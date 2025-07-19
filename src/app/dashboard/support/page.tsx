@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -42,10 +42,28 @@ export default function AdminSupportPage() {
     router.push(`/dashboard/support/${ticketId}`);
   };
 
-  const filteredTickets = tickets.filter(ticket => {
-    if (filter === 'all') return true;
-    return ticket.status.toLowerCase().replace(' ', '-') === filter;
-  });
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(ticket => {
+        if (filter === 'all') return true;
+        return ticket.status.toLowerCase().replace(' ', '-') === filter;
+    });
+  }, [tickets, filter]);
+
+  const ticketCounts = useMemo(() => {
+    const counts = {
+        all: tickets.length,
+        open: 0,
+        inProgress: 0,
+        closed: 0,
+    };
+    tickets.forEach(ticket => {
+        if (ticket.status === 'Open') counts.open++;
+        else if (ticket.status === 'In Progress') counts.inProgress++;
+        else if (ticket.status === 'Closed') counts.closed++;
+    });
+    return counts;
+  }, [tickets]);
+
 
   return (
     <div className="space-y-6">
@@ -57,10 +75,10 @@ export default function AdminSupportPage() {
 
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="open">Open</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-          <TabsTrigger value="closed">Closed</TabsTrigger>
+          <TabsTrigger value="all">All ({ticketCounts.all})</TabsTrigger>
+          <TabsTrigger value="open">Open ({ticketCounts.open})</TabsTrigger>
+          <TabsTrigger value="in-progress">In Progress ({ticketCounts.inProgress})</TabsTrigger>
+          <TabsTrigger value="closed">Closed ({ticketCounts.closed})</TabsTrigger>
         </TabsList>
         <Card className="mt-4">
           <CardHeader>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const getStatusVariant = (status: Ticket['status']) => {
   switch (status) {
@@ -109,6 +110,7 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
 
 export default function MerchantSupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [filter, setFilter] = useState('all');
   const router = useRouter();
 
   const fetchTickets = () => {
@@ -124,6 +126,29 @@ export default function MerchantSupportPage() {
     router.push(`/merchant/support/${ticketId}`);
   };
 
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(ticket => {
+        if (filter === 'all') return true;
+        return ticket.status.toLowerCase().replace(' ', '-') === filter;
+    });
+  }, [tickets, filter]);
+
+  const ticketCounts = useMemo(() => {
+    const counts = {
+        all: tickets.length,
+        open: 0,
+        inProgress: 0,
+        closed: 0,
+    };
+    tickets.forEach(ticket => {
+        if (ticket.status === 'Open') counts.open++;
+        else if (ticket.status === 'In Progress') counts.inProgress++;
+        else if (ticket.status === 'Closed') counts.closed++;
+    });
+    return counts;
+  }, [tickets]);
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -132,43 +157,51 @@ export default function MerchantSupportPage() {
       </div>
       <Separator />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Your Tickets</CardTitle>
-            <CardDescription>A list of all your support tickets.</CardDescription>
-          </div>
-          <CreateTicketDialog onTicketCreated={fetchTickets} />
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ticket ID</TableHead>
-                <TableHead>Subject</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Last Updated</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tickets.map((ticket) => (
-                <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-mono">{ticket.id}</TableCell>
-                  <TableCell className="font-medium">{ticket.subject}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(ticket.status)}>{ticket.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority}</Badge>
-                  </TableCell>
-                  <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
+      <Tabs value={filter} onValueChange={setFilter}>
+        <div className="flex justify-between items-center">
+            <TabsList>
+            <TabsTrigger value="all">All ({ticketCounts.all})</TabsTrigger>
+            <TabsTrigger value="open">Open ({ticketCounts.open})</TabsTrigger>
+            <TabsTrigger value="in-progress">In Progress ({ticketCounts.inProgress})</TabsTrigger>
+            <TabsTrigger value="closed">Closed ({ticketCounts.closed})</TabsTrigger>
+            </TabsList>
+            <CreateTicketDialog onTicketCreated={fetchTickets} />
+        </div>
+        <Card className="mt-4">
+            <CardHeader>
+                <CardTitle>Your Tickets</CardTitle>
+                <CardDescription>A list of all your support tickets.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Ticket ID</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Last Updated</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                {filteredTickets.map((ticket) => (
+                    <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-mono">{ticket.id}</TableCell>
+                    <TableCell className="font-medium">{ticket.subject}</TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusVariant(ticket.status)}>{ticket.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+                    </TableCell>
+                    <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+            </CardContent>
+        </Card>
+      </Tabs>
     </div>
   );
 }
