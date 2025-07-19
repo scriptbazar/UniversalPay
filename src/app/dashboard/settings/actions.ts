@@ -20,21 +20,26 @@ async function updateEnvFile(updates: Record<string, string>) {
     const updatedKeys = new Set<string>();
 
     lines = lines.map(line => {
-      const key = line.split('=')[0];
+      if (!line.trim()) return null; // handle empty lines
+      const eqIndex = line.indexOf('=');
+      if (eqIndex === -1) return line; // handle lines without '='
+      
+      const key = line.substring(0, eqIndex);
       if (updateKeys.includes(key)) {
         updatedKeys.add(key);
         return `${key}=${updates[key]}`;
       }
       return line;
-    }).filter(Boolean); // remove empty lines
+    }).filter(line => line !== null) as string[];
 
     updateKeys.forEach(key => {
       if (!updatedKeys.has(key)) {
         lines.push(`${key}=${updates[key]}`);
       }
     });
-
-    const finalContent = lines.join('\n') + '\n';
+    
+    // Ensure there are no empty lines in the final output unless it's an empty file
+    const finalContent = lines.length > 0 ? lines.join('\n') + '\n' : '';
 
     await fs.writeFile(envPath, finalContent, { encoding: 'utf-8', flag: 'w' });
     console.log('.env file updated successfully with:', Object.keys(updates));
@@ -52,7 +57,7 @@ export async function updateApiKeys(data: {
 }) {
     const updates: Record<string, string> = {};
     if (data.geminiApiKey) updates['GEMINI_API_KEY'] = data.geminiApiKey;
-    if (data.reCaptchaSiteKey) updates['RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey;
+    if (data.reCaptchaSiteKey) updates['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey;
     if (data.reCaptchaSecretKey) updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey;
     
     if (Object.keys(updates).length === 0) {

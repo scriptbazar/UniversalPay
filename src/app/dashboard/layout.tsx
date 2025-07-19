@@ -12,7 +12,13 @@ import {
   Settings,
   Users,
   Package2,
-  BarChart
+  BarChart,
+  Wallet,
+  Landmark,
+  Link2,
+  ArrowRightLeft,
+  FileText,
+  Replace
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
