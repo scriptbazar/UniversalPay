@@ -34,10 +34,13 @@ export default function WithdrawalsPage() {
   const [method, setMethod] = useState("");
   const processingFee = 0.50;
 
+  const fetchMerchantWithdrawals = () => {
+     // In a real app, you'd get the merchantId from the user session.
+     setWithdrawals(getWithdrawals().filter(w => w.merchantId === "merch_123"));
+  }
+
   useEffect(() => {
-    // Filter withdrawals to show only those belonging to a hypothetical merchant
-    // In a real app, you'd get the merchantId from the user session.
-    setWithdrawals(getWithdrawals().filter(w => ["merch_456", "merch_101", "merch_202"].includes(w.merchantId)));
+    fetchMerchantWithdrawals();
   }, []);
 
   const handleWithdrawal = (e: React.FormEvent) => {
@@ -55,14 +58,14 @@ export default function WithdrawalsPage() {
     const newWithdrawal: Omit<Withdrawal, 'id' | 'date'> = {
         amount: numericAmount.toFixed(2),
         currency: method === "bank_inr" ? "INR" : "USDT",
-        destination: method === "bank_inr" ? "Bank A/c ...5678" : "T...def",
+        destination: method === "bank_inr" ? "Bank A/c ...5678" : "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc",
         status: "Pending",
-        merchantId: "merch_202", // Hardcoded for this example
-        merchantName: "FashionHub", // Hardcoded for this example
+        merchantId: "merch_123", // Hardcoded for this example
+        merchantName: "MyStore.com", // Hardcoded for this example
     };
 
     addWithdrawal(newWithdrawal);
-    setWithdrawals(getWithdrawals().filter(w => ["merch_456", "merch_101", "merch_202"].includes(w.merchantId)));
+    fetchMerchantWithdrawals(); // Re-fetch to show the new request
 
     setAmount("");
     setMethod("");
@@ -115,13 +118,9 @@ export default function WithdrawalsPage() {
                         <span className="text-muted-foreground">Processing Fee:</span>
                         <span>${processingFee.toFixed(2)}</span>
                     </div>
+                     <Separator className="my-1"/>
                     <div className="flex justify-between font-bold">
-                        <span>You will receive:</span>
-                        <span>${parseFloat(amount || "0").toFixed(2)}</span>
-                    </div>
-                    <Separator className="my-1"/>
-                    <div className="flex justify-between font-bold">
-                        <span>Total debited:</span>
+                        <span>Total to be debited:</span>
                         <span>${(parseFloat(amount || "0") + processingFee).toFixed(2)}</span>
                     </div>
                 </div>
@@ -133,8 +132,8 @@ export default function WithdrawalsPage() {
                       <SelectValue placeholder="Select a destination" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="crypto_usdt">USDT Wallet (T...abc)</SelectItem>
-                      <SelectItem value="bank_inr">Indian Bank Account (...5678)</SelectItem>
+                      <SelectItem value="crypto_usdt">USDT Wallet (T...vYfBc)</SelectItem>
+                      <SelectItem value="bank_inr">Indian Bank Account (...1234)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
