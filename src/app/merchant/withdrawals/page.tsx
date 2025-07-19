@@ -32,6 +32,7 @@ export default function WithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
+  const processingFee = 0.50;
 
   useEffect(() => {
     // Filter withdrawals to show only those belonging to a hypothetical merchant
@@ -41,17 +42,18 @@ export default function WithdrawalsPage() {
 
   const handleWithdrawal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !method) {
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0 || !method) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter amount and select a method.",
+        description: "Please enter a valid amount and select a method.",
       });
       return;
     }
 
     const newWithdrawal: Omit<Withdrawal, 'id' | 'date'> = {
-        amount: parseFloat(amount).toFixed(2),
+        amount: numericAmount.toFixed(2),
         currency: method === "bank_inr" ? "INR" : "USDT",
         destination: method === "bank_inr" ? "Bank A/c ...5678" : "T...def",
         status: "Pending",
@@ -107,6 +109,23 @@ export default function WithdrawalsPage() {
                     required 
                   />
                 </div>
+                
+                <div className="text-sm space-y-1 p-3 rounded-md border bg-muted/50">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Processing Fee:</span>
+                        <span>${processingFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold">
+                        <span>You will receive:</span>
+                        <span>${parseFloat(amount || "0").toFixed(2)}</span>
+                    </div>
+                    <Separator className="my-1"/>
+                    <div className="flex justify-between font-bold">
+                        <span>Total debited:</span>
+                        <span>${(parseFloat(amount || "0") + processingFee).toFixed(2)}</span>
+                    </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="method">Withdrawal Method</Label>
                   <Select value={method} onValueChange={setMethod}>
