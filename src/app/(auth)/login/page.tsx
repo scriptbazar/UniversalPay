@@ -99,7 +99,7 @@ export default function LoginPage() {
                     <Input 
                         id="email" 
                         type="email" 
-                        placeholder="admin@transactwave.com or merchant@example.com" 
+                        placeholder="m@example.com" 
                         required 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -174,5 +174,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
