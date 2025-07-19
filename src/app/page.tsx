@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, BarChart, Shuffle, Settings, AppWindow } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -33,25 +33,30 @@ const features = [
     title: "Simplified Crypto Payouts",
     description: "Receive all your payments directly in your preferred cryptocurrency, eliminating cross-border complexity.",
   },
-  {
-    icon: <Users className="w-8 h-8 text-primary" />,
+    {
+    icon: <Repeat className="w-8 h-8 text-primary" />,
     title: "Subscription Models",
-    description: "Choose from flexible subscription tiers (Free, Pro, Premium) with varying limits and features.",
+    description: "Create and manage recurring billing plans for your customers to automate monthly payments.",
   },
   {
     icon: <Shuffle className="w-8 h-8 text-primary" />,
     title: "Automatic Currency Conversion",
     description: "Customers pay in their native currency, and our system automatically converts it to your chosen crypto.",
   },
-  {
-    icon: <Settings className="w-8 h-8 text-primary" />,
-    title: "Full Admin Control",
-    description: "Manage payment methods, choose your settlement currency, and monitor everything from one powerful dashboard.",
+   {
+    icon: <Briefcase className="w-8 h-8 text-primary" />,
+    title: "Reseller Program",
+    description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn commissions.",
   },
   {
     icon: <AppWindow className="w-8 h-8 text-primary" />,
     title: "White-Label Solution",
     description: "Use your own domain and branding. Resellers can manage client merchants under their own brand.",
+  },
+   {
+    icon: <FileText className="w-8 h-8 text-primary" />,
+    title: "Invoicing System",
+    description: "Create and send professional online invoices with payment links directly from your dashboard.",
   },
 ];
 
@@ -101,7 +106,7 @@ export default function Home() {
         <section id="features" className="py-20 px-4 md:px-8">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {features.map((feature, index) => (
                 <Card key={index} className="bg-card border-2 border-transparent hover:border-primary transition-all duration-300 transform hover:-translate-y-1 shadow-lg rounded-xl">
                   <CardHeader className="flex flex-col items-center text-center">
@@ -220,5 +225,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
