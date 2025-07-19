@@ -246,41 +246,43 @@ export default function SettingsPage() {
                         <CardContent className="space-y-8">
                             <div className="space-y-4 p-4 border rounded-lg">
                                 <h3 className="font-semibold flex items-center gap-2"><Palette className="w-5 h-5"/> Visuals</h3>
-                                <div className="space-y-2">
-                                    <Label>Logo</Label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
-                                           {logo ? (
-                                                <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover"/>
-                                            ) : (
-                                                <Upload className="w-8 h-8 text-muted-foreground" />
-                                            )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label>Logo</Label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
+                                            {logo ? (
+                                                    <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover"/>
+                                                ) : (
+                                                    <Upload className="w-8 h-8 text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+                                            <Button variant="outline" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
                                         </div>
-                                        <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
-                                        <Button variant="outline" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
+                                        <p className="text-xs text-muted-foreground">Recommended: 256x256px.</p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">Your logo will appear on the checkout page. Recommended: 256x256px.</p>
-                                </div>
-                                 <div className="space-y-2">
-                                    <Label htmlFor="brand-color">Brand Color</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input 
-                                            id="brand-color-hex" 
-                                            value={brandColor}
-                                            onChange={(e) => setBrandColor(e.target.value)}
-                                            className="w-32"
-                                        />
-                                        <div className="relative">
-                                            <input 
-                                                id="brand-color" 
-                                                type="color" 
+                                    <div className="space-y-2">
+                                        <Label htmlFor="brand-color">Brand Color</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input 
+                                                id="brand-color-hex" 
                                                 value={brandColor}
                                                 onChange={(e) => setBrandColor(e.target.value)}
-                                                className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
+                                                className="w-32"
                                             />
+                                            <div className="relative">
+                                                <input 
+                                                    id="brand-color" 
+                                                    type="color" 
+                                                    value={brandColor}
+                                                    onChange={(e) => setBrandColor(e.target.value)}
+                                                    className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
+                                                />
+                                            </div>
                                         </div>
+                                        <p className="text-xs text-muted-foreground">Used for buttons and highlights.</p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">This color will be used for buttons and highlights on the checkout page.</p>
                                 </div>
                             </div>
 
@@ -488,3 +490,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
