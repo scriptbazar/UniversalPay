@@ -80,6 +80,10 @@ export default function SubscriptionsPage() {
                     <Label htmlFor="plan-features-create" className="text-right">Features</Label>
                     <Input id="plan-features-create" placeholder="Comma-separated features" className="col-span-3" />
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="plan-api-quota-create" className="text-right">API Quota</Label>
+                    <Input id="plan-api-quota-create" placeholder="e.g., 50,000 calls/mo" className="col-span-3" />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
@@ -133,6 +137,10 @@ export default function SubscriptionsPage() {
                                         <div className="grid grid-cols-4 items-center gap-4">
                                           <Label htmlFor="plan-features" className="text-right">Features</Label>
                                           <Input id="plan-features" defaultValue={plan.features} className="col-span-3" />
+                                        </div>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                          <Label htmlFor="plan-api-quota" className="text-right">API Quota</Label>
+                                          <Input id="plan-api-quota" defaultValue={plan.api_quota} className="col-span-3" />
                                         </div>
                                       </div>
                                     <DialogFooter>
