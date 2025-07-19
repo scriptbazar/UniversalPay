@@ -106,10 +106,12 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
+type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'transaction' | 'withdrawalDetail' | null;
+
+
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [transactionDetailDialogOpen, setTransactionDetailDialogOpen] = useState(false);
-  const [withdrawalDetailDialogOpen, setWithdrawalDetailDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
+  
   const [selectedMethod, setSelectedMethod] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -122,17 +124,25 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     setSelectedMethod(method);
     setFilteredTransactions(allTransactions.filter(t => t.method === method));
     setCurrentPage(1);
-    setDialogOpen(true);
+    setDialogOpen('method');
   };
   
   const handleTransactionRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
-    setTransactionDetailDialogOpen(true);
+    setDialogOpen('transaction');
   };
   
   const handleWithdrawalRowClick = (withdrawal: Withdrawal) => {
     setSelectedWithdrawal(withdrawal);
-    setWithdrawalDetailDialogOpen(true);
+    setDialogOpen('withdrawalDetail');
+  };
+
+  const openStatDialog = (type: DialogType) => {
+    if (type === 'revenue') {
+      setFilteredTransactions(allTransactions.filter(t => t.status === 'Success'));
+      setCurrentPage(1);
+    }
+    setDialogOpen(type);
   };
 
   const paginatedTransactions = useMemo(() => {
@@ -184,7 +194,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         <Separator/>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card onClick={() => openStatDialog('revenue')} className="cursor-pointer hover:bg-muted/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -193,7 +203,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     <div className="text-2xl font-bold">${stats.revenue}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => openStatDialog('wallet')} className="cursor-pointer hover:bg-muted/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Available Wallet Balance</CardTitle>
                     <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -202,7 +212,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     <div className="text-2xl font-bold">${stats.walletBalance}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => openStatDialog('withdraw')} className="cursor-pointer hover:bg-muted/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Available to Withdraw</CardTitle>
                     <Landmark className="h-4 w-4 text-muted-foreground" />
@@ -211,7 +221,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     <div className="text-2xl font-bold">${stats.availableToWithdraw}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => openStatDialog('success')} className="cursor-pointer hover:bg-muted/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
                     <Percent className="h-4 w-4 text-muted-foreground" />
@@ -316,13 +326,13 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             </CardContent>
         </Card>
 
-        {/* Transaction List Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        {/* Transaction List Dialog (For Revenue and Payment Method) */}
+        <Dialog open={dialogOpen === 'method' || dialogOpen === 'revenue'} onOpenChange={() => setDialogOpen(null)}>
             <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>{selectedMethod} Transactions</DialogTitle>
-                    <DialogDescription>
-                        A complete list of transactions made using the {selectedMethod} method. Click a row to see details.
+                    <DialogTitle>{dialogOpen === 'revenue' ? 'All Successful Transactions' : `${selectedMethod} Transactions`}</DialogTitle>
+                     <DialogDescription>
+                        A complete list of transactions. Click a row to see details.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto">
@@ -376,7 +386,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         </Dialog>
 
         {/* Transaction Detail Dialog */}
-        <Dialog open={transactionDetailDialogOpen} onOpenChange={setTransactionDetailDialogOpen}>
+        <Dialog open={dialogOpen === 'transaction'} onOpenChange={() => setDialogOpen(null)}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>Transaction Details</DialogTitle>
@@ -410,13 +420,13 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     </div>
                 )}
                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setTransactionDetailDialogOpen(false)}>Close</Button>
+                    <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
 
         {/* Withdrawal Detail Dialog */}
-        <Dialog open={withdrawalDetailDialogOpen} onOpenChange={setWithdrawalDetailDialogOpen}>
+        <Dialog open={dialogOpen === 'withdrawalDetail'} onOpenChange={() => setDialogOpen(null)}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>Withdrawal Details</DialogTitle>
@@ -455,7 +465,49 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     </div>
                 )}
                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setWithdrawalDetailDialogOpen(false)}>Close</Button>
+                    <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Other Stat Dialogs */}
+        <Dialog open={['wallet', 'withdraw', 'success'].includes(dialogOpen || '')} onOpenChange={() => setDialogOpen(null)}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                     {dialogOpen === 'wallet' && <DialogTitle>Wallet Balance Details</DialogTitle>}
+                     {dialogOpen === 'withdraw' && <DialogTitle>Available to Withdraw Details</DialogTitle>}
+                     {dialogOpen === 'success' && <DialogTitle>Success Rate Details</DialogTitle>}
+                </DialogHeader>
+                 <div className="space-y-4 py-4">
+                    {dialogOpen === 'wallet' && (
+                        <>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Total Credits:</span> <span className="font-semibold">$50,123.45</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Total Debits (Withdrawals + Fees):</span> <span className="font-semibold">$44,692.95</span></div>
+                            <Separator/>
+                            <div className="flex justify-between font-bold text-lg"><span>Current Balance:</span> <span>${stats.walletBalance}</span></div>
+                        </>
+                    )}
+                     {dialogOpen === 'withdraw' && (
+                        <>
+                             <div className="flex justify-between"><span className="text-muted-foreground">Wallet Balance:</span> <span className="font-semibold">${stats.walletBalance}</span></div>
+                             <div className="flex justify-between"><span className="text-muted-foreground">Pending Settlements:</span> <span className="font-semibold">-$230.50</span></div>
+                             <Separator/>
+                            <div className="flex justify-between font-bold text-lg"><span>Available to Withdraw:</span> <span>${stats.availableToWithdraw}</span></div>
+                            <p className="text-xs text-muted-foreground pt-2">This is the amount you can currently withdraw. It excludes payments that are still being processed.</p>
+                        </>
+                    )}
+                    {dialogOpen === 'success' && (
+                         <>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Total Transactions Attempted:</span> <span className="font-semibold">{allTransactions.length}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Successful Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Success').length}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Failed Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Failed').length}</span></div>
+                            <Separator/>
+                            <div className="flex justify-between font-bold text-lg"><span>Success Rate:</span> <span>{stats.successRate}</span></div>
+                        </>
+                    )}
+                 </div>
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
