@@ -19,13 +19,11 @@ let db: Firestore;
 // Initialize Firebase lazily
 function initializeFirebase() {
     if (!getApps().length) {
-        if (firebaseConfig.apiKey) {
+        if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
             app = initializeApp(firebaseConfig);
         } else {
-            console.error("Firebase API Key is missing. Please check your .env file.");
+            console.error("Firebase configuration is missing or incomplete. Please check your .env file.");
             // We can't initialize, so we'll have to stop here.
-            // A mock or dummy implementation could be returned for non-crashing UI,
-            // but for auth/db, failing is often better.
             throw new Error("Firebase configuration is incomplete.");
         }
     } else {
@@ -37,12 +35,11 @@ function initializeFirebase() {
 
 // Ensure Firebase is initialized before exporting
 if (!getApps().length) {
-    if(firebaseConfig.apiKey) {
+    if(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
         initializeFirebase();
     } else {
-        // If no API key, we can't initialize. 
-        // We'll set up dummy exports that will throw an error if used.
-        const uninitializedError = () => { throw new Error("Firebase is not initialized. Please provide API keys in .env") };
+        // If config is missing, set up dummy exports that will throw an error if used.
+        const uninitializedError = () => { throw new Error("Firebase is not initialized. Please provide necessary environment variables.") };
         app = {} as FirebaseApp;
         auth = { currentUser: null } as unknown as Auth;
         db = {} as Firestore;
