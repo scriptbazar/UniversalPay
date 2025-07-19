@@ -7,9 +7,12 @@ import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
 
 const revenueData = [
   { month: "Jan", revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 390 },
@@ -28,12 +31,27 @@ const paymentMethodData = [
 ];
 
 const geoData = [
-    { country: 'India', volume: 40000, transactions: 1200, merchants: 250 },
-    { country: 'United States', volume: 25000, transactions: 800, merchants: 150 },
-    { country: 'United Kingdom', volume: 15000, transactions: 500, merchants: 80 },
-    { country: 'Germany', volume: 10000, transactions: 300, merchants: 50 },
-    { country: 'UAE', volume: 8000, transactions: 250, merchants: 40 },
-]
+    { country: 'India', volume: 40000, transactions: 1200, merchants: 250, flag: 'IN' },
+    { country: 'United States', volume: 25000, transactions: 800, merchants: 150, flag: 'US' },
+    { country: 'United Kingdom', volume: 15000, transactions: 500, merchants: 80, flag: 'GB' },
+    { country: 'Germany', volume: 10000, transactions: 300, merchants: 50, flag: 'DE' },
+    { country: 'UAE', volume: 8000, transactions: 250, merchants: 40, flag: 'AE' },
+];
+
+const mockNewMerchants = Array.from({ length: 12 }, (_, i) => ({
+    id: `user_${i + 1}`,
+    name: `Merchant ${i + 1}`,
+    email: `merchant${i + 1}@example.com`,
+    avatar: `https://placehold.co/40x40.png?text=M${i+1}`,
+    joined: `2023-10-${28-i}`
+}));
+
+const mockSuccessfulPayments = Array.from({ length: 20 }, (_, i) => ({
+    id: `txn_${i + 1}`,
+    merchant: `Merchant ${i % 4 + 1}`,
+    amount: (Math.random() * 500 + 10).toFixed(2),
+    date: `2023-10-${28-Math.floor(i/2)}`
+}));
 
 type DialogContent = {
   title: string;
@@ -43,18 +61,58 @@ type DialogContent = {
 
 
 export default function AnalyticsPage() {
+  const router = useRouter();
   const [dialogContent, setDialogContent] = useState<DialogContent>(null);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const paginatedMerchants = useMemo(() => {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      return mockNewMerchants.slice(startIndex, startIndex + itemsPerPage);
+  }, [currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(mockNewMerchants.length / itemsPerPage);
+
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
          case 'volume':
              setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$1,452,231.89</p> });
              break;
          case 'payments':
-             setDialogContent({ title: 'Successful Payments Details', description: 'Total number of successful transactions.', data: <p className="text-2xl font-bold">572,234</p> });
+             setDialogContent({ 
+                 title: 'All Successful Payments', 
+                 description: 'A list of all successful transactions on the platform.', 
+                 data: (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Transaction ID</TableHead>
+                                <TableHead>Merchant</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {mockSuccessfulPayments.slice(0,10).map(tx => ( // Show first 10 for brevity
+                                <TableRow key={tx.id}>
+                                    <TableCell>{tx.id}</TableCell>
+                                    <TableCell>{tx.merchant}</TableCell>
+                                    <TableCell>{tx.date}</TableCell>
+                                    <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                 )
+             });
              break;
          case 'merchants':
-             setDialogContent({ title: 'New Merchants Details', description: 'Number of new merchants who joined in the last 30 days.', data: <p className="text-2xl font-bold">+573</p> });
+            setCurrentPage(1);
+             setDialogContent({ 
+                 title: 'New Merchants (Last 30 Days)', 
+                 description: 'A list of new merchants who joined recently. Click to view details.', 
+                 data: <NewMerchantsList/>
+             });
              break;
         case 'avg_transaction':
             setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$25.40</p> });
@@ -94,10 +152,63 @@ export default function AnalyticsPage() {
         title: `Merchants from ${country.country}`, 
         description: `A list of merchants operating from ${country.country}.`, 
         data: (
-            <p>Showing {country.merchants} merchants from {country.country}.</p>
+            <p>Showing {country.merchants} merchants from {country.country}. Full list would be displayed here.</p>
         )
     });
+  };
+  
+  function NewMerchantsList() {
+    return (
+        <div>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Merchant</TableHead>
+                        <TableHead>Joined On</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {paginatedMerchants.map(merchant => (
+                        <TableRow key={merchant.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/users/${merchant.id}`)}>
+                            <TableCell className="flex items-center gap-2">
+                                <Image src={merchant.avatar} alt={merchant.name} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
+                                <div>
+                                    <p className="font-medium">{merchant.name}</p>
+                                    <p className="text-xs text-muted-foreground">{merchant.email}</p>
+                                </div>
+                            </TableCell>
+                            <TableCell>{merchant.joined}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <div className="flex justify-between items-center w-full pt-4">
+                <div className="text-xs text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
   }
+
 
   return (
     <div className="space-y-6">
@@ -210,7 +321,10 @@ export default function AnalyticsPage() {
                 <TableBody>
                     {geoData.map(geo => (
                         <TableRow key={geo.country}>
-                            <TableCell className="font-medium">{geo.country}</TableCell>
+                            <TableCell className="font-medium flex items-center gap-2">
+                                <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} />
+                                {geo.country}
+                            </TableCell>
                             <TableCell>${geo.volume.toLocaleString()}</TableCell>
                             <TableCell>{geo.transactions.toLocaleString()}</TableCell>
                             <TableCell>{geo.merchants.toLocaleString()}</TableCell>
@@ -225,12 +339,12 @@ export default function AnalyticsPage() {
       </Card>
       
       <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
             <DialogHeader>
                 <DialogTitle>{dialogContent?.title}</DialogTitle>
                 <DialogDescription>{dialogContent?.description}</DialogDescription>
             </DialogHeader>
-            <div className="py-4">
+            <div className="py-4 max-h-[60vh] overflow-y-auto">
                 {dialogContent?.data}
             </div>
             <DialogFooter>
@@ -241,4 +355,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-

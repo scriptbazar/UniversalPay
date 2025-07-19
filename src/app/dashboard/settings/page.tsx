@@ -84,6 +84,13 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveGateways = () => {
+    toast({
+        title: "Settings Saved",
+        description: "Your gateway settings have been updated.",
+    });
+  }
+
 
   return (
     <div className="space-y-6">
@@ -295,7 +302,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
                 <div className="pt-4">
-                  <Button>Save Gateway Settings</Button>
+                  <Button onClick={handleSaveGateways}>Save Gateway Settings</Button>
                 </div>
             </CardContent>
           </Card>
