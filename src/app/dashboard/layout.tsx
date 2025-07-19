@@ -63,12 +63,7 @@ export default function AdminDashboardLayout({
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo />
-              <span className="text-sm text-muted-foreground">(Admin)</span>
             </Link>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -108,7 +103,6 @@ export default function AdminDashboardLayout({
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Logo />
-                   <span className="text-sm text-muted-foreground">(Admin)</span>
                 </Link>
                 {navItems.map((item) => (
                     <Link
@@ -128,6 +122,10 @@ export default function AdminDashboardLayout({
           <div className="w-full flex-1">
             {/* Can add a search bar here if needed */}
           </div>
+           <Button variant="outline" size="icon" className="h-8 w-8">
+              <Bell className="h-4 w-4" />
+              <span className="sr-only">Toggle notifications</span>
+            </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
