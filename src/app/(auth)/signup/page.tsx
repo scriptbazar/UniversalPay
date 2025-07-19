@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -56,13 +57,29 @@ export default function SignupPage() {
                 <Label htmlFor="username">Username</Label>
                 <Input id="username" type="text" placeholder="johndoe" required />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="merchant@example.com" required />
+            </div>
              <div className="space-y-2">
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="merchant@example.com" required />
+                <Label htmlFor="country">Country</Label>
+                <Select required>
+                    <SelectTrigger id="country">
+                        <SelectValue placeholder="Select your country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="in">India</SelectItem>
+                        <SelectItem value="us">United States</SelectItem>
+                        <SelectItem value="gb">United Kingdom</SelectItem>
+                        <SelectItem value="ca">Canada</SelectItem>
+                        <SelectItem value="au">Australia</SelectItem>
+                        <SelectItem value="ae">United Arab Emirates</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
