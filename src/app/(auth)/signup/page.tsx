@@ -52,6 +52,14 @@ export default function SignupPage() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input id="name" type="text" placeholder="John Doe" required />
             </div>
+             <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" type="text" placeholder="johndoe" required />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="mobile">Mobile Number</Label>
+                <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="merchant@example.com" required />
