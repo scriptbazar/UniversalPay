@@ -16,8 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState, useMemo } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 
 const merchant = {
@@ -56,6 +56,12 @@ const allTransactions = [
     { id: "pay_7", amount: "50.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-05" },
     { id: "pay_8", amount: "1500.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-05" },
     { id: "pay_9", amount: "800.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-06" },
+    { id: "pay_10", amount: "200.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-06" },
+    { id: "pay_11", amount: "300.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-07" },
+    { id: "pay_12", amount: "400.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-08" },
+    { id: "pay_13", amount: "500.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-09" },
+    { id: "pay_14", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-10" },
+    { id: "pay_15", amount: "700.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-11" },
 ];
 
 const recentTransactions = allTransactions.slice(0, 3);
@@ -86,13 +92,23 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const handlePieClick = (data: any) => {
     const method = data.name;
     setSelectedMethod(method);
     setFilteredTransactions(allTransactions.filter(t => t.method === method));
+    setCurrentPage(1); // Reset to first page on new selection
     setDialogOpen(true);
   };
+
+  const paginatedTransactions = useMemo(() => {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTransactions, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
 
   return (
@@ -287,7 +303,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredTransactions.map(p => (
+                            {paginatedTransactions.map(p => (
                                 <TableRow key={p.id}>
                                     <TableCell className="font-medium">{p.id}</TableCell>
                                     <TableCell>
@@ -300,6 +316,29 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         </TableBody>
                     </Table>
                 </div>
+                 <DialogFooter className="flex justify-between items-center w-full pt-4">
+                    <div className="text-xs text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     </div>
