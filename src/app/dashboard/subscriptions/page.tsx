@@ -30,15 +30,109 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
-const subscriptionPlans = [
+type Plan = {
+    name: string;
+    price: string;
+    transactions: string;
+    features: string;
+    api_quota: string;
+};
+
+const initialSubscriptionPlans: Plan[] = [
     { name: "Free", price: "$0/mo", transactions: "100/mo", features: "Basic UPI", api_quota: "1000 calls/mo" },
     { name: "Pro", price: "$49/mo", transactions: "1000/mo", features: "UPI & Crypto", api_quota: "10,000 calls/mo" },
     { name: "Premium", price: "$99/mo", transactions: "Unlimited", features: "White-Label", api_quota: "Unlimited" },
 ];
 
+
+function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Plan) => void; }) {
+    const [open, setOpen] = React.useState(false);
+    const [formData, setFormData] = React.useState(plan);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(formData);
+        setOpen(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit {plan.name} Plan</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Name</Label>
+                            <Input id="name" value={formData.name} onChange={handleChange} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="price" className="text-right">Price</Label>
+                            <Input id="price" value={formData.price} onChange={handleChange} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="transactions" className="text-right">Transactions</Label>
+                            <Input id="transactions" value={formData.transactions} onChange={handleChange} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="features" className="text-right">Features</Label>
+                            <Input id="features" value={formData.features} onChange={handleChange} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="api_quota" className="text-right">API Quota</Label>
+                            <Input id="api_quota" value={formData.api_quota} onChange={handleChange} className="col-span-3" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
+                        <Button type="submit">Save Changes</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function SubscriptionsPage() {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [plans, setPlans] = React.useState<Plan[]>(initialSubscriptionPlans);
+  const { toast } = useToast();
+
+  const handleCreatePlan = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      const newPlan: Plan = {
+          name: formData.get('plan-name-create') as string,
+          price: formData.get('plan-price-create') as string,
+          transactions: formData.get('plan-txns-create') as string,
+          features: formData.get('plan-features-create') as string,
+          api_quota: formData.get('plan-api-quota-create') as string,
+      };
+      setPlans(prev => [newPlan, ...prev]);
+      toast({ title: 'Plan Created!', description: `${newPlan.name} has been added.`});
+      setIsCreateOpen(false);
+  }
+
+  const handleSavePlan = (updatedPlan: Plan) => {
+      setPlans(prev => prev.map(p => p.name === updatedPlan.name ? updatedPlan : p));
+      toast({ title: 'Plan Updated!', description: `${updatedPlan.name} has been saved.`});
+  }
+
+  const handleDeletePlan = (planName: string) => {
+    setPlans(prev => prev.filter(p => p.name !== planName));
+    toast({ variant: 'destructive', title: 'Plan Deleted!', description: `${planName} has been removed.`});
+  }
 
   return (
     <div className="space-y-6">
@@ -62,32 +156,34 @@ export default function SubscriptionsPage() {
                     Define the details for a new subscription tier.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="plan-name-create" className="text-right">Name</Label>
-                    <Input id="plan-name-create" placeholder="e.g., Enterprise" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="plan-price-create" className="text-right">Price</Label>
-                    <Input id="plan-price-create" placeholder="$199/mo" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="plan-txns-create" className="text-right">Transactions</Label>
-                    <Input id="plan-txns-create" placeholder="10,000/mo" className="col-span-3" />
-                  </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="plan-features-create" className="text-right">Features</Label>
-                    <Input id="plan-features-create" placeholder="Comma-separated features" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="plan-api-quota-create" className="text-right">API Quota</Label>
-                    <Input id="plan-api-quota-create" placeholder="e.g., 50,000 calls/mo" className="col-span-3" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                  <Button type="submit" onClick={() => setIsCreateOpen(false)}>Create Plan</Button>
-                </DialogFooter>
+                <form onSubmit={handleCreatePlan}>
+                    <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="plan-name-create" className="text-right">Name</Label>
+                        <Input id="plan-name-create" name="plan-name-create" placeholder="e.g., Enterprise" className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="plan-price-create" className="text-right">Price</Label>
+                        <Input id="plan-price-create" name="plan-price-create" placeholder="$199/mo" className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="plan-txns-create" className="text-right">Transactions</Label>
+                        <Input id="plan-txns-create" name="plan-txns-create" placeholder="10,000/mo" className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="plan-features-create" className="text-right">Features</Label>
+                        <Input id="plan-features-create" name="plan-features-create" placeholder="Comma-separated features" className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="plan-api-quota-create" className="text-right">API Quota</Label>
+                        <Input id="plan-api-quota-create" name="plan-api-quota-create" placeholder="e.g., 50,000 calls/mo" className="col-span-3" />
+                    </div>
+                    </div>
+                    <DialogFooter>
+                    <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                    <Button type="submit">Create Plan</Button>
+                    </DialogFooter>
+                </form>
               </DialogContent>
             </Dialog>
         </CardHeader>
@@ -104,7 +200,7 @@ export default function SubscriptionsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {subscriptionPlans.map(plan => (
+                    {plans.map(plan => (
                         <TableRow key={plan.name}>
                             <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' ? 'default' : plan.name === 'Premium' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
                             <TableCell>{plan.price}</TableCell>
@@ -112,43 +208,7 @@ export default function SubscriptionsPage() {
                             <TableCell>{plan.features}</TableCell>
                             <TableCell>{plan.api_quota}</TableCell>
                             <TableCell className="text-right space-x-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                      <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Edit {plan.name} Plan</DialogTitle>
-                                    </DialogHeader>
-                                      <div className="grid gap-4 py-4">
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="plan-name" className="text-right">Name</Label>
-                                          <Input id="plan-name" defaultValue={plan.name} className="col-span-3" />
-                                        </div>
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="plan-price" className="text-right">Price</Label>
-                                          <Input id="plan-price" defaultValue={plan.price} className="col-span-3" />
-                                        </div>
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="plan-txns" className="text-right">Transactions</Label>
-                                          <Input id="plan-txns" defaultValue={plan.transactions} className="col-span-3" />
-                                        </div>
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="plan-features" className="text-right">Features</Label>
-                                          <Input id="plan-features" defaultValue={plan.features} className="col-span-3" />
-                                        </div>
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="plan-api-quota" className="text-right">API Quota</Label>
-                                          <Input id="plan-api-quota" defaultValue={plan.api_quota} className="col-span-3" />
-                                        </div>
-                                      </div>
-                                    <DialogFooter>
-                                      <Button variant="outline">Cancel</Button>
-                                      <Button type="submit">Save Changes</Button>
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-
+                                <EditPlanDialog plan={plan} onSave={handleSavePlan} />
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
@@ -162,7 +222,7 @@ export default function SubscriptionsPage() {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction>Delete Plan</AlertDialogAction>
+                                      <AlertDialogAction onClick={() => handleDeletePlan(plan.name)}>Delete Plan</AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
