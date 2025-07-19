@@ -148,12 +148,7 @@ export default function AnalyticsPage() {
   };
 
   const handleCountryClick = (country: typeof geoData[0]) => {
-     setCurrentPage(1);
-     setDialogContent({ 
-        title: `Merchants from ${country.country}`, 
-        description: `A list of all ${country.merchants} merchants operating from ${country.country}. Click to view details.`, 
-        data: <NewMerchantsList/>
-    });
+     router.push('/dashboard/users');
   };
   
   function NewMerchantsList() {
