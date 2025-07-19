@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from "react";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Code2, Info } from "lucide-react";
+import { Copy, PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Code2, Info, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -33,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Logo } from "@/components/logo";
 
 const CodeSnippet = ({ code }: { code: string }) => {
     const { toast } = useToast();
@@ -239,6 +241,7 @@ export default function DeveloperPage() {
                         <TabsTrigger value="react">React</TabsTrigger>
                         <TabsTrigger value="flutter">Flutter</TabsTrigger>
                         <TabsTrigger value="wordpress">WordPress</TabsTrigger>
+                        <TabsTrigger value="shopify">Shopify</TabsTrigger>
                     </TabsList>
                     <TabsContent value="nodejs" className="pt-4">
                         <h3 className="font-semibold text-lg mb-2">Node.js Integration</h3>
@@ -321,7 +324,7 @@ const CheckoutButton = () => {
                     </TabsContent>
                      <TabsContent value="flutter" className="pt-4">
                         <h3 className="font-semibold text-lg mb-2">Flutter Integration</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Add our package to your `pubspec.yaml` file.</p>
+                        <p className="text-sm text-muted-foreground mb-4">Add our package to your \`pubspec.yaml\` file.</p>
                         <CodeSnippet code="dependencies:\n  transactwave_flutter: ^1.0.0" />
                         <h4 className="font-semibold mt-4 mb-2">Example: Initiating a Payment</h4>
                          <CodeSnippet code={`
@@ -353,12 +356,26 @@ class _MyAppState extends State<MyApp> {
                         <p className="text-sm text-muted-foreground mb-4">Install our official plugin from the WordPress repository.</p>
                          <ol className="list-decimal list-inside space-y-2 text-sm">
                             <li>Go to your WordPress Admin Dashboard.</li>
-                            <li>Navigate to `Plugins > Add New`.</li>
+                            <li>Navigate to \`Plugins > Add New\`.</li>
                             <li>Search for "TransactWave Payment Gateway for WooCommerce".</li>
                             <li>Install and activate the plugin.</li>
-                            <li>Go to `WooCommerce > Settings > Payments` and enable TransactWave.</li>
+                            <li>Go to \`WooCommerce > Settings > Payments\` and enable TransactWave.</li>
                             <li>Enter your Publishable Key and Secret Key from this page.</li>
                         </ol>
+                    </TabsContent>
+                    <TabsContent value="shopify" className="pt-4">
+                        <h3 className="font-semibold text-lg mb-2">Shopify Integration</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Integrate TransactWave with your Shopify store by creating a custom payment app.</p>
+                         <ol className="list-decimal list-inside space-y-2 text-sm">
+                            <li>Go to your Shopify Admin, then \`Settings > Payments\`.</li>
+                            <li>In the "Supported payment methods" section, click \`Add payment methods\`.</li>
+                            <li>Search for and select "TransactWave Payments".</li>
+                            <li>Enter your Publishable Key and Secret Key from this page to activate.</li>
+                            <li>If not listed, you may need to install our app from the Shopify App Store.</li>
+                        </ol>
+                         <div className="mt-4">
+                            <Button variant="outline"><ShoppingCart className="mr-2 h-4 w-4"/> View on Shopify App Store</Button>
+                        </div>
                     </TabsContent>
                 </Tabs>
 
@@ -417,5 +434,7 @@ document.getElementById('pay-button').onclick = function(e){
     </div>
   );
 }
+
+    
 
     
