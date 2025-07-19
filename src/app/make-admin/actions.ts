@@ -3,7 +3,6 @@
 
 import * as admin from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
-import { auth as clientAuth } from '@/lib/firebase'; // Client auth to get current user
 
 // --- IMPORTANT ---
 // This is a temporary measure to initialize the admin user.
@@ -12,11 +11,9 @@ import { auth as clientAuth } from '@/lib/firebase'; // Client auth to get curre
 // Initialize Firebase Admin SDK if not already done
 if (!admin.apps.length) {
   try {
-    admin.initializeApp({
-      // Service account credentials can be set as environment variables
-      // GOOGLE_APPLICATION_CREDENTIALS points to the service account JSON file
-      // Or you can initialize with credentials directly if needed
-    });
+    // When running in a Firebase environment, it's often initialized automatically.
+    // If not, it uses GOOGLE_APPLICATION_CREDENTIALS environment variable.
+    admin.initializeApp();
   } catch (e) {
     console.error('Firebase Admin initialization error', e);
   }
@@ -29,33 +26,30 @@ const ADMIN_EMAIL = 'PUT_YOUR_ADMIN_EMAIL_HERE';
 
 export async function grantAdminRole(): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    const currentUser = clientAuth.currentUser;
-    if (!currentUser) {
-      return { success: false, error: 'No user is logged in.' };
+    if (ADMIN_EMAIL === 'PUT_YOUR_ADMIN_EMAIL_HERE' || !ADMIN_EMAIL) {
+        return { success: false, error: 'Admin email has not been configured in the server action file (app/make-admin/actions.ts).' };
     }
-
-    const uid = currentUser.uid;
-    const userEmail = currentUser.email;
-
-    if (userEmail !== ADMIN_EMAIL) {
-      return { success: false, error: `Only the designated admin (${ADMIN_EMAIL}) can perform this action.` };
-    }
-    
-    // Get the user by UID from Firebase Admin SDK
+      
     const adminAuth = getAuth();
-    const userRecord = await adminAuth.getUser(uid);
+    
+    // Get the user by email from Firebase Admin SDK
+    const userRecord = await adminAuth.getUserByEmail(ADMIN_EMAIL);
+    const uid = userRecord.uid;
 
     // Check if the user already has the admin role
     if (userRecord.customClaims && userRecord.customClaims['role'] === 'admin') {
-      return { success: true, message: 'User already has the admin role.' };
+      return { success: true, message: `User ${ADMIN_EMAIL} already has the admin role.` };
     }
 
     // Set the custom claim
     await adminAuth.setCustomUserClaims(uid, { role: 'admin' });
 
-    return { success: true, message: `Admin role has been granted to ${userEmail}.` };
+    return { success: true, message: `Admin role has been granted to ${ADMIN_EMAIL}. Please log out and log back in.` };
   } catch (error: any) {
     console.error('Error in grantAdminRole:', error);
+    if (error.code === 'auth/user-not-found') {
+        return { success: false, error: `The specified admin email "${ADMIN_EMAIL}" does not exist in Firebase Authentication.` };
+    }
     return { success: false, error: 'An internal error occurred: ' + error.message };
   }
 }

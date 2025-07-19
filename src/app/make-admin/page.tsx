@@ -21,15 +21,6 @@ export default function MakeAdminPage() {
   });
 
   const handleGrantAdmin = async () => {
-    if (!auth.currentUser) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'You must be logged in to perform this action.',
-        });
-        return;
-    }
-
     setIsLoading(true);
     setResult('');
     try {
@@ -39,7 +30,7 @@ export default function MakeAdminPage() {
           title: 'Success!',
           description: response.message,
         });
-        setResult(`Success! ${response.message}. Please log out and log back in for the changes to take effect.`);
+        setResult(`Success! ${response.message}.`);
       } else {
         toast({
           variant: 'destructive',
@@ -66,7 +57,7 @@ export default function MakeAdminPage() {
         <CardHeader>
           <CardTitle>Admin Role Utility</CardTitle>
           <CardDescription>
-            This is a one-time setup page to grant administrative privileges to the designated admin account.
+            This is a one-time setup page to grant administrative privileges to the designated admin account configured on the server.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -76,9 +67,9 @@ export default function MakeAdminPage() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Click the button below to assign the 'admin' role to your account. You only need to do this once. After clicking, you must log out and log back in.
+            Click the button below to assign the 'admin' role to the pre-configured admin email. You only need to do this once. After clicking, you must log out and log back in for the changes to take effect.
           </p>
-          <Button onClick={handleGrantAdmin} disabled={isLoading || !user} className="w-full">
+          <Button onClick={handleGrantAdmin} disabled={isLoading} className="w-full">
             {isLoading ? 'Processing...' : 'Make Me Admin'}
           </Button>
           {result && (
