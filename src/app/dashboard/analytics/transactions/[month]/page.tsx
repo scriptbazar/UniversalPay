@@ -4,7 +4,7 @@
 import { ArrowLeft, Copy } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -14,23 +14,25 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 
 // Mock data, in a real app this would be fetched from an API
-const allMockTransactions = Array.from({ length: 6 * 50 }, (_, i) => {
-    const monthIndex = Math.floor(i / 50);
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-    const success = Math.random() > 0.1;
-    return {
-        id: `UVRLP${123456789 + i}`,
-        merchant: `Merchant ${i % 4 + 1}`,
-        customerName: `Customer ${i + 1}`,
-        customerEmail: `customer${i + 1}@example.com`,
-        amount: (Math.random() * 500 + 10).toFixed(2),
-        date: new Date(2023, monthIndex, (i % 28) + 1).toISOString().split('T')[0],
-        month: months[monthIndex],
-        status: success ? 'Success' : 'Failed'
-    }
-});
+const generateMockTransactions = () => {
+    return Array.from({ length: 6 * 50 }, (_, i) => {
+        const monthIndex = Math.floor(i / 50);
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+        const success = Math.random() > 0.1;
+        return {
+            id: `UVRLP${123456789 + i}`,
+            merchant: `Merchant ${i % 4 + 1}`,
+            customerName: `Customer ${i + 1}`,
+            customerEmail: `customer${i + 1}@example.com`,
+            amount: (Math.random() * 500 + 10).toFixed(2),
+            date: new Date(2023, monthIndex, (i % 28) + 1).toISOString().split('T')[0],
+            month: months[monthIndex],
+            status: success ? 'Success' : 'Failed'
+        }
+    });
+};
 
-type Transaction = typeof allMockTransactions[0];
+type Transaction = ReturnType<typeof generateMockTransactions>[0];
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -45,11 +47,17 @@ export default function MonthlyTransactionsPage() {
     const { toast } = useToast();
     const month = params.month as string;
 
+    const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+    useEffect(() => {
+        // Generate data on the client side to avoid hydration issues
+        setAllMockTransactions(generateMockTransactions());
+    }, []);
 
     const monthlyTransactions = useMemo(() => {
         return allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
-    }, [month]);
+    }, [month, allMockTransactions]);
 
     const handleRowClick = (transaction: Transaction) => {
         setSelectedTransaction(transaction);

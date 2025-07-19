@@ -13,7 +13,7 @@ import {
   Users,
   Copy,
 } from "lucide-react"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Avatar,
@@ -67,22 +67,22 @@ const chartData = [
     { name: 'Dec', revenue: 9200, monthIndex: 11 },
 ];
 
-const allTransactions = Array.from({ length: 50 }, (_, i) => {
-    const monthIndex = Math.floor(i / 4);
-    const date = new Date(2023, monthIndex, (i % 28) + 1);
-    return {
-        id: `TXN${12345 + i}`,
-        name: `Customer ${i + 1}`,
-        email: `customer${i + 1}@example.com`,
-        amount: (Math.random() * 500 + 20).toFixed(2),
-        status: Math.random() > 0.1 ? "Success" : "Failed",
-        date: date
-    }
-});
+const generateAllTransactions = () => {
+    return Array.from({ length: 50 }, (_, i) => {
+        const monthIndex = Math.floor(i / 4);
+        const date = new Date(2023, monthIndex, (i % 28) + 1);
+        return {
+            id: `TXN${12345 + i}`,
+            name: `Customer ${i + 1}`,
+            email: `customer${i + 1}@example.com`,
+            amount: (Math.random() * 500 + 20).toFixed(2),
+            status: Math.random() > 0.1 ? "Success" : "Failed",
+            date: date
+        }
+    });
+};
 
-const recentTransactionsData = allTransactions.slice(-5).reverse();
-
-type Transaction = typeof recentTransactionsData[0];
+type Transaction = ReturnType<typeof generateAllTransactions>[0];
 
 interface DashboardProps {
   merchantName?: string;
@@ -92,6 +92,14 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
   const { toast } = useToast();
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    const generated = generateAllTransactions();
+    setAllTransactions(generated);
+    setRecentTransactionsData(generated.slice(-5).reverse());
+  }, []);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);

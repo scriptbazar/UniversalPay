@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,7 @@ const initialLinks: PaymentLink[] = [
     amount: '25.00',
     isActive: true,
     createdAt: '2023-10-26',
-    expiresAt: new Date(new Date('2023-10-26').getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    expiresAt: '', // Will be set in useEffect
     payments: 120,
   },
   {
@@ -51,7 +51,7 @@ const initialLinks: PaymentLink[] = [
     amount: null,
     isActive: true,
     createdAt: '2023-10-25',
-    expiresAt: new Date(new Date('2023-10-25').getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    expiresAt: '', // Will be set in useEffect
     payments: 50,
   },
   {
@@ -62,17 +62,30 @@ const initialLinks: PaymentLink[] = [
     amount: '100.00',
     isActive: false,
     createdAt: '2023-10-22',
-    expiresAt: new Date(new Date('2023-10-22').getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    expiresAt: '', // Will be set in useEffect
     payments: 75,
   },
 ];
 
 export default function PaymentLinksPage() {
   const { toast } = useToast();
-  const [links, setLinks] = useState<PaymentLink[]>(initialLinks);
+  const [links, setLinks] = useState<PaymentLink[]>([]);
   const [title, setTitle] = useState('');
   const [isDynamic, setIsDynamic] = useState(false);
   const [amount, setAmount] = useState('');
+
+  useEffect(() => {
+    // Set expiry dates on client side to avoid hydration mismatch
+    const updatedLinks = initialLinks.map(link => {
+        const creationDate = new Date(link.createdAt);
+        const expiryDate = new Date(creationDate.getTime() + 15 * 24 * 60 * 60 * 1000);
+        return {
+            ...link,
+            expiresAt: expiryDate.toISOString().split('T')[0],
+        }
+    });
+    setLinks(updatedLinks);
+  }, []);
 
   const handleCreateLink = (e: React.FormEvent) => {
     e.preventDefault();
