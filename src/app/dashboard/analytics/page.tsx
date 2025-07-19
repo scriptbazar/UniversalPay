@@ -63,7 +63,7 @@ const mockNewMerchants = Array.from({ length: 12 }, (_, i) => ({
 const mockSuccessfulPayments = allMockTransactions.filter(tx => tx.status === 'Successful');
 
 
-type DialogContent = {
+type DialogContentData = {
   title: string;
   description: string;
   data: React.ReactNode;
@@ -72,7 +72,7 @@ type DialogContent = {
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const [dialogContent, setDialogContent] = useState<DialogContent>(null);
+  const [dialogContent, setDialogContent] = useState<DialogContentData>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -89,90 +89,21 @@ export default function AnalyticsPage() {
              setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$1,452,231.89</p> });
              break;
          case 'payments':
-             setDialogContent({ 
-                 title: 'All Successful Payments', 
-                 description: 'A list of all successful transactions on the platform.', 
-                 data: (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Transaction ID</TableHead>
-                                <TableHead>Merchant</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {mockSuccessfulPayments.slice(0,10).map(tx => ( // Show first 10 for brevity
-                                <TableRow key={tx.id}>
-                                    <TableCell>{tx.id}</TableCell>
-                                    <TableCell>{tx.merchant}</TableCell>
-                                    <TableCell>{tx.date}</TableCell>
-                                    <TableCell className="text-right">${tx.amount}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                 )
-             });
+             router.push(`/dashboard/analytics/details/successful-transactions_all`);
              break;
          case 'merchants':
-            setCurrentPage(1);
-             setDialogContent({ 
-                 title: 'New Merchants (Last 30 Days)', 
-                 description: 'A list of new merchants who joined recently. Click to view details.', 
-                 data: <NewMerchantsList/>
-             });
+            router.push(`/dashboard/analytics/details/new-merchants_all`);
              break;
         case 'avg_transaction':
             setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$25.40</p> });
             break;
      }
   };
-  
-    const showListDialog = (title: string, data: any[], type: 'merchant' | 'transaction') => {
-        setDialogContent({
-            title: title,
-            description: `A list of ${title.toLowerCase()}.`,
-            data: (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>{type === 'merchant' ? 'Merchant' : 'Transaction ID'}</TableHead>
-                            <TableHead>{type === 'merchant' ? 'Joined On' : 'Status'}</TableHead>
-                            {type === 'transaction' && <TableHead className="text-right">Amount</TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {data.slice(0, 20).map(item => ( // Show top 20
-                            <TableRow key={item.id}>
-                                {type === 'merchant' ? (
-                                    <>
-                                        <TableCell>{item.name}</TableCell>
-                                        <TableCell>{item.joined}</TableCell>
-                                    </>
-                                ) : (
-                                    <>
-                                        <TableCell>{item.id}</TableCell>
-                                        <TableCell><Badge variant={item.status === 'Successful' ? 'default' : 'destructive'}>{item.status}</Badge></TableCell>
-                                        <TableCell className="text-right">${item.amount}</TableCell>
-                                    </>
-                                )}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )
-        });
-    };
 
     const handleBarClick = (data: any) => {
         if (!data || !data.activePayload) return;
         const payload = data.activePayload[0].payload;
-
-        const monthlyMerchants = mockNewMerchants.filter(m => m.monthIndex === payload.monthIndex);
-        const monthlyTransactions = allMockTransactions.filter(t => t.monthIndex === payload.monthIndex);
-        const monthlySuccessfulTransactions = monthlyTransactions.filter(t => t.status === 'Successful');
+        const monthSlug = payload.month.toLowerCase();
 
         setDialogContent({
             title: `Details for ${payload.month}`,
@@ -181,15 +112,15 @@ export default function AnalyticsPage() {
                 <div className="space-y-2">
                     <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${payload.revenue.toLocaleString()}</span></div>
                     
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => showListDialog(`New Users in ${payload.month}`, monthlyMerchants, 'merchant')}>
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/new-users_${monthSlug}`)}>
                         <span>New Users:</span> <span className="font-bold">{payload.newUsers}</span>
                     </Button>
                     
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/transactions/${payload.month}`)}>
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${monthSlug}`)}>
                        <span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span>
                     </Button>
 
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => showListDialog(`Successful Transactions in ${payload.month}`, monthlySuccessfulTransactions, 'transaction')}>
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${monthSlug}`)}>
                         <span>Successful Transactions:</span> <span className="font-bold">{payload.successfulTransactions}</span>
                     </Button>
                 </div>
@@ -210,59 +141,6 @@ export default function AnalyticsPage() {
   const handleCountryClick = (country: typeof geoData[0]) => {
      router.push('/dashboard/users');
   };
-  
-  function NewMerchantsList() {
-    return (
-        <div>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Merchant</TableHead>
-                        <TableHead>Joined On</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {paginatedMerchants.map(merchant => (
-                        <TableRow key={merchant.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/users/${merchant.id}`)}>
-                            <TableCell className="flex items-center gap-2">
-                                <Image src={merchant.avatar} alt={merchant.name} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
-                                <div>
-                                    <p className="font-medium">{merchant.name}</p>
-                                    <p className="text-xs text-muted-foreground">{merchant.email}</p>
-                                </div>
-                            </TableCell>
-                            <TableCell>{merchant.joined}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            <div className="flex justify-between items-center w-full pt-4">
-                <div className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-  }
-
 
   return (
     <div className="space-y-6">
@@ -393,7 +271,7 @@ export default function AnalyticsPage() {
       </Card>
       
       <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
             <DialogHeader>
                 <DialogTitle>{dialogContent?.title}</DialogTitle>
                 <DialogDescription>{dialogContent?.description}</DialogDescription>
@@ -409,3 +287,5 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
+    
