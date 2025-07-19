@@ -35,6 +35,7 @@ const paymentMethodData = [
     { name: 'UPI', value: 400, color: '#0088FE' },
     { name: 'Crypto', value: 300, color: '#00C49F' },
     { name: 'Cards', value: 300, color: '#FFBB28' },
+    { name: 'Payment Links', value: 150, color: '#FF8042' },
 ];
 
 export default function AnalyticsPage() {

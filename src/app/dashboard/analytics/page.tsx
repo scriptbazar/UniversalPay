@@ -21,6 +21,7 @@ const paymentMethodData = [
   { name: 'UPI', value: 400 },
   { name: 'Crypto', value: 300 },
   { name: 'Cards', value: 300 },
+  { name: 'Payment Links', value: 250 },
 ];
 
 const geoData = [
@@ -31,7 +32,7 @@ const geoData = [
     { country: 'UAE', volume: 8000, transactions: 250 },
 ]
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 export default function AnalyticsPage() {
   return (
