@@ -34,7 +34,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Logo } from "@/components/logo";
 
 const CodeSnippet = ({ code }: { code: string }) => {
     const { toast } = useToast();
