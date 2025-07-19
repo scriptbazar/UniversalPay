@@ -19,7 +19,8 @@ import {
   CreditCard,
   Briefcase,
   Landmark,
-  Link2
+  Link2,
+  ArrowRightLeft
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,7 @@ const navItems = [
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/invoices", icon: FileText, label: "Invoices" },
   { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
+  { href: "/dashboard/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud Detection" },
   { href: "/dashboard/developer", icon: Code, label: "Developer" },
   { href: "/dashboard/reseller", icon: Briefcase, label: "Reseller" },
