@@ -9,9 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign } from "lucide-react";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { updateApiKeys } from './actions';
+import { updateApiKeys, getApiKeys } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -47,6 +47,7 @@ type GatewayState = {
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [reCaptchaSiteKey, setReCaptchaSiteKey] = useState('');
   const [reCaptchaSecretKey, setReCaptchaSecretKey] = useState('');
@@ -70,12 +71,30 @@ export default function SettingsPage() {
     cad_eft: false,
   });
 
+  useEffect(() => {
+    async function fetchKeys() {
+        setIsLoading(true);
+        try {
+            const keys = await getApiKeys();
+            if (keys.geminiApiKey) setGeminiApiKey(keys.geminiApiKey);
+            if (keys.reCaptchaSiteKey) setReCaptchaSiteKey(keys.reCaptchaSiteKey);
+            if (keys.reCaptchaSecretKey) setReCaptchaSecretKey(keys.reCaptchaSecretKey);
+        } catch (error) {
+            console.error("Failed to fetch API keys", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchKeys();
+  }, []);
+
   const handleGatewayToggle = (gateway: keyof GatewayState) => {
     setGateways(prev => ({...prev, [gateway]: !prev[gateway]}));
   };
 
   const handleSaveApiKeys = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await updateApiKeys({ geminiApiKey, reCaptchaSiteKey, reCaptchaSecretKey });
       toast({
@@ -88,6 +107,8 @@ export default function SettingsPage() {
         title: "Error",
         description: "Failed to save API Keys.",
       });
+    } finally {
+        setIsLoading(false);
     }
   };
   
@@ -199,9 +220,10 @@ export default function SettingsPage() {
                             <Input 
                                 id="gemini-api-key" 
                                 type="password" 
-                                placeholder="Enter your Gemini API Key" 
+                                placeholder={isLoading ? "Loading..." : "Enter your Gemini API Key"} 
                                 value={geminiApiKey}
                                 onChange={(e) => setGeminiApiKey(e.target.value)}
+                                disabled={isLoading}
                             />
                             <p className="text-xs text-muted-foreground">
                                 Required for platform-wide AI features like fraud detection.
@@ -212,9 +234,10 @@ export default function SettingsPage() {
                                 <Input 
                                 id="recaptcha-site-key" 
                                 type="text" 
-                                placeholder="Enter your Captcha Site Key" 
+                                placeholder={isLoading ? "Loading..." : "Enter your Captcha Site Key"}
                                 value={reCaptchaSiteKey}
                                 onChange={(e) => setReCaptchaSiteKey(e.target.value)}
+                                disabled={isLoading}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -222,9 +245,10 @@ export default function SettingsPage() {
                                 <Input 
                                 id="recaptcha-secret-key" 
                                 type="password" 
-                                placeholder="Enter your Captcha Secret Key" 
+                                placeholder={isLoading ? "Loading..." : "Enter your Captcha Secret Key"}
                                 value={reCaptchaSecretKey}
                                 onChange={(e) => setReCaptchaSecretKey(e.target.value)}
+                                disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -258,7 +282,7 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button type="submit">Save API & Security Settings</Button>
+                 <Button type="submit" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save API & Security Settings'}</Button>
               </CardFooter>
             </form>
           </Card>

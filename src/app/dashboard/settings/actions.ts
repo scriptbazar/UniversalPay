@@ -4,44 +4,47 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+async function readEnvFile(): Promise<Record<string, string>> {
+  const envPath = path.resolve(process.cwd(), '.env');
+  const envVars: Record<string, string> = {};
+  
+  try {
+    const envContent = await fs.readFile(envPath, 'utf-8');
+    const lines = envContent.split('\n');
+
+    for (const line of lines) {
+      if (line.trim() && !line.startsWith('#')) {
+        const eqIndex = line.indexOf('=');
+        if (eqIndex !== -1) {
+          const key = line.substring(0, eqIndex).trim();
+          const value = line.substring(eqIndex + 1).trim();
+          envVars[key] = value;
+        }
+      }
+    }
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      console.error('Failed to read .env file:', error);
+      throw new Error('Could not read the .env file.');
+    }
+    // File doesn't exist, return empty object. It will be created on write.
+  }
+  return envVars;
+}
+
+
 async function updateEnvFile(updates: Record<string, string>) {
   const envPath = path.resolve(process.cwd(), '.env');
   
   try {
-    let envContent = '';
-    try {
-      envContent = await fs.readFile(envPath, 'utf-8');
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') throw error;
-    }
+    const currentEnv = await readEnvFile();
+    const newEnv = { ...currentEnv, ...updates };
 
-    let lines = envContent.split('\n');
-    const updateKeys = Object.keys(updates);
-    const updatedKeys = new Set<string>();
+    const newEnvContent = Object.entries(newEnv)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
 
-    lines = lines.map(line => {
-      if (!line.trim()) return null; // handle empty lines
-      const eqIndex = line.indexOf('=');
-      if (eqIndex === -1) return line; // handle lines without '='
-      
-      const key = line.substring(0, eqIndex);
-      if (updateKeys.includes(key)) {
-        updatedKeys.add(key);
-        return `${key}=${updates[key]}`;
-      }
-      return line;
-    }).filter(line => line !== null) as string[];
-
-    updateKeys.forEach(key => {
-      if (!updatedKeys.has(key)) {
-        lines.push(`${key}=${updates[key]}`);
-      }
-    });
-    
-    // Ensure there are no empty lines in the final output unless it's an empty file
-    const finalContent = lines.length > 0 ? lines.join('\n') + '\n' : '';
-
-    await fs.writeFile(envPath, finalContent, { encoding: 'utf-8', flag: 'w' });
+    await fs.writeFile(envPath, newEnvContent + '\n', { encoding: 'utf-8' });
     console.log('.env file updated successfully with:', Object.keys(updates));
     return { success: true };
   } catch (error) {
@@ -50,18 +53,29 @@ async function updateEnvFile(updates: Record<string, string>) {
   }
 }
 
+export async function getApiKeys() {
+    const env = await readEnvFile();
+    return {
+        geminiApiKey: env['GEMINI_API_KEY'] || '',
+        reCaptchaSiteKey: env['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] || '',
+        reCaptchaSecretKey: env['RECAPTCHA_SECRET_KEY'] || '',
+    };
+}
+
+
 export async function updateApiKeys(data: {
     geminiApiKey?: string;
     reCaptchaSiteKey?: string;
     reCaptchaSecretKey?: string;
 }) {
     const updates: Record<string, string> = {};
+    // Only add keys to the update object if they have a non-empty value
     if (data.geminiApiKey) updates['GEMINI_API_KEY'] = data.geminiApiKey;
     if (data.reCaptchaSiteKey) updates['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey;
     if (data.reCaptchaSecretKey) updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey;
     
     if (Object.keys(updates).length === 0) {
-        return { success: true, message: "No keys to update." };
+        return { success: true, message: "No new keys to update." };
     }
 
     return await updateEnvFile(updates);
