@@ -150,7 +150,7 @@ export default function AllTransactionsPage() {
                            <Input
                              type="search"
                              placeholder="Search..."
-                             className="pl-8 w-40 md:w-64"
+                             className="pl-8 w-40"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
@@ -314,5 +314,3 @@ export default function AllTransactionsPage() {
         </div>
     );
 }
-
-    
