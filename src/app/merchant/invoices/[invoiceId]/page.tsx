@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Download, Mail, CheckCircle, Clock, XCircle, FileText, DollarSign, User, Calendar } from 'lucide-react';
+import { ArrowLeft, Download, Mail, CheckCircle, Clock, XCircle, FileText, User, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,18 +25,12 @@ const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secon
 };
 
 export default function InvoiceDetailPage({ params }: { params: { invoiceId: string } }) {
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-
-  useEffect(() => {
-    const fetchedInvoice = getInvoiceById(params.invoiceId);
-    if (fetchedInvoice) {
-      setInvoice(fetchedInvoice);
-    }
-  }, [params.invoiceId]);
+  const invoice = getInvoiceById(params.invoiceId);
 
   if (!invoice) {
-    // You can show a loading skeleton here
-    return <div>Loading...</div>;
+    // In a real app, you might show a more graceful loading or not-found state.
+    // For now, we can use a simple message or redirect.
+    return notFound();
   }
   
   const statusInfo = getStatusInfo(invoice.status);
@@ -132,3 +125,4 @@ export default function InvoiceDetailPage({ params }: { params: { invoiceId: str
     </div>
   );
 }
+
