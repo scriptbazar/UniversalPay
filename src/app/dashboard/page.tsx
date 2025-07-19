@@ -89,8 +89,8 @@ const data = [
 const recentSignups = [
     { id: 'user_1', name: 'Liam Johnson', email: 'liam@example.com', plan: 'Pro' },
     { id: 'user_2', name: 'CreativeGoods', email: 'support@creative.co', plan: 'Free' },
-    { id: 'user_1', name: 'MyStore.com', email: 'contact@mystore.com', plan: 'Pro' },
-    { id: 'user_2', name: 'AnotherShop', email: 'sales@anothershop.io', plan: 'Premium' },
+    { id: 'user_3', name: 'MyStore.com', email: 'contact@mystore.com', plan: 'Pro' },
+    { id: 'user_4', name: 'AnotherShop', email: 'sales@anothershop.io', plan: 'Premium' },
 ];
 
 
@@ -200,34 +200,34 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-             <CardTitle>Recent Merchant Signups</CardTitle>
-          </CardHeader>
-          <CardContent>
-             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Merchant</TableHead>
-                  <TableHead className="text-right">Plan</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentSignups.map((signup) => (
-                    <TableRow key={signup.email} onClick={() => handleRowClick(signup.id)} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell>
-                            <div className="font-medium">{signup.name}</div>
-                            <div className="hidden text-sm text-muted-foreground md:inline">
-                                {signup.email}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                            <Badge variant={signup.plan === 'Free' ? 'secondary' : 'default'}>{signup.plan}</Badge>
-                        </TableCell>
-                    </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
+            <CardHeader className="p-6 pb-4">
+                <CardTitle>Recent Merchant Signups</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="px-6">Merchant</TableHead>
+                            <TableHead className="text-right px-6">Plan</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {recentSignups.map((signup) => (
+                            <TableRow key={signup.email} onClick={() => handleRowClick(signup.id)} className="cursor-pointer hover:bg-muted/50">
+                                <TableCell className="px-6 py-4">
+                                    <div className="font-medium">{signup.name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                        {signup.email}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right px-6 py-4">
+                                    <Badge variant={signup.plan === 'Free' ? 'secondary' : 'default'} className="capitalize">{signup.plan}</Badge>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
         </Card>
       </div>
     </div>
