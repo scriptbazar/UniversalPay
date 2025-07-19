@@ -120,19 +120,21 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground">Welcome back, {adminName}. Here's an overview of your Payment gateway.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Platform Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$1,452,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +15.2% from last month
-            </p>
-          </CardContent>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" asChild>
+          <Link href="/dashboard/analytics">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Platform Revenue
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$1,452,231.89</div>
+              <p className="text-xs text-muted-foreground">
+                +15.2% from last month
+              </p>
+            </CardContent>
+          </Link>
         </Card>
         <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/users')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
