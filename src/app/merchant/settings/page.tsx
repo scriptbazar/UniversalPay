@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
