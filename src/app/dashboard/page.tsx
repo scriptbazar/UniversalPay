@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation";
 
 const data = [
   {
@@ -85,8 +86,22 @@ const data = [
   },
 ]
 
+const recentSignups = [
+    { id: 'user_1', name: 'Liam Johnson', email: 'liam@example.com', plan: 'Pro' },
+    { id: 'user_2', name: 'CreativeGoods', email: 'support@creative.co', plan: 'Free' },
+    { id: 'user_1', name: 'MyStore.com', email: 'contact@mystore.com', plan: 'Pro' },
+    { id: 'user_2', name: 'AnotherShop', email: 'sales@anothershop.io', plan: 'Premium' },
+];
+
+
 export default function AdminDashboard() {
+  const router = useRouter();
   const adminName = "Admin"; // Placeholder for the admin's name
+
+  const handleRowClick = (userId: string) => {
+    router.push(`/dashboard/users/${userId}`);
+  };
+  
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -197,42 +212,19 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Liam Johnson</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      liam@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right"><Badge>Pro</Badge></TableCell>
-                </TableRow>
-                 <TableRow>
-                  <TableCell>
-                    <div className="font-medium">CreativeGoods</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      support@creative.co
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right"><Badge variant="secondary">Free</Badge></TableCell>
-                </TableRow>
-                 <TableRow>
-                  <TableCell>
-                    <div className="font-medium">MyStore.com</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      contact@mystore.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right"><Badge>Pro</Badge></TableCell>
-                </TableRow>
-                 <TableRow>
-                  <TableCell>
-                    <div className="font-medium">AnotherShop</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      sales@anothershop.io
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right"><Badge>Premium</Badge></TableCell>
-                </TableRow>
+                {recentSignups.map((signup) => (
+                    <TableRow key={signup.email} onClick={() => handleRowClick(signup.id)} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell>
+                            <div className="font-medium">{signup.name}</div>
+                            <div className="hidden text-sm text-muted-foreground md:inline">
+                                {signup.email}
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <Badge variant={signup.plan === 'Free' ? 'secondary' : 'default'}>{signup.plan}</Badge>
+                        </TableCell>
+                    </TableRow>
+                ))}
               </TableBody>
             </Table>
           </CardContent>
