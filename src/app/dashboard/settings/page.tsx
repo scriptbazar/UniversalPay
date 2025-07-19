@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,7 @@ type PaymentMethodsState = {
 export default function SettingsPage() {
   const { toast } = useToast();
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [brandColor, setBrandColor] = useState('#29ABE2');
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
     paytm: true,
@@ -138,33 +139,70 @@ export default function SettingsPage() {
         <TabsContent value="branding" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Branding & Privacy</CardTitle>
+              <CardTitle>Branding &amp; Checkout Customization</CardTitle>
               <CardDescription>Control what your customers see during checkout.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Label>Logo</Label>
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center">
-                            <Upload className="w-8 h-8 text-muted-foreground" />
+            <CardContent className="space-y-8">
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <h3 className="font-semibold flex items-center gap-2"><Palette className="w-5 h-5"/> Visuals</h3>
+                    <div className="space-y-2">
+                        <Label>Logo</Label>
+                        <div className="flex items-center gap-4">
+                            <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center">
+                                <Upload className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                            <Button variant="outline">Upload Logo</Button>
                         </div>
-                        <Button variant="outline">Upload Logo</Button>
+                         <p className="text-xs text-muted-foreground">Your logo will appear on the checkout page. Recommended: 256x256px.</p>
                     </div>
-                     <p className="text-xs text-muted-foreground">Your logo will appear on the checkout page if branding is enabled.</p>
+                    <div className="space-y-2">
+                        <Label htmlFor="brand-color">Brand Color</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="brand-color-hex" 
+                                value={brandColor}
+                                onChange={(e) => setBrandColor(e.target.value)}
+                                className="w-32"
+                            />
+                            <div className="relative">
+                                <input 
+                                    id="brand-color" 
+                                    type="color" 
+                                    value={brandColor}
+                                    onChange={(e) => setBrandColor(e.target.value)}
+                                    className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">This color will be used for buttons and highlights on the checkout page.</p>
+                    </div>
                 </div>
+
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5"/> Legal &amp; Links</h3>
+                     <div className="space-y-2">
+                        <Label htmlFor="terms-url">Terms of Service URL</Label>
+                        <Input id="terms-url" placeholder="https://your-website.com/terms" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="privacy-url">Privacy Policy URL</Label>
+                        <Input id="privacy-url" placeholder="https://your-website.com/privacy" />
+                    </div>
+                </div>
+
                 <div className="flex items-start justify-between rounded-lg border p-4">
                     <div className="space-y-1">
                       <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
                         <ShieldQuestion className="w-5 h-5" />
-                        Hide My Identity & Show 'TransactWave' Branding
+                        Hide My Identity &amp; Show 'TransactWave' Branding
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Turn ON to always show "TransactWave" as the sender. Turn OFF to show a generic, non-identifiable business name. Your personal name will never be shown.
+                        Turn ON to always show "TransactWave" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
                       </p>
                     </div>
                     <Switch id="branding-switch" defaultChecked />
                 </div>
-                <Button>Save Changes</Button>
+                <Button>Save Branding Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
