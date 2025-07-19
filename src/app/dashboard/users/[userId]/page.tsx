@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Link2, MoreVertical, Percent, Shield, User, UserX } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Landmark, MoreVertical, Percent, Shield, User, UserX, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,9 +31,9 @@ const merchant = {
 
 const stats = {
     revenue: "45,231.89",
-    transactions: "12,234",
+    walletBalance: "5,430.50",
+    availableToWithdraw: "5,200.00",
     successRate: "98.2%",
-    disputes: "3",
 };
 
 const paymentMethodData = [
@@ -48,6 +48,27 @@ const recentTransactions = [
     { id: "pay_2", amount: "150.00", currency: "INR", method: "UPI (PhonePe)", status: "Success", date: "2023-11-01" },
     { id: "pay_3", amount: "350.00", currency: "INR", method: "UPI (Paytm)", status: "Failed", date: "2023-11-02" },
 ];
+
+const withdrawalHistory = [
+    { id: "wd_1", amount: "500.00", currency: "USDT", status: "Completed", date: "2023-10-25" },
+    { id: "wd_2", amount: "1000.00", currency: "INR", status: "Pending", date: "2023-11-01" },
+    { id: "wd_3", amount: "250.00", currency: "BTC", status: "Failed", date: "2023-10-18" },
+    { id: "wd_4", amount: "750.00", currency: "USDT", status: "Completed", date: "2023-10-15" },
+];
+
+const getStatusBadgeVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+        case 'completed':
+        case 'success':
+            return 'default';
+        case 'pending':
+            return 'secondary';
+        case 'failed':
+            return 'destructive';
+        default:
+            return 'outline';
+    }
+};
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
 
@@ -103,11 +124,20 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Available Wallet Balance</CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.transactions}</div>
+                    <div className="text-2xl font-bold">${stats.walletBalance}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Available to Withdraw</CardTitle>
+                    <Landmark className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">${stats.availableToWithdraw}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -117,15 +147,6 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.successRate}</div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Fraud Disputes</CardTitle>
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{stats.disputes}</div>
                 </CardContent>
             </Card>
         </div>
@@ -170,7 +191,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                                 <TableRow key={p.id}>
                                 <TableCell className="font-medium">{p.id}</TableCell>
                                 <TableCell>
-                                    <Badge variant={p.status === 'Success' ? 'default' : p.status === 'Failed' ? 'destructive' : 'secondary'}>{p.status}</Badge>
+                                    <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
                                 </TableCell>
                                 <TableCell>{p.method}</TableCell>
                                 <TableCell>{p.date}</TableCell>
@@ -182,6 +203,36 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </CardContent>
             </Card>
         </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Withdrawal History</CardTitle>
+                <CardDescription>Full withdrawal history for this merchant.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Withdrawal ID</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {withdrawalHistory.map(w => (
+                            <TableRow key={w.id}>
+                                <TableCell className="font-medium">{w.id}</TableCell>
+                                <TableCell>
+                                    <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                                </TableCell>
+                                <TableCell>{w.date}</TableCell>
+                                <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
     </div>
   )
 }
