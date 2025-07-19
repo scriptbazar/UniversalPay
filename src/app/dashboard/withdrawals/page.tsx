@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,28 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-
-type Withdrawal = {
-  id: string;
-  merchantName: string;
-  merchantId: string;
-  amount: string;
-  currency: string;
-  destination: string;
-  status: "Pending" | "Completed" | "Failed";
-  date: string;
-};
-
-const initialWithdrawals: Withdrawal[] = [
-  { id: "wd_1", merchantName: "MyStore.com", merchantId: "merch_123", amount: "500.00", currency: "USDT", destination: "T...xyz", status: "Completed", date: "2023-10-25" },
-  { id: "wd_5", merchantName: "CreativeGoods", merchantId: "merch_456", amount: "1200.00", currency: "USDT", destination: "T...abc", status: "Pending", date: "2023-10-27" },
-  { id: "wd_2", merchantName: "AnotherShop", merchantId: "merch_789", amount: "1000.00", currency: "USDT", destination: "T...xyz", status: "Completed", date: "2023-10-20" },
-  { id: "wd_3", merchantName: "MyStore.com", merchantId: "merch_123", amount: "250.00", currency: "INR", destination: "Bank A/c ...1234", status: "Completed", date: "2023-10-18" },
-  { id: "wd_4", merchantName: "AnotherShop", merchantId: "merch_789", amount: "750.00", currency: "USDT", destination: "T...xyz", status: "Failed", date: "2023-10-15" },
-  { id: "wd_6", merchantName: "TechGadgets", merchantId: "merch_101", amount: "300.00", currency: "USDT", destination: "T...def", status: "Pending", date: "2023-10-28" },
-  { id: "wd_7", merchantName: "FashionHub", merchantId: "merch_202", amount: "850.00", currency: "INR", destination: "Bank A/c ...5678", status: "Pending", date: "2023-10-28" },
-
-];
+import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -49,13 +28,16 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
 export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>(initialWithdrawals);
+    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+
+    useEffect(() => {
+        setWithdrawals(getWithdrawals());
+    }, []);
 
     const handleAction = (e: React.MouseEvent, id: string, newStatus: "Completed" | "Failed") => {
         e.stopPropagation(); // Prevent row click event
-        setWithdrawals(prev => 
-            prev.map(w => w.id === id ? { ...w, status: newStatus } : w)
-        );
+        updateWithdrawalStatus(id, newStatus);
+        setWithdrawals(getWithdrawals()); // Refresh data from source
         toast({
             title: `Withdrawal ${newStatus}`,
             description: `The withdrawal request (ID: ${id}) has been updated.`,

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,22 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-type Withdrawal = {
-  id: string;
-  amount: string;
-  currency: string;
-  destination: string;
-  status: "Pending" | "Completed" | "Failed";
-  date: string;
-};
-
-const initialWithdrawals: Withdrawal[] = [
-  { id: "wd_1", amount: "500.00", currency: "USDT", destination: "T...xyz", status: "Completed", date: "2023-10-25" },
-  { id: "wd_2", amount: "1000.00", currency: "USDT", destination: "T...xyz", status: "Completed", date: "2023-10-20" },
-  { id: "wd_3", amount: "250.00", currency: "INR", destination: "Bank A/c ...1234", status: "Completed", date: "2023-10-18" },
-  { id: "wd_4", amount: "750.00", currency: "USDT", destination: "T...xyz", status: "Failed", date: "2023-10-15" },
-];
+import { type Withdrawal, getWithdrawals, addWithdrawal } from "@/lib/withdrawalsData";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -44,9 +29,15 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
 
 export default function WithdrawalsPage() {
   const { toast } = useToast();
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>(initialWithdrawals);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
+
+  useEffect(() => {
+    // Filter withdrawals to show only those belonging to a hypothetical merchant
+    // In a real app, you'd get the merchantId from the user session.
+    setWithdrawals(getWithdrawals().filter(w => ["merch_456", "merch_101", "merch_202"].includes(w.merchantId)));
+  }, []);
 
   const handleWithdrawal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,16 +50,18 @@ export default function WithdrawalsPage() {
       return;
     }
 
-    const newWithdrawal: Withdrawal = {
-        id: `wd_${Date.now()}`,
+    const newWithdrawal: Omit<Withdrawal, 'id' | 'date'> = {
         amount: parseFloat(amount).toFixed(2),
         currency: method === "bank_inr" ? "INR" : "USDT",
-        destination: method === "bank_inr" ? "Bank A/c ...5678" : "T...abc",
+        destination: method === "bank_inr" ? "Bank A/c ...5678" : "T...def",
         status: "Pending",
-        date: new Date().toISOString().split("T")[0],
+        merchantId: "merch_202", // Hardcoded for this example
+        merchantName: "FashionHub", // Hardcoded for this example
     };
 
-    setWithdrawals(prev => [newWithdrawal, ...prev]);
+    addWithdrawal(newWithdrawal);
+    setWithdrawals(getWithdrawals().filter(w => ["merch_456", "merch_101", "merch_202"].includes(w.merchantId)));
+
     setAmount("");
     setMethod("");
     toast({
