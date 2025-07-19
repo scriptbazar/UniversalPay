@@ -130,7 +130,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             </Card>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-8 items-start">
             <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>Payment Method Mix</CardTitle>
