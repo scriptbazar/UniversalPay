@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const allLinks = [
   { id: 'plink_1', merchant: 'MyStore.com', title: 'T-Shirt Sale', payments: 120, fraud: 2, status: 'Active', createdAt: '2023-10-26' },
@@ -14,6 +16,12 @@ const allLinks = [
 ];
 
 export default function AdminPaymentLinksPage() {
+  const router = useRouter();
+
+  const handleRowClick = (linkId: string) => {
+    router.push(`/dashboard/payment-links/${linkId}`);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -31,8 +39,8 @@ export default function AdminPaymentLinksPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Merchant</TableHead>
                 <TableHead>Link Title</TableHead>
+                <TableHead>Merchant</TableHead>
                 <TableHead>Payments</TableHead>
                 <TableHead>Fraudulent Payments</TableHead>
                 <TableHead>Status</TableHead>
@@ -41,9 +49,9 @@ export default function AdminPaymentLinksPage() {
             </TableHeader>
             <TableBody>
               {allLinks.map((link) => (
-                <TableRow key={link.id}>
-                  <TableCell className="font-medium">{link.merchant}</TableCell>
-                  <TableCell>{link.title}</TableCell>
+                <TableRow key={link.id} onClick={() => handleRowClick(link.id)} className="cursor-pointer hover:bg-muted/50">
+                  <TableCell className="font-medium">{link.title}</TableCell>
+                  <TableCell>{link.merchant}</TableCell>
                   <TableCell>{link.payments}</TableCell>
                   <TableCell>
                     <Badge variant={link.fraud > 0 ? "destructive" : "outline"}>
