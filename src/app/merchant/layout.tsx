@@ -84,10 +84,6 @@ export default function MerchantDashboardLayout({
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Logo />
             </Link>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -146,6 +142,10 @@ export default function MerchantDashboardLayout({
           <div className="w-full flex-1">
             {/* Can add a search bar here if needed */}
           </div>
+           <Button variant="outline" size="icon" className="h-8 w-8">
+              <Bell className="h-4 w-4" />
+              <span className="sr-only">Toggle notifications</span>
+            </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
