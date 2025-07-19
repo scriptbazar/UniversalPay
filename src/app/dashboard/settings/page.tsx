@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee } from "lucide-react";
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { updateApiKeys } from './actions';
@@ -23,28 +23,14 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-
-const IndianFlagIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" {...props}>
-        <rect width="900" height="600" fill="#F93"/>
-        <rect width="900" height="400" fill="#FFF"/>
-        <rect width="900" height="200" fill="#128807"/>
-        <circle r="90" cx="450" cy="300" fill="#008"/>
-        <circle r="70" cx="450" cy="300" fill="#fff"/>
-        <circle r="35" cx="450" cy="300" fill="#008"/>
-        {Array.from({ length: 24 }).map((_, i) => (
-            <line 
-                key={i}
-                x1="450" y1="300" 
-                x2={450 + 70 * Math.cos(i * 15 * Math.PI / 180)} 
-                y2={300 + 70 * Math.sin(i * 15 * Math.PI / 180)} 
-                stroke="#008" 
-                strokeWidth="10" 
-            />
-        ))}
-    </svg>
-);
-
+type GatewayState = {
+    paytm: boolean;
+    phonepe: boolean;
+    gpay: boolean;
+    usd_card: boolean;
+    eur_sepa: boolean;
+    paypal: boolean;
+};
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -55,6 +41,19 @@ export default function SettingsPage() {
   const [isCaptchaEnabled, setIsCaptchaEnabled] = useState(true);
   const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
   const [isMerchantCaptchaRequired, setIsMerchantCaptchaRequired] = useState(true);
+  
+  const [gateways, setGateways] = useState<GatewayState>({
+    paytm: true,
+    phonepe: true,
+    gpay: false,
+    usd_card: true,
+    eur_sepa: false,
+    paypal: false,
+  });
+
+  const handleGatewayToggle = (gateway: keyof GatewayState) => {
+    setGateways(prev => ({...prev, [gateway]: !prev[gateway]}));
+  };
 
   const handleSaveApiKeys = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,21 +256,21 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2">
-                            <IndianFlagIcon className="w-6 h-auto rounded-sm" />
+                            <IndianRupee className="w-6 h-auto rounded-sm" />
                             Indian UPI Gateways
                         </h5>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div><Label htmlFor="paytm-switch" className="font-medium">Paytm</Label></div>
-                                <Switch id="paytm-switch" defaultChecked />
+                                <Switch id="paytm-switch" checked={gateways.paytm} onCheckedChange={() => handleGatewayToggle('paytm')} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div><Label htmlFor="phonepe-switch" className="font-medium">PhonePe</Label></div>
-                                <Switch id="phonepe-switch" defaultChecked />
+                                <Switch id="phonepe-switch" checked={gateways.phonepe} onCheckedChange={() => handleGatewayToggle('phonepe')} />
                             </div>
                               <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div><Label htmlFor="gpay-switch" className="font-medium">Google Pay</Label></div>
-                                <Switch id="gpay-switch" />
+                                <Switch id="gpay-switch" checked={gateways.gpay} onCheckedChange={() => handleGatewayToggle('gpay')} />
                             </div>
                         </div>
                     </div>
@@ -282,13 +281,13 @@ export default function SettingsPage() {
                                 <div>
                                     <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
                                 </div>
-                                <Switch id="usd-card-switch" defaultChecked />
+                                <Switch id="usd-card-switch" checked={gateways.usd_card} onCheckedChange={() => handleGatewayToggle('usd_card')} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div>
                                     <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
                                 </div>
-                                <Switch id="eur-sepa-switch" />
+                                <Switch id="eur-sepa-switch" checked={gateways.eur_sepa} onCheckedChange={() => handleGatewayToggle('eur_sepa')} />
                             </div>
                              <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div>
@@ -296,7 +295,7 @@ export default function SettingsPage() {
                                         <PayPalIcon className="w-5 h-5" /> PayPal
                                     </Label>
                                 </div>
-                                <Switch id="paypal-switch" />
+                                <Switch id="paypal-switch" checked={gateways.paypal} onCheckedChange={() => handleGatewayToggle('paypal')} />
                             </div>
                         </div>
                     </div>
