@@ -33,6 +33,9 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +56,19 @@ export default function SignupPage() {
     router.push('/merchant/dashboard');
   };
 
-  const handleSocialSignup = () => {
+  const handleSocialSignup = (provider: 'google' | 'github') => {
     toast({
-      title: "Account Created",
-      description: "Welcome to TransactWave! Redirecting you to your dashboard.",
+      title: "Account Details Fetched",
+      description: "Please complete your registration.",
     });
-    router.push('/merchant/dashboard');
+    // Simulate fetching user data from social provider
+    if(provider === 'google') {
+        setFullName('Google User');
+        setEmail('user@google.com');
+    } else {
+        setFullName('GitHub User');
+        setEmail('user@github.com');
+    }
   };
 
   return (
@@ -76,7 +86,7 @@ export default function SignupPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" type="text" placeholder="John Doe" required />
+                    <Input id="name" type="text" placeholder="John Doe" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
@@ -84,7 +94,7 @@ export default function SignupPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="merchant@example.com" required />
+                  <Input id="email" type="email" placeholder="merchant@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -130,8 +140,8 @@ export default function SignupPage() {
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
-                <Button variant="outline" onClick={handleSocialSignup}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                <Button variant="outline" onClick={handleSocialSignup}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                <Button variant="outline" onClick={() => handleSocialSignup('google')} type="button"><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                <Button variant="outline" onClick={() => handleSocialSignup('github')} type="button"><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
