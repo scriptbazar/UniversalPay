@@ -8,6 +8,7 @@ import {
     signOut,
     GoogleAuthProvider,
     GithubAuthProvider,
+    FacebookAuthProvider,
     signInWithPopup
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore"; 
@@ -66,10 +67,22 @@ export async function signInUser(email: string, password: string) {
 }
 
 // Function to sign in with Google or GitHub
-export async function signInWithSocial(providerName: 'google' | 'github') {
-    const provider = providerName === 'google' 
-        ? new GoogleAuthProvider() 
-        : new GithubAuthProvider();
+export async function signInWithSocial(providerName: 'google' | 'github' | 'facebook') {
+    let provider;
+    switch (providerName) {
+        case 'google':
+            provider = new GoogleAuthProvider();
+            break;
+        case 'github':
+            provider = new GithubAuthProvider();
+            break;
+        case 'facebook':
+            provider = new FacebookAuthProvider();
+            break;
+        default:
+            return { success: false, error: 'Invalid social provider.' };
+    }
+
 
     try {
         const result = await signInWithPopup(auth, provider);
