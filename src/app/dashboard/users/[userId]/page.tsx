@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,28 +16,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-
-const initialMerchant = {
-    id: "user_1",
-    name: "John Doe",
-    email: "john@example.com",
-    mobile: "+91 98765 43210",
-    businessName: "MyStore.com",
-    plan: "Pro",
-    status: "Active" as "Active" | "Suspended",
-    avatar: "https://placehold.co/80x80.png?text=JD",
-    role: "Merchant",
-    joinedDate: "2023-01-15",
-    lastLogin: "2023-10-27 10:00 AM",
-};
-
+// MOCK DATA - This will be replaced by dynamic data where needed
 const stats = {
     revenue: "45,231.89",
     walletBalance: "5,430.50",
@@ -67,16 +55,6 @@ const allTransactions: Transaction[] = [
     { id: "UVRLP333333333", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
     { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-02" },
     { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-03" },
-    { id: "UVRLP666666666", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-04" },
-    { id: "UVRLP777777777", amount: "50.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-05" },
-    { id: "UVRLP888888888", amount: "1500.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-05" },
-    { id: "UVRLP999999999", amount: "800.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-06" },
-    { id: "UVRLP101010101", amount: "200.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-06" },
-    { id: "UVRLP121212121", amount: "300.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-07" },
-    { id: "UVRLP131313131", amount: "400.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-08" },
-    { id: "UVRLP141414141", amount: "500.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-09" },
-    { id: "UVRLP151515151", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-10" },
-    { id: "UVRLP161616161", amount: "700.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-11" },
 ];
 
 const recentTransactions = allTransactions.slice(0, 3);
@@ -94,8 +72,6 @@ type Withdrawal = {
 const withdrawalHistory: Withdrawal[] = [
     { id: "UVRLP789012345", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
     { id: "UVRLP890123456", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
-    { id: "UVRLP901234567", amount: "250.00", currency: "BTC", destinationType: "Crypto Wallet", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Failed", date: "2023-10-18" },
-    { id: "UVRLP012345678", amount: "750.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-15" },
 ];
 
 const getStatusBadgeVariant = (status: string) => {
@@ -117,11 +93,28 @@ const getStatusBadgeVariant = (status: string) => {
 
 type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'transaction' | 'withdrawalDetail' | 'transactionList' | null;
 
+interface UserProfile {
+    id: string;
+    fullName: string;
+    email: string;
+    mobile?: string;
+    businessName?: string;
+    plan?: string;
+    status: "Active" | "Suspended";
+    avatar?: string;
+    role?: string;
+    createdAt?: { seconds: number, nanoseconds: number };
+}
+
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
   const { toast } = useToast();
   const router = useRouter();
-  const [merchant, setMerchant] = useState(initialMerchant);
+  const { userId } = params;
+
+  const [merchant, setMerchant] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   const [dialogTitle, setDialogTitle] = useState('');
   
@@ -135,13 +128,44 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   const [walletBalance, setWalletBalance] = useState(parseFloat(stats.walletBalance.replace(/,/g, '')));
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
 
-  const handleToggleSuspend = () => {
+  useEffect(() => {
+    const fetchUser = async () => {
+        if (!userId) return;
+        setLoading(true);
+        try {
+            const userDocRef = doc(db, "users", userId);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                setMerchant({ id: userDoc.id, ...userDoc.data() } as UserProfile);
+            } else {
+                toast({ variant: "destructive", title: "Error", description: "User not found." });
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+            toast({ variant: "destructive", title: "Error", description: "Failed to fetch user data." });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchUser();
+  }, [userId, toast]);
+
+
+  const handleToggleSuspend = async () => {
+    if (!merchant) return;
     const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
-    setMerchant(prev => ({...prev, status: newStatus}));
-    toast({
-        title: `Merchant ${newStatus}`,
-        description: `${merchant.name} has been ${newStatus.toLowerCase()}.`
-    });
+    const userDocRef = doc(db, "users", merchant.id);
+    try {
+        await setDoc(userDocRef, { status: newStatus }, { merge: true });
+        setMerchant(prev => prev ? {...prev, status: newStatus} : null);
+        toast({
+            title: `Merchant ${newStatus}`,
+            description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
+        });
+    } catch (error) {
+        toast({ variant: "destructive", title: "Error", description: "Failed to update user status." });
+    }
   };
   
   const handleWalletAdjustment = (type: 'credit' | 'debit') => {
@@ -165,7 +189,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   const handleLoginAsUser = () => {
     toast({
         title: "Redirecting...",
-        description: `Logging you in as ${merchant.name}.`
+        description: `Logging you in as ${merchant?.fullName}.`
     });
     router.push('/merchant/dashboard');
   };
@@ -242,10 +266,18 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     navigator.clipboard.writeText(text);
     toast({
         title: `${label} Copied!`,
-        description: `${text} has been copied to your clipboard.`,
     });
   };
 
+  if (loading) {
+    return <div>Loading user details...</div>;
+  }
+  
+  if (!merchant) {
+    return <div>User not found.</div>;
+  }
+
+  const joinedDate = merchant.createdAt ? new Date(merchant.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
 
   return (
     <div className="space-y-6">
@@ -255,11 +287,11 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         </Link>
         <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-shrink-0">
-                 <Image src={merchant.avatar} width={96} height={96} alt={merchant.name} className="rounded-full" data-ai-hint="user avatar" />
+                 <Image src={merchant.avatar || `https://placehold.co/96x96.png?text=${merchant.fullName.charAt(0)}`} width={96} height={96} alt={merchant.fullName} className="rounded-full" data-ai-hint="user avatar" />
             </div>
             <div className="flex-grow">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">{merchant.name}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
                     <div className="flex gap-2">
                          <Button variant="outline" onClick={handleToggleSuspend}>
                            {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
@@ -282,13 +314,13 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </div>
                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                     <span className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {merchant.email}</span>
-                    <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile}</span>
-                    <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>
+                    {merchant.mobile && <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile}</span>}
+                    {merchant.businessName && <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>}
                 </div>
                  <div className="flex items-center gap-4 mt-2">
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>{merchant.status}</Badge>
-                    <Badge variant="secondary">Plan: {merchant.plan}</Badge>
-                    <span className="text-sm text-muted-foreground">Joined: {merchant.joinedDate}</span>
+                    <Badge variant="secondary">Plan: {merchant.plan || 'Free'}</Badge>
+                    <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4"/> Joined: {joinedDate}</span>
                 </div>
             </div>
         </div>

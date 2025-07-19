@@ -62,6 +62,7 @@ export default function UsersPage() {
 
     useEffect(() => {
         const fetchUsers = async () => {
+            setLoading(true);
             try {
                 const usersCollection = collection(db, "users");
                 const userSnapshot = await getDocs(usersCollection);
@@ -79,10 +80,6 @@ export default function UsersPage() {
 
         fetchUsers();
     }, []);
-
-    if (loading) {
-        return <div>Loading users...</div>;
-    }
 
   return (
     <div className="space-y-6">
@@ -135,6 +132,9 @@ export default function UsersPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+               {loading ? (
+                <div>Loading users...</div>
+                ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -196,6 +196,7 @@ export default function UsersPage() {
                   ))}
                 </TableBody>
               </Table>
+                )}
             </CardContent>
             <CardFooter>
               <div className="text-xs text-muted-foreground">
