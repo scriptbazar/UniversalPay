@@ -18,17 +18,27 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    // Admin Login
     if (email === 'admin@transactwave.com' && password === 'admin123') {
       toast({
-        title: "Login Successful",
+        title: "Admin Login Successful",
         description: "Welcome back, Admin!",
       });
       router.push('/dashboard');
-    } else {
+    } 
+    // Merchant Login (simulated)
+    else if (email.includes('@') && password) {
+       toast({
+        title: "Login Successful",
+        description: "Welcome back to your Merchant Dashboard!",
+      });
+      router.push('/merchant/dashboard');
+    }
+    else {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        description: "Invalid credentials. Please try again.",
       });
     }
   };
@@ -50,7 +60,7 @@ export default function LoginPage() {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="admin@transactwave.com" 
+                placeholder="admin@transactwave.com or merchant@example.com" 
                 required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -67,7 +77,7 @@ export default function LoginPage() {
                 id="password" 
                 type="password" 
                 required 
-                placeholder="admin123"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

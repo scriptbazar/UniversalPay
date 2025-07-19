@@ -5,16 +5,32 @@ import Link from "next/link";
 import {
   Bell,
   Home,
+  LineChart,
+  Package,
+  Package2,
+  Settings,
+  ShoppingCart,
+  Users,
+  Wallet,
   ShieldCheck,
   Code,
+  FileText,
   CreditCard,
   Briefcase,
-  Settings,
-  Users,
-  Package2
+  Landmark,
+  Link2,
+  ArrowRightLeft
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
@@ -30,16 +47,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
-  { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
-  { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
-  { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud & Risk" },
-  { href: "/dashboard/reseller", icon: Briefcase, label: "Reseller Accounts" },
-  { href: "/dashboard/developer", icon: Code, label: "Platform SDKs" },
-  { href: "/dashboard/settings", icon: Settings, label: "Platform Settings" },
+  { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
+  { href: "/merchant/payments", icon: Wallet, label: "Payments" },
+  { href: "/merchant/payment-links", icon: Link2, label: "Payment Links" },
+  { href: "/merchant/withdrawals", icon: Landmark, label: "Withdrawals" },
+  { href: "/merchant/invoices", icon: FileText, label: "Invoices" },
+  { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
+  { href: "/merchant/developer", icon: Code, label: "Developer" },
+  { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
 
-export default function AdminDashboardLayout({
+export default function MerchantDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -51,9 +69,8 @@ export default function AdminDashboardLayout({
       <div className="hidden border-r bg-card md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+            <Link href="/" className="flex items-center gap-2 font-semibold">
               <Logo />
-              <span className="text-sm text-muted-foreground">(Admin)</span>
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
               <Bell className="h-4 w-4" />
@@ -67,7 +84,7 @@ export default function AdminDashboardLayout({
                   key={item.label}
                   href={item.href}
                   className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
-                      "bg-muted text-primary": pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')
+                      "bg-muted text-primary": pathname.startsWith(item.href) && (item.href !== '/merchant/dashboard' || pathname === '/merchant/dashboard')
                   })}
                 >
                   <item.icon className="h-4 w-4" />
@@ -94,18 +111,17 @@ export default function AdminDashboardLayout({
             <SheetContent side="left" className="flex flex-col">
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
-                  href="/dashboard"
+                  href="#"
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Logo />
-                   <span className="text-sm text-muted-foreground">(Admin)</span>
                 </Link>
                 {navItems.map((item) => (
                     <Link
                     key={item.label}
                     href={item.href}
                     className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
-                        "bg-muted text-foreground": pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard'),
+                        "bg-muted text-foreground": pathname.startsWith(item.href) && (item.href !== '/merchant/dashboard' || pathname === '/merchant/dashboard'),
                     })}
                     >
                     <item.icon className="h-5 w-5" />
@@ -127,16 +143,16 @@ export default function AdminDashboardLayout({
                   height={36}
                   alt="Avatar"
                   className="rounded-full"
-                  data-ai-hint="administrator avatar"
+                  data-ai-hint="user avatar"
                 />
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Settings</Link>
+                <Link href="/merchant/settings">Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a href="mailto:support@transactwave.com">Support</a>

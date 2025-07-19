@@ -14,7 +14,8 @@ export default function SignupPage() {
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle signup logic here
-    router.push('/dashboard');
+    // On successful signup, redirect to the merchant dashboard
+    router.push('/merchant/dashboard');
   };
 
   return (
