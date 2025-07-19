@@ -42,6 +42,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import Image from "next/image";
+import Link from "next/link";
 
 const users = [
   {
@@ -150,13 +151,13 @@ export default function UsersPage() {
                   {users.map((user) => (
                      <TableRow key={user.id}>
                         <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
-                                <Image src={user.avatar} width={40} height={40} alt={user.name} className="rounded-full" />
+                            <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 hover:underline">
+                                <Image src={user.avatar} width={40} height={40} alt={user.name} className="rounded-full" data-ai-hint="user avatar" />
                                 <div>
                                     <div>{user.name}</div>
                                     <div className="text-sm text-muted-foreground">{user.email}</div>
                                 </div>
-                            </div>
+                            </Link>
                         </TableCell>
                         <TableCell>
                            <Badge variant={user.role === 'Admin' ? 'destructive' : 'secondary'}>{user.role}</Badge>
@@ -179,8 +180,10 @@ export default function UsersPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/dashboard/users/${user.id}`}>View Details</Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>View Details</DropdownMenuItem>
                                     <DropdownMenuItem>Login as User</DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-destructive">
