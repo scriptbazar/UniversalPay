@@ -13,6 +13,13 @@ import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { updateGeminiApiKey } from './actions';
 
+const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M10 13a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-1a4 4 0 0 1 4-4h2a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1a4 4 0 1 0 0 8" />
+    </svg>
+);
+
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -137,6 +144,14 @@ export default function SettingsPage() {
                             <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
                         </div>
                         <Switch id="eur-sepa-switch" />
+                    </div>
+                     <div className="flex items-center justify-between rounded-lg border p-3">
+                        <div>
+                            <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
+                                <PayPalIcon className="w-4 h-4" /> PayPal
+                            </Label>
+                        </div>
+                        <Switch id="paypal-switch" />
                     </div>
                 </div>
                   <Button>Save Gateway Settings</Button>
