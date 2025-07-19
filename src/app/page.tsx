@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -57,6 +57,16 @@ const features = [
     icon: <Briefcase className="w-8 h-8 text-primary" />,
     title: "Reseller Program",
     description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn commissions.",
+  },
+  {
+    icon: <LinkIcon className="w-8 h-8 text-primary" />,
+    title: "Dynamic Payment Links",
+    description: "Easily generate and share payment links for single or multiple use, with fixed or dynamic amounts.",
+  },
+  {
+    icon: <LayoutGrid className="w-8 h-8 text-primary" />,
+    title: "Comprehensive Dashboard",
+    description: "Manage all your transactions, analytics, withdrawals, and customers from one powerful dashboard.",
   },
 ];
 
