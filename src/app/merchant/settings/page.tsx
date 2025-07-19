@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="profile">
         <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full md:w-auto">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="profile">Profile & Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
@@ -189,25 +189,42 @@ export default function SettingsPage() {
         <TabsContent value="profile" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Update your personal and business information.</CardDescription>
+              <CardTitle>Profile & Security</CardTitle>
+              <CardDescription>Update your personal, business, and security information.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue="John Doe" />
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Profile Information</h3>
+                <div className="space-y-4 p-4 border rounded-md">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input id="name" defaultValue="John Doe" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" defaultValue="merchant@example.com" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="business-name-profile">Business Name</Label>
+                        <Input 
+                            id="business-name-profile" 
+                            value={businessName} 
+                            onChange={(e) => setBusinessName(e.target.value)} 
+                        />
+                    </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="merchant@example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="business-name-profile">Business Name</Label>
-                <Input 
-                    id="business-name-profile" 
-                    value={businessName} 
-                    onChange={(e) => setBusinessName(e.target.value)} 
-                />
+              <div>
+                <h3 className="text-lg font-medium mb-2">Security</h3>
+                 <div className="space-y-4 p-4 border rounded-md">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> 2-Step Verification</h4>
+                        <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
+                        </div>
+                        <Switch />
+                    </div>
+                </div>
               </div>
                <Button>Save Changes</Button>
             </CardContent>
@@ -519,5 +536,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

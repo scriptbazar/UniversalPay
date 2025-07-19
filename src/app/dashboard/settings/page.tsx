@@ -180,12 +180,19 @@ export default function SettingsPage() {
                 </div>
                 <Separator/>
                  <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Captcha Settings</h3>
+                  <h3 className="font-medium flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Security Settings</h3>
                   <div className="space-y-4 pl-6 border-l">
                       <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
                           <h4 className="font-medium">Enable Captcha on Login/Signup</h4>
                           <p className="text-sm text-muted-foreground">Protects your platform from bots.</p>
+                        </div>
+                        <Switch />
+                      </div>
+                       <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <h4 className="font-medium">Enable 2-Step Verification for Admin</h4>
+                          <p className="text-sm text-muted-foreground">Secure your own admin account.</p>
                         </div>
                         <Switch />
                       </div>
