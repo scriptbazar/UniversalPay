@@ -48,7 +48,7 @@ const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
         id: `UVRLP${123456789 + i}`,
         merchant: `Merchant ${i % 4 + 1}`,
         customerEmail: `customer${i + 1}@example.com`,
-        amount: ((i + 1) * 12.34).toFixed(2), // Replaced Math.random()
+        amount: ((i + 1) * 12.34).toFixed(2),
         status: statuses[i % 3],
         method: methods[i % 4],
         date: date.toISOString().split('T')[0],
