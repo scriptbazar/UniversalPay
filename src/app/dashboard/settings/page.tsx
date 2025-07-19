@@ -52,6 +52,8 @@ export default function SettingsPage() {
   const [reCaptchaSiteKey, setReCaptchaSiteKey] = useState('');
   const [reCaptchaSecretKey, setReCaptchaSecretKey] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
+  const [isCaptchaEnabled, setIsCaptchaEnabled] = useState(true);
+  const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
 
   const handleSaveApiKeys = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,14 +189,14 @@ export default function SettingsPage() {
                           <h4 className="font-medium">Enable Captcha on Login/Signup</h4>
                           <p className="text-sm text-muted-foreground">Protects your platform from bots.</p>
                         </div>
-                        <Switch />
+                        <Switch checked={isCaptchaEnabled} onCheckedChange={setIsCaptchaEnabled} />
                       </div>
                        <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
                           <h4 className="font-medium">Enable 2-Step Verification for Admin</h4>
                           <p className="text-sm text-muted-foreground">Secure your own admin account.</p>
                         </div>
-                        <Switch />
+                        <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="recaptcha-site-key">Captcha Site Key</Label>
@@ -291,3 +293,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

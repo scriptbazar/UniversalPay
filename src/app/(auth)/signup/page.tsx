@@ -29,6 +29,10 @@ export default function SignupPage() {
     }
     // Handle signup logic here
     // On successful signup, redirect to the merchant dashboard
+    toast({
+      title: "Account Created",
+      description: "Welcome to TransactWave! Redirecting you to your dashboard.",
+    });
     router.push('/merchant/dashboard');
   };
 
@@ -80,3 +84,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+    
