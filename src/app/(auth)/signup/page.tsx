@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -7,12 +8,25 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isVerified) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: "Please verify that you are not a robot.",
+      });
+      return;
+    }
     // Handle signup logic here
     // On successful signup, redirect to the merchant dashboard
     router.push('/merchant/dashboard');
@@ -41,6 +55,10 @@ export default function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required />
+            </div>
+            <div className="flex items-center space-x-2 p-4 border rounded-md bg-muted/50">
+              <Checkbox id="captcha" onCheckedChange={(checked) => setIsVerified(checked as boolean)} />
+              <Label htmlFor="captcha" className="font-normal text-sm">I'm not a robot</Label>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">

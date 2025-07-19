@@ -4,11 +4,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-export async function updateGeminiApiKey(apiKey: string) {
-  if (!apiKey) {
-    throw new Error('API key is required.');
-  }
-
+async function updateEnvFile(updates: Record<string, string>) {
   const envPath = path.resolve(process.cwd(), '.env');
   
   try {
@@ -16,34 +12,52 @@ export async function updateGeminiApiKey(apiKey: string) {
     try {
       envContent = await fs.readFile(envPath, 'utf-8');
     } catch (error: any) {
-      if (error.code !== 'ENOENT') {
-        throw error; // Rethrow if it's not a "file not found" error
-      }
-      // File doesn't exist, it will be created.
+      if (error.code !== 'ENOENT') throw error;
     }
 
-    const lines = envContent.split('\n');
-    let keyFound = false;
+    let lines = envContent.split('\n');
+    const updateKeys = Object.keys(updates);
+    const updatedKeys = new Set<string>();
 
-    const newLines = lines.map(line => {
-      if (line.startsWith('GEMINI_API_KEY=')) {
-        keyFound = true;
-        return `GEMINI_API_KEY=${apiKey}`;
+    lines = lines.map(line => {
+      const key = line.split('=')[0];
+      if (updateKeys.includes(key)) {
+        updatedKeys.add(key);
+        return `${key}=${updates[key]}`;
       }
       return line;
     });
 
-    if (!keyFound) {
-      newLines.push(`GEMINI_API_KEY=${apiKey}`);
-    }
+    updateKeys.forEach(key => {
+      if (!updatedKeys.has(key)) {
+        lines.push(`${key}=${updates[key]}`);
+      }
+    });
 
-    // Filter out any potential empty lines that might have been created
-    const finalContent = newLines.filter(line => line).join('\n') + '\n';
+    const finalContent = lines.filter(line => line).join('\n') + '\n';
 
     await fs.writeFile(envPath, finalContent, { encoding: 'utf-8', flag: 'w' });
     console.log('.env file updated successfully.');
+    return { success: true };
   } catch (error) {
     console.error('Failed to write to .env file:', error);
-    throw new Error('Could not update the API key.');
+    throw new Error('Could not update the .env file.');
   }
+}
+
+export async function updateApiKeys(data: {
+    geminiApiKey?: string;
+    reCaptchaSiteKey?: string;
+    reCaptchaSecretKey?: string;
+}) {
+    const updates: Record<string, string> = {};
+    if (data.geminiApiKey) updates['GEMINI_API_KEY'] = data.geminiApiKey;
+    if (data.reCaptchaSiteKey) updates['RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey;
+    if (data.reCaptchaSecretKey) updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey;
+    
+    if (Object.keys(updates).length === 0) {
+        return { success: true, message: "No keys to update." };
+    }
+
+    return await updateEnvFile(updates);
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -9,15 +10,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isVerified) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: "Please verify that you are not a robot.",
+      });
+      return;
+    }
+
     // Admin Login
     if (email === 'admin@transactwave.com' && password === 'admin123') {
       toast({
@@ -81,6 +93,10 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+            </div>
+            <div className="flex items-center space-x-2 p-4 border rounded-md bg-muted/50">
+              <Checkbox id="captcha" onCheckedChange={(checked) => setIsVerified(checked as boolean)} />
+              <Label htmlFor="captcha" className="font-normal text-sm">I'm not a robot</Label>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">

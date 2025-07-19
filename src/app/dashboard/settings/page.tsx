@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound, Upload, Mail, Banknote } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck } from "lucide-react";
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { updateGeminiApiKey } from './actions';
+import { updateApiKeys } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -47,21 +49,23 @@ const IndianFlagIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function SettingsPage() {
   const { toast } = useToast();
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [reCaptchaSiteKey, setReCaptchaSiteKey] = useState('');
+  const [reCaptchaSecretKey, setReCaptchaSecretKey] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
 
-  const handleSaveApiKey = async (e: React.FormEvent) => {
+  const handleSaveApiKeys = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateGeminiApiKey(geminiApiKey);
+      await updateApiKeys({ geminiApiKey, reCaptchaSiteKey, reCaptchaSecretKey });
       toast({
         title: "Success",
-        description: "Gemini API Key saved successfully.",
+        description: "API Keys saved successfully.",
       });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save API Key.",
+        description: "Failed to save API Keys.",
       });
     }
   };
@@ -89,7 +93,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="api-keys">API & Security</TabsTrigger>
           <TabsTrigger value="gateways">Payment Gateways</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="pt-4">
@@ -153,30 +157,65 @@ export default function SettingsPage() {
         <TabsContent value="api-keys" className="pt-4">
            <Card>
             <CardHeader>
-              <CardTitle>Global API Keys</CardTitle>
-              <CardDescription>Manage global API keys for third-party services.</CardDescription>
+              <CardTitle>API & Security</CardTitle>
+              <CardDescription>Manage global API keys and security settings.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <form onSubmit={handleSaveApiKey} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gemini-api-key" className="flex items-center gap-2">
-                    <KeyRound className="w-4 h-4" />
-                    Google Gemini API Key
-                  </Label>
-                  <Input 
-                    id="gemini-api-key" 
-                    type="password" 
-                    placeholder="Enter your Gemini API Key" 
-                    value={geminiApiKey}
-                    onChange={(e) => setGeminiApiKey(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This key is required for platform-wide AI features like fraud detection.
-                  </p>
+            <form onSubmit={handleSaveApiKeys}>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="font-medium flex items-center gap-2"><KeyRound className="w-4 h-4" /> Third-Party API Keys</h3>
+                  <div className="space-y-2 pl-6 border-l">
+                    <Label htmlFor="gemini-api-key">Google Gemini API Key</Label>
+                    <Input 
+                      id="gemini-api-key" 
+                      type="password" 
+                      placeholder="Enter your Gemini API Key" 
+                      value={geminiApiKey}
+                      onChange={(e) => setGeminiApiKey(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Required for platform-wide AI features like fraud detection.
+                    </p>
+                  </div>
                 </div>
-                <Button type="submit">Save API Key</Button>
-              </form>
-            </CardContent>
+                <Separator/>
+                 <div className="space-y-4">
+                  <h3 className="font-medium flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Captcha Settings</h3>
+                  <div className="space-y-4 pl-6 border-l">
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <h4 className="font-medium">Enable Captcha on Login/Signup</h4>
+                          <p className="text-sm text-muted-foreground">Protects your platform from bots.</p>
+                        </div>
+                        <Switch />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="recaptcha-site-key">Captcha Site Key</Label>
+                        <Input 
+                          id="recaptcha-site-key" 
+                          type="text" 
+                          placeholder="Enter your Captcha Site Key" 
+                          value={reCaptchaSiteKey}
+                          onChange={(e) => setReCaptchaSiteKey(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="recaptcha-secret-key">Captcha Secret Key</Label>
+                        <Input 
+                          id="recaptcha-secret-key" 
+                          type="password" 
+                          placeholder="Enter your Captcha Secret Key" 
+                          value={reCaptchaSecretKey}
+                          onChange={(e) => setReCaptchaSecretKey(e.target.value)}
+                        />
+                      </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                 <Button type="submit">Save API & Security Settings</Button>
+              </CardFooter>
+            </form>
           </Card>
         </TabsContent>
         <TabsContent value="gateways" className="pt-4">
