@@ -6,7 +6,8 @@ import {
   DollarSign,
   Users,
   CreditCard,
-  ShieldAlert
+  ShieldAlert,
+  Copy,
 } from "lucide-react"
 import {
   Bar,
@@ -14,7 +15,9 @@ import {
   ResponsiveContainer,
   XAxis,
   YAxis,
+  Tooltip,
 } from "recharts"
+import React, { useState } from "react";
 
 import {
   Card,
@@ -34,57 +37,39 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jul",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Aug",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Sep",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Oct",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Nov",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Dec",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-]
+  { name: "Jan", total: 4230, monthIndex: 0 },
+  { name: "Feb", total: 3120, monthIndex: 1 },
+  { name: "Mar", total: 5890, monthIndex: 2 },
+  { name: "Apr", total: 4500, monthIndex: 3 },
+  { name: "May", total: 6200, monthIndex: 4 },
+  { name: "Jun", total: 7100, monthIndex: 5 },
+  { name: "Jul", total: 6800, monthIndex: 6 },
+  { name: "Aug", total: 7500, monthIndex: 7 },
+  { name: "Sep", total: 6400, monthIndex: 8 },
+  { name: "Oct", total: 8100, monthIndex: 9 },
+  { name: "Nov", total: 8500, monthIndex: 10 },
+  { name: "Dec", total: 9200, monthIndex: 11 },
+];
+
+const allTransactions = Array.from({ length: 150 }, (_, i) => {
+    const monthIndex = Math.floor(i / (150/12));
+    const date = new Date(2023, monthIndex, (i % 28) + 1);
+    return {
+        id: `UVRLP${123456789 + i}`,
+        name: `Customer ${i + 1}`,
+        email: `customer${i + 1}@example.com`,
+        amount: (Math.random() * 500 + 20).toFixed(2),
+        status: Math.random() > 0.1 ? "Success" : "Failed",
+        date: date,
+        monthIndex: monthIndex,
+    }
+});
 
 const recentSignups = [
     { id: 'user_1', name: 'Liam Johnson', email: 'liam@example.com', plan: 'Pro' },
@@ -93,13 +78,37 @@ const recentSignups = [
     { id: 'user_4', name: 'AnotherShop', email: 'sales@anothershop.io', plan: 'Premium' },
 ];
 
+type Transaction = typeof allTransactions[0];
+
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { toast } = useToast();
   const adminName = "Admin"; // Placeholder for the admin's name
+
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
+
 
   const handleRowClick = (userId: string) => {
     router.push(`/dashboard/users/${userId}`);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+    });
+  };
+
+  const handleBarClick = (data: any) => {
+    if (!data || !data.activePayload) return;
+    const payload = data.activePayload[0].payload;
+    const month = payload.name;
+    const monthIndex = payload.monthIndex;
+
+    const transactionsForMonth = allTransactions.filter(tx => tx.monthIndex === monthIndex);
+    setMonthlyTransactions({ month, transactions: transactionsForMonth });
   };
   
   return (
@@ -174,7 +183,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="pl-2">
              <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={data}>
+              <BarChart data={data} onClick={handleBarClick}>
                 <XAxis
                   dataKey="name"
                   stroke="#888888"
@@ -189,11 +198,15 @@ export default function AdminDashboard() {
                   axisLine={false}
                   tickFormatter={(value) => `$${value}`}
                 />
+                <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
                 <Bar
                   dataKey="total"
                   fill="currentColor"
                   radius={[4, 4, 0, 0]}
-                  className="fill-primary"
+                  className="fill-primary cursor-pointer"
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -230,6 +243,88 @@ export default function AdminDashboard() {
             </CardContent>
         </Card>
       </div>
+
+       <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+            <DialogDescription>
+              Full details for transaction {selectedTransaction?.id}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4 py-4">
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Transaction ID:</span>
+                   <div className="flex items-center gap-2">
+                        <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                    </div>
+              </div>
+              <Separator />
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Customer:</span>
+                  <span className="font-semibold">{selectedTransaction.name} ({selectedTransaction.email})</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Amount:</span>
+                  <span className="font-semibold">${selectedTransaction.amount}</span>
+              </div>
+              <Separator />
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge variant={selectedTransaction.status === 'Success' ? 'default' : 'destructive'}>{selectedTransaction.status}</Badge>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={!!monthlyTransactions} onOpenChange={() => setMonthlyTransactions(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
+            <DialogDescription>
+                A list of all transactions that occurred in {monthlyTransactions?.month}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {monthlyTransactions?.transactions.map((tx) => (
+                        <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
+                            <TableCell className="font-medium">{tx.id}</TableCell>
+                            <TableCell>{tx.name}</TableCell>
+                            <TableCell>
+                                <Badge variant={tx.status === 'Success' ? 'default' : 'destructive'}>{tx.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">${tx.amount}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            {monthlyTransactions?.transactions.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">No transactions found for {monthlyTransactions.month}.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
