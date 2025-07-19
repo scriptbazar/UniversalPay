@@ -20,7 +20,8 @@ import {
   Landmark,
   Link2,
   ArrowRightLeft,
-  LifeBuoy
+  LifeBuoy,
+  LogOut
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +45,11 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import React, { useState } from "react";
+import { signOutUser } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
@@ -68,7 +71,19 @@ export default function MerchantDashboardLayout({
   children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const { toast } = useToast();
     const [merchantName, setMerchantName] = useState("John Doe");
+
+    const handleLogout = async () => {
+        const { success, error } = await signOutUser();
+        if (success) {
+            toast({ title: "Logged Out", description: "You have been successfully logged out." });
+            router.push('/login');
+        } else {
+            toast({ variant: 'destructive', title: "Logout Failed", description: error });
+        }
+    };
 
     const childrenWithProps = React.Children.map(children, child => {
       if (React.isValidElement(child)) {
@@ -171,8 +186,9 @@ export default function MerchantDashboardLayout({
                 <a href="mailto:support@transactwave.com">Support</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/">Logout</Link>
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -20,7 +20,8 @@ import {
   FileText,
   Replace,
   LifeBuoy,
-  PlusCircle
+  PlusCircle,
+  LogOut
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,10 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { signOutUser } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
@@ -60,6 +63,19 @@ export default function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const { toast } = useToast();
+    
+    const handleLogout = async () => {
+        const { success, error } = await signOutUser();
+        if (success) {
+            toast({ title: "Logged Out", description: "You have been successfully logged out." });
+            router.push('/login');
+        } else {
+            toast({ variant: 'destructive', title: "Logout Failed", description: error });
+        }
+    };
+
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -158,8 +174,9 @@ export default function AdminDashboardLayout({
                 <a href="mailto:support@transactwave.com">Support</a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/">Logout</Link>
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

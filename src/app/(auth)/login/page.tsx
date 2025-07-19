@@ -11,9 +11,9 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
+import { signInUser } from "@/lib/auth";
 
 type LoginStep = 'credentials' | 'otp';
-type UserType = 'admin' | 'merchant' | null;
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -38,58 +38,66 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [step, setStep] = useState<LoginStep>('credentials');
-  const [userType, setUserType] = useState<UserType>(null);
+  const [user, setUser] = useState<any>(null); // To store user data after credential check
+  const [isLoading, setIsLoading] = useState(false);
 
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     if (!recaptchaToken) {
       toast({
         variant: "destructive",
         title: "Verification Failed",
         description: "Please complete the reCAPTCHA challenge.",
       });
+      setIsLoading(false);
       return;
     }
     
-    // Simulate server-side reCAPTCHA verification
-    // In a real app, you would send recaptchaToken to your server
-    // and verify it with Google using your secret key.
-    // For now, we assume it's valid if it exists.
-
-    if (email === 'admin@universalpay.com' && password === 'admin123') {
-      setUserType('admin');
-      setStep('otp');
-    } 
-    else if (email.includes('@') && password) {
-       setUserType('merchant');
-       setStep('otp');
-    }
-    else {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid credentials. Please try again.",
-      });
+    try {
+      const { success, user, error } = await signInUser(email, password);
+      
+      if (success && user) {
+        setUser(user);
+        // Simulate OTP for now
+        // In a real app, you might trigger an OTP service here
+        if (user.role === 'admin') {
+            toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
+            router.push('/dashboard');
+        } else {
+            toast({ title: "Login Successful", description: "Welcome back to your Merchant Dashboard!" });
+            router.push('/merchant/dashboard');
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: error || "Invalid credentials. Please try again.",
+        });
+      }
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Login Error",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+        setIsLoading(false);
     }
   };
 
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate OTP validation. In a real app, you'd call a server to verify.
-    // For now, any 6-digit OTP is considered valid.
+    // This part is now mostly handled after successful login
+    // Can be repurposed for actual 2FA
     if (otp.length === 6 && /^\d+$/.test(otp)) {
-        if (userType === 'admin') {
-            toast({
-                title: "Admin Login Successful",
-                description: "Welcome back, Admin!",
-            });
+        if (user?.role === 'admin') {
+            toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
             router.push('/dashboard');
-        } else if (userType === 'merchant') {
-            toast({
-                title: "Login Successful",
-                description: "Welcome back to your Merchant Dashboard!",
-            });
+        } else {
+            toast({ title: "Login Successful", description: "Welcome back to your Merchant Dashboard!" });
             router.push('/merchant/dashboard');
         }
     } else {
@@ -103,10 +111,9 @@ export default function LoginPage() {
 
   const handleSocialLogin = () => {
     toast({
-      title: "Login Successful",
-      description: "Welcome! Redirecting you to your dashboard.",
+      title: "Feature not available",
+      description: "Social login is not yet implemented.",
     });
-    router.push('/merchant/dashboard');
   };
 
   return (
@@ -131,6 +138,7 @@ export default function LoginPage() {
                         required 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
                     />
                     </div>
                     <div className="space-y-2">
@@ -147,6 +155,7 @@ export default function LoginPage() {
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
                     />
                     </div>
                     <div className="flex justify-center">
@@ -157,7 +166,9 @@ export default function LoginPage() {
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
-                    <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit">Log In</Button>
+                    <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
+                        {isLoading ? 'Logging in...' : 'Log In'}
+                    </Button>
                     <div className="relative w-full">
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t" />
@@ -167,8 +178,8 @@ export default function LoginPage() {
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 w-full">
-                        <Button variant="outline" onClick={handleSocialLogin}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                        <Button variant="outline" onClick={handleSocialLogin}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                        <Button variant="outline" onClick={handleSocialLogin} disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                        <Button variant="outline" onClick={handleSocialLogin} disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
                     </div>
                     <p className="text-sm text-center text-muted-foreground mt-4">
                     Don't have an account?{' '}

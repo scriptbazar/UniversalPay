@@ -11,8 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { countries } from "@/lib/countries";
+import { createUser } from "@/lib/auth";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -33,30 +32,68 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+      fullName: '',
+      email: '',
+      mobile: '',
+      password: '',
+  });
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { id, value } = e.target;
+      setFormData(prev => ({...prev, [id]: value}));
+  }
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     if (!recaptchaToken) {
       toast({
         variant: "destructive",
         title: "Verification Failed",
         description: "Please complete the reCAPTCHA challenge.",
       });
+      setIsLoading(false);
       return;
     }
-    toast({
-      title: "Account Created",
-      description: "Welcome to UniversalPay! Redirecting you to your dashboard.",
-    });
-    router.push('/merchant/dashboard');
+    
+    try {
+        const { success, error } = await createUser(formData.email, formData.password, {
+            fullName: formData.fullName,
+            mobile: formData.mobile,
+            // Add other details you want to save to Firestore here
+        });
+
+        if (success) {
+            toast({
+                title: "Account Created",
+                description: "Welcome to UniversalPay! Redirecting you to your dashboard.",
+            });
+            router.push('/merchant/dashboard');
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Signup Failed",
+                description: error,
+            });
+        }
+    } catch (error: any) {
+         toast({
+            variant: "destructive",
+            title: "Signup Error",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
   
   const handleSocialSignup = () => {
-    // In a real app, this would trigger the OAuth flow.
-    // For now, it will show a toast.
     toast({
-      title: "Social Signup",
-      description: "This would normally start the social signup process.",
+      title: "Feature not available",
+      description: "Social signup is not yet implemented.",
     });
   };
 
@@ -74,22 +111,22 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" type="text" placeholder="John Doe" required />
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input id="fullName" type="text" placeholder="John Doe" required value={formData.fullName} onChange={handleInputChange} disabled={isLoading} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" placeholder="merchant@example.com" required />
+                  <Input id="email" type="email" placeholder="merchant@example.com" required value={formData.email} onChange={handleInputChange} disabled={isLoading} />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile Number</Label>
-                    <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
+                    <Input id="mobile" type="tel" placeholder="+91 98765 43210" required value={formData.mobile} onChange={handleInputChange} disabled={isLoading} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" required />
+                    <Input id="password" type="password" required value={formData.password} onChange={handleInputChange} disabled={isLoading} />
                 </div>
             </div>
              <div className="flex justify-center pt-4">
@@ -100,7 +137,9 @@ export default function SignupPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit">Create Account</Button>
+            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
+                {isLoading ? 'Creating Account...' : 'Create Account'}
+            </Button>
             <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
@@ -110,8 +149,8 @@ export default function SignupPage() {
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
-                <Button variant="outline" onClick={handleSocialSignup} type="button"><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                <Button variant="outline" onClick={handleSocialSignup} type="button"><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                <Button variant="outline" onClick={handleSocialSignup} type="button" disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                <Button variant="outline" onClick={handleSocialSignup} type="button" disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}

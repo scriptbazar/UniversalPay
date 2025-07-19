@@ -7,7 +7,7 @@ import {
   PlusCircle,
   MoreHorizontal,
 } from "lucide-react"
-
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -43,47 +43,47 @@ import {
 } from "@/components/ui/tabs"
 import Image from "next/image";
 import Link from "next/link";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const users = [
-  {
-    id: "user_1",
-    name: "John Doe",
-    email: "john@example.com",
-    plan: "Pro",
-    status: "Active",
-    avatar: "https://placehold.co/40x40.png?text=JD",
-    role: "Merchant",
-  },
-  {
-    id: "user_2",
-    name: "Jane Smith",
-    email: "jane@creative.co",
-    plan: "Free",
-    status: "Active",
-    avatar: "https://placehold.co/40x40.png?text=JS",
-    role: "Merchant",
-  },
-  {
-    id: "user_3",
-    name: "Admin User",
-    email: "admin@universalpay.com",
-    plan: "Premium",
-    status: "Active",
-    avatar: "https://placehold.co/40x40.png?text=AU",
-    role: "Admin",
-  },
-   {
-    id: "user_4",
-    name: "Inactive Merchant",
-    email: "inactive@test.com",
-    plan: "Pro",
-    status: "Inactive",
-    avatar: "https://placehold.co/40x40.png?text=IM",
-    role: "Merchant",
-  },
-];
+interface User {
+    id: string;
+    fullName: string;
+    email: string;
+    plan?: string;
+    status?: string;
+    avatar?: string;
+    role?: string;
+}
 
 export default function UsersPage() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const usersCollection = collection(db, "users");
+                const userSnapshot = await getDocs(usersCollection);
+                const userList = userSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as User));
+                setUsers(userList);
+            } catch (error) {
+                console.error("Error fetching users: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    if (loading) {
+        return <div>Loading users...</div>;
+    }
+
   return (
     <div className="space-y-6">
        <Tabs defaultValue="all">
@@ -152,20 +152,20 @@ export default function UsersPage() {
                      <TableRow key={user.id}>
                         <TableCell className="font-medium">
                             <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 hover:underline">
-                                <Image src={user.avatar} width={40} height={40} alt={user.name} className="rounded-full" data-ai-hint="user avatar" />
+                                <Image src={user.avatar || `https://placehold.co/40x40.png?text=${user.fullName.charAt(0)}`} width={40} height={40} alt={user.fullName} className="rounded-full" data-ai-hint="user avatar" />
                                 <div>
-                                    <div>{user.name}</div>
+                                    <div>{user.fullName}</div>
                                     <div className="text-sm text-muted-foreground">{user.email}</div>
                                 </div>
                             </Link>
                         </TableCell>
                         <TableCell>
-                           <Badge variant={user.role === 'Admin' ? 'destructive' : 'secondary'}>{user.role}</Badge>
+                           <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>{user.role || 'Merchant'}</Badge>
                         </TableCell>
                         <TableCell>
-                           <Badge variant={user.status === 'Active' ? 'default' : 'outline'}>{user.status}</Badge>
+                           <Badge variant={user.status === 'Active' ? 'default' : 'outline'}>{user.status || 'Active'}</Badge>
                         </TableCell>
-                         <TableCell>{user.plan}</TableCell>
+                         <TableCell>{user.plan || 'Free'}</TableCell>
                         <TableCell>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
