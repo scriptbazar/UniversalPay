@@ -101,6 +101,14 @@ export default function LoginPage() {
     }
   };
 
+  const handleSocialLogin = () => {
+    toast({
+      title: "Login Successful",
+      description: "Welcome! Redirecting you to your dashboard.",
+    });
+    router.push('/merchant/dashboard');
+  };
+
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
         {step === 'credentials' && (
@@ -159,8 +167,8 @@ export default function LoginPage() {
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 w-full">
-                        <Button variant="outline"><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                        <Button variant="outline"><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                        <Button variant="outline" onClick={handleSocialLogin}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                        <Button variant="outline" onClick={handleSocialLogin}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
                     </div>
                     <p className="text-sm text-center text-muted-foreground mt-4">
                     Don't have an account?{' '}

@@ -53,6 +53,14 @@ export default function SignupPage() {
     router.push('/merchant/dashboard');
   };
 
+  const handleSocialSignup = () => {
+    toast({
+      title: "Account Created",
+      description: "Welcome to TransactWave! Redirecting you to your dashboard.",
+    });
+    router.push('/merchant/dashboard');
+  };
+
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-3xl shadow-xl">
@@ -118,12 +126,12 @@ export default function SignupPage() {
                     <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
-                <Button variant="outline"><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                <Button variant="outline"><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                <Button variant="outline" onClick={handleSocialSignup}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                <Button variant="outline" onClick={handleSocialSignup}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
