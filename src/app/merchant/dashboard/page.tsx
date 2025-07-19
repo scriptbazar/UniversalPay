@@ -53,27 +53,34 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
 const chartData = [
-    { name: 'Jan', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Feb', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Mar', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Apr', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'May', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Jun', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Jul', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Aug', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Sep', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Oct', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Nov', revenue: Math.floor(Math.random() * 5000) + 1000 },
-    { name: 'Dec', revenue: Math.floor(Math.random() * 5000) + 1000 },
-]
-
-const recentTransactionsData = [
-  { id: "TXN12345", name: "Liam Johnson", email: "liam@example.com", amount: "250.00", status: "Success" },
-  { id: "TXN12346", name: "Olivia Smith", email: "olivia@example.com", amount: "150.00", status: "Success" },
-  { id: "TXN12347", name: "Noah Williams", email: "noah@example.com", amount: "350.00", status: "Success" },
-  { id: "TXN12348", name: "Emma Brown", email: "emma@example.com", amount: "450.00", status: "Failed" },
-  { id: "TXN12349", name: "Ava Jones", email: "ava@example.com", amount: "200.00", status: "Success" },
+    { name: 'Jan', revenue: 4230, monthIndex: 0 },
+    { name: 'Feb', revenue: 3120, monthIndex: 1 },
+    { name: 'Mar', revenue: 5890, monthIndex: 2 },
+    { name: 'Apr', revenue: 4500, monthIndex: 3 },
+    { name: 'May', revenue: 6200, monthIndex: 4 },
+    { name: 'Jun', revenue: 7100, monthIndex: 5 },
+    { name: 'Jul', revenue: 6800, monthIndex: 6 },
+    { name: 'Aug', revenue: 7500, monthIndex: 7 },
+    { name: 'Sep', revenue: 6400, monthIndex: 8 },
+    { name: 'Oct', revenue: 8100, monthIndex: 9 },
+    { name: 'Nov', revenue: 8500, monthIndex: 10 },
+    { name: 'Dec', revenue: 9200, monthIndex: 11 },
 ];
+
+const allTransactions = Array.from({ length: 50 }, (_, i) => {
+    const monthIndex = Math.floor(i / 4);
+    const date = new Date(2023, monthIndex, (i % 28) + 1);
+    return {
+        id: `TXN${12345 + i}`,
+        name: `Customer ${i + 1}`,
+        email: `customer${i + 1}@example.com`,
+        amount: (Math.random() * 500 + 20).toFixed(2),
+        status: Math.random() > 0.1 ? "Success" : "Failed",
+        date: date
+    }
+});
+
+const recentTransactionsData = allTransactions.slice(-5).reverse();
 
 type Transaction = typeof recentTransactionsData[0];
 
@@ -83,6 +90,7 @@ interface DashboardProps {
 
 export default function Dashboard({ merchantName = "Merchant" }: DashboardProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
   const { toast } = useToast();
 
   const copyToClipboard = (text: string, label: string) => {
@@ -91,6 +99,17 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
         title: `${label} Copied!`,
         description: `${text} has been copied to your clipboard.`,
     });
+  };
+
+  const handleBarClick = (data: any) => {
+    if (!data || !data.activePayload) return;
+    const payload = data.activePayload[0].payload;
+    const month = payload.name;
+    const monthIndex = payload.monthIndex;
+
+    const transactionsForMonth = allTransactions.filter(tx => tx.date.getMonth() === monthIndex);
+
+    setMonthlyTransactions({ month, transactions: transactionsForMonth });
   };
 
   return (
@@ -167,10 +186,11 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
+            <CardDescription>Click on a month to view its transactions.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={chartData}>
+                <BarChart data={chartData} onClick={handleBarClick}>
                     <XAxis
                     dataKey="name"
                     stroke="#888888"
@@ -186,11 +206,11 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
                     tickFormatter={(value) => `$${value}`}
                     />
                     <Tooltip
-                        contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)' }}
-                        labelStyle={{ color: 'var(--foreground)' }}
+                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
                     />
                     <Legend iconType="circle" />
-                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="cursor-pointer" />
                 </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -272,6 +292,47 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={!!monthlyTransactions} onOpenChange={() => setMonthlyTransactions(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
+            <DialogDescription>
+                A list of all transactions that occurred in {monthlyTransactions?.month}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {monthlyTransactions?.transactions.map((tx) => (
+                        <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
+                            <TableCell className="font-medium">{tx.id}</TableCell>
+                            <TableCell>{tx.name}</TableCell>
+                            <TableCell>
+                                <Badge variant={tx.status === 'Success' ? 'default' : 'destructive'}>{tx.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">${tx.amount}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            {monthlyTransactions?.transactions.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">No transactions found for {monthlyTransactions.month}.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
