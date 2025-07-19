@@ -1,8 +1,12 @@
+
+'use client';
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Shield, DollarSign, User, Server, AlertCircle, Clock, CheckCircle, XCircle, Ban, FileWarning } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,8 +15,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
-const suspiciousTransactions = [
+type Transaction = {
+    id: string;
+    user: string;
+    ip: string;
+    amount: string;
+    riskScore: number;
+    reason: string;
+    status: "Flagged" | "Held" | "Blocked";
+    timestamp: string;
+};
+
+const suspiciousTransactions: Transaction[] = [
   {
     id: "UVRLP123456789",
     user: "user_a",
@@ -61,7 +78,25 @@ const getRiskBadgeVariant = (score: number) => {
     return "outline";
 }
 
+const getStatusBadgeVariant = (status: Transaction["status"]) => {
+    if (status === "Blocked") return "destructive";
+    if (status === "Held") return "secondary";
+    return "outline"
+}
+
+
 export default function FraudDetectionPage() {
+  const { toast } = useToast();
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  const handleAction = (action: string, txId: string) => {
+    toast({
+      title: "Action Triggered",
+      description: `${action} for transaction ${txId}.`,
+    });
+    setSelectedTx(null); // Close dialog after action
+  };
+
   return (
     <div className="space-y-6">
        <div>
@@ -74,7 +109,7 @@ export default function FraudDetectionPage() {
         <CardHeader>
           <CardTitle>Suspicious Transactions</CardTitle>
           <CardDescription>
-            Review transactions that have been flagged by our AI-powered risk engine.
+            Review transactions that have been flagged by our AI-powered risk engine. Click a row for details.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,14 +123,11 @@ export default function FraudDetectionPage() {
                 <TableHead>Reason</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Timestamp</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {suspiciousTransactions.map((tx) => (
-                <TableRow key={tx.id}>
+                <TableRow key={tx.id} onClick={() => setSelectedTx(tx)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{tx.id}</TableCell>
                   <TableCell>{tx.user} <br/> <span className="text-muted-foreground text-xs">{tx.ip}</span></TableCell>
                   <TableCell>${tx.amount}</TableCell>
@@ -104,32 +136,61 @@ export default function FraudDetectionPage() {
                   </TableCell>
                   <TableCell>{tx.reason}</TableCell>
                   <TableCell>
-                    <Badge variant={tx.status === 'Blocked' ? 'destructive' : 'secondary'}>{tx.status}</Badge>
+                    <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                   </TableCell>
                   <TableCell>{tx.timestamp}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Approve Payment</DropdownMenuItem>
-                        <DropdownMenuItem>Hold Payment</DropdownMenuItem>
-                        <DropdownMenuItem>Block User</DropdownMenuItem>
-                        <DropdownMenuItem>Request KYC</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+      
+      <Dialog open={!!selectedTx} onOpenChange={() => setSelectedTx(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+            <DialogDescription>Reviewing transaction <span className="font-mono">{selectedTx?.id}</span></DialogDescription>
+          </DialogHeader>
+          {selectedTx && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /> <span>User:</span> <span className="font-semibold">{selectedTx.user}</span></div>
+                <div className="flex items-center gap-2"><Server className="h-4 w-4 text-muted-foreground" /> <span>IP Address:</span> <span className="font-semibold">{selectedTx.ip}</span></div>
+                <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /> <span>Amount:</span> <span className="font-semibold">${selectedTx.amount}</span></div>
+                <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> <span>Timestamp:</span> <span className="font-semibold">{selectedTx.timestamp}</span></div>
+              </div>
+              <Separator />
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-muted-foreground" /> <span>Risk Score:</span> <Badge variant={getRiskBadgeVariant(selectedTx.riskScore)}>{selectedTx.riskScore}</Badge></div>
+                  <div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-muted-foreground" /> <span>Status:</span> <Badge variant={getStatusBadgeVariant(selectedTx.status)}>{selectedTx.status}</Badge></div>
+               </div>
+               <div className="flex items-start gap-2 pt-2">
+                 <FileWarning className="h-4 w-4 text-muted-foreground mt-1" />
+                 <div>
+                    <span className="text-muted-foreground">Reason for Flagging:</span>
+                    <p className="font-semibold">{selectedTx.reason}</p>
+                 </div>
+               </div>
+
+              <Separator />
+              <div className="space-y-2">
+                <h4 className="font-semibold">Take Action</h4>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleAction('Approved Payment', selectedTx.id)}><CheckCircle className="mr-2 h-4 w-4"/> Approve Payment</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleAction('Held Payment', selectedTx.id)}><XCircle className="mr-2 h-4 w-4"/> Hold Payment</Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleAction('Blocked User', selectedTx.id)}><Ban className="mr-2 h-4 w-4"/> Block User</Button>
+                  <Button variant="secondary" size="sm" onClick={() => handleAction('Requested KYC', selectedTx.id)}>Request KYC</Button>
+                </div>
+              </div>
+
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSelectedTx(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
