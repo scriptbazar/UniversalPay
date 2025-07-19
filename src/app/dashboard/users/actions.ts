@@ -39,6 +39,7 @@ export async function fetchUsers(): Promise<User[]> {
     } catch (error) {
         console.error("Error fetching users in Server Action: ", error);
         // We throw the error so the client-side component can catch it and display a message.
-        throw new Error("You do not have permission to view users.");
+        // It's better to return a structured error than to throw.
+        throw new Error("You do not have permission to view users. Please check Firestore security rules.");
     }
 }

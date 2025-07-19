@@ -11,13 +11,48 @@ import {
     FacebookAuthProvider,
     signInWithPopup
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore"; 
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK only if it's not already initialized
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+    });
+}
 
 interface UserData {
     fullName: string;
     mobile: string;
     [key: string]: any; // Allow other properties
 }
+
+// This is a new server action to set the admin claim.
+export async function setAdminClaimForCurrentUser(uid: string) {
+    try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (!adminEmail) {
+            console.log('ADMIN_EMAIL not set in environment. Skipping admin claim.');
+            return { success: false, message: 'Admin email not configured.' };
+        }
+
+        const user = await admin.auth().getUser(uid);
+        if (user.email === adminEmail) {
+            // Check if user already has admin role
+            if (user.customClaims && user.customClaims.role === 'admin') {
+                return { success: true, message: 'User is already an admin.' };
+            }
+            // Set custom claim
+            await admin.auth().setCustomUserClaims(uid, { role: 'admin' });
+            return { success: true, message: `Admin role granted to ${user.email}` };
+        }
+        return { success: false, message: 'User is not the designated admin.' };
+    } catch (error: any) {
+        console.error("Error setting admin claim:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 
 async function getUserRole(user: any): Promise<string> {
     try {
@@ -72,8 +107,13 @@ export async function signInUser(email: string, password: string) {
         const role = await getUserRole(user);
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
+        
+        // After successful sign-in, check if this user should be an admin.
+        await setAdminClaimForCurrentUser(user.uid);
 
-        return { success: true, user: { uid: user.uid, role, ...userData } };
+        const finalRole = await getUserRole(user);
+
+        return { success: true, user: { uid: user.uid, role: finalRole, ...userData } };
         
     } catch (error: any) {
         console.error("Error signing in:", error);
@@ -122,8 +162,10 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
             });
         }
         
+        await setAdminClaimForCurrentUser(user.uid);
         const role = await getUserRole(user);
         const finalUserDoc = await getDoc(userDocRef);
+
         return { success: true, user: { uid: user.uid, role, ...finalUserDoc.data() } };
 
     } catch (error: any) {
