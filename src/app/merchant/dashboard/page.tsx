@@ -11,6 +11,7 @@ import {
   Package2,
   Search,
   Users,
+  Copy,
 } from "lucide-react"
 import React, { useState } from "react";
 
@@ -49,6 +50,7 @@ import {
 } from "recharts"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 const chartData = [
     { name: 'Jan', revenue: Math.floor(Math.random() * 5000) + 1000 },
@@ -81,6 +83,15 @@ interface DashboardProps {
 
 export default function Dashboard({ merchantName = "Merchant" }: DashboardProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const { toast } = useToast();
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+        description: `${text} has been copied to your clipboard.`,
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -237,7 +248,10 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
             <div className="space-y-4 py-4">
                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Transaction ID:</span>
-                  <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                   <div className="flex items-center gap-2">
+                        <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                    </div>
               </div>
               <Separator />
                <div className="flex justify-between items-center">
