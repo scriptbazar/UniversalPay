@@ -11,12 +11,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const CurrencyInfoInputSchema = z.object({
+const CurrencyInfoInputSchema = z.object({
   currency: z.string().describe('The name or symbol of the currency to inquire about.'),
 });
 export type CurrencyInfoInput = z.infer<typeof CurrencyInfoInputSchema>;
 
-export const CurrencyInfoOutputSchema = z.object({
+const CurrencyInfoOutputSchema = z.object({
   explanation: z.string().describe('A detailed explanation about the currency.'),
 });
 export type CurrencyInfoOutput = z.infer<typeof CurrencyInfoOutputSchema>;
