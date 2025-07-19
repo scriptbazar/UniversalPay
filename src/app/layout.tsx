@@ -1,20 +1,31 @@
+
+'use client';
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+import { useEffect, useState } from 'react';
 
-export const metadata: Metadata = {
-  title: 'TransactWave',
-  description: 'A secure, scalable, and globally functional third-party payment gateway platform.',
-};
+// export const metadata: Metadata = {
+//   title: 'TransactWave',
+//   description: 'A secure, scalable, and globally functional third-party payment gateway platform.',
+// };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
-    <html lang="en" className="light">
+    <html lang="en" className={isMounted ? 'light' : ''} suppressHydrationWarning>
       <head>
+        <title>TransactWave</title>
+        <meta name="description" content="A secure, scalable, and globally functional third-party payment gateway platform." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
