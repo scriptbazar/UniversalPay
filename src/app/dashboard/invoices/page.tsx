@@ -1,40 +1,15 @@
+
+'use client';
+
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Download, PlusCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
-const invoices = [
-  {
-    id: "INV-2023-001",
-    customer: "Liam Johnson",
-    date: "2023-10-25",
-    status: "Paid",
-    amount: "250.00",
-  },
-  {
-    id: "INV-2023-002",
-    customer: "Olivia Smith",
-    date: "2023-10-24",
-    status: "Pending",
-    amount: "150.00",
-  },
-  {
-    id: "INV-2023-003",
-    customer: "Noah Williams",
-    date: "2023-10-23",
-    status: "Paid",
-    amount: "350.00",
-  },
-  {
-    id: "INV-2023-004",
-    customer: "Emma Brown",
-    date: "2023-10-22",
-    status: "Overdue",
-    amount: "450.00",
-  },
-];
+import { type Invoice, getInvoices } from "@/lib/invoicesData";
+import { useRouter } from "next/navigation";
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -50,6 +25,21 @@ const getStatusBadgeVariant = (status: string) => {
 }
 
 export default function InvoicesPage() {
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const router = useRouter();
+
+    useEffect(() => {
+        setInvoices(getInvoices());
+    }, []);
+
+    const handleRowClick = (invoiceId: string) => {
+        // In a real app, you might have a different detail view for admin
+        // For now, we can just log it or disable it.
+        console.log(`Admin viewing invoice: ${invoiceId}`);
+        // router.push(`/dashboard/invoices/${invoiceId}`);
+    };
+
+
   return (
     <div className="space-y-6">
         <div>
@@ -61,12 +51,11 @@ export default function InvoicesPage() {
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>Your Invoices</CardTitle>
-                <CardDescription>A list of all invoices for your account.</CardDescription>
+                <CardTitle>All Invoices</CardTitle>
+                <CardDescription>A list of all invoices across the platform.</CardDescription>
             </div>
             <div className="flex gap-2">
                 <Button variant="outline"><Download className="mr-2 h-4 w-4"/> Export CSV</Button>
-                <Button><PlusCircle className="mr-2 h-4 w-4"/> Create Invoice</Button>
             </div>
             </CardHeader>
             <CardContent>
@@ -74,6 +63,7 @@ export default function InvoicesPage() {
                 <TableHeader>
                 <TableRow>
                     <TableHead>Invoice ID</TableHead>
+                    <TableHead>Merchant</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
@@ -82,14 +72,15 @@ export default function InvoicesPage() {
                 </TableHeader>
                 <TableBody>
                 {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">{invoice.id}</TableCell>
-                    <TableCell>{invoice.customer}</TableCell>
-                    <TableCell>{invoice.date}</TableCell>
-                    <TableCell>
-                        <Badge variant={getStatusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">${invoice.amount}</TableCell>
+                    <TableRow key={invoice.id} onClick={() => handleRowClick(invoice.id)} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell className="font-medium">{invoice.id}</TableCell>
+                        <TableCell>{invoice.merchantName}</TableCell>
+                        <TableCell>{invoice.customerName}</TableCell>
+                        <TableCell>{invoice.issueDate}</TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">${invoice.totalAmount.toFixed(2)}</TableCell>
                     </TableRow>
                 ))}
                 </TableBody>
@@ -99,3 +90,4 @@ export default function InvoicesPage() {
     </div>
   );
 }
+
