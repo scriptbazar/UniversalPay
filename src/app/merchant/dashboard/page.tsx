@@ -12,6 +12,7 @@ import {
   Search,
   Users,
 } from "lucide-react"
+import React, { useState } from "react";
 
 import {
   Avatar,
@@ -46,6 +47,8 @@ import {
   Tooltip,
   Legend
 } from "recharts"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 const chartData = [
     { name: 'Jan', revenue: Math.floor(Math.random() * 5000) + 1000 },
@@ -62,11 +65,23 @@ const chartData = [
     { name: 'Dec', revenue: Math.floor(Math.random() * 5000) + 1000 },
 ]
 
+const recentTransactionsData = [
+  { id: "TXN12345", name: "Liam Johnson", email: "liam@example.com", amount: "250.00", status: "Success" },
+  { id: "TXN12346", name: "Olivia Smith", email: "olivia@example.com", amount: "150.00", status: "Success" },
+  { id: "TXN12347", name: "Noah Williams", email: "noah@example.com", amount: "350.00", status: "Success" },
+  { id: "TXN12348", name: "Emma Brown", email: "emma@example.com", amount: "450.00", status: "Failed" },
+  { id: "TXN12349", name: "Ava Jones", email: "ava@example.com", amount: "200.00", status: "Success" },
+];
+
+type Transaction = typeof recentTransactionsData[0];
+
 interface DashboardProps {
   merchantName?: string;
 }
 
 export default function Dashboard({ merchantName = "Merchant" }: DashboardProps) {
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
   return (
     <div className="flex flex-col gap-4">
         <div>
@@ -174,7 +189,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
              <div className="grid gap-2">
                 <CardTitle>Recent Transactions</CardTitle>
                 <CardDescription>
-                You made 265 transactions this month.
+                You made {recentTransactionsData.length} transactions this month.
                 </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
@@ -193,56 +208,59 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Liam Johnson</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      liam@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">$250.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Olivia Smith</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      olivia@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">$150.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Noah Williams</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      noah@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">$350.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Emma Brown</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      emma@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">$450.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <div className="font-medium">Liam Johnson</div>
-                    <div className="hidden text-sm text-muted-foreground md:inline">
-                      liam@example.com
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">$250.00</TableCell>
-                </TableRow>
+                {recentTransactionsData.map((tx) => (
+                    <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
+                        <TableCell>
+                            <div className="font-medium">{tx.name}</div>
+                            <div className="hidden text-sm text-muted-foreground md:inline">
+                                {tx.email}
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-right">${tx.amount}</TableCell>
+                    </TableRow>
+                ))}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       </div>
+      
+       <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transaction Details</DialogTitle>
+            <DialogDescription>
+              Full details for transaction {selectedTransaction?.id}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransaction && (
+            <div className="space-y-4 py-4">
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Transaction ID:</span>
+                  <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+              </div>
+              <Separator />
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Customer:</span>
+                  <span className="font-semibold">{selectedTransaction.name} ({selectedTransaction.email})</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Amount:</span>
+                  <span className="font-semibold">${selectedTransaction.amount}</span>
+              </div>
+              <Separator />
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge variant={selectedTransaction.status === 'Success' ? 'default' : 'destructive'}>{selectedTransaction.status}</Badge>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
