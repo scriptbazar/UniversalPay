@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -138,23 +138,10 @@ export default function SettingsPage() {
         <TabsContent value="branding" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>White-Label & Branding</CardTitle>
-              <CardDescription>Customize the look and feel of your payment pages.</CardDescription>
+              <CardTitle>Branding & Privacy</CardTitle>
+              <CardDescription>Control what your customers see during checkout.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Label>Custom Domain</Label>
-                    <Input placeholder="pay.yourstore.com"/>
-                    <p className="text-xs text-muted-foreground">Set a custom domain or subdomain for your payment pages.</p>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="upi-display-name">Custom UPI Display Name</Label>
-                    <div className="flex items-center gap-2">
-                      <Banknote className="w-5 h-5 text-muted-foreground" />
-                      <Input id="upi-display-name" placeholder="e.g., My Awesome Store"/>
-                    </div>
-                    <p className="text-xs text-muted-foreground">This name will be shown to customers on the UPI payment screen.</p>
-                </div>
                 <div className="space-y-2">
                     <Label>Logo</Label>
                     <div className="flex items-center gap-4">
@@ -163,13 +150,19 @@ export default function SettingsPage() {
                         </div>
                         <Button variant="outline">Upload Logo</Button>
                     </div>
+                     <p className="text-xs text-muted-foreground">Your logo will appear on the checkout page if branding is enabled.</p>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                    <h4 className="font-medium">"Powered by TransactWave" Badge</h4>
-                    <p className="text-sm text-muted-foreground">Show our branding on your payment pages.</p>
+                <div className="flex items-start justify-between rounded-lg border p-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
+                        <ShieldQuestion className="w-5 h-5" />
+                        Hide My Identity & Show 'TransactWave' Branding
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Turn ON to always show "TransactWave" as the sender. Turn OFF to show a generic, non-identifiable business name. Your personal name will never be shown.
+                      </p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch id="branding-switch" defaultChecked />
                 </div>
                 <Button>Save Changes</Button>
             </CardContent>
