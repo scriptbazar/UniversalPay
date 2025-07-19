@@ -19,8 +19,8 @@ type PaymentMethodsState = {
   paytm: boolean;
   phonepe: boolean;
   gpay: boolean;
-  btc: boolean;
-  usdt: boolean;
+  btc_wallet: boolean;
+  usdt_wallet: boolean;
   usd_card: boolean;
   eur_sepa: boolean;
   gbp_bacs: boolean;
@@ -35,8 +35,8 @@ export default function SettingsPage() {
     paytm: true,
     phonepe: true,
     gpay: false,
-    btc: true,
-    usdt: true,
+    btc_wallet: true,
+    usdt_wallet: true,
     usd_card: true,
     eur_sepa: false,
     gbp_bacs: false,
@@ -206,9 +206,9 @@ export default function SettingsPage() {
                                 <Label htmlFor="btc-switch" className="font-medium">Bitcoin (BTC) Wallet</Label>
                                 <p className="text-sm text-muted-foreground">Enable to receive settlements in BTC.</p>
                             </div>
-                            <Switch id="btc-switch" checked={paymentMethods.btc} onCheckedChange={() => handlePaymentMethodToggle('btc')} />
+                            <Switch id="btc-switch" checked={paymentMethods.btc_wallet} onCheckedChange={() => handlePaymentMethodToggle('btc_wallet')} />
                         </div>
-                        {paymentMethods.btc && (
+                        {paymentMethods.btc_wallet && (
                             <div className="space-y-2 pl-4 pb-2">
                                 <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
                                 <Input id="btc-wallet" placeholder="bc1..."/>
@@ -220,9 +220,9 @@ export default function SettingsPage() {
                                 <Label htmlFor="usdt-switch" className="font-medium">USDT (TRC20) Wallet</Label>
                                 <p className="text-sm text-muted-foreground">Enable to receive settlements in Tether.</p>
                             </div>
-                            <Switch id="usdt-switch" checked={paymentMethods.usdt} onCheckedChange={() => handlePaymentMethodToggle('usdt')} />
+                            <Switch id="usdt-switch" checked={paymentMethods.usdt_wallet} onCheckedChange={() => handlePaymentMethodToggle('usdt_wallet')} />
                         </div>
-                        {paymentMethods.usdt && (
+                        {paymentMethods.usdt_wallet && (
                             <div className="space-y-2 pl-4 pb-2">
                                 <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
                                 <Input id="usdt-wallet" placeholder="T..."/>
