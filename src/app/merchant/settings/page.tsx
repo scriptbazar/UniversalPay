@@ -122,7 +122,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         <div className="flex items-center justify-center pt-2 gap-2 text-xs text-muted-foreground">
+                         <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
                             <Globe className="h-4 w-4 text-primary"/>
                             <span>Powered by UniversalPay</span>
                          </div>
@@ -191,6 +191,13 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
     toast({
       title: "Settings Saved",
       description: "Your settings have been updated.",
+    });
+  };
+  
+  const handleBrandingSaveChanges = () => {
+    toast({
+        title: "Branding settings saved!",
+        description: "Your checkout page has been updated."
     });
   };
 
@@ -421,7 +428,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                 </div>
                                 <Switch id="branding-switch" defaultChecked />
                             </div>
-                            <Button onClick={handleSaveChanges}>Save Branding Changes</Button>
+                            <Button onClick={handleBrandingSaveChanges}>Save Branding Changes</Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -463,34 +470,37 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
 
                 <div>
                     <h4 className="font-semibold mb-4 text-base">2. Configure Your Settlement Wallets</h4>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between rounded-lg border p-4">
-                            <div>
-                                <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
-                                <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                             <div className="flex items-center justify-between rounded-lg border p-4 h-full">
+                                <div>
+                                    <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
+                                    <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in Tether.</p>
+                                </div>
+                                <Switch id="usdt-switch" checked={paymentMethods.usdt_wallet} onCheckedChange={() => handlePaymentMethodToggle('usdt_wallet')} />
                             </div>
-                            <Switch id="btc-switch" checked={paymentMethods.btc_wallet} onCheckedChange={() => handlePaymentMethodToggle('btc_wallet')} />
+                            {paymentMethods.usdt_wallet && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
+                                    <Input id="usdt-wallet" placeholder="T..."/>
+                                </div>
+                            )}
                         </div>
-                        {paymentMethods.btc_wallet && (
-                            <div className="space-y-2 pl-4 pb-2">
-                                <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
-                                <Input id="btc-wallet" placeholder="bc1..."/>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between rounded-lg border p-4 h-full">
+                                <div>
+                                    <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
+                                    <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
+                                </div>
+                                <Switch id="btc-switch" checked={paymentMethods.btc_wallet} onCheckedChange={() => handlePaymentMethodToggle('btc_wallet')} />
                             </div>
-                        )}
-
-                        <div className="flex items-center justify-between rounded-lg border p-4">
-                            <div>
-                                <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
-                                <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in Tether.</p>
-                            </div>
-                            <Switch id="usdt-switch" checked={paymentMethods.usdt_wallet} onCheckedChange={() => handlePaymentMethodToggle('usdt_wallet')} />
+                            {paymentMethods.btc_wallet && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
+                                    <Input id="btc-wallet" placeholder="bc1..."/>
+                                </div>
+                            )}
                         </div>
-                        {paymentMethods.usdt_wallet && (
-                            <div className="space-y-2 pl-4 pb-2">
-                                <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
-                                <Input id="usdt-wallet" placeholder="T..."/>
-                            </div>
-                        )}
                     </div>
                 </div>
 
