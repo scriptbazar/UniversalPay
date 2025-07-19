@@ -62,10 +62,11 @@ const chartData = [
 ]
 
 export default function Dashboard() {
+  const merchantName = "Merchant"; // Placeholder for the merchant's name
   return (
     <div className="flex flex-col gap-4">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back, Merchant!</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back, {merchantName}!</h1>
             <p className="text-muted-foreground">Here's an overview of your account and recent activity.</p>
         </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
