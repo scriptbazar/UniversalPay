@@ -43,7 +43,9 @@ import { Separator } from '@/components/ui/separator';
 const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
     const statuses = ["Success", "Failed", "Pending"] as const;
     const methods = ["UPI", "Crypto", "Card", "Link"] as const;
-    const date = new Date(2023, 10, 28 - Math.floor(i / 2));
+    // Using a static date string to avoid hydration errors
+    const day = 28 - Math.floor(i / 2);
+    const dateStr = `2023-11-${day < 10 ? '0' + day : day}`;
     return {
         id: `UVRLP${123456789 + i}`,
         merchant: `Merchant ${i % 4 + 1}`,
@@ -51,7 +53,7 @@ const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
         amount: ((i + 1) * 12.34).toFixed(2),
         status: statuses[i % 3],
         method: methods[i % 4],
-        date: date.toISOString().split('T')[0],
+        date: dateStr,
     };
 });
 
