@@ -167,6 +167,10 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
       setFilteredTransactions(allTransactions.filter(t => t.status === 'Success'));
       setCurrentPage(1);
     }
+    if (type === 'success') {
+      openTransactionListDialog('total');
+      return;
+    }
     setDialogOpen(type);
   };
 
@@ -600,3 +604,4 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     </div>
   )
 }
+
