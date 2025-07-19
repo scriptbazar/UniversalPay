@@ -9,13 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Image from "next/image";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 
 const merchant = {
     id: "user_1",
@@ -37,17 +40,26 @@ const stats = {
 };
 
 const paymentMethodData = [
-  { name: 'UPI', value: 450, color: '#0088FE' },
-  { name: 'Crypto', value: 300, color: '#00C49F' },
-  { name: 'Cards', value: 300, color: '#FFBB28' },
-  { name: 'Payment Links', value: 200, color: '#FF8042' },
+  { name: 'UPI', value: 20050, color: '#0088FE' },
+  { name: 'Crypto', value: 15125, color: '#00C49F' },
+  { name: 'Cards', value: 8056.89, color: '#FFBB28' },
+  { name: 'Payment Links', value: 2000, color: '#FF8042' },
 ];
 
-const recentTransactions = [
-    { id: "pay_1", amount: "250.00", currency: "USD", method: "Crypto (BTC)", status: "Success", date: "2023-11-01" },
-    { id: "pay_2", amount: "150.00", currency: "INR", method: "UPI (PhonePe)", status: "Success", date: "2023-11-01" },
-    { id: "pay_3", amount: "350.00", currency: "INR", method: "UPI (Paytm)", status: "Failed", date: "2023-11-02" },
+const allTransactions = [
+    { id: "pay_1", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-01" },
+    { id: "pay_2", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-01" },
+    { id: "pay_3", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
+    { id: "pay_4", amount: "800.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-02" },
+    { id: "pay_5", amount: "1200.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-03" },
+    { id: "pay_6", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-04" },
+    { id: "pay_7", amount: "50.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-05" },
+    { id: "pay_8", amount: "1500.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-05" },
+    { id: "pay_9", amount: "800.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-06" },
 ];
+
+const recentTransactions = allTransactions.slice(0, 3);
+
 
 const withdrawalHistory = [
     { id: "wd_1", amount: "500.00", currency: "USDT", status: "Completed", date: "2023-10-25" },
@@ -71,6 +83,17 @@ const getStatusBadgeVariant = (status: string) => {
 };
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState('');
+  const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
+
+  const handlePieClick = (data: any) => {
+    const method = data.name;
+    setSelectedMethod(method);
+    setFilteredTransactions(allTransactions.filter(t => t.method === method));
+    setDialogOpen(true);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -155,17 +178,28 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>Payment Method Mix</CardTitle>
-                    <CardDescription>Breakdown of transactions by type.</CardDescription>
+                    <CardDescription>Breakdown of transactions by type. Click a slice to view details.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
-                            <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                            <Pie 
+                                data={paymentMethodData} 
+                                dataKey="value" 
+                                nameKey="name" 
+                                cx="50%" 
+                                cy="50%" 
+                                outerRadius={80} 
+                                label 
+                                onClick={handlePieClick}
+                                className="cursor-pointer"
+                            >
                                 {paymentMethodData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                 ))}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                            <Legend />
                         </PieChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -233,6 +267,41 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </Table>
             </CardContent>
         </Card>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{selectedMethod} Transactions</DialogTitle>
+                    <DialogDescription>
+                        A complete list of transactions made using the {selectedMethod} method.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Transaction ID</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredTransactions.map(p => (
+                                <TableRow key={p.id}>
+                                    <TableCell className="font-medium">{p.id}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>{p.date}</TableCell>
+                                    <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </DialogContent>
+        </Dialog>
     </div>
   )
 }
