@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe } from "lucide-react";
+import { Upload, Globe, KeyRound } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { updateGeminiApiKey } from './actions';
 
 type PaymentMethodsState = {
   paytm: boolean;
@@ -25,6 +27,8 @@ type PaymentMethodsState = {
 };
 
 export default function SettingsPage() {
+  const { toast } = useToast();
+  const [geminiApiKey, setGeminiApiKey] = useState('');
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
     paytm: true,
@@ -42,6 +46,23 @@ export default function SettingsPage() {
     setPaymentMethods(prev => ({ ...prev, [method]: !prev[method] }));
   };
 
+  const handleSaveApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateGeminiApiKey(geminiApiKey);
+      toast({
+        title: "Success",
+        description: "Gemini API Key saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save API Key.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -51,11 +72,12 @@ export default function SettingsPage() {
       <Separator />
 
       <Tabs defaultValue="profile">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full md:w-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full md:w-auto">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
         <TabsContent value="profile" className="pt-4">
           <Card>
@@ -283,7 +305,38 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+         <TabsContent value="integrations" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrations</CardTitle>
+              <CardDescription>Manage API keys for third-party services.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleSaveApiKey} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gemini-api-key" className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4" />
+                    Google Gemini API Key
+                  </Label>
+                  <Input 
+                    id="gemini-api-key" 
+                    type="password" 
+                    placeholder="Enter your Gemini API Key" 
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This key is required for AI-powered features like fraud detection.
+                  </p>
+                </div>
+                <Button type="submit">Save API Key</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+    
