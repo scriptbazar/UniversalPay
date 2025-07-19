@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Link2, MoreVertical, Trash2 } from 'lucide-react';
+import { Copy, Link2, MoreVertical, Trash2, IndianRupee } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ type PaymentLink = {
   amount: string | null;
   isActive: boolean;
   createdAt: string;
+  singleUse: boolean;
 };
 
 const initialLinks: PaymentLink[] = [
@@ -38,6 +39,7 @@ const initialLinks: PaymentLink[] = [
     amount: '25.00',
     isActive: true,
     createdAt: '2023-10-26',
+    singleUse: true,
   },
   {
     id: 'plink_2',
@@ -47,6 +49,7 @@ const initialLinks: PaymentLink[] = [
     amount: null,
     isActive: true,
     createdAt: '2023-10-25',
+    singleUse: false,
   },
   {
     id: 'plink_3',
@@ -56,6 +59,7 @@ const initialLinks: PaymentLink[] = [
     amount: '100.00',
     isActive: false,
     createdAt: '2023-10-22',
+    singleUse: false,
   },
 ];
 
@@ -65,6 +69,7 @@ export default function PaymentLinksPage() {
   const [title, setTitle] = useState('');
   const [isDynamic, setIsDynamic] = useState(false);
   const [amount, setAmount] = useState('');
+  const [isSingleUse, setIsSingleUse] = useState(false);
 
   const handleCreateLink = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,12 +90,14 @@ export default function PaymentLinksPage() {
       amount: isDynamic ? null : parseFloat(amount).toFixed(2),
       isActive: true,
       createdAt: new Date().toISOString().split('T')[0],
+      singleUse: isSingleUse,
     };
 
     setLinks((prev) => [newLink, ...prev]);
     setTitle('');
     setIsDynamic(false);
     setAmount('');
+    setIsSingleUse(false);
     toast({
       title: 'Success!',
       description: 'New payment link has been created.',
@@ -100,6 +107,25 @@ export default function PaymentLinksPage() {
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url);
     toast({ title: 'Copied to clipboard!' });
+  };
+
+  const simulatePayment = (linkId: string) => {
+    setLinks(prevLinks => {
+      const link = prevLinks.find(l => l.id === linkId);
+      if (link && link.singleUse) {
+        toast({
+          title: "Payment Successful & Link Deactivated",
+          description: `Link "${link.title}" was a single-use link and is now inactive.`
+        });
+        return prevLinks.map(l => l.id === linkId ? { ...l, isActive: false } : l);
+      } else if (link) {
+         toast({
+          title: "Payment Successful",
+          description: `Payment received for link "${link.title}".`
+        });
+      }
+      return prevLinks;
+    });
   };
 
 
@@ -154,6 +180,17 @@ export default function PaymentLinksPage() {
                     />
                   </div>
                 )}
+                 <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <Label htmlFor="single-use-switch">Single Use Only</Label>
+                    <p className="text-xs text-muted-foreground">Link will expire after one payment.</p>
+                  </div>
+                  <Switch
+                    id="single-use-switch"
+                    checked={isSingleUse}
+                    onCheckedChange={setIsSingleUse}
+                  />
+                </div>
               </CardContent>
               <div className="p-6 pt-0">
                 <Button className="w-full" type="submit">
@@ -192,7 +229,10 @@ export default function PaymentLinksPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{link.type}</Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline">{link.type}</Badge>
+                          {link.singleUse && <Badge variant="destructive">Single Use</Badge>}
+                        </div>
                       </TableCell>
                        <TableCell>{link.amount ? `$${link.amount}` : 'N/A'}</TableCell>
                       <TableCell>
@@ -201,26 +241,31 @@ export default function PaymentLinksPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost">
-                              <MoreVertical className="h-4 w-4" />
+                         <div className="flex justify-end items-center gap-2">
+                            <Button size="sm" variant="outline" disabled={!link.isActive} onClick={() => simulatePayment(link.id)}>
+                                <IndianRupee className="mr-2 h-4 w-4" /> Pay
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => copyToClipboard(link.url)}>
-                              <Copy className="mr-2 h-4 w-4" /> Copy Link
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
-                                setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
-                              }}/> {link.isActive ? 'Deactivate' : 'Activate'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => copyToClipboard(link.url)}>
+                                  <Copy className="mr-2 h-4 w-4" /> Copy Link
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
+                                    setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
+                                  }}/> {link.isActive ? 'Deactivate' : 'Activate'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
