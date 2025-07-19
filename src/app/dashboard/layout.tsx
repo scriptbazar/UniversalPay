@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -16,7 +17,8 @@ import {
   Code,
   FileText,
   CreditCard,
-  Briefcase
+  Briefcase,
+  Landmark
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +48,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
   { href: "/dashboard/payments", icon: Wallet, label: "Payments" },
+  { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/invoices", icon: FileText, label: "Invoices" },
   { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud Detection" },
