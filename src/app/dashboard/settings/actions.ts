@@ -53,20 +53,26 @@ async function updateEnvFile(updates: Record<string, string>) {
   }
 }
 
-export async function getApiKeys() {
+export async function getSecuritySettings() {
     const env = await readEnvFile();
     return {
         geminiApiKey: env['GEMINI_API_KEY'] || '',
         reCaptchaSiteKey: env['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] || '',
         reCaptchaSecretKey: env['RECAPTCHA_SECRET_KEY'] || '',
+        isCaptchaEnabled: env['ENABLE_ADMIN_CAPTCHA'] !== 'false', // default to true
+        isMerchantCaptchaRequired: env['ENABLE_MERCHANT_CAPTCHA'] !== 'false', // default to true
+        isAdmin2faEnabled: env['ENABLE_ADMIN_2FA'] !== 'false', // default to true
     };
 }
 
 
-export async function updateApiKeys(data: {
+export async function updateSecuritySettings(data: {
     geminiApiKey?: string;
     reCaptchaSiteKey?: string;
     reCaptchaSecretKey?: string;
+    isCaptchaEnabled: boolean;
+    isMerchantCaptchaRequired: boolean;
+    isAdmin2faEnabled: boolean;
 }) {
     const updates: Record<string, string> = {};
     // Only add keys to the update object if they have a non-empty value
@@ -74,9 +80,9 @@ export async function updateApiKeys(data: {
     if (data.reCaptchaSiteKey) updates['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey;
     if (data.reCaptchaSecretKey) updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey;
     
-    if (Object.keys(updates).length === 0) {
-        return { success: true, message: "No new keys to update." };
-    }
+    updates['ENABLE_ADMIN_CAPTCHA'] = String(data.isCaptchaEnabled);
+    updates['ENABLE_MERCHANT_CAPTCHA'] = String(data.isMerchantCaptchaRequired);
+    updates['ENABLE_ADMIN_2FA'] = String(data.isAdmin2faEnabled);
 
     return await updateEnvFile(updates);
 }

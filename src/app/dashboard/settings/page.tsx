@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { updateApiKeys, getApiKeys } from './actions';
+import { updateSecuritySettings, getSecuritySettings } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -52,9 +52,11 @@ export default function SettingsPage() {
   const [reCaptchaSiteKey, setReCaptchaSiteKey] = useState('');
   const [reCaptchaSecretKey, setReCaptchaSecretKey] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
+  
   const [isCaptchaEnabled, setIsCaptchaEnabled] = useState(true);
-  const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
   const [isMerchantCaptchaRequired, setIsMerchantCaptchaRequired] = useState(true);
+  const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
+
   
   const [gateways, setGateways] = useState<GatewayState>({
     paytm: true,
@@ -72,40 +74,51 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    async function fetchKeys() {
+    async function fetchSettings() {
         setIsLoading(true);
         try {
-            const keys = await getApiKeys();
-            if (keys.geminiApiKey) setGeminiApiKey(keys.geminiApiKey);
-            if (keys.reCaptchaSiteKey) setReCaptchaSiteKey(keys.reCaptchaSiteKey);
-            if (keys.reCaptchaSecretKey) setReCaptchaSecretKey(keys.reCaptchaSecretKey);
+            const settings = await getSecuritySettings();
+            setGeminiApiKey(settings.geminiApiKey);
+            setReCaptchaSiteKey(settings.reCaptchaSiteKey);
+            setReCaptchaSecretKey(settings.reCaptchaSecretKey);
+            setIsCaptchaEnabled(settings.isCaptchaEnabled);
+            setIsMerchantCaptchaRequired(settings.isMerchantCaptchaRequired);
+            setIsAdmin2faEnabled(settings.isAdmin2faEnabled);
         } catch (error) {
-            console.error("Failed to fetch API keys", error);
+            console.error("Failed to fetch settings", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load settings.'})
         } finally {
             setIsLoading(false);
         }
     }
-    fetchKeys();
-  }, []);
+    fetchSettings();
+  }, [toast]);
 
   const handleGatewayToggle = (gateway: keyof GatewayState) => {
     setGateways(prev => ({...prev, [gateway]: !prev[gateway]}));
   };
 
-  const handleSaveApiKeys = async (e: React.FormEvent) => {
+  const handleSaveSecuritySettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await updateApiKeys({ geminiApiKey, reCaptchaSiteKey, reCaptchaSecretKey });
+      await updateSecuritySettings({ 
+          geminiApiKey, 
+          reCaptchaSiteKey, 
+          reCaptchaSecretKey,
+          isCaptchaEnabled,
+          isMerchantCaptchaRequired,
+          isAdmin2faEnabled,
+      });
       toast({
         title: "Success",
-        description: "API Keys saved successfully.",
+        description: "API & Security settings saved successfully.",
       });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save API Keys.",
+        description: "Failed to save settings.",
       });
     } finally {
         setIsLoading(false);
@@ -209,7 +222,7 @@ export default function SettingsPage() {
               <CardTitle>API & Security</CardTitle>
               <CardDescription>Manage global API keys and security settings.</CardDescription>
             </CardHeader>
-            <form onSubmit={handleSaveApiKeys}>
+            <form onSubmit={handleSaveSecuritySettings}>
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-4">
@@ -261,21 +274,21 @@ export default function SettingsPage() {
                                 <h4 className="font-medium">Enable Captcha on Admin Login</h4>
                                 <p className="text-sm text-muted-foreground">Protects your admin login page from bots.</p>
                                 </div>
-                                <Switch checked={isCaptchaEnabled} onCheckedChange={setIsCaptchaEnabled} />
+                                <Switch checked={isCaptchaEnabled} onCheckedChange={setIsCaptchaEnabled} disabled={isLoading} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-4">
                                 <div>
                                 <h4 className="font-medium">Require Captcha for Merchants</h4>
                                 <p className="text-sm text-muted-foreground">Enforce Captcha on merchant login & signup.</p>
                                 </div>
-                                <Switch checked={isMerchantCaptchaRequired} onCheckedChange={setIsMerchantCaptchaRequired} />
+                                <Switch checked={isMerchantCaptchaRequired} onCheckedChange={setIsMerchantCaptchaRequired} disabled={isLoading} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-4">
                                 <div>
                                 <h4 className="font-medium">Enable 2-Step Verification for Admin</h4>
                                 <p className="text-sm text-muted-foreground">Secure your own admin account.</p>
                                 </div>
-                                <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} />
+                                <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} disabled={isLoading} />
                             </div>
                         </div>
                     </div>
