@@ -533,14 +533,14 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         </>
                     )}
                     {dialogOpen === 'success' && (
-                         <div className="space-y-2">
-                             <Button variant="link" className="p-0 h-auto justify-start" onClick={() => openTransactionListDialog('total')}>
+                         <div className="space-y-4">
+                             <Button variant="link" className="p-0 h-auto justify-start w-full" onClick={() => openTransactionListDialog('total')}>
                                 <div className="flex justify-between w-full"><span className="text-muted-foreground">Total Transactions Attempted:</span> <span className="font-semibold">{allTransactions.length}</span></div>
                              </Button>
-                              <Button variant="link" className="p-0 h-auto justify-start" onClick={() => openTransactionListDialog('successful')}>
+                              <Button variant="link" className="p-0 h-auto justify-start w-full" onClick={() => openTransactionListDialog('successful')}>
                                 <div className="flex justify-between w-full"><span className="text-muted-foreground">Successful Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Success').length}</span></div>
                              </Button>
-                             <Button variant="link" className="p-0 h-auto justify-start" onClick={() => openTransactionListDialog('failed')}>
+                             <Button variant="link" className="p-0 h-auto justify-start w-full" onClick={() => openTransactionListDialog('failed')}>
                                 <div className="flex justify-between w-full"><span className="text-muted-foreground">Failed Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Failed').length}</span></div>
                              </Button>
                             <Separator/>
