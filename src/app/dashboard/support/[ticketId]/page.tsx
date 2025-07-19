@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, User, Calendar, MessageSquare, LifeBuoy } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MessageSquare, LifeBuoy, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,6 +87,14 @@ export default function AdminTicketDetailPage() {
       toast({ title: "Priority Updated" });
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+        description: `${text} has been copied to your clipboard.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Link href="/dashboard/support" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -148,6 +156,7 @@ export default function AdminTicketDetailPage() {
                     <div className="flex items-center gap-2">
                         <LifeBuoy className="w-4 h-4 text-muted-foreground" />
                         <span className="font-mono">{ticket.id}</span>
+                         <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(ticket.id, 'Ticket ID')} />
                     </div>
                     <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground" />

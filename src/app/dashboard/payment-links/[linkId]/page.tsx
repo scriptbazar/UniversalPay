@@ -1,13 +1,14 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 const linkDetails = {
     id: "plink_1",
@@ -32,6 +33,14 @@ const recentTransactions = [
 ];
 
 export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
+  const { toast } = useToast();
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -48,9 +57,12 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                             <Link2 className="h-8 w-8 text-muted-foreground" />
                             <div>
                                 <CardTitle className="text-2xl">{linkDetails.title}</CardTitle>
-                                <a href={linkDetails.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
-                                    {linkDetails.url} <ExternalLink className="h-3 w-3" />
-                                </a>
+                                <div className="flex items-center gap-2">
+                                    <a href={linkDetails.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
+                                        {linkDetails.url} <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(linkDetails.url, 'Payment Link')} />
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 mt-2">

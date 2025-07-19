@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserX, Wallet } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserX, Wallet, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 
 const merchant = {
@@ -110,6 +111,7 @@ type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'tr
 
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   const [dialogTitle, setDialogTitle] = useState('');
   
@@ -182,6 +184,14 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
       return `₹${value.toLocaleString()}`;
     }
     return `$${value.toLocaleString()}`;
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+        description: `${text} has been copied to your clipboard.`,
+    });
   };
 
 
@@ -431,7 +441,10 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     <div className="space-y-4 py-4">
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Transaction ID:</span>
-                            <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                            <span className="font-mono font-semibold flex items-center gap-2">
+                                {selectedTransaction.id}
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                            </span>
                         </div>
                         <Separator/>
                         <div className="flex justify-between items-center">
@@ -471,7 +484,10 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     <div className="space-y-4 py-4">
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Withdrawal ID:</span>
-                            <span className="font-mono font-semibold">{selectedWithdrawal.id}</span>
+                            <span className="font-mono font-semibold flex items-center gap-2">
+                                {selectedWithdrawal.id}
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedWithdrawal.id, 'Withdrawal ID')} />
+                            </span>
                         </div>
                         <Separator/>
                         <div className="flex justify-between items-center">
@@ -486,7 +502,10 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                          <Separator/>
                          <div className="flex flex-col space-y-2">
                             <span className="text-muted-foreground">Destination Address:</span>
-                            <span className="font-mono font-semibold break-all">{selectedWithdrawal.destination}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono font-semibold break-all">{selectedWithdrawal.destination}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground flex-shrink-0" onClick={() => copyToClipboard(selectedWithdrawal.destination, 'Destination Address')} />
+                            </div>
                         </div>
                         <Separator/>
                         <div className="flex justify-between items-center">
