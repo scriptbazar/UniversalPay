@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRightLeft, Search, Bot } from 'lucide-react';
+import { ArrowRightLeft, Bot } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencies } from '@/lib/currencies';
@@ -76,6 +76,11 @@ export default function CurrencyConverterPage() {
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState('');
+
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleTimeString());
+  }, []);
 
   const exchangeRate = 83.5; // Dummy exchange rate for demonstration
 
@@ -104,8 +109,8 @@ export default function CurrencyConverterPage() {
     setIsLoading(true);
     setAiResponse('');
     try {
-      const response = await getCurrencyInfo({ currency: aiQuery });
-      setAiResponse(response.explanation);
+      const { explanation } = await getCurrencyInfo({ currency: aiQuery });
+      setAiResponse(explanation);
     } catch (error) {
       console.error("AI query failed:", error);
       toast({
@@ -169,7 +174,7 @@ export default function CurrencyConverterPage() {
 
             <div className="text-sm text-muted-foreground pt-4">
                 1 {fromCurrency.code} = {exchangeRate} {toCurrency.code}
-                <p className="text-xs">Last updated: {new Date().toLocaleTimeString()}. Rates are for demonstration purposes.</p>
+                {lastUpdated && <p className="text-xs">Last updated: {lastUpdated}. Rates are for demonstration purposes.</p>}
             </div>
 
           </CardContent>
