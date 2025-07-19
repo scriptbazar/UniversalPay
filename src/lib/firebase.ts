@@ -16,39 +16,44 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 
-// Initialize Firebase lazily
-function initializeFirebase() {
-    if (!getApps().length) {
-        if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
-            app = initializeApp(firebaseConfig);
+// Lazily initialize Firebase
+function getFirebaseInstances() {
+    if (typeof window !== 'undefined') {
+        if (!getApps().length) {
+            if (firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
+                app = initializeApp(firebaseConfig);
+            } else {
+                console.error("Firebase configuration is missing or incomplete. Please check your .env file.");
+                throw new Error("Firebase configuration is incomplete.");
+            }
         } else {
-            console.error("Firebase configuration is missing or incomplete. Please check your .env file.");
-            // We can't initialize, so we'll have to stop here.
-            throw new Error("Firebase configuration is incomplete.");
+            app = getApp();
         }
+        auth = getAuth(app);
+        db = getFirestore(app);
     } else {
-        app = getApp();
-    }
-    auth = getAuth(app);
-    db = getFirestore(app);
-}
-
-// Ensure Firebase is initialized before exporting
-if (!getApps().length) {
-    if(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
-        initializeFirebase();
-    } else {
-        // If config is missing, set up dummy exports that will throw an error if used.
-        const uninitializedError = () => { throw new Error("Firebase is not initialized. Please provide necessary environment variables.") };
+       // Provide dummy instances for server-side rendering
         app = {} as FirebaseApp;
-        auth = { currentUser: null } as unknown as Auth;
+        auth = {} as Auth;
         db = {} as Firestore;
     }
-} else {
-    app = getApp();
-    auth = getAuth(app);
-    db = getFirestore(app);
+    return { app, auth, db };
 }
+
+// Export a function that returns the instances
+function getAuthInstance() {
+    return getFirebaseInstances().auth;
+}
+
+function getDbInstance() {
+    return getFirebaseInstances().db;
+}
+
+// Initial call to set up the exports
+const instances = getFirebaseInstances();
+app = instances.app;
+auth = instances.auth;
+db = instances.db;
 
 
 export { app, auth, db };
