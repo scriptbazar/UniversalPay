@@ -18,7 +18,8 @@ import {
   Link2,
   ArrowRightLeft,
   FileText,
-  Replace
+  Replace,
+  LifeBuoy
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const navItems = [
   { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
+  { href: "/dashboard/support", icon: LifeBuoy, label: "Support Tickets" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud & Risk" },
   { href: "/dashboard/reseller", icon: Briefcase, label: "Reseller Accounts" },
   { href: "/dashboard/developer", icon: Code, label: "Platform SDKs" },

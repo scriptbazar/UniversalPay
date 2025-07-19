@@ -19,7 +19,8 @@ import {
   Briefcase,
   Landmark,
   Link2,
-  ArrowRightLeft
+  ArrowRightLeft,
+  LifeBuoy
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,7 @@ const navItems = [
   { href: "/merchant/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/merchant/invoices", icon: FileText, label: "Invoices" },
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
+  { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
