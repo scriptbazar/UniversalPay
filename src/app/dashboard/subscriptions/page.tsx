@@ -103,7 +103,7 @@ export default function SubscriptionsPage() {
                 <TableBody>
                     {subscriptionPlans.map(plan => (
                         <TableRow key={plan.name}>
-                            <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
+                            <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' ? 'default' : plan.name === 'Premium' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
                             <TableCell>{plan.price}</TableCell>
                             <TableCell>{plan.transactions}</TableCell>
                             <TableCell>{plan.features}</TableCell>
