@@ -77,7 +77,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: strin
 
                         <div className="w-full">
                             <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
-                             <div className="grid grid-cols-2 gap-2">
+                             <div className="flex flex-col space-y-2">
                                 <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
                                 <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
                                 <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
@@ -94,7 +94,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: strin
 
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
-                        </p>
+                         </p>
                     </div>
                 </CardContent>
             </Card>
