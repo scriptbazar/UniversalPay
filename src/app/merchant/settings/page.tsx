@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -36,9 +36,27 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M7.069 5.633H11.516C12.186 5.633 12.613 5.645 12.802 5.669C15.424 5.926 17.37 7.952 17.061 10.518C16.911 11.762 16.143 12.748 15.012 13.284C14.73 13.408 14.418 13.508 14.124 13.54C14.049 13.553 13.974 13.565 13.899 13.565C13.899 13.565 13.899 13.565 13.887 13.565H13.874C13.799 13.565 13.737 13.553 13.674 13.54C13.624 13.528 13.587 13.515 13.549 13.503C13.061 13.341 12.634 12.98 12.383 12.518L12.333 12.431L11.042 17.435C10.956 17.765 10.675 18 10.334 18H7.424C7.032 18 6.714 17.694 6.789 17.309L9.431 3.483C9.481 3.203 9.722 3 3.009 3H12.802C15.82 3 18.15 5.026 18.495 7.915C18.827 10.716 17.152 13.044 14.654 13.793C16.012 14.288 16.996 15.525 16.634 17.063C16.21 18.825 14.666 20.213 12.79 20.358C12.74 20.368 12.703 20.378 12.653 20.38C11.996 20.455 11.238 20.305 10.669 19.929L10.594 19.88L10.544 19.842C10.012 19.501 9.619 19.013 9.444 18.431L9.407 18.307L8.03 12.996L6.533 13.623C6.168 13.773 5.766 13.565 5.654 13.18L3.061 3.483C2.949 3.109 3.157 2.706 3.534 2.594L6.444 1.706C6.82 1.594 7.223 1.802 7.335 2.176L8.136 4.887C8.211 5.129 8.452 5.304 8.711 5.304H9.173L8.855 3.93C8.78 3.545 9.098 3.239 9.49 3.239H9.984C10.225 3.239 10.429 3.419 10.466 3.659L11.833 9.11L11.846 9.158C11.896 9.398 12.112 9.573 12.359 9.573H12.912C14.868 9.573 16.146 8.27 16.296 6.5C16.42 5.039 15.424 3.827 14.072 3.587C13.432 3.475 12.827 3.425 12.288 3.425H10.134L9.048 8.199L7.492 5.894C7.394 5.744 7.232 5.633 7.069 5.633Z"/>
+      <path d="M7.069 5.633H11.516C12.186 5.633 12.613 5.645 12.802 5.669C15.424 5.926 17.37 7.952 17.061 10.518C16.911 11.762 16.143 12.748 15.012 13.284C14.73 13.408 14.418 13.508 14.124 13.54C14.049 13.553 13.974 13.565 13.899 13.565C13.899 13.565 13.899 13.565 13.887 13.565H13.874C13.799 13.565 13.737 13.553 13.674 13.54C13.624 13.528 13.587 13.515 13.549 13.503C13.061 13.341 12.634 12.98 12.383 12.518L12.333 12.431L11.042 17.435C10.956 17.765 10.675 18 10.334 18H7.424C7.032 18 6.714 17.694 6.789 17.309L9.431 3.483C9.481 3.203 9.722 3 10.009 3H12.802C15.82 3 18.15 5.026 18.495 7.915C18.827 10.716 17.152 13.044 14.654 13.793C16.012 14.288 16.996 15.525 16.634 17.063C16.21 18.825 14.666 20.213 12.79 20.358C12.74 20.368 12.703 20.378 12.653 20.38C11.996 20.455 11.238 20.305 10.669 19.929L10.594 19.88L10.544 19.842C10.012 19.501 9.619 19.013 9.444 18.431L9.407 18.307L8.03 12.996L6.533 13.623C6.168 13.773 5.766 13.565 5.654 13.18L3.061 3.483C2.949 3.109 3.157 2.706 3.534 2.594L6.444 1.706C6.82 1.594 7.223 1.802 7.335 2.176L8.136 4.887C8.211 5.129 8.452 5.304 8.711 5.304H9.173L8.855 3.93C8.78 3.545 9.098 3.239 9.49 3.239H9.984C10.225 3.239 10.429 3.419 10.466 3.659L11.833 9.11L11.846 9.158C11.896 9.398 12.112 9.573 12.359 9.573H12.912C14.868 9.573 16.146 8.27 16.296 6.5C16.42 5.039 15.424 3.827 14.072 3.587C13.432 3.475 12.827 3.425 12.288 3.425H10.134L9.048 8.199L7.492 5.894C7.394 5.744 7.232 5.633 7.069 5.633Z"/>
     </svg>
 );
+
+const CodeSnippet = ({ code }: { code: string }) => {
+    const { toast } = useToast();
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(code.trim());
+        toast({ title: "Copied to clipboard!" });
+    };
+    return (
+        <div className="relative">
+            <pre className="p-4 rounded-md bg-muted text-sm overflow-x-auto">
+                <code>{code.trim()}</code>
+            </pre>
+            <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={copyToClipboard}>
+                <Copy className="h-4 w-4" />
+            </Button>
+        </div>
+    );
+};
 
 
 const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: string, logo: string | null, businessName: string }) => {
@@ -111,7 +129,6 @@ interface SettingsPageProps {
 
 export default function SettingsPage({ merchantName = "My Awesome Store", setMerchantName = () => {} }: SettingsPageProps) {
   const { toast } = useToast();
-  const [geminiApiKey, setGeminiApiKey] = useState('');
   
   // Branding states
   const [businessName, setBusinessName] = useState('My Awesome Store');
@@ -135,31 +152,6 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
 
   const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
     setPaymentMethods(prev => ({ ...prev, [method]: !prev[method] }));
-  };
-
-  const handleSaveApiKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!geminiApiKey) {
-        toast({
-            variant: "destructive",
-            title: "API Key Required",
-            description: "Please enter your Gemini API Key.",
-        });
-        return;
-    }
-    try {
-      await updateGeminiApiKey(geminiApiKey);
-      toast({
-        title: "Success",
-        description: "Gemini API Key saved successfully.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save API Key.",
-      });
-    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -512,37 +504,146 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
           </Card>
         </TabsContent>
          <TabsContent value="integrations" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Integrations</CardTitle>
-              <CardDescription>Manage API keys for third-party services.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <form onSubmit={handleSaveApiKey} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gemini-api-key" className="flex items-center gap-2">
-                    <KeyRound className="w-4 h-4" />
-                    Google Gemini API Key
-                  </Label>
-                  <Input 
-                    id="gemini-api-key" 
-                    type="password" 
-                    placeholder="Enter your Gemini API Key" 
-                    value={geminiApiKey}
-                    onChange={(e) => setGeminiApiKey(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This key is required for AI-powered features like the currency assistant.
-                  </p>
-                </div>
-                <Button type="submit">Save API Key</Button>
-              </form>
-            </CardContent>
-          </Card>
+            <Tabs defaultValue="sdks" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="sdks">SDKs & Guides</TabsTrigger>
+                    <TabsTrigger value="checkout">JS Widget</TabsTrigger>
+                </TabsList>
+                <TabsContent value="sdks" className="pt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>SDKs and Integration Guides</CardTitle>
+                            <CardDescription>
+                            Integrate UniversalPay into your application with our official libraries and guides.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <Alert>
+                                <Code2 className="h-4 w-4" />
+                                <AlertTitle>Server-Side Integration</AlertTitle>
+                                <AlertDescription>
+                                    All payment and withdrawal logic should be handled on your server using your Secret Key to ensure security. Never expose your secret key in client-side code.
+                                </AlertDescription>
+                            </Alert>
+
+                            <Tabs defaultValue="server-side" className="w-full">
+                                <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="server-side" className="gap-2"><Server/>Server-Side</TabsTrigger>
+                                    <TabsTrigger value="client-side" className="gap-2"><Smartphone/>Client-Side</TabsTrigger>
+                                    <TabsTrigger value="ecommerce" className="gap-2"><Store/>eCommerce</TabsTrigger>
+                                </TabsList>
+                                
+                                <TabsContent value="server-side" className="pt-6">
+                                    <Tabs defaultValue="nodejs" className="w-full">
+                                        <TabsList className="overflow-x-auto w-full justify-start">
+                                            <TabsTrigger value="nodejs">Node.js</TabsTrigger>
+                                            <TabsTrigger value="php">PHP</TabsTrigger>
+                                            <TabsTrigger value="python">Python</TabsTrigger>
+                                            <TabsTrigger value="ruby">Ruby</TabsTrigger>
+                                            <TabsTrigger value="go">Go</TabsTrigger>
+                                            <TabsTrigger value="java">Java</TabsTrigger>
+                                        </TabsList>
+                                        <TabsContent value="nodejs" className="pt-4">
+                                            <h3 className="font-semibold text-lg mb-2">Node.js Integration</h3>
+                                            <p className="text-sm text-muted-foreground mb-4">Install our Node.js library to get started.</p>
+                                            <CodeSnippet code="npm install universalpay-node" />
+                                            <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                            <CodeSnippet code={`
+        const universalpay = require('universalpay-node')('YOUR_SECRET_KEY');
+
+        async function createPayment() {
+        try {
+            const payment = await universalpay.payments.create({
+            amount: 1000, // amount in smallest currency unit
+            currency: 'INR',
+            receipt: 'receipt_order_7432',
+            });
+            console.log('Payment created:', payment.id);
+            // Redirect customer to payment.checkout_url
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        }
+        createPayment();
+                                            `} />
+                                        </TabsContent>
+                                        <TabsContent value="php" className="pt-4">
+                                             <h3 className="font-semibold text-lg mb-2">PHP Integration</h3>
+                                             <p className="text-sm text-muted-foreground mb-4">Use Composer to install our PHP library.</p>
+                                             <CodeSnippet code="composer require universalpay/universalpay-php" />
+                                             <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                             <CodeSnippet code={`
+        require_once('vendor/autoload.php');
+        use UniversalPay\\Api;
+
+        $api = new Api('YOUR_SECRET_KEY');
+
+        $payment = $api->payment->create([
+            'amount' => 1000,
+            'currency' => 'INR',
+            'receipt' => 'receipt_order_7432'
+        ]);
+
+        $paymentId = $payment->id;
+        $checkoutUrl = $payment->checkout_url;
+        // Redirect customer to $checkoutUrl
+                                             `} />
+                                         </TabsContent>
+                                    </Tabs>
+                                </TabsContent>
+                                <TabsContent value="client-side" className="pt-6">
+                                    <p>Client side integrations coming soon.</p>
+                                </TabsContent>
+                                <TabsContent value="ecommerce" className="pt-6">
+                                     <p>eCommerce integrations coming soon.</p>
+                                </TabsContent>
+                            </Tabs>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="checkout" className="pt-4">
+                    <Card>
+                        <CardHeader>
+                        <CardTitle>Embedded Checkout Widget</CardTitle>
+                        <CardDescription>
+                            Easily embed a secure payment form on any website with a single HTML script tag.
+                        </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Alert variant="destructive">
+                                <Info className="h-4 w-4" />
+                                <AlertTitle>Important Security Note</AlertTitle>
+                                <AlertDescription>
+                                    The JS Widget should be used for collecting payment details only. You must always verify the payment status on your server using your Secret Key to confirm the payment was successful.
+                                </AlertDescription>
+                            </Alert>
+                        <div>
+                            <Label>Embed Script</Label>
+                            <CodeSnippet code={`
+        <script src="https://cdn.universalpay.com/checkout.js"></script>
+        <form>
+        <script
+            src="https://checkout.universalpay.com/v1/checkout.js"
+            data-key="YOUR_PUBLISHABLE_KEY"
+            data-amount="1000"
+            data-currency="INR"
+            data-name="Your Business Name"
+            data-description="Test Transaction"
+            data-image="https://your-logo.com/logo.png"
+            data-prefill.name="John Doe"
+            data-prefill.email="john.doe@example.com"
+        >
+        </script>
+        <input type="hidden" custom="Hidden Value" name="hidden">
+        </form>
+                            `} />
+                        </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
-
-    
