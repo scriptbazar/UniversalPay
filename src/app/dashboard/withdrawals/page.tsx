@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type Withdrawal = {
   id: string;
@@ -47,9 +48,11 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
 
 export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
+    const router = useRouter();
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>(initialWithdrawals);
 
-    const handleAction = (id: string, newStatus: "Completed" | "Failed") => {
+    const handleAction = (e: React.MouseEvent, id: string, newStatus: "Completed" | "Failed") => {
+        e.stopPropagation(); // Prevent row click event
         setWithdrawals(prev => 
             prev.map(w => w.id === id ? { ...w, status: newStatus } : w)
         );
@@ -59,6 +62,10 @@ export default function AdminWithdrawalsPage() {
         });
     };
     
+    const handleRowClick = (withdrawalId: string) => {
+        router.push(`/dashboard/withdrawals/${withdrawalId}`);
+    };
+
     const itemsPerPage = 5;
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.ceil(withdrawals.length / itemsPerPage);
@@ -96,7 +103,7 @@ export default function AdminWithdrawalsPage() {
             </TableHeader>
             <TableBody>
               {paginatedWithdrawals.map((w) => (
-                <TableRow key={w.id}>
+                <TableRow key={w.id} onClick={() => handleRowClick(w.id)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{w.id}</TableCell>
                   <TableCell>
                     <div className="font-medium">{w.merchantName}</div>
@@ -111,10 +118,10 @@ export default function AdminWithdrawalsPage() {
                   <TableCell className="text-right">
                     {w.status === "Pending" && (
                         <div className="flex gap-2 justify-end">
-                            <Button size="sm" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={() => handleAction(w.id, 'Completed')}>
+                            <Button size="sm" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={(e) => handleAction(e, w.id, 'Completed')}>
                                 <Check className="h-4 w-4 mr-2" />Approve
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleAction(w.id, 'Failed')}>
+                            <Button size="sm" variant="destructive" onClick={(e) => handleAction(e, w.id, 'Failed')}>
                                 <X className="h-4 w-4 mr-2" />Reject
                             </Button>
                         </div>
