@@ -286,17 +286,19 @@ export default function SettingsPage() {
 
                              <div className="space-y-4 p-4 border rounded-lg">
                                 <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5"/> Legal &amp; Links</h3>
-                                <div className="space-y-2">
-                                    <Label htmlFor="business-name-checkout">Business Name on Checkout</Label>
-                                    <Input 
-                                        id="business-name-checkout" 
-                                        value={businessName} 
-                                        onChange={(e) => setBusinessName(e.target.value)}
-                                     />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="terms-url">Terms of Service URL</Label>
-                                    <Input id="terms-url" placeholder="https://your-website.com/terms" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="business-name-checkout">Business Name on Checkout</Label>
+                                        <Input 
+                                            id="business-name-checkout" 
+                                            value={businessName} 
+                                            onChange={(e) => setBusinessName(e.target.value)}
+                                         />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="terms-url">Terms of Service URL</Label>
+                                        <Input id="terms-url" placeholder="https://your-website.com/terms" />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="privacy-url">Privacy Policy URL</Label>
