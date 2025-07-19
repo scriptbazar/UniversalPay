@@ -8,17 +8,51 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ArrowRightLeft, Bot } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencies } from '@/lib/currencies';
 import { getCurrencyInfo } from '@/ai/flows/currencyInfoFlow';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 type Currency = {
   code: string;
   name: string;
 };
+
+function CurrencyList({
+  setOpen,
+  onSelect,
+}: {
+  setOpen: (open: boolean) => void;
+  onSelect: (currency: Currency) => void;
+}) {
+  return (
+    <Command>
+      <CommandInput placeholder="Search currency..." />
+      <CommandList>
+        <CommandEmpty>No currency found.</CommandEmpty>
+        <CommandGroup>
+          {currencies.map((currency) => (
+            <CommandItem
+              key={currency.code}
+              value={`${currency.code} ${currency.name}`}
+              onSelect={() => {
+                onSelect(currency);
+                setOpen(false);
+              }}
+            >
+              <span className="font-medium mr-2">{currency.code}</span>
+              <span className="text-muted-foreground">{currency.name}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
+  );
+}
 
 const CurrencySelector = ({
   selected,
@@ -28,45 +62,45 @@ const CurrencySelector = ({
   onSelect: (currency: Currency) => void;
 }) => {
   const [open, setOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full justify-start font-normal">
+            {selected.code} - {selected.name}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Select Currency</DialogTitle>
+            <DialogDescription>
+              Choose a currency from the list below.
+            </DialogDescription>
+          </DialogHeader>
+          <CurrencyList setOpen={setOpen} onSelect={onSelect} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
         <Button variant="outline" className="w-full justify-start font-normal">
           {selected.code} - {selected.name}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="p-0 w-[300px]" 
-        side="bottom" 
-        align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <Command>
-          <CommandInput placeholder="Search currency..." />
-          <CommandList>
-            <CommandEmpty>No currency found.</CommandEmpty>
-            <CommandGroup>
-              {currencies.map((currency) => (
-                <CommandItem
-                  key={currency.code}
-                  value={`${currency.code} ${currency.name}`}
-                  onSelect={() => {
-                    onSelect(currency);
-                    setOpen(false);
-                  }}
-                >
-                  <span>{currency.code}</span>
-                  <span className="text-muted-foreground ml-2">{currency.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+      </DrawerTrigger>
+      <DrawerContent>
+        <div className="mt-4 border-t">
+          <CurrencyList setOpen={setOpen} onSelect={onSelect} />
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
+
 
 export default function CurrencyConverterPage() {
     const { toast } = useToast();
