@@ -7,9 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X } from "lucide-react";
+import { Check, X, User, Calendar, DollarSign, Hash, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getWalletLoadRequests, updateWalletLoadRequestStatus, type WalletLoadRequest } from "@/lib/walletLoadData";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import Link from "next/link";
 
 const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
   switch (status) {
@@ -27,17 +29,28 @@ const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
 export default function AdminWalletLoadsPage() {
     const { toast } = useToast();
     const [requests, setRequests] = useState<WalletLoadRequest[]>([]);
+    const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
 
     useEffect(() => {
         setRequests(getWalletLoadRequests());
     }, []);
 
-    const handleAction = (id: string, newStatus: "Approved" | "Rejected") => {
+    const handleAction = (e: React.MouseEvent, id: string, newStatus: "Approved" | "Rejected") => {
+        e.stopPropagation();
         updateWalletLoadRequestStatus(id, newStatus);
         setRequests(getWalletLoadRequests()); // Refresh data
+        setSelectedRequest(null);
         toast({
             title: `Request ${newStatus}`,
             description: `The wallet load request (ID: ${id}) has been updated.`,
+        });
+    };
+    
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: `${label} Copied!`,
+            description: `${text} has been copied to your clipboard.`,
         });
     };
 
@@ -52,7 +65,7 @@ export default function AdminWalletLoadsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Requests</CardTitle>
-          <CardDescription>A list of all wallet load requests from merchants.</CardDescription>
+          <CardDescription>A list of all wallet load requests from merchants. Click a row for details.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -64,12 +77,11 @@ export default function AdminWalletLoadsPage() {
                 <TableHead>Reference/Txn ID</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {requests.map((req) => (
-                <TableRow key={req.id}>
+                <TableRow key={req.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedRequest(req)}>
                   <TableCell className="font-medium">{req.id}</TableCell>
                   <TableCell>{req.merchantName}</TableCell>
                   <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
@@ -78,26 +90,52 @@ export default function AdminWalletLoadsPage() {
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(req.status)}>{req.status}</Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    {req.status === 'Pending' ? (
-                      <div className="flex gap-2 justify-end">
-                        <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-100" onClick={() => handleAction(req.id, "Approved")}>
-                          <Check className="h-4 w-4 mr-1" /> Approve
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleAction(req.id, "Rejected")}>
-                          <X className="h-4 w-4 mr-1" /> Reject
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Processed</span>
-                    )}
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+      
+      <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wallet Load Request</DialogTitle>
+            {selectedRequest && <DialogDescription>Details for request {selectedRequest.id}.</DialogDescription>}
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4 py-4">
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Merchant:</span> <Link href={`/dashboard/users/${selectedRequest.merchantId}`} className="font-semibold hover:underline">{selectedRequest.merchantName}</Link></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedRequest.amount}</span></div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Reference ID:</span>
+                    <div className="flex items-center gap-2">
+                        <span className="font-mono font-semibold">{selectedRequest.transactionId}</span>
+                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedRequest.transactionId, 'Reference ID')} />
+                    </div>
+                </div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedRequest.status)}>{selectedRequest.status}</Badge></div>
+                {selectedRequest.status === 'Pending' && (
+                    <>
+                    <Separator className="my-4"/>
+                    <div className="flex gap-2 justify-end">
+                        <Button variant="outline" className="text-green-600 border-green-600 hover:bg-green-100" onClick={(e) => handleAction(e, selectedRequest!.id, "Approved")}>
+                            <Check className="h-4 w-4 mr-1" /> Approve
+                        </Button>
+                        <Button variant="destructive" onClick={(e) => handleAction(e, selectedRequest!.id, "Rejected")}>
+                            <X className="h-4 w-4 mr-1" /> Reject
+                        </Button>
+                    </div>
+                    </>
+                )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

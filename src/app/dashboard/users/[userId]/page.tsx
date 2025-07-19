@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,8 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 
 const initialMerchant = {
@@ -98,6 +100,7 @@ const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
         case 'completed':
         case 'success':
+        case 'active':
             return 'default';
         case 'pending':
             return 'secondary';
@@ -127,6 +130,9 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  const [walletBalance, setWalletBalance] = useState(parseFloat(stats.walletBalance.replace(/,/g, '')));
+  const [adjustmentAmount, setAdjustmentAmount] = useState('');
+
   const handleToggleSuspend = () => {
     const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
     setMerchant(prev => ({...prev, status: newStatus}));
@@ -134,6 +140,24 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         title: `Merchant ${newStatus}`,
         description: `${merchant.name} has been ${newStatus.toLowerCase()}.`
     });
+  };
+  
+  const handleWalletAdjustment = (type: 'credit' | 'debit') => {
+      const amount = parseFloat(adjustmentAmount);
+      if (isNaN(amount) || amount <= 0) {
+          toast({ variant: 'destructive', title: 'Invalid Amount' });
+          return;
+      }
+
+      if (type === 'debit' && amount > walletBalance) {
+          toast({ variant: 'destructive', title: 'Insufficient Balance' });
+          return;
+      }
+      
+      const newBalance = type === 'credit' ? walletBalance + amount : walletBalance - amount;
+      setWalletBalance(newBalance);
+      toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
+      setAdjustmentAmount('');
   };
 
   const handleLoginAsUser = () => {
@@ -280,7 +304,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     <Wallet className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${stats.walletBalance}</div>
+                    <div className="text-2xl font-bold">${walletBalance.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card onClick={() => openStatDialog('withdraw')} className="cursor-pointer hover:bg-muted/50">
@@ -366,36 +390,72 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </CardContent>
             </Card>
         </div>
-        <Card>
-            <CardHeader>
-                <CardTitle>Withdrawal History</CardTitle>
-                <CardDescription>Full withdrawal history for this merchant.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Withdrawal ID</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {withdrawalHistory.map(w => (
-                            <TableRow key={w.id} onClick={() => handleWithdrawalRowClick(w)} className="cursor-pointer hover:bg-muted/50">
-                                <TableCell className="font-medium">{w.id}</TableCell>
-                                <TableCell>
-                                    <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
-                                </TableCell>
-                                <TableCell>{w.date}</TableCell>
-                                <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
+        
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+             <Card>
+                <CardHeader>
+                    <CardTitle>Withdrawal History</CardTitle>
+                    <CardDescription>Full withdrawal history for this merchant.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Withdrawal ID</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                        </TableHeader>
+                        <TableBody>
+                            {withdrawalHistory.map(w => (
+                                <TableRow key={w.id} onClick={() => handleWithdrawalRowClick(w)} className="cursor-pointer hover:bg-muted/50">
+                                    <TableCell className="font-medium">{w.id}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>{w.date}</TableCell>
+                                    <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Wallet Management</CardTitle>
+                    <CardDescription>Manually adjust the merchant's wallet balance.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
+                        <Wallet className="w-6 h-6 text-muted-foreground"/>
+                        <span className="text-muted-foreground">Current Balance:</span>
+                        <span className="text-2xl font-bold">${walletBalance.toFixed(2)}</span>
+                    </div>
+                    <Separator/>
+                    <div className="space-y-2">
+                        <Label htmlFor="adjustment-amount">Adjustment Amount (USD)</Label>
+                        <Input
+                            id="adjustment-amount"
+                            type="number"
+                            placeholder="e.g., 100.00"
+                            value={adjustmentAmount}
+                            onChange={(e) => setAdjustmentAmount(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button onClick={() => handleWalletAdjustment('credit')}>
+                            <PlusCircle className="mr-2 h-4 w-4"/> Credit (Add Funds)
+                        </Button>
+                        <Button variant="destructive" onClick={() => handleWalletAdjustment('debit')}>
+                            <MinusCircle className="mr-2 h-4 w-4"/> Debit (Remove Funds)
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
 
         {/* Transaction List Dialog (For Revenue, Payment Method and Success Rate clicks) */}
         <Dialog open={dialogOpen === 'method' || dialogOpen === 'revenue' || dialogOpen === 'transactionList'} onOpenChange={() => setDialogOpen(null)}>
@@ -568,12 +628,12 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                             <div className="flex justify-between"><span className="text-muted-foreground">Total Credits:</span> <span className="font-semibold">$50,123.45</span></div>
                             <div className="flex justify-between"><span className="text-muted-foreground">Total Debits (Withdrawals + Fees):</span> <span className="font-semibold">$44,692.95</span></div>
                             <Separator/>
-                            <div className="flex justify-between font-bold text-lg"><span>Current Balance:</span> <span>${stats.walletBalance}</span></div>
+                            <div className="flex justify-between font-bold text-lg"><span>Current Balance:</span> <span>${walletBalance.toFixed(2)}</span></div>
                         </div>
                     )}
                      {dialogOpen === 'withdraw' && (
                         <div className="space-y-4">
-                             <div className="flex justify-between"><span className="text-muted-foreground">Wallet Balance:</span> <span className="font-semibold">${stats.walletBalance}</span></div>
+                             <div className="flex justify-between"><span className="text-muted-foreground">Wallet Balance:</span> <span className="font-semibold">${walletBalance.toFixed(2)}</span></div>
                              <div className="flex justify-between"><span className="text-muted-foreground">Pending Settlements:</span> <span className="font-semibold">-$230.50</span></div>
                              <Separator/>
                             <div className="flex justify-between font-bold text-lg"><span>Available to Withdraw:</span> <span>${stats.availableToWithdraw}</span></div>
@@ -604,4 +664,3 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     </div>
   )
 }
-
