@@ -39,13 +39,13 @@ import { Logo } from "@/components/logo";
 const CodeSnippet = ({ code }: { code: string }) => {
     const { toast } = useToast();
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(code);
+        navigator.clipboard.writeText(code.trim());
         toast({ title: "Copied to clipboard!" });
     };
     return (
         <div className="relative">
             <pre className="p-4 rounded-md bg-muted text-sm overflow-x-auto">
-                <code>{code}</code>
+                <code>{code.trim()}</code>
             </pre>
             <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={copyToClipboard}>
                 <Copy className="h-4 w-4" />
@@ -235,9 +235,13 @@ export default function DeveloperPage() {
                 </Alert>
 
                 <Tabs defaultValue="nodejs" className="w-full">
-                    <TabsList>
+                    <TabsList className="overflow-x-auto w-full justify-start">
                         <TabsTrigger value="nodejs">Node.js</TabsTrigger>
                         <TabsTrigger value="php">PHP</TabsTrigger>
+                        <TabsTrigger value="python">Python</TabsTrigger>
+                        <TabsTrigger value="ruby">Ruby</TabsTrigger>
+                        <TabsTrigger value="go">Go</TabsTrigger>
+                        <TabsTrigger value="java">Java</TabsTrigger>
                         <TabsTrigger value="react">React</TabsTrigger>
                         <TabsTrigger value="flutter">Flutter</TabsTrigger>
                         <TabsTrigger value="wordpress">WordPress</TabsTrigger>
@@ -254,11 +258,9 @@ const transactwave = require('transactwave-node')('YOUR_SECRET_KEY');
 async function createPayment() {
   try {
     const payment = await transactwave.payments.create({
-      amount: 1000, // amount in smallest currency unit (e.g., cents for USD, paise for INR)
+      amount: 1000, // amount in smallest currency unit
       currency: 'INR',
       receipt: 'receipt_order_7432',
-      customer_name: 'John Doe',
-      customer_email: 'john.doe@example.com'
     });
     console.log('Payment created:', payment.id);
     // Redirect customer to payment.checkout_url
@@ -266,8 +268,32 @@ async function createPayment() {
     console.error('Error:', error);
   }
 }
-
 createPayment();
+                        `} />
+                         <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
+                        <CodeSnippet code={`
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
+
+app.post('/webhook', express.json({type: 'application/json'}), (req, res) => {
+  const secret = 'YOUR_WEBHOOK_SECRET';
+  const signature = req.headers['transactwave-signature'];
+  const body = JSON.stringify(req.body);
+
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(body);
+  const digest = hmac.digest('hex');
+
+  if (digest === signature) {
+    // Signature is valid
+    console.log('Payment successful:', req.body.payload.payment.entity);
+    res.status(200).send('OK');
+  } else {
+    // Signature is invalid
+    res.status(400).send('Invalid signature');
+  }
+});
                         `} />
                     </TabsContent>
                      <TabsContent value="php" className="pt-4">
@@ -277,8 +303,9 @@ createPayment();
                         <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                         <CodeSnippet code={`
 require_once('vendor/autoload.php');
+use TransactWave\\Api;
 
-$api = new TransactWave\\Api('YOUR_SECRET_KEY');
+$api = new Api('YOUR_SECRET_KEY');
 
 $payment = $api->payment->create([
     'amount' => 1000,
@@ -288,8 +315,203 @@ $payment = $api->payment->create([
 
 $paymentId = $payment->id;
 $checkoutUrl = $payment->checkout_url;
-
 // Redirect customer to $checkoutUrl
+                        `} />
+                         <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
+                        <CodeSnippet code={`
+use TransactWave\\Api\\Utility;
+
+$secret = 'YOUR_WEBHOOK_SECRET';
+$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_TRANSACTWAVE_SIGNATURE'];
+
+try {
+    Utility::verifyPaymentSignature($payload, $signature, $secret);
+    // Signature is valid
+    // Process the webhook payload
+    http_response_code(200);
+} catch (Exception $e) {
+    // Signature is invalid
+    http_response_code(400);
+}
+                        `} />
+                    </TabsContent>
+                     <TabsContent value="python" className="pt-4">
+                        <h3 className="font-semibold text-lg mb-2">Python Integration</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Install our Python library using pip.</p>
+                        <CodeSnippet code="pip install transactwave-python" />
+                        <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                        <CodeSnippet code={`
+import transactwave
+client = transactwave.Client(api_key="YOUR_SECRET_KEY")
+
+payment = client.payment.create({
+  "amount": 1000,
+  "currency": "INR",
+  "receipt": "receipt_order_7432"
+})
+
+print(payment['id'])
+# Redirect customer to payment['checkout_url']
+                        `} />
+                         <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
+                        <CodeSnippet code={`
+import hmac
+import hashlib
+
+def verify_signature(payload_body, signature, secret):
+    generated_signature = hmac.new(
+        secret.encode(),
+        payload_body.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(generated_signature, signature)
+
+# In your Flask/Django view:
+# payload_body = request.get_data(as_text=True)
+# signature = request.headers.get('Transactwave-Signature')
+# secret = 'YOUR_WEBHOOK_SECRET'
+# if verify_signature(payload_body, signature, secret):
+#     # Process webhook
+# else:
+#     # Invalid signature
+                        `} />
+                    </TabsContent>
+                    <TabsContent value="ruby" className="pt-4">
+                        <h3 className="font-semibold text-lg mb-2">Ruby Integration</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Install our Ruby gem.</p>
+                        <CodeSnippet code="gem install transactwave" />
+                        <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                        <CodeSnippet code={`
+require 'transactwave'
+TransactWave.api_key = 'YOUR_SECRET_KEY'
+
+payment = TransactWave::Payment.create(
+  amount: 1000,
+  currency: 'INR',
+  receipt: 'receipt_order_7432'
+)
+
+puts payment.id
+# Redirect customer to payment.checkout_url
+                        `} />
+                         <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
+                        <CodeSnippet code={`
+require 'openssl'
+
+def verify_signature(payload_body, signature, secret)
+  digest = OpenSSL::HMAC.hexdigest('sha256', secret, payload_body)
+  return Rack::Utils.secure_compare(digest, signature)
+end
+
+# In your Rails/Sinatra controller:
+# payload_body = request.body.read
+# signature = request.env['HTTP_TRANSACTWAVE_SIGNATURE']
+# secret = 'YOUR_WEBHOOK_SECRET'
+# if verify_signature(payload_body, signature, secret)
+#   # Process webhook
+# else
+#   # Invalid signature
+# end
+                        `} />
+                    </TabsContent>
+                     <TabsContent value="go" className="pt-4">
+                        <h3 className="font-semibold text-lg mb-2">Go Integration</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Install our Go module.</p>
+                        <CodeSnippet code="go get github.com/transactwave/transactwave-go" />
+                        <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                        <CodeSnippet code={`
+package main
+
+import (
+	"fmt"
+	"github.com/transactwave/transactwave-go"
+)
+
+func main() {
+	client := transactwave.NewClient("YOUR_SECRET_KEY", "")
+	
+	params := &transactwave.PaymentParams{
+		Amount:   transactwave.Int(1000),
+		Currency: transactwave.String("INR"),
+		Receipt:  transactwave.String("receipt_order_7432"),
+	}
+
+	payment, err := client.Payment.Create(params)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(payment.ID)
+	// Redirect customer to payment.CheckoutURL
+}
+                        `} />
+                         <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
+                        <CodeSnippet code={`
+package main
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+    "net/http"
+)
+func verifySignature(payloadBody, signature, secret string) bool {
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write([]byte(payloadBody))
+    expectedMAC := hex.EncodeToString(mac.Sum(nil))
+    return hmac.Equal([]byte(expectedMAC), []byte(signature))
+}
+// In your HTTP handler
+// bodyBytes, _ := ioutil.ReadAll(r.Body)
+// signature := r.Header.Get("Transactwave-Signature")
+// if verifySignature(string(bodyBytes), signature, "YOUR_WEBHOOK_SECRET") {
+//     // Process
+// }
+                        `} />
+                    </TabsContent>
+                    <TabsContent value="java" className="pt-4">
+                        <h3 className="font-semibold text-lg mb-2">Java Integration</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Add our library to your Maven or Gradle project.</p>
+                        <CodeSnippet code={`
+<dependency>
+  <groupId>com.transactwave</groupId>
+  <artifactId>transactwave-java</artifactId>
+  <version>1.0.0</version>
+</dependency>
+                        `} />
+                        <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                        <CodeSnippet code={`
+import com.transactwave.api.TransactWaveClient;
+import com.transactwave.model.Payment;
+import org.json.JSONObject;
+
+TransactWaveClient client = new TransactWaveClient("YOUR_SECRET_KEY");
+
+JSONObject paymentParams = new JSONObject();
+paymentParams.put("amount", 1000);
+paymentParams.put("currency", "INR");
+paymentParams.put("receipt", "receipt_order_7432");
+
+Payment payment = client.payment.create(paymentParams);
+System.out.println(payment.get("id"));
+// Redirect to payment.get("checkout_url");
+                        `} />
+                         <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
+                        <CodeSnippet code={`
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.binary.Hex;
+
+public class Utils {
+  public static boolean verifySignature(String payload, String signature, String secret) throws Exception {
+    Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+    SecretKeySpec secret_key = new SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256");
+    sha256_HMAC.init(secret_key);
+    
+    String generatedSignature = new String(Hex.encodeHex(sha256_HMAC.doFinal(payload.getBytes("UTF-8"))));
+    
+    return generatedSignature.equals(signature);
+  }
+}
                         `} />
                     </TabsContent>
                     <TabsContent value="react" className="pt-4">
@@ -360,7 +582,7 @@ class _MyAppState extends State<MyApp> {
                          <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
                          <ol className="list-decimal list-inside space-y-2 text-sm">
                             <li>Go to your WordPress Admin Dashboard.</li>
-                            <li>Navigate to `Plugins > Add New Plugin`.</li>
+                            <li>Navigate to `Plugins > Add New`.</li>
                             <li>Click on the "Upload Plugin" button at the top of the page.</li>
                             <li>Choose the downloaded .zip file and click "Install Now".</li>
                             <li>After installation, click "Activate Plugin".</li>
