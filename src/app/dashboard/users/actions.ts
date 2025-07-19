@@ -1,11 +1,4 @@
-
-'use server';
-
-// This file is being deprecated in favor of client-side data fetching
-// to resolve the persistent permission issues. It can be safely removed.
-// The logic has been moved to /src/app/dashboard/users/page.tsx.
-
-export async function fetchUsers() {
-    console.warn("fetchUsers server action is deprecated and should be removed.");
-    return [];
-}
+// This file is intentionally left empty.
+// The user fetching logic has been moved to the client-side component
+// at /src/app/dashboard/users/page.tsx to resolve permission issues.
+// This file can be safely removed in a future cleanup.
