@@ -100,7 +100,7 @@ export default function InvoiceDetailPage() {
                 <h2 className="font-semibold mb-2">From:</h2>
                 <p className="font-semibold text-lg">{invoice.merchantName}</p>
                 <a href={`https://transactwave.com/pay/${invoice.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 md:justify-end">
-                    {`transactwave.com/pay/${invoice.id}`} <ExternalLink className="h-3 w-3" />
+                    View Payment Link <ExternalLink className="h-3 w-3" />
                 </a>
             </div>
         </div>
