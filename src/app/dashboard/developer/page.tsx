@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Code2, Info, ShoppingCart } from "lucide-react";
+import { Copy, PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Code2, Info, ShoppingCart, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -34,7 +34,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Logo } from "@/components/logo";
 
 const CodeSnippet = ({ code }: { code: string }) => {
     const { toast } = useToast();
@@ -353,29 +352,36 @@ class _MyAppState extends State<MyApp> {
                     </TabsContent>
                     <TabsContent value="wordpress" className="pt-4">
                         <h3 className="font-semibold text-lg mb-2">WordPress / WooCommerce</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Install our official plugin from the WordPress repository.</p>
+                        <p className="text-sm text-muted-foreground mb-4">Download our official plugin and upload it to your WordPress site.</p>
+                        <div className="mb-4">
+                            <Button><Download className="mr-2 h-4 w-4"/> Download Plugin (.zip)</Button>
+                        </div>
+                         <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
                          <ol className="list-decimal list-inside space-y-2 text-sm">
                             <li>Go to your WordPress Admin Dashboard.</li>
-                            <li>Navigate to \`Plugins > Add New\`.</li>
-                            <li>Search for "TransactWave Payment Gateway for WooCommerce".</li>
-                            <li>Install and activate the plugin.</li>
-                            <li>Go to \`WooCommerce > Settings > Payments\` and enable TransactWave.</li>
-                            <li>Enter your Publishable Key and Secret Key from this page.</li>
+                            <li>Navigate to `Plugins > Add New Plugin`.</li>
+                            <li>Click on the "Upload Plugin" button at the top of the page.</li>
+                            <li>Choose the downloaded .zip file and click "Install Now".</li>
+                            <li>After installation, click "Activate Plugin".</li>
+                            <li>Go to `WooCommerce > Settings > Payments` and enable the "TransactWave" gateway.</li>
+                            <li>Enter your Publishable Key and Secret Key from this page and save changes.</li>
                         </ol>
                     </TabsContent>
                     <TabsContent value="shopify" className="pt-4">
                         <h3 className="font-semibold text-lg mb-2">Shopify Integration</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Integrate TransactWave with your Shopify store by creating a custom payment app.</p>
-                         <ol className="list-decimal list-inside space-y-2 text-sm">
-                            <li>Go to your Shopify Admin, then \`Settings > Payments\`.</li>
-                            <li>In the "Supported payment methods" section, click \`Add payment methods\`.</li>
-                            <li>Search for and select "TransactWave Payments".</li>
-                            <li>Enter your Publishable Key and Secret Key from this page to activate.</li>
-                            <li>If not listed, you may need to install our app from the Shopify App Store.</li>
-                        </ol>
-                         <div className="mt-4">
-                            <Button variant="outline"><ShoppingCart className="mr-2 h-4 w-4"/> View on Shopify App Store</Button>
+                        <p className="text-sm text-muted-foreground mb-4">Install our private app to connect TransactWave with your Shopify store.</p>
+                        <div className="mb-4">
+                            <Button variant="outline"><ShoppingCart className="mr-2 h-4 w-4"/> Install Shopify App</Button>
                         </div>
+                         <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
+                         <ol className="list-decimal list-inside space-y-2 text-sm">
+                            <li>Click the "Install Shopify App" button above to go to the installation page.</li>
+                            <li>Log in to your Shopify store if you haven't already.</li>
+                            <li>Review the permissions and click "Install app" to authorize TransactWave.</li>
+                            <li>You will be redirected to the TransactWave settings page within your Shopify admin.</li>
+                            <li>Enter your Publishable Key and Secret Key from this Developer page.</li>
+                            <li>Activate the TransactWave payment method. Your store is now ready to accept payments!</li>
+                        </ol>
                     </TabsContent>
                 </Tabs>
 
@@ -434,7 +440,3 @@ document.getElementById('pay-button').onclick = function(e){
     </div>
   );
 }
-
-    
-
-    
