@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Logo } from "@/components/logo";
 
 const CodeSnippet = ({ code }: { code: string }) => {
     const { toast } = useToast();
@@ -593,6 +594,9 @@ class _MyAppState extends State<MyApp> {
                                 <TabsList className="overflow-x-auto w-full justify-start">
                                     <TabsTrigger value="wordpress">WordPress</TabsTrigger>
                                     <TabsTrigger value="shopify">Shopify</TabsTrigger>
+                                    <TabsTrigger value="magento">Magento</TabsTrigger>
+                                    <TabsTrigger value="prestashop">PrestaShop</TabsTrigger>
+                                    <TabsTrigger value="opencart">OpenCart</TabsTrigger>
                                 </TabsList>
                                  <TabsContent value="wordpress" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">WordPress / WooCommerce</h3>
@@ -625,6 +629,59 @@ class _MyAppState extends State<MyApp> {
                                         <li>You will be redirected to the TransactWave settings page within your Shopify admin.</li>
                                         <li>Enter your Publishable Key and Secret Key from this Developer page.</li>
                                         <li>Activate the TransactWave payment method. Your store is now ready to accept payments!</li>
+                                    </ol>
+                                </TabsContent>
+                                 <TabsContent value="magento" className="pt-4">
+                                    <h3 className="font-semibold text-lg mb-2">Magento 2 Integration</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">Download our official extension and install it via the command line.</p>
+                                    <div className="mb-4">
+                                        <Button><Download className="mr-2 h-4 w-4"/> Download Extension (.zip)</Button>
+                                    </div>
+                                     <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
+                                     <ol className="list-decimal list-inside space-y-2 text-sm">
+                                        <li>Unzip the downloaded file.</li>
+                                        <li>Upload the contents to `app/code/TransactWave/Payments` directory of your Magento installation.</li>
+                                        <li>Run the following commands from your Magento root directory:</li>
+                                     </ol>
+                                     <CodeSnippet code={`
+php bin/magento setup:upgrade
+php bin/magento setup:di:compile
+php bin/magento setup:static-content:deploy
+php bin/magento cache:clean
+                                     `} />
+                                     <p className="text-sm mt-4">After installation, navigate to `Stores > Configuration > Sales > Payment Methods` to configure and enable the TransactWave gateway.</p>
+                                </TabsContent>
+                                <TabsContent value="prestashop" className="pt-4">
+                                    <h3 className="font-semibold text-lg mb-2">PrestaShop Integration</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">Download our PrestaShop module and upload it through your admin panel.</p>
+                                    <div className="mb-4">
+                                        <Button><Download className="mr-2 h-4 w-4"/> Download Module (.zip)</Button>
+                                    </div>
+                                     <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
+                                     <ol className="list-decimal list-inside space-y-2 text-sm">
+                                        <li>Go to your PrestaShop Admin Dashboard.</li>
+                                        <li>Navigate to `Modules > Module Manager`.</li>
+                                        <li>Click on "Upload a module" and select the downloaded .zip file.</li>
+                                        <li>Once the module is installed, click "Configure".</li>
+                                        <li>Enter your API Keys from TransactWave and save the settings.</li>
+                                        <li>Ensure the payment method is active for the desired customer zones.</li>
+                                    </ol>
+                                </TabsContent>
+                                <TabsContent value="opencart" className="pt-4">
+                                    <h3 className="font-semibold text-lg mb-2">OpenCart Integration</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">Download our OpenCart extension and upload it.</p>
+                                    <div className="mb-4">
+                                        <Button><Download className="mr-2 h-4 w-4"/> Download Extension (.zip)</Button>
+                                    </div>
+                                     <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
+                                     <ol className="list-decimal list-inside space-y-2 text-sm">
+                                        <li>Go to your OpenCart Admin Dashboard.</li>
+                                        <li>Navigate to `Extensions > Installer`.</li>
+                                        <li>Click the "Upload" button and select the downloaded `.ocmod.zip` file.</li>
+                                        <li>After successful upload, go to `Extensions > Extensions` and select "Payments" from the dropdown.</li>
+                                        <li>Find "TransactWave" in the list and click the green "Install" button.</li>
+                                        <li>Click the blue "Edit" button to configure the module with your API keys.</li>
+                                        <li>Set the status to "Enabled" and save.</li>
                                     </ol>
                                 </TabsContent>
                              </Tabs>
