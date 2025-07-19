@@ -5,9 +5,12 @@ import { auth, db } from './firebase';
 import { 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
-    signOut
+    signOut,
+    GoogleAuthProvider,
+    GithubAuthProvider,
+    signInWithPopup
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from "firebase/firestore"; 
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore"; 
 
 interface UserData {
     fullName: string;
@@ -30,7 +33,7 @@ export async function createUser(email: string, password: string, additionalData
             role: 'merchant', // Default role for new signups
             status: 'Active',
             plan: 'Free',
-            createdAt: new Date().toISOString(),
+            createdAt: serverTimestamp(),
         });
         
         return { success: true, userId: user.uid };
@@ -61,6 +64,48 @@ export async function signInUser(email: string, password: string) {
         return { success: false, error: error.message };
     }
 }
+
+// Function to sign in with Google or GitHub
+export async function signInWithSocial(providerName: 'google' | 'github') {
+    const provider = providerName === 'google' 
+        ? new GoogleAuthProvider() 
+        : new GithubAuthProvider();
+
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Check if user exists in Firestore
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            // New user, create a document in Firestore
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                email: user.email,
+                fullName: user.displayName || 'Social User',
+                avatar: user.photoURL,
+                role: 'merchant',
+                status: 'Active',
+                plan: 'Free',
+                createdAt: serverTimestamp(),
+            });
+        }
+        
+        const finalUserDoc = await getDoc(userDocRef);
+        return { success: true, user: { uid: user.uid, ...finalUserDoc.data() } };
+
+    } catch (error: any) {
+        console.error(`Error with ${providerName} sign-in:`, error);
+        // Handle specific errors like account-exists-with-different-credential
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            return { success: false, error: 'An account already exists with the same email address but different sign-in credentials.' };
+        }
+        return { success: false, error: error.message };
+    }
+}
+
 
 // Function to sign out the current user
 export async function signOutUser() {

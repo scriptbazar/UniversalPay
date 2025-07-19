@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
-import { signInUser } from "@/lib/auth";
+import { signInUser, signInWithSocial } from "@/lib/auth";
 
 type LoginStep = 'credentials' | 'otp';
 
@@ -61,8 +61,6 @@ export default function LoginPage() {
       
       if (success && user) {
         setUser(user);
-        // Simulate OTP for now
-        // In a real app, you might trigger an OTP service here
         if (user.role === 'admin') {
             toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
             router.push('/dashboard');
@@ -90,8 +88,6 @@ export default function LoginPage() {
 
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // This part is now mostly handled after successful login
-    // Can be repurposed for actual 2FA
     if (otp.length === 6 && /^\d+$/.test(otp)) {
         if (user?.role === 'admin') {
             toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
@@ -109,12 +105,36 @@ export default function LoginPage() {
     }
   };
 
-  const handleSocialLogin = () => {
-    toast({
-      title: "Feature not available",
-      description: "Social login is not yet implemented.",
-    });
+  const handleSocialLogin = async (provider: 'google' | 'github') => {
+    setIsLoading(true);
+    try {
+        const { success, user, error } = await signInWithSocial(provider);
+        if (success && user) {
+            if (user.role === 'admin') {
+                toast({ title: "Admin Login Successful", description: `Welcome back, ${user.fullName}!` });
+                router.push('/dashboard');
+            } else {
+                toast({ title: "Login Successful", description: `Welcome back, ${user.fullName}!` });
+                router.push('/merchant/dashboard');
+            }
+        } else {
+            toast({
+                variant: "destructive",
+                title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
+                description: error,
+            });
+        }
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Login Error",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
+
 
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
@@ -178,8 +198,8 @@ export default function LoginPage() {
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 w-full">
-                        <Button variant="outline" onClick={handleSocialLogin} disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                        <Button variant="outline" onClick={handleSocialLogin} disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                        <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                        <Button variant="outline" onClick={() => handleSocialLogin('github')} disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
                     </div>
                     <p className="text-sm text-center text-muted-foreground mt-4">
                     Don't have an account?{' '}

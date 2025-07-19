@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
-import { createUser } from "@/lib/auth";
+import { createUser, signInWithSocial } from "@/lib/auth";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -63,7 +63,6 @@ export default function SignupPage() {
         const { success, error } = await createUser(formData.email, formData.password, {
             fullName: formData.fullName,
             mobile: formData.mobile,
-            // Add other details you want to save to Firestore here
         });
 
         if (success) {
@@ -90,11 +89,29 @@ export default function SignupPage() {
     }
   };
   
-  const handleSocialSignup = () => {
-    toast({
-      title: "Feature not available",
-      description: "Social signup is not yet implemented.",
-    });
+  const handleSocialSignup = async (provider: 'google' | 'github') => {
+    setIsLoading(true);
+    try {
+        const { success, user, error } = await signInWithSocial(provider);
+        if (success && user) {
+            toast({ title: "Account Created", description: `Welcome to UniversalPay, ${user.fullName}!` });
+            router.push('/merchant/dashboard');
+        } else {
+            toast({
+                variant: "destructive",
+                title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Signup Failed`,
+                description: error,
+            });
+        }
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Signup Error",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -149,8 +166,8 @@ export default function SignupPage() {
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
-                <Button variant="outline" onClick={handleSocialSignup} type="button" disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                <Button variant="outline" onClick={handleSocialSignup} type="button" disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                <Button variant="outline" onClick={() => handleSocialSignup('google')} type="button" disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                <Button variant="outline" onClick={() => handleSocialSignup('github')} type="button" disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
