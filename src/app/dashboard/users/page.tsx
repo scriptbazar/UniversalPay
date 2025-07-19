@@ -3,7 +3,6 @@
 
 import {
   File,
-  ListFilter,
   PlusCircle,
   MoreHorizontal,
 } from "lucide-react"
