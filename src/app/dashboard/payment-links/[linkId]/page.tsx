@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const linkDetails = {
     id: "plink_1",
@@ -26,17 +28,47 @@ const linkDetails = {
     fraudAlerts: 2,
 };
 
-const recentTransactions = [
+type Transaction = {
+    id: string;
+    customer: string;
+    amount: string;
+    currency: string;
+    status: "Success" | "Flagged" | "Failed";
+    date: string;
+};
+
+const allTransactions: Transaction[] = [
     { id: "UVRLP101101101", customer: "customer_a@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-05" },
     { id: "UVRLP102102102", customer: "customer_b@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-05" },
-    { id: "UVRLP103103103", customer: "customer_c@mail.com", amount: "25.00", currency: "USD", status: "Flagged", date: "2023-11-04" },
+    { id: "UVRLP103103103", customer: "customer_c@mail.com", amount: "50.00", currency: "USD", status: "Flagged", date: "2023-11-04" },
     { id: "UVRLP104104104", customer: "customer_d@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-04" },
     { id: "UVRLP105105105", customer: "customer_e@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-03" },
     { id: "UVRLP106106106", customer: "customer_f@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-03" },
+    { id: "UVRLP107107107", customer: "suspicious_user@mail.com", amount: "1500.00", currency: "USD", status: "Flagged", date: "2023-11-02" },
 ];
+
+const successfulTransactions = allTransactions.filter(tx => tx.status === 'Success');
+const fraudulentTransactions = allTransactions.filter(tx => tx.status === 'Flagged');
+
+const getStatusBadgeVariant = (status: Transaction["status"]) => {
+    switch (status) {
+        case 'Success':
+            return 'default';
+        case 'Flagged':
+            return 'destructive';
+        case 'Failed':
+            return 'secondary';
+        default:
+            return 'outline';
+    }
+};
+
 
 export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
   const { toast } = useToast();
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; transactions: Transaction[] } | null>(null);
+
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -44,6 +76,23 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
         title: `${label} Copied!`,
     });
   };
+
+  const handleCardClick = (type: 'successful' | 'fraud') => {
+    if (type === 'successful') {
+        setDialogContent({
+            title: "Successful Payments",
+            description: "A list of all successful payments made via this link.",
+            transactions: successfulTransactions
+        });
+    } else {
+        setDialogContent({
+            title: "Fraud Alerts",
+            description: "A list of all payments flagged for suspicious activity.",
+            transactions: fraudulentTransactions
+        });
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -92,7 +141,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <div className="text-2xl font-bold">${linkDetails.volume}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('successful')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Successful Payments</CardTitle>
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -101,7 +150,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <div className="text-2xl font-bold">{linkDetails.payments}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('fraud')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Fraud Alerts</CardTitle>
                     <Shield className="h-4 w-4 text-muted-foreground" />
@@ -115,7 +164,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
         <Card>
             <CardHeader>
                 <CardTitle>Transactions via this Link</CardTitle>
-                <CardDescription>All payments made using this payment link.</CardDescription>
+                <CardDescription>All payments made using this payment link. Click a row for details.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -129,12 +178,12 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {recentTransactions.map(p => (
-                            <TableRow key={p.id}>
+                        {allTransactions.map(p => (
+                            <TableRow key={p.id} onClick={() => setSelectedTransaction(p)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="font-medium">{p.id}</TableCell>
                                 <TableCell>{p.customer}</TableCell>
                                 <TableCell>
-                                    <Badge variant={p.status === 'Success' ? 'default' : p.status === 'Flagged' ? 'destructive' : 'secondary'}>{p.status}</Badge>
+                                    <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
                                 </TableCell>
                                 <TableCell>{p.date}</TableCell>
                                 <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
@@ -144,6 +193,61 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                 </Table>
             </CardContent>
         </Card>
+
+        {/* Dialog for a single transaction detail */}
+        <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Transaction Details</DialogTitle>
+                     {selectedTransaction && <DialogDescription>Details for transaction {selectedTransaction.id}</DialogDescription>}
+                </DialogHeader>
+                {selectedTransaction && (
+                    <div className="space-y-4 py-4">
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">ID:</span> <span className="font-mono">{selectedTransaction.id}</span></div>
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Customer:</span> <span>{selectedTransaction.customer}</span></div>
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedTransaction.amount} {selectedTransaction.currency}</span></div>
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span>{selectedTransaction.date}</span></div>
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge></div>
+                    </div>
+                )}
+                 <DialogFooter>
+                    <Button onClick={() => setSelectedTransaction(null)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Dialog for lists of transactions (Successful / Fraud) */}
+        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{dialogContent?.title}</DialogTitle>
+                    <DialogDescription>{dialogContent?.description}</DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Transaction ID</TableHead>
+                                <TableHead>Customer</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {dialogContent?.transactions.map(p => (
+                                <TableRow key={p.id}>
+                                    <TableCell className="font-medium">{p.id}</TableCell>
+                                    <TableCell>{p.customer}</TableCell>
+                                    <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+                <DialogFooter>
+                    <Button onClick={() => setDialogContent(null)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   )
 }
