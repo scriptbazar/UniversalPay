@@ -19,7 +19,7 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -107,10 +107,11 @@ interface UserProfile {
 }
 
 
-export default function UserDetailPage({ params }: { params: { userId: string } }) {
+export default function UserDetailPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { userId } = params;
+  const params = useParams();
+  const userId = params.userId as string;
 
   const [merchant, setMerchant] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);

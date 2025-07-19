@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/card"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -43,8 +42,8 @@ import {
 } from "@/components/ui/tabs"
 import Image from "next/image";
 import Link from "next/link";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { fetchUsers } from "./actions";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
     id: string;
@@ -59,27 +58,28 @@ interface User {
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
-        const fetchUsers = async () => {
+        const loadUsers = async () => {
             setLoading(true);
             try {
-                const usersCollection = collection(db, "users");
-                const userSnapshot = await getDocs(usersCollection);
-                const userList = userSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                } as User));
-                setUsers(userList);
-            } catch (error) {
+                const fetchedUsers = await fetchUsers();
+                setUsers(fetchedUsers);
+            } catch (error: any) {
                 console.error("Error fetching users: ", error);
+                toast({
+                    variant: "destructive",
+                    title: "Failed to load users",
+                    description: error.message || "Please check your permissions and try again.",
+                });
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchUsers();
-    }, []);
+        loadUsers();
+    }, [toast]);
 
   return (
     <div className="space-y-6">
@@ -91,24 +91,6 @@ export default function UsersPage() {
             <TabsTrigger value="admins">Admins</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
-                  <ListFilter className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Filter
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked>
-                  Active
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Inactive</DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <Button size="sm" variant="outline" className="h-8 gap-1">
               <File className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -133,7 +115,7 @@ export default function UsersPage() {
             </CardHeader>
             <CardContent>
                {loading ? (
-                <div>Loading users...</div>
+                <div className="text-center p-8">Loading users...</div>
                 ) : (
               <Table>
                 <TableHeader>
