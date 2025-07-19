@@ -19,6 +19,27 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const IndianFlagIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" {...props}>
+        <rect width="900" height="600" fill="#F93"/>
+        <rect width="900" height="400" fill="#FFF"/>
+        <rect width="900" height="200" fill="#128807"/>
+        <circle r="90" cx="450" cy="300" fill="#008"/>
+        <circle r="70" cx="450" cy="300" fill="#fff"/>
+        <circle r="35" cx="450" cy="300" fill="#008"/>
+        {Array.from({ length: 24 }).map((_, i) => (
+            <line 
+                key={i}
+                x1="450" y1="300" 
+                x2={450 + 70 * Math.cos(i * 15 * Math.PI / 180)} 
+                y2={300 + 70 * Math.sin(i * 15 * Math.PI / 180)} 
+                stroke="#008" 
+                strokeWidth="10" 
+            />
+        ))}
+    </svg>
+);
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -115,46 +136,56 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <h5 className="font-semibold mb-2 mt-4">Indian UPI Gateways</h5>
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div><Label htmlFor="paytm-switch" className="font-medium">Paytm</Label></div>
-                        <Switch id="paytm-switch" defaultChecked />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2">
+                            <IndianFlagIcon className="w-6 h-auto rounded-sm" />
+                            Indian UPI Gateways
+                        </h5>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between rounded-lg border p-3">
+                                <div><Label htmlFor="paytm-switch" className="font-medium">Paytm</Label></div>
+                                <Switch id="paytm-switch" defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border p-3">
+                                <div><Label htmlFor="phonepe-switch" className="font-medium">PhonePe</Label></div>
+                                <Switch id="phonepe-switch" defaultChecked />
+                            </div>
+                              <div className="flex items-center justify-between rounded-lg border p-3">
+                                <div><Label htmlFor="gpay-switch" className="font-medium">Google Pay</Label></div>
+                                <Switch id="gpay-switch" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div><Label htmlFor="phonepe-switch" className="font-medium">PhonePe</Label></div>
-                        <Switch id="phonepe-switch" defaultChecked />
-                    </div>
-                      <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div><Label htmlFor="gpay-switch" className="font-medium">Google Pay</Label></div>
-                        <Switch id="gpay-switch" />
+                    <div>
+                        <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h5>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between rounded-lg border p-3">
+                                <div>
+                                    <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
+                                </div>
+                                <Switch id="usd-card-switch" defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border p-3">
+                                <div>
+                                    <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
+                                </div>
+                                <Switch id="eur-sepa-switch" />
+                            </div>
+                             <div className="flex items-center justify-between rounded-lg border p-3">
+                                <div>
+                                    <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
+                                        <PayPalIcon className="w-4 h-4" /> PayPal
+                                    </Label>
+                                </div>
+                                <Switch id="paypal-switch" />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            
-                <h5 className="font-semibold mb-2 mt-6 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h5>
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                            <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
-                        </div>
-                        <Switch id="usd-card-switch" defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                            <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
-                        </div>
-                        <Switch id="eur-sepa-switch" />
-                    </div>
-                     <div className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                            <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
-                                <PayPalIcon className="w-4 h-4" /> PayPal
-                            </Label>
-                        </div>
-                        <Switch id="paypal-switch" />
-                    </div>
-                </div>
+                <div className="pt-4">
                   <Button>Save Gateway Settings</Button>
+                </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -162,3 +193,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
