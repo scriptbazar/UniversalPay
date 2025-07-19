@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { getInvoiceById, type Invoice } from '@/lib/invoicesData';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 
 const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secondary' | 'destructive', icon: React.ReactNode } => {
     switch (status) {
@@ -24,12 +24,12 @@ const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secon
     }
 };
 
-export default function InvoiceDetailPage({ params }: { params: { invoiceId: string } }) {
-  const invoice = getInvoiceById(params.invoiceId);
+export default function InvoiceDetailPage() {
+  const params = useParams();
+  const invoiceId = params.invoiceId as string;
+  const invoice = getInvoiceById(invoiceId);
 
   if (!invoice) {
-    // In a real app, you might show a more graceful loading or not-found state.
-    // For now, we can use a simple message or redirect.
     return notFound();
   }
   
@@ -125,4 +125,3 @@ export default function InvoiceDetailPage({ params }: { params: { invoiceId: str
     </div>
   );
 }
-
