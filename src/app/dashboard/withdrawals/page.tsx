@@ -27,6 +27,11 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   }
 }
 
+const truncateAddress = (address: string) => {
+    if (address.length <= 10) return address;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+}
+
 export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -102,7 +107,7 @@ export default function AdminWithdrawalsPage() {
                     <div className="text-xs text-muted-foreground">{w.merchantId}</div>
                   </TableCell>
                   <TableCell>{w.date}</TableCell>
-                  <TableCell>{w.destination}</TableCell>
+                  <TableCell>{truncateAddress(w.destination)}</TableCell>
                   <TableCell>${w.amount} {w.currency}</TableCell>
                    <TableCell>
                     <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
@@ -181,7 +186,7 @@ export default function AdminWithdrawalsPage() {
                             <DollarSign className="w-6 h-6 text-primary" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Amount</p>
-                                <p className="font-semibold">{selectedWithdrawal.amount} {selectedWithdrawal.currency}</p>
+                                <p className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</p>
                             </div>
                         </div>
                     </div>
@@ -191,7 +196,7 @@ export default function AdminWithdrawalsPage() {
                             <Wallet className="w-6 h-6 text-primary mt-1" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Destination Type</p>
-                                <p className="font-semibold">Crypto Wallet</p> 
+                                <p className="font-semibold">{selectedWithdrawal.destination.startsWith('bc1') ? 'Bitcoin Wallet' : selectedWithdrawal.destination.startsWith('T') ? 'USDT (TRC20) Wallet' : 'Bank Account'}</p> 
                             </div>
                         </div>
                         <div className="flex items-start gap-4">
