@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Landmark, Check, X, User, Calendar, DollarSign, Wallet, Hash } from "lucide-react";
+import { ArrowLeft, Landmark, Check, X, User, Calendar, DollarSign, Wallet, Hash, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useState } from "react";
 // Mock data - in a real app, you'd fetch this based on params.withdrawalId
 const withdrawalDetails = {
     id: "wd_5",
+    transactionId: "txn_wd_17000345",
     merchant: {
         id: "merch_456",
         name: "CreativeGoods",
@@ -70,7 +71,7 @@ export default function WithdrawalDetailPage({ params }: { params: { withdrawalI
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="flex items-center gap-4">
                         <User className="w-6 h-6 text-primary" />
                         <div>
@@ -112,6 +113,20 @@ export default function WithdrawalDetailPage({ params }: { params: { withdrawalI
                         </div>
                     </div>
                 </div>
+
+                {withdrawal.status === "Completed" && withdrawal.transactionId && (
+                     <>
+                        <Separator className="my-6" />
+                         <div className="flex items-start gap-4">
+                            <Ticket className="w-6 h-6 text-primary mt-1" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">Transaction ID</p>
+                                <p className="font-semibold font-mono break-all">{withdrawal.transactionId}</p>
+                            </div>
+                        </div>
+                    </>
+                )}
+                
                 {withdrawal.status === "Pending" && (
                     <>
                         <Separator className="my-6"/>
