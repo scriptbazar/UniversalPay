@@ -1,3 +1,6 @@
+
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,8 +9,30 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload } from "lucide-react";
+import React, { useState } from 'react';
+
+type PaymentMethodsState = {
+  paytm: boolean;
+  phonepe: boolean;
+  gpay: boolean;
+  btc: boolean;
+  usdt: boolean;
+};
 
 export default function SettingsPage() {
+
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
+    paytm: true,
+    phonepe: true,
+    gpay: false,
+    btc: true,
+    usdt: true,
+  });
+
+  const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
+    setPaymentMethods(prev => ({ ...prev, [method]: !prev[method] }));
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -114,30 +139,86 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Configure your UPI and cryptocurrency settings.</CardDescription>
+              <CardDescription>Configure and manage your enabled payment gateways.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="space-y-4">
-                    <h4 className="font-semibold">UPI Gateways</h4>
-                    <div className="space-y-2">
-                        <Label htmlFor="paytm-upi">Paytm UPI ID</Label>
-                        <Input id="paytm-upi" placeholder="your-number@paytm"/>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="phonepe-upi">PhonePe UPI ID</Label>
-                        <Input id="phonepe-upi" placeholder="your-number@ybl"/>
+                <div>
+                    <h4 className="font-semibold mb-4">UPI Gateways</h4>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="paytm-switch" className="font-medium">Paytm</Label>
+                                <p className="text-sm text-muted-foreground">Accept payments via Paytm UPI.</p>
+                            </div>
+                            <Switch id="paytm-switch" checked={paymentMethods.paytm} onCheckedChange={() => handlePaymentMethodToggle('paytm')} />
+                        </div>
+                        {paymentMethods.paytm && (
+                             <div className="space-y-2 pl-4 pb-2">
+                                <Label htmlFor="paytm-upi">Paytm UPI ID</Label>
+                                <Input id="paytm-upi" placeholder="your-number@paytm"/>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="phonepe-switch" className="font-medium">PhonePe</Label>
+                                <p className="text-sm text-muted-foreground">Accept payments via PhonePe UPI.</p>
+                            </div>
+                            <Switch id="phonepe-switch" checked={paymentMethods.phonepe} onCheckedChange={() => handlePaymentMethodToggle('phonepe')} />
+                        </div>
+                        {paymentMethods.phonepe && (
+                            <div className="space-y-2 pl-4 pb-2">
+                                <Label htmlFor="phonepe-upi">PhonePe UPI ID</Label>
+                                <Input id="phonepe-upi" placeholder="your-number@ybl"/>
+                            </div>
+                        )}
+
+                         <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="gpay-switch" className="font-medium">Google Pay</Label>
+                                <p className="text-sm text-muted-foreground">Accept payments via GPay UPI.</p>
+                            </div>
+                            <Switch id="gpay-switch" checked={paymentMethods.gpay} onCheckedChange={() => handlePaymentMethodToggle('gpay')} />
+                        </div>
+                        {paymentMethods.gpay && (
+                            <div className="space-y-2 pl-4 pb-2">
+                                <Label htmlFor="gpay-upi">Google Pay UPI ID</Label>
+                                <Input id="gpay-upi" placeholder="your-name@okhdfcbank"/>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <Separator />
-                <div className="space-y-4">
-                    <h4 className="font-semibold">Cryptocurrency Wallets</h4>
-                    <div className="space-y-2">
-                        <Label htmlFor="btc-wallet">Bitcoin (BTC) Address</Label>
-                        <Input id="btc-wallet" placeholder="bc1..."/>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="usdt-wallet">USDT (TRC20) Address</Label>
-                        <Input id="usdt-wallet" placeholder="T..."/>
+                <div>
+                    <h4 className="font-semibold mb-4">Cryptocurrency Wallets</h4>
+                    <div className="space-y-4">
+                         <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="btc-switch" className="font-medium">Bitcoin (BTC)</Label>
+                                <p className="text-sm text-muted-foreground">Accept payments in Bitcoin.</p>
+                            </div>
+                            <Switch id="btc-switch" checked={paymentMethods.btc} onCheckedChange={() => handlePaymentMethodToggle('btc')} />
+                        </div>
+                        {paymentMethods.btc && (
+                            <div className="space-y-2 pl-4 pb-2">
+                                <Label htmlFor="btc-wallet">Bitcoin (BTC) Address</Label>
+                                <Input id="btc-wallet" placeholder="bc1..."/>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="usdt-switch" className="font-medium">USDT (TRC20)</Label>
+                                <p className="text-sm text-muted-foreground">Accept payments in Tether.</p>
+                            </div>
+                            <Switch id="usdt-switch" checked={paymentMethods.usdt} onCheckedChange={() => handlePaymentMethodToggle('usdt')} />
+                        </div>
+                        {paymentMethods.usdt && (
+                            <div className="space-y-2 pl-4 pb-2">
+                                <Label htmlFor="usdt-wallet">USDT (TRC20) Address</Label>
+                                <Input id="usdt-wallet" placeholder="T..."/>
+                            </div>
+                        )}
                     </div>
                 </div>
                  <Button>Save Changes</Button>
