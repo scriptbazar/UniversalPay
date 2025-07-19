@@ -164,71 +164,72 @@ export default function SettingsPage() {
               <CardDescription>Manage global API keys and security settings.</CardDescription>
             </CardHeader>
             <form onSubmit={handleSaveApiKeys}>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2"><KeyRound className="w-4 h-4" /> Third-Party API Keys</h3>
-                  <div className="space-y-4 pl-6 border-l">
-                    <div className="space-y-2">
-                      <Label htmlFor="gemini-api-key">Google Gemini API Key</Label>
-                      <Input 
-                        id="gemini-api-key" 
-                        type="password" 
-                        placeholder="Enter your Gemini API Key" 
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiApiKey(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Required for platform-wide AI features like fraud detection.
-                      </p>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <h3 className="font-medium text-lg flex items-center gap-2"><KeyRound className="w-5 h-5" /> Third-Party API Keys</h3>
+                        <div className="space-y-4 p-4 border rounded-md">
+                        <div className="space-y-2">
+                            <Label htmlFor="gemini-api-key">Google Gemini API Key</Label>
+                            <Input 
+                                id="gemini-api-key" 
+                                type="password" 
+                                placeholder="Enter your Gemini API Key" 
+                                value={geminiApiKey}
+                                onChange={(e) => setGeminiApiKey(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Required for platform-wide AI features like fraud detection.
+                            </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="recaptcha-site-key">Captcha Site Key</Label>
+                                <Input 
+                                id="recaptcha-site-key" 
+                                type="text" 
+                                placeholder="Enter your Captcha Site Key" 
+                                value={reCaptchaSiteKey}
+                                onChange={(e) => setReCaptchaSiteKey(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="recaptcha-secret-key">Captcha Secret Key</Label>
+                                <Input 
+                                id="recaptcha-secret-key" 
+                                type="password" 
+                                placeholder="Enter your Captcha Secret Key" 
+                                value={reCaptchaSecretKey}
+                                onChange={(e) => setReCaptchaSecretKey(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="recaptcha-site-key">Captcha Site Key</Label>
-                        <Input 
-                          id="recaptcha-site-key" 
-                          type="text" 
-                          placeholder="Enter your Captcha Site Key" 
-                          value={reCaptchaSiteKey}
-                          onChange={(e) => setReCaptchaSiteKey(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="recaptcha-secret-key">Captcha Secret Key</Label>
-                        <Input 
-                          id="recaptcha-secret-key" 
-                          type="password" 
-                          placeholder="Enter your Captcha Secret Key" 
-                          value={reCaptchaSecretKey}
-                          onChange={(e) => setReCaptchaSecretKey(e.target.value)}
-                        />
-                      </div>
-                  </div>
-                </div>
-                <Separator/>
-                 <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Security Settings</h3>
-                  <div className="space-y-4 pl-6 border-l">
-                      <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <h4 className="font-medium">Enable Captcha on Admin Login</h4>
-                          <p className="text-sm text-muted-foreground">Protects your admin login page from bots.</p>
+                    <div className="space-y-4">
+                        <h3 className="font-medium text-lg flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Security Settings</h3>
+                        <div className="space-y-4 p-4 border rounded-md">
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div>
+                                <h4 className="font-medium">Enable Captcha on Admin Login</h4>
+                                <p className="text-sm text-muted-foreground">Protects your admin login page from bots.</p>
+                                </div>
+                                <Switch checked={isCaptchaEnabled} onCheckedChange={setIsCaptchaEnabled} />
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div>
+                                <h4 className="font-medium">Require Captcha for Merchants</h4>
+                                <p className="text-sm text-muted-foreground">Enforce Captcha on merchant login & signup.</p>
+                                </div>
+                                <Switch checked={isMerchantCaptchaRequired} onCheckedChange={setIsMerchantCaptchaRequired} />
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border p-4">
+                                <div>
+                                <h4 className="font-medium">Enable 2-Step Verification for Admin</h4>
+                                <p className="text-sm text-muted-foreground">Secure your own admin account.</p>
+                                </div>
+                                <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} />
+                            </div>
                         </div>
-                        <Switch checked={isCaptchaEnabled} onCheckedChange={setIsCaptchaEnabled} />
-                      </div>
-                       <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <h4 className="font-medium">Require Captcha for Merchants</h4>
-                          <p className="text-sm text-muted-foreground">Enforce Captcha on merchant login & signup.</p>
-                        </div>
-                        <Switch checked={isMerchantCaptchaRequired} onCheckedChange={setIsMerchantCaptchaRequired} />
-                      </div>
-                       <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <h4 className="font-medium">Enable 2-Step Verification for Admin</h4>
-                          <p className="text-sm text-muted-foreground">Secure your own admin account.</p>
-                        </div>
-                        <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} />
-                      </div>
-                  </div>
+                    </div>
                 </div>
               </CardContent>
               <CardFooter>
@@ -303,5 +304,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
