@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote } from "lucide-react";
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { updateGeminiApiKey } from './actions';
+import Image from "next/image";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -45,6 +47,7 @@ const IndianFlagIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function SettingsPage() {
   const { toast } = useToast();
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [logo, setLogo] = useState<string | null>(null);
 
   const handleSaveApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +65,18 @@ export default function SettingsPage() {
       });
     }
   };
+  
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -83,11 +98,47 @@ export default function SettingsPage() {
               <CardTitle>General Settings</CardTitle>
               <CardDescription>Manage general platform settings.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="platform-name">Platform Name</Label>
-                <Input id="platform-name" defaultValue="TransactWave" />
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="platform-name">Platform Name</Label>
+                    <Input id="platform-name" defaultValue="TransactWave" />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Platform Logo</Label>
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
+                        {logo ? (
+                                <Image src={logo} alt="Business Logo" width={40} height={40} className="object-cover"/>
+                            ) : (
+                                <Upload className="w-5 h-5 text-muted-foreground" />
+                            )}
+                        </div>
+                        <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+                        <Button variant="outline" size="sm" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="support-email" className="flex items-center gap-2"><Mail className="w-4 h-4" /> Support Email</Label>
+                    <Input id="support-email" type="email" placeholder="support@transactwave.com" />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="default-currency" className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Default Currency</Label>
+                     <Select defaultValue="usd">
+                        <SelectTrigger id="default-currency">
+                            <SelectValue placeholder="Select default currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="usd">USD - United States Dollar</SelectItem>
+                            <SelectItem value="inr">INR - Indian Rupee</SelectItem>
+                            <SelectItem value="eur">EUR - Euro</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
               </div>
+
+               <Separator />
+              
                <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
                   <h4 className="font-medium">Platform Maintenance Mode</h4>
