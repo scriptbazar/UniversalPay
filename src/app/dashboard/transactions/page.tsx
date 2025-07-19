@@ -4,7 +4,6 @@
 import { useState, useMemo } from 'react';
 import {
   File,
-  ListFilter,
   Search,
   Copy
 } from "lucide-react";
@@ -18,14 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -73,12 +64,20 @@ export default function AllTransactionsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const filteredTransactions = useMemo(() => {
         let filtered = transactions;
 
-        if (filter !== 'all') {
-            filtered = filtered.filter(tx => tx.status.toLowerCase() === filter);
+        const filterLower = filter.toLowerCase();
+        const statusFilters = ['success', 'pending', 'failed'];
+        const methodFilters = ['upi', 'crypto', 'card', 'link'];
+        
+        if (statusFilters.includes(filterLower)) {
+            filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
+        } else if (methodFilters.includes(filterLower)) {
+            filtered = filtered.filter(tx => tx.method.toLowerCase() === filterLower);
         }
 
         if (searchTerm) {
@@ -98,6 +97,17 @@ export default function AllTransactionsPage() {
 
         return filtered;
     }, [transactions, filter, searchTerm, dateRange]);
+    
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const paginatedTransactions = filteredTransactions.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
+    const handleFilterChange = (newFilter: string) => {
+        setFilter(newFilter);
+        setCurrentPage(1); // Reset to first page on filter change
+    };
     
     const getStatusBadgeVariant = (status: string) => {
         switch (status.toLowerCase()) {
@@ -122,28 +132,32 @@ export default function AllTransactionsPage() {
                 <h1 className="text-3xl font-bold tracking-tight">All Transactions</h1>
                 <p className="text-muted-foreground">Search, filter, and view all transactions across the platform.</p>
             </div>
-            <Tabs value={filter} onValueChange={setFilter}>
-                <div className="flex items-center">
+            <Tabs value={filter} onValueChange={handleFilterChange}>
+                <div className="flex flex-wrap items-center gap-4">
                     <TabsList>
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="success">Success</TabsTrigger>
                         <TabsTrigger value="pending">Pending</TabsTrigger>
                         <TabsTrigger value="failed">Failed</TabsTrigger>
+                        <TabsTrigger value="upi">UPI</TabsTrigger>
+                        <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                        <TabsTrigger value="card">Card</TabsTrigger>
+                        <TabsTrigger value="link">Link</TabsTrigger>
                     </TabsList>
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="flex-grow flex justify-end items-center gap-2">
                         <div className="relative">
                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                            <Input
                              type="search"
-                             placeholder="Search ID, merchant, email..."
-                             className="pl-8"
+                             placeholder="Search..."
+                             className="pl-8 w-40 md:w-64"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
                         </div>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
+                                <Button variant="outline" className="w-auto justify-start text-left font-normal">
                                     <span>
                                         {dateRange?.from ? (
                                             dateRange.to ? (
@@ -154,7 +168,7 @@ export default function AllTransactionsPage() {
                                                 format(dateRange.from, "LLL dd, y")
                                             )
                                         ) : (
-                                            "Filter by date range"
+                                            "Filter by date"
                                         )}
                                     </span>
                                 </Button>
@@ -197,7 +211,7 @@ export default function AllTransactionsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredTransactions.map(tx => (
+                                {paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
                                         <TableCell>{tx.merchant}</TableCell>
@@ -219,8 +233,28 @@ export default function AllTransactionsPage() {
                          )}
                     </CardContent>
                     <CardFooter>
-                        <div className="text-xs text-muted-foreground">
-                            Showing <strong>{filteredTransactions.length}</strong> transactions.
+                         <div className="flex justify-between items-center w-full">
+                            <div className="text-xs text-muted-foreground">
+                                Page {currentPage} of {totalPages}. Total {filteredTransactions.length} transactions.
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
                         </div>
                     </CardFooter>
                 </Card>
@@ -280,3 +314,5 @@ export default function AllTransactionsPage() {
         </div>
     );
 }
+
+    
