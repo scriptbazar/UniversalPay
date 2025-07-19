@@ -38,7 +38,6 @@ const subscriptionPlans = [
 ];
 
 export default function SubscriptionsPage() {
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
 
   return (
