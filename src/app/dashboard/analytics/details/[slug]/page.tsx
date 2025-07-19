@@ -238,7 +238,10 @@ export default function AnalyticsDetailPage() {
                                 <Image src={(dialogContent.data as User).avatar} alt={(dialogContent.data as User).name} width={64} height={64} className="rounded-full" data-ai-hint="user avatar" />
                                 <div>
                                     <h3 className="text-lg font-semibold">{(dialogContent.data as User).name}</h3>
-                                    <p className="text-sm text-muted-foreground">{(dialogContent.data as User).email}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm text-muted-foreground">{(dialogContent.data as User).email}</p>
+                                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as User).email, 'Email')} />
+                                    </div>
                                 </div>
                             </div>
                             <Separator />
@@ -277,5 +280,3 @@ export default function AnalyticsDetailPage() {
         </div>
     );
 }
-
-    
