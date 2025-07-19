@@ -270,7 +270,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         </TableHeader>
                         <TableBody>
                             {recentTransactions.map(p => (
-                                <TableRow key={p.id}>
+                                <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="font-medium">{p.id}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
@@ -463,3 +463,4 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   )
 }
 
+    
