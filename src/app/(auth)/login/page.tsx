@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
+import ReCAPTCHA from "react-google-recaptcha";
 
 type LoginStep = 'credentials' | 'otp';
 type UserType = 'admin' | 'merchant' | null;
@@ -21,21 +21,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [step, setStep] = useState<LoginStep>('credentials');
   const [userType, setUserType] = useState<UserType>(null);
 
 
-  const handleCredentialSubmit = (e: React.FormEvent) => {
+  const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isVerified) {
+    if (!recaptchaToken) {
       toast({
         variant: "destructive",
         title: "Verification Failed",
-        description: "Please verify that you are not a robot.",
+        description: "Please complete the reCAPTCHA challenge.",
       });
       return;
     }
+    
+    // Simulate server-side reCAPTCHA verification
+    // In a real app, you would send recaptchaToken to your server
+    // and verify it with Google using your secret key.
+    // For now, we assume it's valid if it exists.
 
     if (email === 'admin@transactwave.com' && password === 'admin123') {
       setUserType('admin');
@@ -121,9 +126,11 @@ export default function LoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     </div>
-                    <div className="flex items-center space-x-2 p-4 border rounded-md bg-muted/50">
-                    <Checkbox id="captcha" onCheckedChange={(checked) => setIsVerified(checked as boolean)} />
-                    <Label htmlFor="captcha" className="font-normal text-sm">I'm not a robot</Label>
+                    <div className="flex justify-center">
+                       <ReCAPTCHA
+                            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
+                            onChange={(token) => setRecaptchaToken(token)}
+                        />
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
