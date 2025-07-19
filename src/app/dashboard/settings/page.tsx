@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload } from "lucide-react";
+import { Upload, Globe } from "lucide-react";
 import React, { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type PaymentMethodsState = {
   paytm: boolean;
@@ -17,6 +18,10 @@ type PaymentMethodsState = {
   gpay: boolean;
   btc: boolean;
   usdt: boolean;
+  usd_card: boolean;
+  eur_sepa: boolean;
+  gbp_bacs: boolean;
+  aud_becs: boolean;
 };
 
 export default function SettingsPage() {
@@ -27,6 +32,10 @@ export default function SettingsPage() {
     gpay: false,
     btc: true,
     usdt: true,
+    usd_card: true,
+    eur_sepa: false,
+    gbp_bacs: false,
+    aud_becs: false,
   });
 
   const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
@@ -42,7 +51,7 @@ export default function SettingsPage() {
       <Separator />
 
       <Tabs defaultValue="profile">
-        <TabsList>
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full md:w-auto">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
@@ -143,7 +152,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
-                    <h4 className="font-semibold mb-4">UPI Gateways</h4>
+                    <h4 className="font-semibold mb-4">Indian UPI Gateways</h4>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
@@ -191,34 +200,83 @@ export default function SettingsPage() {
                 <Separator />
                 <div>
                     <h4 className="font-semibold mb-4">Cryptocurrency Wallets</h4>
+                     <div className="p-4 rounded-lg border bg-card-foreground/5 mb-4">
+                        <Label htmlFor="settlement-crypto">Default Settlement Currency</Label>
+                        <Select defaultValue="usdt">
+                            <SelectTrigger id="settlement-crypto" className="mt-2">
+                                <SelectValue placeholder="Select crypto for settlement" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="usdt">USDT (TRC20)</SelectItem>
+                                <SelectItem value="btc">Bitcoin (BTC)</SelectItem>
+                                <SelectItem value="eth">Ethereum (ETH)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-2">All payments from global methods will be settled to this currency.</p>
+                    </div>
                     <div className="space-y-4">
                          <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
-                                <Label htmlFor="btc-switch" className="font-medium">Bitcoin (BTC)</Label>
-                                <p className="text-sm text-muted-foreground">Accept payments in Bitcoin.</p>
+                                <Label htmlFor="btc-switch" className="font-medium">Bitcoin (BTC) Payments</Label>
+                                <p className="text-sm text-muted-foreground">Accept direct payments in Bitcoin.</p>
                             </div>
                             <Switch id="btc-switch" checked={paymentMethods.btc} onCheckedChange={() => handlePaymentMethodToggle('btc')} />
                         </div>
                         {paymentMethods.btc && (
                             <div className="space-y-2 pl-4 pb-2">
-                                <Label htmlFor="btc-wallet">Bitcoin (BTC) Address</Label>
+                                <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Address for Settlements</Label>
                                 <Input id="btc-wallet" placeholder="bc1..."/>
                             </div>
                         )}
 
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
-                                <Label htmlFor="usdt-switch" className="font-medium">USDT (TRC20)</Label>
-                                <p className="text-sm text-muted-foreground">Accept payments in Tether.</p>
+                                <Label htmlFor="usdt-switch" className="font-medium">USDT (TRC20) Payments</Label>
+                                <p className="text-sm text-muted-foreground">Accept direct payments in Tether.</p>
                             </div>
                             <Switch id="usdt-switch" checked={paymentMethods.usdt} onCheckedChange={() => handlePaymentMethodToggle('usdt')} />
                         </div>
                         {paymentMethods.usdt && (
                             <div className="space-y-2 pl-4 pb-2">
-                                <Label htmlFor="usdt-wallet">USDT (TRC20) Address</Label>
+                                <Label htmlFor="usdt-wallet">Your USDT (TRC20) Address for Settlements</Label>
                                 <Input id="usdt-wallet" placeholder="T..."/>
                             </div>
                         )}
+                    </div>
+                </div>
+                <Separator />
+                 <div>
+                    <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h4>
+                     <p className="text-sm text-muted-foreground mb-4">Enable local payment methods for different countries. All payouts will be settled in your chosen cryptocurrency.</p>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
+                                <p className="text-sm text-muted-foreground">For customers in the USA & North America.</p>
+                            </div>
+                            <Switch id="usd-card-switch" checked={paymentMethods.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
+                                <p className="text-sm text-muted-foreground">For customers in the European Union.</p>
+                            </div>
+                            <Switch id="eur-sepa-switch" checked={paymentMethods.eur_sepa} onCheckedChange={() => handlePaymentMethodToggle('eur_sepa')} />
+                        </div>
+                         <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="gbp-bacs-switch" className="font-medium">BACS Direct Debit (GBP)</Label>
+                                <p className="text-sm text-muted-foreground">For customers in the United Kingdom.</p>
+                            </div>
+                            <Switch id="gbp-bacs-switch" checked={paymentMethods.gbp_bacs} onCheckedChange={() => handlePaymentMethodToggle('gbp_bacs')} />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <Label htmlFor="aud-becs-switch" className="font-medium">BECS Direct Debit (AUD)</Label>
+                                <p className="text-sm text-muted-foreground">For customers in Australia.</p>
+                            </div>
+                            <Switch id="aud-becs-switch" checked={paymentMethods.aud_becs} onCheckedChange={() => handlePaymentMethodToggle('aud_becs')} />
+                        </div>
                     </div>
                 </div>
                  <Button>Save Changes</Button>
