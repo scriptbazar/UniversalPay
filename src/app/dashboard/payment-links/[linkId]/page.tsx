@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,6 +93,10 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
     }
   };
 
+  const handleTransactionRowClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+  }
+
 
   return (
     <div className="space-y-6">
@@ -179,7 +183,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     </TableHeader>
                     <TableBody>
                         {allTransactions.map(p => (
-                            <TableRow key={p.id} onClick={() => setSelectedTransaction(p)} className="cursor-pointer hover:bg-muted/50">
+                            <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="font-medium">{p.id}</TableCell>
                                 <TableCell>{p.customer}</TableCell>
                                 <TableCell>
@@ -203,8 +207,20 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                 </DialogHeader>
                 {selectedTransaction && (
                     <div className="space-y-4 py-4">
-                       <div className="flex justify-between items-center"><span className="text-muted-foreground">ID:</span> <span className="font-mono">{selectedTransaction.id}</span></div>
-                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Customer:</span> <span>{selectedTransaction.customer}</span></div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">ID:</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono">{selectedTransaction.id}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                            </div>
+                        </div>
+                       <div className="flex justify-between items-center">
+                           <span className="text-muted-foreground">Customer:</span>
+                           <div className="flex items-center gap-2">
+                               <span>{selectedTransaction.customer}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customer, 'Customer Email')} />
+                            </div>
+                        </div>
                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedTransaction.amount} {selectedTransaction.currency}</span></div>
                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span>{selectedTransaction.date}</span></div>
                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge></div>
@@ -234,7 +250,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                         </TableHeader>
                         <TableBody>
                             {dialogContent?.transactions.map(p => (
-                                <TableRow key={p.id}>
+                                <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{p.id}</TableCell>
                                     <TableCell>{p.customer}</TableCell>
                                     <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
