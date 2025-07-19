@@ -423,7 +423,7 @@ export default function SettingsPage() {
                      <p className="text-sm text-muted-foreground mb-4">Select which payment options your customers will see.</p>
                     
                     <h5 className="font-semibold mb-2 mt-4">Indian UPI Gateways</h5>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div><Label htmlFor="paytm-switch" className="font-medium">Paytm</Label></div>
                             <Switch id="paytm-switch" checked={paymentMethods.paytm} onCheckedChange={() => handlePaymentMethodToggle('paytm')} />
@@ -439,39 +439,34 @@ export default function SettingsPage() {
                     </div>
                 
                     <h5 className="font-semibold mb-2 mt-6 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h5>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
-                                <p className="text-xs text-muted-foreground">For customers in the USA &amp; North America.</p>
                             </div>
                             <Switch id="usd-card-switch" checked={paymentMethods.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
-                                <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
-                                <p className="text-xs text-muted-foreground">For customers in the European Union.</p>
+                                <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Transfer (EUR)</Label>
                             </div>
                             <Switch id="eur-sepa-switch" checked={paymentMethods.eur_sepa} onCheckedChange={() => handlePaymentMethodToggle('eur_sepa')} />
                         </div>
                          <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
-                                <Label htmlFor="gbp-bacs-switch" className="font-medium">BACS Direct Debit (GBP)</Label>
-                                <p className="text-xs text-muted-foreground">For customers in the United Kingdom.</p>
+                                <Label htmlFor="gbp-bacs-switch" className="font-medium">BACS Debit (GBP)</Label>
                             </div>
                             <Switch id="gbp-bacs-switch" checked={paymentMethods.gbp_bacs} onCheckedChange={() => handlePaymentMethodToggle('gbp_bacs')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
-                                <Label htmlFor="aud-becs-switch" className="font-medium">BECS Direct Debit (AUD)</Label>
-                                <p className="text-xs text-muted-foreground">For customers in Australia.</p>
+                                <Label htmlFor="aud-becs-switch" className="font-medium">BECS Debit (AUD)</Label>
                             </div>
                             <Switch id="aud-becs-switch" checked={paymentMethods.aud_becs} onCheckedChange={() => handlePaymentMethodToggle('aud_becs')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
-                                <Label htmlFor="cad-eft-switch" className="font-medium">EFT Pre-authorized Debit (CAD)</Label>
-                                <p className="text-xs text-muted-foreground">For customers in Canada.</p>
+                                <Label htmlFor="cad-eft-switch" className="font-medium">EFT Debit (CAD)</Label>
                             </div>
                             <Switch id="cad-eft-switch" checked={paymentMethods.cad_eft} onCheckedChange={() => handlePaymentMethodToggle('cad_eft')} />
                         </div>
