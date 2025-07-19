@@ -88,64 +88,36 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={revenueData}>
-              <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-              <Tooltip
-                contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
       
-      <div className="grid gap-8 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
+      <div className="grid gap-8 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Top Customers</CardTitle>
-            <CardDescription>Your most valuable customers by total amount spent.</CardDescription>
+            <CardTitle>Revenue Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="text-right">Total Spent</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {topCustomers.map(customer => (
-                        <TableRow key={customer.email}>
-                            <TableCell>
-                                <div className="font-medium">{customer.name}</div>
-                                <div className="text-sm text-muted-foreground">{customer.email}</div>
-                            </TableCell>
-                            <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={revenueData}>
+                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
+         <Card>
             <CardHeader>
                 <CardTitle>Payment Methods Breakdown</CardTitle>
                 <CardDescription>Distribution of transactions by type.</CardDescription>
             </CardHeader>
             <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
-                        <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} label>
+                        <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} label>
                             {paymentMethodData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
@@ -157,6 +129,35 @@ export default function AnalyticsPage() {
             </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Customers</CardTitle>
+          <CardDescription>Your most valuable customers by total amount spent.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+              <TableHeader>
+                  <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className="text-right">Total Spent</TableHead>
+                  </TableRow>
+              </TableHeader>
+              <TableBody>
+                  {topCustomers.map(customer => (
+                      <TableRow key={customer.email}>
+                          <TableCell>
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-muted-foreground">{customer.email}</div>
+                          </TableCell>
+                          <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
+                      </TableRow>
+                  ))}
+              </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
