@@ -41,6 +41,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 const data = [
   { name: "Jan", total: 4230, monthIndex: 0 },
@@ -88,6 +89,7 @@ export default function AdminDashboard() {
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
+  const [isAllTransactionsOpen, setIsAllTransactionsOpen] = useState(false);
 
 
   const handleRowClick = (userId: string) => {
@@ -132,7 +134,7 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/users')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Active Merchants
@@ -146,7 +148,7 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setIsAllTransactionsOpen(true)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -158,7 +160,7 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/fraud-detection')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Fraud Alerts
@@ -327,6 +329,44 @@ export default function AdminDashboard() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isAllTransactionsOpen} onOpenChange={setIsAllTransactionsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>All Platform Transactions</DialogTitle>
+            <DialogDescription>
+                A complete list of all transactions processed across the platform.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {allTransactions.map((tx) => (
+                        <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
+                            <TableCell className="font-medium">{tx.id}</TableCell>
+                            <TableCell>{tx.name}</TableCell>
+                            <TableCell>
+                                <Badge variant={tx.status === 'Success' ? 'default' : 'destructive'}>{tx.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">${tx.amount}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAllTransactionsOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
