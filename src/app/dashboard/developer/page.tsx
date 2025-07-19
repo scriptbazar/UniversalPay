@@ -525,6 +525,8 @@ public class Utils {
                             <Tabs defaultValue="react" className="w-full">
                                 <TabsList className="overflow-x-auto w-full justify-start">
                                     <TabsTrigger value="react">React</TabsTrigger>
+                                    <TabsTrigger value="vue">Vue.js</TabsTrigger>
+                                    <TabsTrigger value="angular">Angular</TabsTrigger>
                                     <TabsTrigger value="flutter">Flutter</TabsTrigger>
                                 </TabsList>
                                  <TabsContent value="react" className="pt-4">
@@ -555,6 +557,68 @@ const CheckoutButton = () => {
     </button>
   );
 };
+                                    `} />
+                                </TabsContent>
+                                <TabsContent value="vue" className="pt-4">
+                                    <h3 className="font-semibold text-lg mb-2">Vue.js Integration</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">Use our Vue composable for easy integration.</p>
+                                    <CodeSnippet code="npm install @transactwave/vue" />
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Payment Button</h4>
+                                    <CodeSnippet code={`
+<template>
+  <button @click="pay" :disabled="!isLoaded">Pay with TransactWave</button>
+</template>
+
+<script setup>
+import { useTransactWave } from '@transactwave/vue';
+
+const { open, isLoaded } = useTransactWave({
+  key: 'YOUR_PUBLISHABLE_KEY',
+  amount: 1000,
+  currency: 'INR',
+  name: 'My Awesome Store',
+  handler: (response) => {
+    alert('Payment successful: ' + response.payment_id);
+    // Verify payment on your server
+  }
+});
+
+function pay() {
+  open();
+}
+</script>
+                                    `} />
+                                </TabsContent>
+                                <TabsContent value="angular" className="pt-4">
+                                    <h3 className="font-semibold text-lg mb-2">Angular Integration</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">Integrate our script and service into your Angular application.</p>
+                                    <CodeSnippet code="npm install @transactwave/angular" />
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Payment Component</h4>
+                                    <CodeSnippet code={`
+// app.component.ts
+import { Component } from '@angular/core';
+import { TransactWaveService } from '@transactwave/angular';
+
+@Component({
+  selector: 'app-checkout',
+  template: \`<button (click)="pay()">Pay with TransactWave</button>\`
+})
+export class CheckoutComponent {
+  constructor(private transactWaveService: TransactWaveService) {}
+
+  pay() {
+    this.transactWaveService.open({
+      key: 'YOUR_PUBLISHABLE_KEY',
+      amount: 1000,
+      currency: 'INR',
+      name: 'My Awesome Store',
+      handler: (response) => {
+        alert('Payment successful: ' + response.payment_id);
+        // Verify payment on your server
+      }
+    });
+  }
+}
                                     `} />
                                 </TabsContent>
                                  <TabsContent value="flutter" className="pt-4">
