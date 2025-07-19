@@ -27,7 +27,8 @@ type PaymentLink = {
   amount: string | null;
   isActive: boolean;
   createdAt: string;
-  singleUse: boolean;
+  expiresAt: string;
+  payments: number;
 };
 
 const initialLinks: PaymentLink[] = [
@@ -39,7 +40,8 @@ const initialLinks: PaymentLink[] = [
     amount: '25.00',
     isActive: true,
     createdAt: '2023-10-26',
-    singleUse: true,
+    expiresAt: new Date(new Date('2023-10-26').getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    payments: 120,
   },
   {
     id: 'plink_2',
@@ -49,7 +51,8 @@ const initialLinks: PaymentLink[] = [
     amount: null,
     isActive: true,
     createdAt: '2023-10-25',
-    singleUse: false,
+    expiresAt: new Date(new Date('2023-10-25').getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    payments: 50,
   },
   {
     id: 'plink_3',
@@ -59,7 +62,8 @@ const initialLinks: PaymentLink[] = [
     amount: '100.00',
     isActive: false,
     createdAt: '2023-10-22',
-    singleUse: false,
+    expiresAt: new Date(new Date('2023-10-22').getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    payments: 75,
   },
 ];
 
@@ -69,7 +73,6 @@ export default function PaymentLinksPage() {
   const [title, setTitle] = useState('');
   const [isDynamic, setIsDynamic] = useState(false);
   const [amount, setAmount] = useState('');
-  const [isSingleUse, setIsSingleUse] = useState(false);
 
   const handleCreateLink = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +85,9 @@ export default function PaymentLinksPage() {
       return;
     }
 
+    const creationDate = new Date();
+    const expiryDate = new Date(creationDate.getTime() + 15 * 24 * 60 * 60 * 1000);
+
     const newLink: PaymentLink = {
       id: `plink_${Date.now()}`,
       title,
@@ -89,18 +95,18 @@ export default function PaymentLinksPage() {
       type: isDynamic ? 'Dynamic' : 'Fixed',
       amount: isDynamic ? null : parseFloat(amount).toFixed(2),
       isActive: true,
-      createdAt: new Date().toISOString().split('T')[0],
-      singleUse: isSingleUse,
+      createdAt: creationDate.toISOString().split('T')[0],
+      expiresAt: expiryDate.toISOString().split('T')[0],
+      payments: 0,
     };
 
     setLinks((prev) => [newLink, ...prev]);
     setTitle('');
     setIsDynamic(false);
     setAmount('');
-    setIsSingleUse(false);
     toast({
       title: 'Success!',
-      description: 'New payment link has been created.',
+      description: 'New payment link has been created. It will expire in 15 days.',
     });
   };
   
@@ -112,19 +118,15 @@ export default function PaymentLinksPage() {
   const simulatePayment = (linkId: string) => {
     setLinks(prevLinks => {
       const link = prevLinks.find(l => l.id === linkId);
-      if (link && link.singleUse) {
-        toast({
-          title: "Payment Successful & Link Deactivated",
-          description: `Link "${link.title}" was a single-use link and is now inactive.`
-        });
-        return prevLinks.map(l => l.id === linkId ? { ...l, isActive: false } : l);
-      } else if (link) {
+      if (link) {
          toast({
           title: "Payment Successful",
           description: `Payment received for link "${link.title}".`
         });
       }
-      return prevLinks;
+       return prevLinks.map(l => 
+        l.id === linkId ? { ...l, payments: l.payments + 1 } : l
+      );
     });
   };
 
@@ -142,7 +144,7 @@ export default function PaymentLinksPage() {
           <Card>
             <CardHeader>
               <CardTitle>Create a New Link</CardTitle>
-              <CardDescription>Generate a new link to share with your customers.</CardDescription>
+              <CardDescription>Generate a new link to share with your customers. Links expire after 15 days.</CardDescription>
             </CardHeader>
             <form onSubmit={handleCreateLink}>
               <CardContent className="space-y-4">
@@ -180,17 +182,6 @@ export default function PaymentLinksPage() {
                     />
                   </div>
                 )}
-                 <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="single-use-switch">Single Use Only</Label>
-                    <p className="text-xs text-muted-foreground">Link will expire after one payment.</p>
-                  </div>
-                  <Switch
-                    id="single-use-switch"
-                    checked={isSingleUse}
-                    onCheckedChange={setIsSingleUse}
-                  />
-                </div>
               </CardContent>
               <div className="p-6 pt-0">
                 <Button className="w-full" type="submit">
@@ -229,10 +220,7 @@ export default function PaymentLinksPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <Badge variant="outline">{link.type}</Badge>
-                          {link.singleUse && <Badge variant="destructive">Single Use</Badge>}
-                        </div>
+                        <Badge variant="outline">{link.type}</Badge>
                       </TableCell>
                        <TableCell>{link.amount ? `$${link.amount}` : 'N/A'}</TableCell>
                       <TableCell>

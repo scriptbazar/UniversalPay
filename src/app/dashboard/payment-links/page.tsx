@@ -9,10 +9,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const allLinks = [
-  { id: 'plink_1', merchant: 'MyStore.com', title: 'T-Shirt Sale', payments: 120, fraud: 2, status: 'Active', createdAt: '2023-10-26' },
-  { id: 'plink_2', merchant: 'CreativeGoods', title: 'General Donation', payments: 50, fraud: 0, status: 'Active', createdAt: '2023-10-25' },
-  { id: 'plink_3', merchant: 'AnotherShop', title: 'Workshop Registration', payments: 75, fraud: 5, status: 'Inactive', createdAt: '2023-10-22' },
-  { id: 'plink_4', merchant: 'MyStore.com', title: 'Ebook Download', payments: 250, fraud: 1, status: 'Active', createdAt: '2023-10-21' },
+  { id: 'plink_1', merchant: 'MyStore.com', title: 'T-Shirt Sale', payments: 120, fraud: 2, status: 'Active', expiresAt: '2023-11-10' },
+  { id: 'plink_2', merchant: 'CreativeGoods', title: 'General Donation', payments: 50, fraud: 0, status: 'Active', expiresAt: '2023-11-09' },
+  { id: 'plink_3', merchant: 'AnotherShop', title: 'Workshop Registration', payments: 75, fraud: 5, status: 'Inactive', expiresAt: '2023-11-06' },
+  { id: 'plink_4', merchant: 'MyStore.com', title: 'Ebook Download', payments: 250, fraud: 1, status: 'Active', expiresAt: '2023-11-05' },
 ];
 
 export default function AdminPaymentLinksPage() {
@@ -41,10 +41,10 @@ export default function AdminPaymentLinksPage() {
               <TableRow>
                 <TableHead>Link Title</TableHead>
                 <TableHead>Merchant</TableHead>
-                <TableHead>Payments</TableHead>
+                <TableHead>Total Payments</TableHead>
                 <TableHead>Fraudulent Payments</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead>Expires At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -63,7 +63,7 @@ export default function AdminPaymentLinksPage() {
                       {link.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{link.createdAt}</TableCell>
+                  <TableCell>{link.expiresAt}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
