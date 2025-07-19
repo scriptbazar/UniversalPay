@@ -12,12 +12,12 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const CurrencyInfoInputSchema = z.object({
-  currency: z.string().describe('The name or symbol of the currency to inquire about.'),
+  currency: z.string().describe('The name, symbol, or query about a currency.'),
 });
 export type CurrencyInfoInput = z.infer<typeof CurrencyInfoInputSchema>;
 
 const CurrencyInfoOutputSchema = z.object({
-  explanation: z.string().describe('A detailed explanation about the currency.'),
+  explanation: z.string().describe('A detailed explanation about the currency or the conversion query.'),
 });
 export type CurrencyInfoOutput = z.infer<typeof CurrencyInfoOutputSchema>;
 
@@ -25,16 +25,26 @@ const currencyInfoPrompt = ai.definePrompt({
   name: 'currencyInfoPrompt',
   input: { schema: CurrencyInfoInputSchema },
   output: { schema: CurrencyInfoOutputSchema },
-  prompt: `You are a helpful and witty financial assistant for a payment gateway called TransactWave. A user is asking about a currency that might not be in our standard list.
+  prompt: `You are a helpful and witty financial assistant for a payment gateway called TransactWave. You are an expert on all world currencies. A user is asking a question about a currency.
 
-Your task is to provide a clear, concise, and slightly humorous explanation about the specified currency: {{{currency}}}.
+Your task is to provide a clear, concise, and helpful response based on the user's query about: {{{currency}}}.
 
-- If it's a real-world currency, briefly describe it and mention if it's commonly traded.
-- If it's a fictional currency (from a movie, game, etc.), identify its origin and explain what it is in a playful tone.
-- If it's a cryptocurrency, explain what it is and its general purpose. Mention that while we support major cryptocurrencies like BTC and ETH, we may not support every single one for direct conversion yet.
-- If the input is nonsensical, politely state that you couldn't identify it as a currency.
+Follow these rules:
 
-Keep the response to 2-3 sentences.
+1.  **If the user asks to convert a currency (e.g., "how much is 100 USD in INR?", "convert euros to pounds"):**
+    - Do NOT provide a number or an exchange rate.
+    - Politely explain that you don't have access to real-time exchange rates.
+    - Instruct the user to use the "Live Currency Converter" tool on the page for accurate, up-to-the-minute conversions.
+
+2.  **If the user asks for information about a specific currency:**
+    - **Real-world currency:** Briefly describe it, its origin, and common uses.
+    - **Fictional currency (from a movie, game, etc.):** Identify its origin and explain what it is in a playful tone.
+    - **Cryptocurrency:** Explain what it is and its general purpose. Mention that TransactWave supports major cryptocurrencies like BTC and ETH, but may not support every single one for direct conversion yet.
+
+3.  **If the input is nonsensical or not a currency:**
+    - Politely state that you couldn't identify it as a currency and ask them to try again.
+
+Keep the response to 2-4 sentences. Be friendly and professional.
 `,
 });
 
