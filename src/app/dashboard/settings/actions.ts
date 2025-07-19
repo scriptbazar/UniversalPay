@@ -26,7 +26,7 @@ async function updateEnvFile(updates: Record<string, string>) {
         return `${key}=${updates[key]}`;
       }
       return line;
-    });
+    }).filter(Boolean); // remove empty lines
 
     updateKeys.forEach(key => {
       if (!updatedKeys.has(key)) {
@@ -34,10 +34,10 @@ async function updateEnvFile(updates: Record<string, string>) {
       }
     });
 
-    const finalContent = lines.filter(line => line).join('\n') + '\n';
+    const finalContent = lines.join('\n') + '\n';
 
     await fs.writeFile(envPath, finalContent, { encoding: 'utf-8', flag: 'w' });
-    console.log('.env file updated successfully.');
+    console.log('.env file updated successfully with:', Object.keys(updates));
     return { success: true };
   } catch (error) {
     console.error('Failed to write to .env file:', error);
