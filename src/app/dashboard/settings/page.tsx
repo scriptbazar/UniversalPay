@@ -55,7 +55,7 @@ export default function SettingsPage() {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="upi-crypto">Payment Methods</TabsTrigger>
+          <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
         </TabsList>
         <TabsContent value="profile" className="pt-4">
           <Card>
@@ -144,7 +144,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="upi-crypto" className="pt-4">
+        <TabsContent value="payment-methods" className="pt-4">
           <Card>
             <CardHeader>
               <CardTitle>Payment Methods</CardTitle>
@@ -200,20 +200,6 @@ export default function SettingsPage() {
                 <Separator />
                 <div>
                     <h4 className="font-semibold mb-4">Cryptocurrency Wallets</h4>
-                     <div className="p-4 rounded-lg border bg-card-foreground/5 mb-4">
-                        <Label htmlFor="settlement-crypto">Default Settlement Currency</Label>
-                        <Select defaultValue="usdt">
-                            <SelectTrigger id="settlement-crypto" className="mt-2">
-                                <SelectValue placeholder="Select crypto for settlement" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="usdt">USDT (TRC20)</SelectItem>
-                                <SelectItem value="btc">Bitcoin (BTC)</SelectItem>
-                                <SelectItem value="eth">Ethereum (ETH)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground mt-2">All payments from global methods will be settled to this currency.</p>
-                    </div>
                     <div className="space-y-4">
                          <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
@@ -248,6 +234,20 @@ export default function SettingsPage() {
                  <div>
                     <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h4>
                      <p className="text-sm text-muted-foreground mb-4">Enable local payment methods for different countries. All payouts will be settled in your chosen cryptocurrency.</p>
+                      <div className="p-4 rounded-lg border bg-card-foreground/5 mb-4">
+                        <Label htmlFor="settlement-crypto">Default Settlement Currency</Label>
+                        <Select defaultValue="usdt">
+                            <SelectTrigger id="settlement-crypto" className="mt-2">
+                                <SelectValue placeholder="Select crypto for settlement" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="usdt">USDT (TRC20)</SelectItem>
+                                <SelectItem value="btc">Bitcoin (BTC)</SelectItem>
+                                <SelectItem value="eth">Ethereum (ETH)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-2">All payments from global methods will be settled to this currency.</p>
+                    </div>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
