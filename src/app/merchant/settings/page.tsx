@@ -26,6 +26,7 @@ type PaymentMethodsState = {
   eur_sepa: boolean;
   gbp_bacs: boolean;
   aud_becs: boolean;
+  cad_eft: boolean;
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -123,6 +124,7 @@ export default function SettingsPage() {
     eur_sepa: false,
     gbp_bacs: false,
     aud_becs: false,
+    cad_eft: false,
   });
 
   const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
@@ -131,6 +133,14 @@ export default function SettingsPage() {
 
   const handleSaveApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!geminiApiKey) {
+        toast({
+            variant: "destructive",
+            title: "API Key Required",
+            description: "Please enter your Gemini API Key.",
+        });
+        return;
+    }
     try {
       await updateGeminiApiKey(geminiApiKey);
       toast({
@@ -457,6 +467,13 @@ export default function SettingsPage() {
                                 <p className="text-xs text-muted-foreground">For customers in Australia.</p>
                             </div>
                             <Switch id="aud-becs-switch" checked={paymentMethods.aud_becs} onCheckedChange={() => handlePaymentMethodToggle('aud_becs')} />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div>
+                                <Label htmlFor="cad-eft-switch" className="font-medium">EFT Pre-authorized Debit (CAD)</Label>
+                                <p className="text-xs text-muted-foreground">For customers in Canada.</p>
+                            </div>
+                            <Switch id="cad-eft-switch" checked={paymentMethods.cad_eft} onCheckedChange={() => handlePaymentMethodToggle('cad_eft')} />
                         </div>
                     </div>
                 </div>
