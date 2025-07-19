@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -69,6 +69,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: strin
                             <div className="space-y-2">
                                 <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
                                 <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
+                                <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
                             </div>
                         </div>
 
