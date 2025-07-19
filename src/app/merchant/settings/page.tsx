@@ -123,7 +123,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
                          <div className="flex items-center justify-center pt-2 gap-2 text-xs text-muted-foreground">
-                            <Logo className="h-4 w-4"/>
+                            <Globe className="h-4 w-4 text-primary"/>
                             <span>Powered by UniversalPay</span>
                          </div>
                     </div>
@@ -187,6 +187,12 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
     }
   };
 
+  const handleSaveChanges = () => {
+    toast({
+      title: "Settings Saved",
+      description: "Your settings have been updated.",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -256,7 +262,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                     </div>
                 </div>
               </div>
-               <Button>Save Changes</Button>
+               <Button onClick={handleSaveChanges}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -297,7 +303,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                         <Switch />
                     </div>
                 </div>
-               <Button className="mt-4">Save Changes</Button>
+               <Button className="mt-4" onClick={handleSaveChanges}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -415,7 +421,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                 </div>
                                 <Switch id="branding-switch" defaultChecked />
                             </div>
-                            <Button>Save Branding Changes</Button>
+                            <Button onClick={handleSaveChanges}>Save Branding Changes</Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -552,7 +558,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                         </div>
                     </div>
                 </div>
-                 <Button>Save Changes</Button>
+                 <Button onClick={handleSaveChanges}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
