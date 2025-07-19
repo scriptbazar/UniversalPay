@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { countries } from "@/lib/countries";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -50,11 +52,12 @@ export default function SignupPage() {
   };
   
   const handleSocialSignup = () => {
+    // In a real app, this would trigger the OAuth flow.
+    // For now, it will show a toast.
     toast({
-      title: "Account Created",
-      description: "Welcome to TransactWave! Redirecting...",
+      title: "Social Signup",
+      description: "This would normally start the social signup process.",
     });
-    router.push('/merchant/dashboard');
   };
 
   return (
