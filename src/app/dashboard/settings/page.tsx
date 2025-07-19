@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign } from "lucide-react";
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { updateApiKeys } from './actions';
@@ -23,6 +23,13 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const StripeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M22.53,10.22A1.05,1.05,0,0,0,21.5,10V7.21a4.2,4.2,0,0,0-4.2-4.2H13.1a1.05,1.05,0,0,0,0,2.1h4.2a2.1,2.1,0,0,1,2.1,2.1v.24A4.32,4.32,0,0,0,15.2,11.8a1.05,1.05,0,0,0,.8,1.86h.6v2.79a2.1,2.1,0,0,1-2.1,2.1H10.3a1.05,1.05,0,1,0,0,2.1H14.5a4.2,4.2,0,0,0,4.2-4.2V13.84a2.21,2.21,0,0,0,3.83-1.51,1.1,1.1,0,0,0-1-1A1.05,1.05,0,0,0,22.53,10.22ZM8.6,3a1,1,0,1,0-1-1.05A1.05,1.05,0,0,0,8.6,3Zm-2.1,3.3A3.3,3.3,0,0,0,3.2,9.6V19.05H1.05a1.05,1.05,0,0,0,0,2.1h8.4a1.05,1.05,0,0,0,0-2.1H7.3V9.6A4.32,4.32,0,0,0,1.5,5.1,1.05,1.05,0,1,0,1.5,7.2,2.21,2.21,0,0,1,6.5,6.3Z"/>
+  </svg>
+);
+
+
 type GatewayState = {
     paytm: boolean;
     phonepe: boolean;
@@ -30,6 +37,9 @@ type GatewayState = {
     usd_card: boolean;
     eur_sepa: boolean;
     paypal: boolean;
+    stripe: boolean;
+    crypto_usdt: boolean;
+    crypto_btc: boolean;
 };
 
 export default function SettingsPage() {
@@ -49,6 +59,9 @@ export default function SettingsPage() {
     usd_card: true,
     eur_sepa: false,
     paypal: false,
+    stripe: true,
+    crypto_usdt: true,
+    crypto_btc: true,
   });
 
   const handleGatewayToggle = (gateway: keyof GatewayState) => {
@@ -103,7 +116,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="api-keys">API & Security</TabsTrigger>
-          <TabsTrigger value="gateways">Payment Gateways</TabsTrigger>
+          <TabsTrigger value="gateways">Payment Configuration</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="pt-4">
           <Card>
@@ -247,18 +260,19 @@ export default function SettingsPage() {
         <TabsContent value="gateways" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Payment Gateway Management</CardTitle>
+              <CardTitle>Payment Configuration</CardTitle>
               <CardDescription>
-                Enable, disable, and configure payment gateways for the entire platform.
+                Configure the payment gateways your platform uses to accept payments from customers.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2">
                             <IndianRupee className="w-6 h-auto rounded-sm" />
                             Indian UPI Gateways
                         </h5>
+                        <p className="text-sm text-muted-foreground mb-4">Enable or disable UPI options for customers.</p>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between rounded-lg border p-3">
                                 <div><Label htmlFor="paytm-switch" className="font-medium">Paytm</Label></div>
@@ -276,32 +290,79 @@ export default function SettingsPage() {
                     </div>
                     <div>
                         <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h5>
-                        <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground mb-4">Connect your accounts to accept international payments.</p>
+                        <div className="space-y-4">
                             <div className="flex items-center justify-between rounded-lg border p-3">
-                                <div>
-                                    <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
-                                </div>
-                                <Switch id="usd-card-switch" checked={gateways.usd_card} onCheckedChange={() => handleGatewayToggle('usd_card')} />
+                                <Label htmlFor="stripe-switch" className="font-medium flex items-center gap-2">
+                                    <StripeIcon className="w-5 h-5" /> Stripe (Cards, SEPA, etc.)
+                                </Label>
+                                <Switch id="stripe-switch" checked={gateways.stripe} onCheckedChange={() => handleGatewayToggle('stripe')} />
                             </div>
-                            <div className="flex items-center justify-between rounded-lg border p-3">
-                                <div>
-                                    <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Bank Transfer (EUR)</Label>
+                             {gateways.stripe && (
+                                <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
+                                    <Label htmlFor="stripe-pk">Stripe Publishable Key</Label>
+                                    <Input id="stripe-pk" placeholder="pk_live_..."/>
+                                    <Label htmlFor="stripe-sk">Stripe Secret Key</Label>
+                                    <Input id="stripe-sk" type="password" placeholder="sk_live_..."/>
                                 </div>
-                                <Switch id="eur-sepa-switch" checked={gateways.eur_sepa} onCheckedChange={() => handleGatewayToggle('eur_sepa')} />
-                            </div>
+                            )}
+
                              <div className="flex items-center justify-between rounded-lg border p-3">
-                                <div>
-                                    <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
-                                        <PayPalIcon className="w-5 h-5" /> PayPal
-                                    </Label>
-                                </div>
+                                <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
+                                    <PayPalIcon className="w-5 h-5" /> PayPal
+                                </Label>
                                 <Switch id="paypal-switch" checked={gateways.paypal} onCheckedChange={() => handleGatewayToggle('paypal')} />
                             </div>
+                             {gateways.paypal && (
+                                <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
+                                    <Label htmlFor="paypal-client-id">PayPal Client ID</Label>
+                                    <Input id="paypal-client-id" placeholder="Enter PayPal Client ID"/>
+                                    <Label htmlFor="paypal-secret">PayPal Secret</Label>
+                                    <Input id="paypal-secret" type="password" placeholder="Enter PayPal Secret"/>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
+
+                <Separator className="my-8"/>
+
+                 <div>
+                    <h5 className="font-semibold mb-4 flex items-center gap-2"><KeyRound className="w-5 h-5"/> Admin Crypto Settlement Wallets</h5>
+                     <p className="text-sm text-muted-foreground mb-4">Enter the wallet addresses where you want to receive funds from all payments.</p>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div>
+                                <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
+                                <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in Tether.</p>
+                            </div>
+                            <Switch id="usdt-switch" checked={gateways.crypto_usdt} onCheckedChange={() => handleGatewayToggle('crypto_usdt')} />
+                        </div>
+                        {gateways.crypto_usdt && (
+                            <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
+                                <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
+                                <Input id="usdt-wallet" placeholder="T..."/>
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div>
+                                <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
+                                <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
+                            </div>
+                            <Switch id="btc-switch" checked={gateways.crypto_btc} onCheckedChange={() => handleGatewayToggle('crypto_btc')} />
+                        </div>
+                        {gateways.crypto_btc && (
+                            <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
+                                <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
+                                <Input id="btc-wallet" placeholder="bc1..."/>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+
                 <div className="pt-4">
-                  <Button onClick={handleSaveGateways}>Save Gateway Settings</Button>
+                  <Button onClick={handleSaveGateways}>Save Gateway Configuration</Button>
                 </div>
             </CardContent>
           </Card>
@@ -310,3 +371,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
