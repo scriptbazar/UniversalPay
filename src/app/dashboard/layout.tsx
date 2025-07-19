@@ -11,7 +11,8 @@ import {
   Briefcase,
   Settings,
   Users,
-  Package2
+  Package2,
+  BarChart
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
+  { href: "/dashboard/analytics", icon: BarChart, label: "Analytics" },
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
   { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud & Risk" },
