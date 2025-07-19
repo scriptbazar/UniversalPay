@@ -264,7 +264,13 @@ export default function AdminDashboard() {
               <Separator />
                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Customer:</span>
-                  <span className="font-semibold">{selectedTransaction.name} ({selectedTransaction.email})</span>
+                  <div className="flex items-center gap-2">
+                      <div className="text-right">
+                          <p className="font-semibold">{selectedTransaction.name}</p>
+                          <p className="text-sm text-muted-foreground">{selectedTransaction.email}</p>
+                      </div>
+                      <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.email, 'Customer Email')} />
+                  </div>
               </div>
               <Separator />
               <div className="flex justify-between items-center">
