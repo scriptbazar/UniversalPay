@@ -86,10 +86,10 @@ type Withdrawal = {
 };
 
 const withdrawalHistory: Withdrawal[] = [
-    { id: "UVRLPWD000001", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
-    { id: "UVRLPWD000002", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
-    { id: "UVRLPWD000003", amount: "250.00", currency: "BTC", destinationType: "Crypto Wallet", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Failed", date: "2023-10-18" },
-    { id: "UVRLPWD000004", amount: "750.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-15" },
+    { id: "UVRLP789012345", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
+    { id: "UVRLP890123456", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
+    { id: "UVRLP901234567", amount: "250.00", currency: "BTC", destinationType: "Crypto Wallet", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Failed", date: "2023-10-18" },
+    { id: "UVRLP012345678", amount: "750.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-15" },
 ];
 
 const getStatusBadgeVariant = (status: string) => {

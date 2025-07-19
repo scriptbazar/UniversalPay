@@ -19,7 +19,7 @@ export type Invoice = {
 
 let invoices: Invoice[] = [
   {
-    id: "UVRLPINV-2023-001",
+    id: "UVRLPINV001",
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Liam Johnson",
@@ -31,7 +31,7 @@ let invoices: Invoice[] = [
     status: "Paid",
   },
   {
-    id: "UVRLPINV-2023-002",
+    id: "UVRLPINV002",
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Olivia Smith",
@@ -43,7 +43,7 @@ let invoices: Invoice[] = [
     status: "Pending",
   },
   {
-    id: "UVRLPINV-2023-003",
+    id: "UVRLPINV003",
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Noah Williams",
@@ -55,7 +55,7 @@ let invoices: Invoice[] = [
     status: "Paid",
   },
   {
-    id: "UVRLPINV-2023-004",
+    id: "UVRLPINV004",
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Emma Brown",
@@ -67,7 +67,7 @@ let invoices: Invoice[] = [
     status: "Overdue",
   },
   {
-    id: "UVRLPINV-2023-005",
+    id: "UVRLPINV005",
     merchantId: "merch_789",
     merchantName: "AnotherShop",
     customerName: "James White",
@@ -104,7 +104,7 @@ export const addInvoice = (newInvoiceData: Omit<Invoice, 'id' | 'totalAmount'>):
   const totalAmount = newInvoiceData.items.reduce((sum, item) => sum + item.amount, 0);
   const newInvoice: Invoice = {
     ...newInvoiceData,
-    id: `UVRLPINV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, '0')}`,
+    id: `UVRLPINV${String(invoices.length + 1).padStart(3, '0')}`,
     totalAmount,
   };
   invoices.unshift(newInvoice); // Add to the beginning of the array

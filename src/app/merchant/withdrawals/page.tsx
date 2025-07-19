@@ -156,7 +156,7 @@ export default function WithdrawalsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Withdrawal ID</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Destination</TableHead>
                     <TableHead>Status</TableHead>
