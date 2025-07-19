@@ -13,6 +13,7 @@ import { notFound, useParams } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 const getStatusVariant = (status: Ticket['status']) => {
   switch (status) {
