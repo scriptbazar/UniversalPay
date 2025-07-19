@@ -46,7 +46,16 @@ const paymentMethodData = [
   { name: 'Payment Links', value: 2000, color: '#FF8042' },
 ];
 
-const allTransactions = [
+type Transaction = {
+    id: string;
+    amount: string;
+    currency: string;
+    method: string;
+    status: string;
+    date: string;
+};
+
+const allTransactions: Transaction[] = [
     { id: "pay_1", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-01" },
     { id: "pay_2", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-01" },
     { id: "pay_3", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
@@ -90,8 +99,10 @@ const getStatusBadgeVariant = (status: string) => {
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [transactionDetailDialogOpen, setTransactionDetailDialogOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -99,8 +110,13 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     const method = data.name;
     setSelectedMethod(method);
     setFilteredTransactions(allTransactions.filter(t => t.method === method));
-    setCurrentPage(1); // Reset to first page on new selection
+    setCurrentPage(1);
     setDialogOpen(true);
+  };
+  
+  const handleTransactionRowClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setTransactionDetailDialogOpen(true);
   };
 
   const paginatedTransactions = useMemo(() => {
@@ -284,12 +300,13 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             </CardContent>
         </Card>
 
+        {/* Transaction List Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>{selectedMethod} Transactions</DialogTitle>
                     <DialogDescription>
-                        A complete list of transactions made using the {selectedMethod} method.
+                        A complete list of transactions made using the {selectedMethod} method. Click a row to see details.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto">
@@ -304,7 +321,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         </TableHeader>
                         <TableBody>
                             {paginatedTransactions.map(p => (
-                                <TableRow key={p.id}>
+                                <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{p.id}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
@@ -338,6 +355,46 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                             Next
                         </Button>
                     </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Transaction Detail Dialog */}
+        <Dialog open={transactionDetailDialogOpen} onOpenChange={setTransactionDetailDialogOpen}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Transaction Details</DialogTitle>
+                </DialogHeader>
+                {selectedTransaction && (
+                    <div className="space-y-4 py-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Transaction ID:</span>
+                            <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Amount:</span>
+                            <span className="font-semibold">${selectedTransaction.amount} {selectedTransaction.currency}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Method:</span>
+                            <span className="font-semibold">{selectedTransaction.method}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Date:</span>
+                            <span className="font-semibold">{selectedTransaction.date}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Status:</span>
+                            <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+                        </div>
+                    </div>
+                )}
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => setTransactionDetailDialogOpen(false)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
