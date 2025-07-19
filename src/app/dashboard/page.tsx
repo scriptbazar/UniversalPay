@@ -88,6 +88,10 @@ const data = [
 export default function AdminDashboard() {
   return (
     <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Welcome Admin!</h1>
+        <p className="text-muted-foreground">Welcome back, Admin. Here's an overview of your Payment gateway.</p>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
