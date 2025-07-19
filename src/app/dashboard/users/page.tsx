@@ -42,8 +42,10 @@ import {
 } from "@/components/ui/tabs"
 import Image from "next/image";
 import Link from "next/link";
-import { fetchUsers } from "./actions";
 import { useToast } from "@/hooks/use-toast";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 
 interface User {
     id: string;
@@ -63,15 +65,32 @@ export default function UsersPage() {
     useEffect(() => {
         const loadUsers = async () => {
             setLoading(true);
+            if (!db) {
+                toast({
+                    variant: "destructive",
+                    title: "Firestore not initialized",
+                    description: "Please check your Firebase configuration.",
+                });
+                setLoading(false);
+                return;
+            }
             try {
-                const fetchedUsers = await fetchUsers();
-                setUsers(fetchedUsers);
+                const usersCollectionRef = collection(db, "users");
+                const userSnapshot = await getDocs(usersCollectionRef);
+                
+                const userList = userSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as User));
+                
+                setUsers(userList);
+
             } catch (error: any) {
-                console.error("Error fetching users: ", error);
+                console.error("Error fetching users from client: ", error);
                 toast({
                     variant: "destructive",
                     title: "Failed to load users",
-                    description: error.message || "Please check your permissions and try again.",
+                    description: error.message || "Please check your Firestore rules and console.",
                 });
             } finally {
                 setLoading(false);
