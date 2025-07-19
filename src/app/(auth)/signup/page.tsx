@@ -46,7 +46,7 @@ export default function SignupPage() {
     }
     toast({
       title: "Account Created",
-      description: "Welcome to TransactWave! Redirecting you to your dashboard.",
+      description: "Welcome to UniversalPay! Redirecting you to your dashboard.",
     });
     router.push('/merchant/dashboard');
   };
@@ -68,7 +68,7 @@ export default function SignupPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join TransactWave and start accepting payments today</CardDescription>
+          <CardDescription>Join UniversalPay and start accepting payments today</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>
           <CardContent className="space-y-4">

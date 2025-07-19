@@ -135,7 +135,7 @@ export default function DeveloperPage() {
                     <div>
                         <CardTitle>Webhooks</CardTitle>
                         <CardDescription>
-                            Get notified about events that happen in your TransactWave account.
+                            Get notified about events that happen in your UniversalPay account.
                         </CardDescription>
                     </div>
                      <Dialog>
@@ -196,7 +196,7 @@ export default function DeveloperPage() {
                     </TableHeader>
                     <TableBody>
                         <TableRow>
-                            <TableCell className="font-medium">https://api.myapp.com/webhooks/transactwave</TableCell>
+                            <TableCell className="font-medium">https://api.myapp.com/webhooks/universalpay</TableCell>
                             <TableCell>Active</TableCell>
                             <TableCell>payment.succeeded, payment.failed</TableCell>
                             <TableCell className="text-right">
@@ -221,7 +221,7 @@ export default function DeveloperPage() {
                 <CardHeader>
                     <CardTitle>SDKs and Integration Guides</CardTitle>
                     <CardDescription>
-                    Integrate TransactWave into your application with our official libraries and guides.
+                    Integrate UniversalPay into your application with our official libraries and guides.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -253,14 +253,14 @@ export default function DeveloperPage() {
                                 <TabsContent value="nodejs" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Node.js Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Node.js library to get started.</p>
-                                    <CodeSnippet code="npm install transactwave-node" />
+                                    <CodeSnippet code="npm install universalpay-node" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                                     <CodeSnippet code={`
-const transactwave = require('transactwave-node')('YOUR_SECRET_KEY');
+const universalpay = require('universalpay-node')('YOUR_SECRET_KEY');
 
 async function createPayment() {
   try {
-    const payment = await transactwave.payments.create({
+    const payment = await universalpay.payments.create({
       amount: 1000, // amount in smallest currency unit
       currency: 'INR',
       receipt: 'receipt_order_7432',
@@ -281,7 +281,7 @@ const app = express();
 
 app.post('/webhook', express.json({type: 'application/json'}), (req, res) => {
   const secret = 'YOUR_WEBHOOK_SECRET';
-  const signature = req.headers['transactwave-signature'];
+  const signature = req.headers['universalpay-signature'];
   const body = JSON.stringify(req.body);
 
   const hmac = crypto.createHmac('sha256', secret);
@@ -302,11 +302,11 @@ app.post('/webhook', express.json({type: 'application/json'}), (req, res) => {
                                 <TabsContent value="php" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">PHP Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Use Composer to install our PHP library.</p>
-                                    <CodeSnippet code="composer require transactwave/transactwave-php" />
+                                    <CodeSnippet code="composer require universalpay/universalpay-php" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                                     <CodeSnippet code={`
 require_once('vendor/autoload.php');
-use TransactWave\\Api;
+use UniversalPay\\Api;
 
 $api = new Api('YOUR_SECRET_KEY');
 
@@ -322,11 +322,11 @@ $checkoutUrl = $payment->checkout_url;
                                     `} />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
                                     <CodeSnippet code={`
-use TransactWave\\Api\\Utility;
+use UniversalPay\\Api\\Utility;
 
 $secret = 'YOUR_WEBHOOK_SECRET';
 $payload = file_get_contents('php://input');
-$signature = $_SERVER['HTTP_TRANSACTWAVE_SIGNATURE'];
+$signature = $_SERVER['HTTP_UNIVERSALPAY_SIGNATURE'];
 
 try {
     Utility::verifyPaymentSignature($payload, $signature, $secret);
@@ -342,11 +342,11 @@ try {
                                 <TabsContent value="python" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Python Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Python library using pip.</p>
-                                    <CodeSnippet code="pip install transactwave-python" />
+                                    <CodeSnippet code="pip install universalpay-python" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                                     <CodeSnippet code={`
-import transactwave
-client = transactwave.Client(api_key="YOUR_SECRET_KEY")
+import universalpay
+client = universalpay.Client(api_key="YOUR_SECRET_KEY")
 
 payment = client.payment.create({
   "amount": 1000,
@@ -372,7 +372,7 @@ def verify_signature(payload_body, signature, secret):
 
 # In your Flask/Django view:
 # payload_body = request.get_data(as_text=True)
-# signature = request.headers.get('Transactwave-Signature')
+# signature = request.headers.get('UniversalPay-Signature')
 # secret = 'YOUR_WEBHOOK_SECRET'
 # if verify_signature(payload_body, signature, secret):
 #     # Process webhook
@@ -383,13 +383,13 @@ def verify_signature(payload_body, signature, secret):
                                 <TabsContent value="ruby" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Ruby Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Ruby gem.</p>
-                                    <CodeSnippet code="gem install transactwave" />
+                                    <CodeSnippet code="gem install universalpay" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                                     <CodeSnippet code={`
-require 'transactwave'
-TransactWave.api_key = 'YOUR_SECRET_KEY'
+require 'universalpay'
+UniversalPay.api_key = 'YOUR_SECRET_KEY'
 
-payment = TransactWave::Payment.create(
+payment = UniversalPay::Payment.create(
   amount: 1000,
   currency: 'INR',
   receipt: 'receipt_order_7432'
@@ -409,7 +409,7 @@ end
 
 # In your Rails/Sinatra controller:
 # payload_body = request.body.read
-# signature = request.env['HTTP_TRANSACTWAVE_SIGNATURE']
+# signature = request.env['HTTP_UNIVERSALPAY_SIGNATURE']
 # secret = 'YOUR_WEBHOOK_SECRET'
 # if verify_signature(payload_body, signature, secret)
 #   # Process webhook
@@ -421,23 +421,23 @@ end
                                 <TabsContent value="go" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Go Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Go module.</p>
-                                    <CodeSnippet code="go get github.com/transactwave/transactwave-go" />
+                                    <CodeSnippet code="go get github.com/universalpay/universalpay-go" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                                     <CodeSnippet code={`
 package main
 
 import (
     "fmt"
-    "github.com/transactwave/transactwave-go"
+    "github.com/universalpay/universalpay-go"
 )
 
 func main() {
-    client := transactwave.NewClient("YOUR_SECRET_KEY", "")
+    client := universalpay.NewClient("YOUR_SECRET_KEY", "")
     
-    params := &transactwave.PaymentParams{
-        Amount:   transactwave.Int(1000),
-        Currency: transactwave.String("INR"),
-        Receipt:  transactwave.String("receipt_order_7432"),
+    params := &universalpay.PaymentParams{
+        Amount:   universalpay.Int(1000),
+        Currency: universalpay.String("INR"),
+        Receipt:  universalpay.String("receipt_order_7432"),
     }
 
     payment, err := client.Payment.Create(params)
@@ -465,7 +465,7 @@ func verifySignature(payloadBody, signature, secret string) bool {
 }
 // In your HTTP handler
 // bodyBytes, _ := ioutil.ReadAll(r.Body)
-// signature := r.Header.Get("Transactwave-Signature")
+// signature := r.Header.Get("UniversalPay-Signature")
 // if verifySignature(string(bodyBytes), signature, "YOUR_WEBHOOK_SECRET") {
 //     // Process
 // }
@@ -476,18 +476,18 @@ func verifySignature(payloadBody, signature, secret string) bool {
                                     <p className="text-sm text-muted-foreground mb-4">Add our library to your Maven or Gradle project.</p>
                                     <CodeSnippet code={`
 <dependency>
-  <groupId>com.transactwave</groupId>
-  <artifactId>transactwave-java</artifactId>
+  <groupId>com.universalpay</groupId>
+  <artifactId>universalpay-java</artifactId>
   <version>1.0.0</version>
 </dependency>
                                     `} />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
                                     <CodeSnippet code={`
-import com.transactwave.api.TransactWaveClient;
-import com.transactwave.model.Payment;
+import com.universalpay.api.UniversalPayClient;
+import com.universalpay.model.Payment;
 import org.json.JSONObject;
 
-TransactWaveClient client = new TransactWaveClient("YOUR_SECRET_KEY");
+UniversalPayClient client = new UniversalPayClient("YOUR_SECRET_KEY");
 
 JSONObject paymentParams = new JSONObject();
 paymentParams.put("amount", 1000);
@@ -531,14 +531,14 @@ public class Utils {
                                  <TabsContent value="react" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">React Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Use our React hook for easy integration with the JS Widget.</p>
-                                    <CodeSnippet code="npm install @transactwave/react" />
+                                    <CodeSnippet code="npm install @universalpay/react" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Payment Button</h4>
                                      <CodeSnippet code={`
 import React from 'react';
-import { useTransactWave } from '@transactwave/react';
+import { useUniversalPay } from '@universalpay/react';
 
 const CheckoutButton = () => {
-  const { open, isLoaded } = useTransactWave({
+  const { open, isLoaded } = useUniversalPay({
     key: 'YOUR_PUBLISHABLE_KEY',
     amount: 1000,
     currency: 'INR',
@@ -552,7 +552,7 @@ const CheckoutButton = () => {
 
   return (
     <button onClick={() => open()} disabled={!isLoaded}>
-      Pay with TransactWave
+      Pay with UniversalPay
     </button>
   );
 };
@@ -561,17 +561,17 @@ const CheckoutButton = () => {
                                 <TabsContent value="vue" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Vue.js Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Use our Vue composable for easy integration.</p>
-                                    <CodeSnippet code="npm install @transactwave/vue" />
+                                    <CodeSnippet code="npm install @universalpay/vue" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Payment Button</h4>
                                     <CodeSnippet code={`
 <template>
-  <button @click="pay" :disabled="!isLoaded">Pay with TransactWave</button>
+  <button @click="pay" :disabled="!isLoaded">Pay with UniversalPay</button>
 </template>
 
 <script setup>
-import { useTransactWave } from '@transactwave/vue';
+import { useUniversalPay } from '@universalpay/vue';
 
-const { open, isLoaded } = useTransactWave({
+const { open, isLoaded } = useUniversalPay({
   key: 'YOUR_PUBLISHABLE_KEY',
   amount: 1000,
   currency: 'INR',
@@ -591,22 +591,22 @@ function pay() {
                                 <TabsContent value="angular" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Angular Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Integrate our script and service into your Angular application.</p>
-                                    <CodeSnippet code="npm install @transactwave/angular" />
+                                    <CodeSnippet code="npm install @universalpay/angular" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Payment Component</h4>
                                     <CodeSnippet code={`
 // app.component.ts
 import { Component } from '@angular/core';
-import { TransactWaveService } from '@transactwave/angular';
+import { UniversalPayService } from '@universalpay/angular';
 
 @Component({
   selector: 'app-checkout',
-  template: \`<button (click)="pay()">Pay with TransactWave</button>\`
+  template: \`<button (click)="pay()">Pay with UniversalPay</button>\`
 })
 export class CheckoutComponent {
-  constructor(private transactWaveService: TransactWaveService) {}
+  constructor(private universalPayService: UniversalPayService) {}
 
   pay() {
-    this.transactWaveService.open({
+    this.universalPayService.open({
       key: 'YOUR_PUBLISHABLE_KEY',
       amount: 1000,
       currency: 'INR',
@@ -623,19 +623,19 @@ export class CheckoutComponent {
                                  <TabsContent value="flutter" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Flutter Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Add our package to your \`pubspec.yaml\` file.</p>
-                                    <CodeSnippet code="dependencies:\\n  transactwave_flutter: ^1.0.0" />
+                                    <CodeSnippet code="dependencies:\\n  universalpay_flutter: ^1.0.0" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Initiating a Payment</h4>
                                      <CodeSnippet code={`
-import 'package:transactwave_flutter/transactwave_flutter.dart';
+import 'package:universalpay_flutter/universalpay_flutter.dart';
 
 class _MyAppState extends State<MyApp> {
-  final _transactwave = TransactWave();
+  final _universalpay = UniversalPay();
 
   @override
   void initState() {
     super.initState();
-    _transactwave.on(TransactWave.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _transactwave.on(TransactWave.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _universalpay.on(UniversalPay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _universalpay.on(UniversalPay.EVENT_PAYMENT_ERROR, _handlePaymentError);
   }
 
   void openCheckout() {
@@ -644,7 +644,7 @@ class _MyAppState extends State<MyApp> {
       'amount': '1000',
       'name': 'My Awesome Store',
     };
-    _transactwave.open(options);
+    _universalpay.open(options);
   }
 }
                                     `} />
@@ -674,13 +674,13 @@ class _MyAppState extends State<MyApp> {
                                         <li>Click on the "Upload Plugin" button at the top of the page.</li>
                                         <li>Choose the downloaded .zip file and click "Install Now".</li>
                                         <li>After installation, click "Activate Plugin".</li>
-                                        <li>Go to `WooCommerce > Settings > Payments` and enable the "TransactWave" gateway.</li>
+                                        <li>Go to `WooCommerce > Settings > Payments` and enable the "UniversalPay" gateway.</li>
                                         <li>Enter your Publishable Key and Secret Key from this page and save changes.</li>
                                     </ol>
                                 </TabsContent>
                                 <TabsContent value="shopify" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Shopify Integration</h3>
-                                    <p className="text-sm text-muted-foreground mb-4">Install our private app to connect TransactWave with your Shopify store.</p>
+                                    <p className="text-sm text-muted-foreground mb-4">Install our private app to connect UniversalPay with your Shopify store.</p>
                                     <div className="mb-4">
                                         <Button><ShoppingCart className="mr-2 h-4 w-4"/> Install Shopify App</Button>
                                     </div>
@@ -688,10 +688,10 @@ class _MyAppState extends State<MyApp> {
                                      <ol className="list-decimal list-inside space-y-2 text-sm">
                                         <li>Click the "Install Shopify App" button above to go to the installation page.</li>
                                         <li>Log in to your Shopify store if you haven't already.</li>
-                                        <li>Review the permissions and click "Install app" to authorize TransactWave.</li>
-                                        <li>You will be redirected to the TransactWave settings page within your Shopify admin.</li>
+                                        <li>Review the permissions and click "Install app" to authorize UniversalPay.</li>
+                                        <li>You will be redirected to the UniversalPay settings page within your Shopify admin.</li>
                                         <li>Enter your Publishable Key and Secret Key from this Developer page.</li>
-                                        <li>Activate the TransactWave payment method. Your store is now ready to accept payments!</li>
+                                        <li>Activate the UniversalPay payment method. Your store is now ready to accept payments!</li>
                                     </ol>
                                 </TabsContent>
                                  <TabsContent value="magento" className="pt-4">
@@ -703,7 +703,7 @@ class _MyAppState extends State<MyApp> {
                                      <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
                                      <ol className="list-decimal list-inside space-y-2 text-sm">
                                         <li>Unzip the downloaded file.</li>
-                                        <li>Upload the contents to `app/code/TransactWave/Payments` directory of your Magento installation.</li>
+                                        <li>Upload the contents to `app/code/UniversalPay/Payments` directory of your Magento installation.</li>
                                         <li>Run the following commands from your Magento root directory:</li>
                                      </ol>
                                      <CodeSnippet code={`
@@ -712,7 +712,7 @@ php bin/magento setup:di:compile
 php bin/magento setup:static-content:deploy
 php bin/magento cache:clean
                                      `} />
-                                     <p className="text-sm mt-4">After installation, navigate to `Stores > Configuration > Sales > Payment Methods` to configure and enable the TransactWave gateway.</p>
+                                     <p className="text-sm mt-4">After installation, navigate to `Stores > Configuration > Sales > Payment Methods` to configure and enable the UniversalPay gateway.</p>
                                 </TabsContent>
                                 <TabsContent value="prestashop" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">PrestaShop Integration</h3>
@@ -726,7 +726,7 @@ php bin/magento cache:clean
                                         <li>Navigate to `Modules > Module Manager`.</li>
                                         <li>Click on "Upload a module" and select the downloaded .zip file.</li>
                                         <li>Once the module is installed, click "Configure".</li>
-                                        <li>Enter your API Keys from TransactWave and save the settings.</li>
+                                        <li>Enter your API Keys from UniversalPay and save the settings.</li>
                                         <li>Ensure the payment method is active for the desired customer zones.</li>
                                     </ol>
                                 </TabsContent>
@@ -742,7 +742,7 @@ php bin/magento cache:clean
                                         <li>Navigate to `Extensions > Installer`.</li>
                                         <li>Click the "Upload" button and select the downloaded `.ocmod.zip` file.</li>
                                         <li>After successful upload, go to `Extensions > Extensions` and select "Payments" from the dropdown.</li>
-                                        <li>Find "TransactWave" in the list and click the green "Install" button.</li>
+                                        <li>Find "UniversalPay" in the list and click the green "Install" button.</li>
                                         <li>Click the blue "Edit" button to configure the module with your API keys.</li>
                                         <li>Set the status to "Enabled" and save.</li>
                                     </ol>
@@ -772,10 +772,10 @@ php bin/magento cache:clean
               <div>
                 <Label>Embed Script</Label>
                 <CodeSnippet code={`
-<script src="https://cdn.transactwave.com/checkout.js"></script>
+<script src="https://cdn.universalpay.com/checkout.js"></script>
 <form>
   <script
-    src="https://checkout.transactwave.com/v1/checkout.js"
+    src="https://checkout.universalpay.com/v1/checkout.js"
     data-key="YOUR_PUBLISHABLE_KEY"
     data-amount="1000"
     data-currency="INR"

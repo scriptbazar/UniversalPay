@@ -39,7 +39,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Platform Analytics</h1>
-        <p className="text-muted-foreground">An overview of the entire TransactWave platform's performance.</p>
+        <p className="text-muted-foreground">An overview of the entire UniversalPay platform's performance.</p>
       </div>
       <Separator />
 

@@ -34,7 +34,7 @@ const initialLinks: PaymentLink[] = [
   {
     id: 'plink_1',
     title: 'T-Shirt Sale',
-    url: 'https://transactwave.com/pay/t-shirt-sale',
+    url: 'https://universalpay.com/pay/t-shirt-sale',
     type: 'Fixed',
     amount: '25.00',
     isActive: true,
@@ -44,7 +44,7 @@ const initialLinks: PaymentLink[] = [
   {
     id: 'plink_2',
     title: 'General Donation',
-    url: 'https://transactwave.com/pay/donation',
+    url: 'https://universalpay.com/pay/donation',
     type: 'Dynamic',
     amount: null,
     isActive: true,
@@ -54,7 +54,7 @@ const initialLinks: PaymentLink[] = [
   {
     id: 'plink_3',
     title: 'Workshop Registration',
-    url: 'https://transactwave.com/pay/workshop',
+    url: 'https://universalpay.com/pay/workshop',
     type: 'Fixed',
     amount: '100.00',
     isActive: false,
@@ -85,7 +85,7 @@ export default function PaymentLinksPage() {
     const newLink: PaymentLink = {
       id: `plink_${Date.now()}`,
       title,
-      url: `https://transactwave.com/pay/${title.toLowerCase().replace(/\s+/g, '-')}`,
+      url: `https://universalpay.com/pay/${title.toLowerCase().replace(/\s+/g, '-')}`,
       type: isDynamic ? 'Dynamic' : 'Fixed',
       amount: isDynamic ? null : parseFloat(amount).toFixed(2),
       isActive: true,

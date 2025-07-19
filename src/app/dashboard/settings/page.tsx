@@ -89,7 +89,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Platform Settings</h1>
-        <p className="text-muted-foreground">Manage global settings for the TransactWave platform.</p>
+        <p className="text-muted-foreground">Manage global settings for the UniversalPay platform.</p>
       </div>
       <Separator />
 
@@ -109,7 +109,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="platform-name">Platform Name</Label>
-                    <Input id="platform-name" defaultValue="TransactWave" />
+                    <Input id="platform-name" defaultValue="UniversalPay" />
                 </div>
                  <div className="space-y-2">
                     <Label>Platform Logo</Label>
@@ -127,7 +127,7 @@ export default function SettingsPage() {
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="support-email" className="flex items-center gap-2"><Mail className="w-4 h-4" /> Support Email</Label>
-                    <Input id="support-email" type="email" placeholder="support@transactwave.com" />
+                    <Input id="support-email" type="email" placeholder="support@universalpay.com" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="default-currency" className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Default Currency</Label>

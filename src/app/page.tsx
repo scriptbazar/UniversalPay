@@ -62,8 +62,8 @@ const features = [
 
 const faqItems = [
     {
-        question: "What is TransactWave?",
-        answer: "TransactWave is a comprehensive payment gateway platform that allows businesses to accept a wide range of payments, including Indian UPI, international cryptocurrencies, and other country-specific methods. It's designed to be secure, scalable, and developer-friendly."
+        question: "What is UniversalPay?",
+        answer: "UniversalPay is a comprehensive payment gateway platform that allows businesses to accept a wide range of payments, including Indian UPI, international cryptocurrencies, and other country-specific methods. It's designed to be secure, scalable, and developer-friendly."
     },
     {
         question: "What currencies are supported?",
@@ -128,7 +128,7 @@ export default function Home() {
             <div className="container mx-auto text-center">
                  <h2 className="text-3xl md:text-4xl font-bold mb-4">One Platform, Global Reach</h2>
                  <p className="text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
-                    From local payments in India to cross-border crypto transactions, TransactWave provides the infrastructure you need to scale.
+                    From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale.
                  </p>
                  <Image 
                     src="https://placehold.co/1200x600/E5F5F9/29ABE2"

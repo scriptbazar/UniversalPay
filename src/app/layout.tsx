@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useEffect, useState } from 'react';
 
 // export const metadata: Metadata = {
-//   title: 'TransactWave',
+//   title: 'UniversalPay',
 //   description: 'A secure, scalable, and globally functional third-party payment gateway platform.',
 // };
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>TransactWave</title>
+        <title>UniversalPay</title>
         <meta name="description" content="A secure, scalable, and globally functional third-party payment gateway platform." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

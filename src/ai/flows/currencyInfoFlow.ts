@@ -25,7 +25,7 @@ const currencyInfoPrompt = ai.definePrompt({
   name: 'currencyInfoPrompt',
   input: { schema: CurrencyInfoInputSchema },
   output: { schema: CurrencyInfoOutputSchema },
-  prompt: `You are a helpful and witty financial assistant for a payment gateway called TransactWave. You are an expert on all official, government-issued (fiat) world currencies. A user is asking a question about a currency.
+  prompt: `You are a helpful and witty financial assistant for a payment gateway called UniversalPay. You are an expert on all official, government-issued (fiat) world currencies. A user is asking a question about a currency.
 
 Your task is to provide a clear, concise, and helpful response based on the user's query about: {{{currency}}}.
 

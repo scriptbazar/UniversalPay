@@ -362,10 +362,10 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                 <div className="space-y-1">
                                 <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
                                     <ShieldQuestion className="w-5 h-5" />
-                                    Hide My Identity &amp; Show 'TransactWave' Branding
+                                    Hide My Identity &amp; Show 'UniversalPay' Branding
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                    Turn ON to always show "TransactWave" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
+                                    Turn ON to always show "UniversalPay" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
                                 </p>
                                 </div>
                                 <Switch id="branding-switch" defaultChecked />

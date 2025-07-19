@@ -57,7 +57,7 @@ export default function LoginPage() {
     // and verify it with Google using your secret key.
     // For now, we assume it's valid if it exists.
 
-    if (email === 'admin@transactwave.com' && password === 'admin123') {
+    if (email === 'admin@universalpay.com' && password === 'admin123') {
       setUserType('admin');
       setStep('otp');
     } 

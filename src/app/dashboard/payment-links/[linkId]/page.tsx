@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 const linkDetails = {
     id: "plink_1",
     title: "T-Shirt Sale",
-    url: "https://transactwave.com/pay/t-shirt-sale",
+    url: "https://universalpay.com/pay/t-shirt-sale",
     status: "Active",
     merchant: {
         id: "user_1",

@@ -66,7 +66,7 @@ const users = [
   {
     id: "user_3",
     name: "Admin User",
-    email: "admin@transactwave.com",
+    email: "admin@universalpay.com",
     plan: "Premium",
     status: "Active",
     avatar: "https://placehold.co/40x40.png?text=AU",
