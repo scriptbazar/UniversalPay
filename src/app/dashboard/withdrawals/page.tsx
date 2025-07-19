@@ -7,13 +7,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy } from "lucide-react";
+import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -38,6 +39,7 @@ export default function AdminWithdrawalsPage() {
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
     const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
     const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         setWithdrawals(getWithdrawals());
@@ -67,12 +69,26 @@ export default function AdminWithdrawalsPage() {
     };
 
     const filteredWithdrawals = useMemo(() => {
-        if (filter === 'all') return withdrawals;
-        return withdrawals.filter(w => {
-            const method = w.currency === 'INR' ? 'upi' : 'crypto';
-            return method === filter;
-        });
-    }, [withdrawals, filter]);
+        let results = withdrawals;
+
+        if (filter !== 'all') {
+            results = results.filter(w => {
+                const method = w.currency === 'INR' ? 'upi' : 'crypto';
+                return method === filter;
+            });
+        }
+        
+        if (searchTerm) {
+            const lowercasedFilter = searchTerm.toLowerCase();
+            results = results.filter(w => 
+                w.id.toLowerCase().includes(lowercasedFilter) ||
+                w.merchantName.toLowerCase().includes(lowercasedFilter) ||
+                w.destination.toLowerCase().includes(lowercasedFilter)
+            );
+        }
+
+        return results;
+    }, [withdrawals, filter, searchTerm]);
 
     const itemsPerPage = 5;
     const [currentPage, setCurrentPage] = useState(1);
@@ -92,11 +108,23 @@ export default function AdminWithdrawalsPage() {
       <Separator />
 
        <Tabs value={filter} onValueChange={setFilter}>
-        <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="upi">UPI</TabsTrigger>
-            <TabsTrigger value="crypto">Crypto</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+            <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="upi">UPI</TabsTrigger>
+                <TabsTrigger value="crypto">Crypto</TabsTrigger>
+            </TabsList>
+             <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search withdrawals..."
+                    className="pl-8 w-64"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+        </div>
 
         <Card className="mt-4">
             <CardHeader>
