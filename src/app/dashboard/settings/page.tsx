@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -141,11 +141,19 @@ export default function SettingsPage() {
               <CardTitle>White-Label & Branding</CardTitle>
               <CardDescription>Customize the look and feel of your payment pages.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label>Custom Domain</Label>
                     <Input placeholder="pay.yourstore.com"/>
                     <p className="text-xs text-muted-foreground">Set a custom domain or subdomain for your payment pages.</p>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="upi-display-name">Custom UPI Display Name</Label>
+                    <div className="flex items-center gap-2">
+                      <Banknote className="w-5 h-5 text-muted-foreground" />
+                      <Input id="upi-display-name" placeholder="e.g., My Awesome Store"/>
+                    </div>
+                    <p className="text-xs text-muted-foreground">This name will be shown to customers on the UPI payment screen.</p>
                 </div>
                 <div className="space-y-2">
                     <Label>Logo</Label>
