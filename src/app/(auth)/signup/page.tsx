@@ -40,7 +40,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-xl">
+      <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <Logo />
@@ -50,40 +50,46 @@ export default function SignupPage() {
         </CardHeader>
         <form onSubmit={handleSignup}>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" type="text" placeholder="John Doe" required />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input id="name" type="text" placeholder="John Doe" required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input id="username" type="text" placeholder="johndoe" required />
+                </div>
             </div>
-             <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" type="text" placeholder="johndoe" required />
+             <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="merchant@example.com" required />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="mobile">Mobile Number</Label>
+                    <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="merchant@example.com" required />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number</Label>
-                <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <Select required>
-                    <SelectTrigger id="country">
-                        <SelectValue placeholder="Select your country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {countries.map((country) => (
-                            <SelectItem key={country.code} value={country.code.toLowerCase()}>
-                                {country.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select required>
+                        <SelectTrigger id="country">
+                            <SelectValue placeholder="Select your country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {countries.map((country) => (
+                                <SelectItem key={country.code} value={country.code.toLowerCase()}>
+                                    {country.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" required />
+                </div>
             </div>
              <div className="flex justify-center">
                 <ReCAPTCHA
