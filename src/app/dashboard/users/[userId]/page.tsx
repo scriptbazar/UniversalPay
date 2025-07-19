@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserX, Wallet, Copy } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,14 +19,15 @@ import {
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 
-const merchant = {
+const initialMerchant = {
     id: "user_1",
     name: "John Doe",
     email: "john@example.com",
     plan: "Pro",
-    status: "Active",
+    status: "Active" as "Active" | "Suspended",
     avatar: "https://placehold.co/80x80.png?text=JD",
     role: "Merchant",
     joinedDate: "2023-01-15",
@@ -100,6 +101,8 @@ const getStatusBadgeVariant = (status: string) => {
             return 'default';
         case 'pending':
             return 'secondary';
+        case 'suspended':
+            return 'destructive';
         case 'failed':
             return 'destructive';
         default:
@@ -112,6 +115,8 @@ type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'tr
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
   const { toast } = useToast();
+  const router = useRouter();
+  const [merchant, setMerchant] = useState(initialMerchant);
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   const [dialogTitle, setDialogTitle] = useState('');
   
@@ -121,6 +126,23 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  const handleToggleSuspend = () => {
+    const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
+    setMerchant(prev => ({...prev, status: newStatus}));
+    toast({
+        title: `Merchant ${newStatus}`,
+        description: `${merchant.name} has been ${newStatus.toLowerCase()}.`
+    });
+  };
+
+  const handleLoginAsUser = () => {
+    toast({
+        title: "Redirecting...",
+        description: `Logging you in as ${merchant.name}.`
+    });
+    router.push('/merchant/dashboard');
+  };
 
   const handlePieClick = (data: any) => {
     const method = data.name;
@@ -209,8 +231,11 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">{merchant.name}</h1>
                     <div className="flex gap-2">
-                        <Button variant="outline"><UserX className="mr-2 h-4 w-4"/> Suspend Merchant</Button>
-                        <Button variant="outline">Login As User</Button>
+                         <Button variant="outline" onClick={handleToggleSuspend}>
+                           {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
+                           {merchant.status === 'Active' ? 'Suspend' : 'Unsuspend'} Merchant
+                        </Button>
+                        <Button variant="outline" onClick={handleLoginAsUser}>Login As User</Button>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button size="icon" variant="ghost">
@@ -227,7 +252,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </div>
                 <p className="text-muted-foreground">{merchant.email}</p>
                  <div className="flex items-center gap-4 mt-2">
-                    <Badge variant={merchant.status === 'Active' ? 'default' : 'outline'}>{merchant.status}</Badge>
+                    <Badge variant={getStatusBadgeVariant(merchant.status)}>{merchant.status}</Badge>
                     <Badge variant="secondary">Plan: {merchant.plan}</Badge>
                     <span className="text-sm text-muted-foreground">Joined: {merchant.joinedDate}</span>
                 </div>
