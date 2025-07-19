@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 
 const suspiciousTransactions = [
   {
-    id: "txn_1",
+    id: "UVRLP123456789",
     user: "user_a",
     ip: "123.45.67.89",
     amount: "1500.00",
@@ -24,7 +24,7 @@ const suspiciousTransactions = [
     timestamp: "2023-10-26 10:00:00",
   },
   {
-    id: "txn_2",
+    id: "UVRLP987654321",
     user: "user_b",
     ip: "98.76.54.32",
     amount: "50.00",
@@ -34,7 +34,7 @@ const suspiciousTransactions = [
     timestamp: "2023-10-26 10:05:00",
   },
   {
-    id: "txn_3",
+    id: "UVRLP112233445",
     user: "user_c",
     ip: "111.222.111.222",
     amount: "200.00",
@@ -44,7 +44,7 @@ const suspiciousTransactions = [
     timestamp: "2023-10-26 10:10:00",
   },
   {
-    id: "txn_4",
+    id: "UVRLP556677889",
     user: "user_d",
     ip: "123.45.67.89",
     amount: "3000.00",

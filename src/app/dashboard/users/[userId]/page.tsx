@@ -56,21 +56,21 @@ type Transaction = {
 };
 
 const allTransactions: Transaction[] = [
-    { id: "pay_1", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-01" },
-    { id: "pay_2", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-01" },
-    { id: "pay_3", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
-    { id: "pay_4", amount: "800.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-02" },
-    { id: "pay_5", amount: "1200.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-03" },
-    { id: "pay_6", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-04" },
-    { id: "pay_7", amount: "50.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-05" },
-    { id: "pay_8", amount: "1500.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-05" },
-    { id: "pay_9", amount: "800.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-06" },
-    { id: "pay_10", amount: "200.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-06" },
-    { id: "pay_11", amount: "300.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-07" },
-    { id: "pay_12", amount: "400.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-08" },
-    { id: "pay_13", amount: "500.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-09" },
-    { id: "pay_14", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-10" },
-    { id: "pay_15", amount: "700.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-11" },
+    { id: "UVRLP111111111", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-01" },
+    { id: "UVRLP222222222", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-01" },
+    { id: "UVRLP333333333", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
+    { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-02" },
+    { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-03" },
+    { id: "UVRLP666666666", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-04" },
+    { id: "UVRLP777777777", amount: "50.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-05" },
+    { id: "UVRLP888888888", amount: "1500.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-05" },
+    { id: "UVRLP999999999", amount: "800.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-06" },
+    { id: "UVRLP101010101", amount: "200.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-06" },
+    { id: "UVRLP121212121", amount: "300.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-07" },
+    { id: "UVRLP131313131", amount: "400.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-08" },
+    { id: "UVRLP141414141", amount: "500.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-09" },
+    { id: "UVRLP151515151", amount: "600.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-10" },
+    { id: "UVRLP161616161", amount: "700.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-11" },
 ];
 
 const recentTransactions = allTransactions.slice(0, 3);
@@ -86,10 +86,10 @@ type Withdrawal = {
 };
 
 const withdrawalHistory: Withdrawal[] = [
-    { id: "wd_1", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
-    { id: "wd_2", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
-    { id: "wd_3", amount: "250.00", currency: "BTC", destinationType: "Crypto Wallet", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Failed", date: "2023-10-18" },
-    { id: "wd_4", amount: "750.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-15" },
+    { id: "UVRLPWD000001", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
+    { id: "UVRLPWD000002", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
+    { id: "UVRLPWD000003", amount: "250.00", currency: "BTC", destinationType: "Crypto Wallet", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Failed", date: "2023-10-18" },
+    { id: "UVRLPWD000004", amount: "750.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-15" },
 ];
 
 const getStatusBadgeVariant = (status: string) => {
@@ -514,23 +514,23 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                      {dialogOpen === 'withdraw' && <DialogTitle>Available to Withdraw Details</DialogTitle>}
                      {dialogOpen === 'success' && <DialogTitle>Success Rate Details</DialogTitle>}
                 </DialogHeader>
-                 <div className="space-y-4 py-4">
+                 <div className="py-4">
                     {dialogOpen === 'wallet' && (
-                        <>
+                        <div className="space-y-4">
                             <div className="flex justify-between"><span className="text-muted-foreground">Total Credits:</span> <span className="font-semibold">$50,123.45</span></div>
                             <div className="flex justify-between"><span className="text-muted-foreground">Total Debits (Withdrawals + Fees):</span> <span className="font-semibold">$44,692.95</span></div>
                             <Separator/>
                             <div className="flex justify-between font-bold text-lg"><span>Current Balance:</span> <span>${stats.walletBalance}</span></div>
-                        </>
+                        </div>
                     )}
                      {dialogOpen === 'withdraw' && (
-                        <>
+                        <div className="space-y-4">
                              <div className="flex justify-between"><span className="text-muted-foreground">Wallet Balance:</span> <span className="font-semibold">${stats.walletBalance}</span></div>
                              <div className="flex justify-between"><span className="text-muted-foreground">Pending Settlements:</span> <span className="font-semibold">-$230.50</span></div>
                              <Separator/>
                             <div className="flex justify-between font-bold text-lg"><span>Available to Withdraw:</span> <span>${stats.availableToWithdraw}</span></div>
                             <p className="text-xs text-muted-foreground pt-2">This is the amount you can currently withdraw. It excludes payments that are still being processed.</p>
-                        </>
+                        </div>
                     )}
                     {dialogOpen === 'success' && (
                          <div className="space-y-4">

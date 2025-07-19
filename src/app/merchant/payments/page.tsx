@@ -38,11 +38,11 @@ import {
 import { Separator } from "@/components/ui/separator"
 
 const payments = [
-    { id: "pay_1", amount: "250.00", currency: "USD", method: "Crypto (BTC)", status: "Success", date: "2023-11-01" },
-    { id: "pay_2", amount: "150.00", currency: "INR", method: "UPI (PhonePe)", status: "Success", date: "2023-11-01" },
-    { id: "pay_3", amount: "350.00", currency: "INR", method: "UPI (Paytm)", status: "Failed", date: "2023-11-02" },
-    { id: "pay_4", amount: "450.00", currency: "USD", method: "Crypto (ETH)", status: "Success", date: "2023-11-02" },
-    { id: "pay_5", amount: "550.00", currency: "INR", method: "UPI (GPay)", status: "Pending", date: "2023-11-03" },
+    { id: "UVRLP123456701", amount: "250.00", currency: "USD", method: "Crypto (BTC)", status: "Success", date: "2023-11-01" },
+    { id: "UVRLP123456702", amount: "150.00", currency: "INR", method: "UPI (PhonePe)", status: "Success", date: "2023-11-01" },
+    { id: "UVRLP123456703", amount: "350.00", currency: "INR", method: "UPI (Paytm)", status: "Failed", date: "2023-11-02" },
+    { id: "UVRLP123456704", amount: "450.00", currency: "USD", method: "Crypto (ETH)", status: "Success", date: "2023-11-02" },
+    { id: "UVRLP123456705", amount: "550.00", currency: "INR", method: "UPI (GPay)", status: "Pending", date: "2023-11-03" },
 ]
 
 export default function PaymentsPage() {

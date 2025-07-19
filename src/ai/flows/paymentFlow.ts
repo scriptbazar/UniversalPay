@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to process incoming payments.
@@ -36,7 +37,7 @@ const processPaymentFlow = ai.defineFlow(
     // For this example, we'll just simulate a successful payment.
     console.log('Processing payment for:', input);
 
-    const transactionId = `txn_${Date.now()}`;
+    const transactionId = `UVRLP${Math.floor(100000000 + Math.random() * 900000000)}`;
     
     return {
       transactionId,

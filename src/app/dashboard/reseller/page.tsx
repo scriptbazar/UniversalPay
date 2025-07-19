@@ -39,11 +39,11 @@ const subMerchants = [
 ];
 
 const allSubMerchantTransactions = [
-    { id: 'txn_sm_1', merchantName: 'MyStore.com', amount: 50.00, date: '2023-11-10' },
-    { id: 'txn_sm_2', merchantName: 'AnotherShop', amount: 75.00, date: '2023-11-10' },
-    { id: 'txn_sm_3', merchantName: 'MyStore.com', amount: 120.00, date: '2023-11-09' },
-    { id: 'txn_sm_4', merchantName: 'CreativeGoods', amount: 200.00, date: '2023-11-09' },
-    { id: 'txn_sm_5', merchantName: 'AnotherShop', amount: 30.00, date: '2023-11-08' },
+    { id: 'UVRLP911202311', merchantName: 'MyStore.com', amount: 50.00, date: '2023-11-10' },
+    { id: 'UVRLP911202312', merchantName: 'AnotherShop', amount: 75.00, date: '2023-11-10' },
+    { id: 'UVRLP911202313', merchantName: 'MyStore.com', amount: 120.00, date: '2023-11-09' },
+    { id: 'UVRLP911202314', merchantName: 'CreativeGoods', amount: 200.00, date: '2023-11-09' },
+    { id: 'UVRLP911202315', merchantName: 'AnotherShop', amount: 30.00, date: '2023-11-08' },
 ];
 
 type DialogType = 'subMerchants' | 'sales' | 'commission' | null;

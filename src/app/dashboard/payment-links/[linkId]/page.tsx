@@ -25,10 +25,10 @@ const linkDetails = {
 };
 
 const recentTransactions = [
-    { id: "pay_101", customer: "customer_a@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-05" },
-    { id: "pay_102", customer: "customer_b@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-05" },
-    { id: "pay_103", customer: "customer_c@mail.com", amount: "25.00", currency: "USD", status: "Flagged", date: "2023-11-04" },
-    { id: "pay_104", customer: "customer_d@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-04" },
+    { id: "UVRLP101101101", customer: "customer_a@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-05" },
+    { id: "UVRLP102102102", customer: "customer_b@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-05" },
+    { id: "UVRLP103103103", customer: "customer_c@mail.com", amount: "25.00", currency: "USD", status: "Flagged", date: "2023-11-04" },
+    { id: "UVRLP104104104", customer: "customer_d@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-11-04" },
 ];
 
 export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
