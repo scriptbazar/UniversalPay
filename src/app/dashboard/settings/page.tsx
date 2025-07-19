@@ -122,7 +122,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="api-keys">API & Security</TabsTrigger>
-          <TabsTrigger value="gateways">Payment Configuration</TabsTrigger>
+          <TabsTrigger value="payment-methods">Payment Configuration</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="pt-4">
           <Card>
@@ -263,7 +263,7 @@ export default function SettingsPage() {
             </form>
           </Card>
         </TabsContent>
-        <TabsContent value="gateways" className="pt-4">
+        <TabsContent value="payment-methods" className="pt-4">
           <Card>
             <CardHeader>
               <CardTitle>Payment Configuration</CardTitle>
@@ -359,7 +359,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
-                                <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in Tether.</p>
+                                <p className="text-sm text-muted-foreground pl-6">Low-fee stablecoin settlement.</p>
                             </div>
                             <Switch id="usdt-switch" checked={gateways.crypto_usdt} onCheckedChange={() => handleGatewayToggle('crypto_usdt')} />
                         </div>
