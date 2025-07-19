@@ -148,12 +148,11 @@ export default function AnalyticsPage() {
   };
 
   const handleCountryClick = (country: typeof geoData[0]) => {
+     setCurrentPage(1);
      setDialogContent({ 
         title: `Merchants from ${country.country}`, 
-        description: `A list of merchants operating from ${country.country}.`, 
-        data: (
-            <p>Showing {country.merchants} merchants from {country.country}. Full list would be displayed here.</p>
-        )
+        description: `A list of all ${country.merchants} merchants operating from ${country.country}. Click to view details.`, 
+        data: <NewMerchantsList/>
     });
   };
   
