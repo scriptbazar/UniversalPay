@@ -106,11 +106,12 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'transaction' | 'withdrawalDetail' | null;
+type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'transaction' | 'withdrawalDetail' | 'transactionList' | null;
 
 
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
+  const [dialogTitle, setDialogTitle] = useState('');
   
   const [selectedMethod, setSelectedMethod] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
@@ -144,6 +145,30 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     }
     setDialogOpen(type);
   };
+
+  const openTransactionListDialog = (type: 'total' | 'successful' | 'failed') => {
+    let transactions;
+    let title;
+    switch(type) {
+      case 'successful':
+        transactions = allTransactions.filter(t => t.status === 'Success');
+        title = 'Successful Transactions';
+        break;
+      case 'failed':
+        transactions = allTransactions.filter(t => t.status === 'Failed');
+        title = 'Failed Transactions';
+        break;
+      case 'total':
+      default:
+        transactions = allTransactions;
+        title = 'All Attempted Transactions';
+        break;
+    }
+    setFilteredTransactions(transactions);
+    setDialogTitle(title);
+    setCurrentPage(1);
+    setDialogOpen('transactionList');
+  }
 
   const paginatedTransactions = useMemo(() => {
       const startIndex = (currentPage - 1) * itemsPerPage;
@@ -333,11 +358,15 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             </CardContent>
         </Card>
 
-        {/* Transaction List Dialog (For Revenue and Payment Method) */}
-        <Dialog open={dialogOpen === 'method' || dialogOpen === 'revenue'} onOpenChange={() => setDialogOpen(null)}>
+        {/* Transaction List Dialog (For Revenue, Payment Method and Success Rate clicks) */}
+        <Dialog open={dialogOpen === 'method' || dialogOpen === 'revenue' || dialogOpen === 'transactionList'} onOpenChange={() => setDialogOpen(null)}>
             <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>{dialogOpen === 'revenue' ? 'All Successful Transactions' : `${selectedMethod} Transactions`}</DialogTitle>
+                    <DialogTitle>
+                        {dialogOpen === 'revenue' && 'All Successful Transactions'}
+                        {dialogOpen === 'method' && `${selectedMethod} Transactions`}
+                        {dialogOpen === 'transactionList' && dialogTitle}
+                    </DialogTitle>
                      <DialogDescription>
                         A complete list of transactions. Click a row to see details.
                     </DialogDescription>
@@ -504,13 +533,19 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         </>
                     )}
                     {dialogOpen === 'success' && (
-                         <>
-                            <div className="flex justify-between"><span className="text-muted-foreground">Total Transactions Attempted:</span> <span className="font-semibold">{allTransactions.length}</span></div>
-                            <div className="flex justify-between"><span className="text-muted-foreground">Successful Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Success').length}</span></div>
-                            <div className="flex justify-between"><span className="text-muted-foreground">Failed Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Failed').length}</span></div>
+                         <div className="space-y-2">
+                             <Button variant="link" className="p-0 h-auto justify-start" onClick={() => openTransactionListDialog('total')}>
+                                <div className="flex justify-between w-full"><span className="text-muted-foreground">Total Transactions Attempted:</span> <span className="font-semibold">{allTransactions.length}</span></div>
+                             </Button>
+                              <Button variant="link" className="p-0 h-auto justify-start" onClick={() => openTransactionListDialog('successful')}>
+                                <div className="flex justify-between w-full"><span className="text-muted-foreground">Successful Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Success').length}</span></div>
+                             </Button>
+                             <Button variant="link" className="p-0 h-auto justify-start" onClick={() => openTransactionListDialog('failed')}>
+                                <div className="flex justify-between w-full"><span className="text-muted-foreground">Failed Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Failed').length}</span></div>
+                             </Button>
                             <Separator/>
-                            <div className="flex justify-between font-bold text-lg"><span>Success Rate:</span> <span>{stats.successRate}</span></div>
-                        </>
+                            <div className="flex justify-between font-bold text-lg pt-2"><span>Success Rate:</span> <span>{stats.successRate}</span></div>
+                        </div>
                     )}
                  </div>
                  <DialogFooter>
@@ -521,5 +556,3 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     </div>
   )
 }
-
-    
