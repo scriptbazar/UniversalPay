@@ -13,14 +13,27 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+const allMockTransactions = Array.from({ length: 6 * 50 }, (_, i) => {
+    const monthIndex = Math.floor(i / 50);
+    const success = Math.random() > 0.1;
+    return {
+        id: `txn_${i + 1}`,
+        merchant: `Merchant ${i % 4 + 1}`,
+        amount: (Math.random() * 500 + 10).toFixed(2),
+        date: `2023-10-${28-Math.floor(i/2)}`,
+        monthIndex: monthIndex,
+        status: success ? 'Successful' : 'Failed'
+    }
+});
+
 
 const revenueData = [
-  { month: "Jan", revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 390 },
-  { month: "Feb", revenue: 3000, newUsers: 13, totalTransactions: 350, successfulTransactions: 340 },
-  { month: "Mar", revenue: 5000, newUsers: 84, totalTransactions: 500, successfulTransactions: 490 },
-  { month: "Apr", revenue: 4500, newUsers: 45, totalTransactions: 480, successfulTransactions: 470 },
-  { month: "May", revenue: 6000, newUsers: 56, totalTransactions: 600, successfulTransactions: 580 },
-  { month: "Jun", revenue: 5500, newUsers: 34, totalTransactions: 550, successfulTransactions: 540 },
+  { month: "Jan", revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 390, monthIndex: 0 },
+  { month: "Feb", revenue: 3000, newUsers: 13, totalTransactions: 350, successfulTransactions: 340, monthIndex: 1 },
+  { month: "Mar", revenue: 5000, newUsers: 84, totalTransactions: 500, successfulTransactions: 490, monthIndex: 2 },
+  { month: "Apr", revenue: 4500, newUsers: 45, totalTransactions: 480, successfulTransactions: 470, monthIndex: 3 },
+  { month: "May", revenue: 6000, newUsers: 56, totalTransactions: 600, successfulTransactions: 580, monthIndex: 4 },
+  { month: "Jun", revenue: 5500, newUsers: 34, totalTransactions: 550, successfulTransactions: 540, monthIndex: 5 },
 ];
 
 const paymentMethodData = [
@@ -43,15 +56,12 @@ const mockNewMerchants = Array.from({ length: 12 }, (_, i) => ({
     name: `Merchant ${i + 1}`,
     email: `merchant${i + 1}@example.com`,
     avatar: `https://placehold.co/40x40.png?text=M${i+1}`,
-    joined: `2023-10-${28-i}`
+    joined: `2023-10-${28-i}`,
+    monthIndex: i % 6,
 }));
 
-const mockSuccessfulPayments = Array.from({ length: 20 }, (_, i) => ({
-    id: `txn_${i + 1}`,
-    merchant: `Merchant ${i % 4 + 1}`,
-    amount: (Math.random() * 500 + 10).toFixed(2),
-    date: `2023-10-${28-Math.floor(i/2)}`
-}));
+const mockSuccessfulPayments = allMockTransactions.filter(tx => tx.status === 'Successful');
+
 
 type DialogContent = {
   title: string;
@@ -69,7 +79,7 @@ export default function AnalyticsPage() {
   const paginatedMerchants = useMemo(() => {
       const startIndex = (currentPage - 1) * itemsPerPage;
       return mockNewMerchants.slice(startIndex, startIndex + itemsPerPage);
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage]);
 
   const totalPages = Math.ceil(mockNewMerchants.length / itemsPerPage);
 
@@ -120,22 +130,72 @@ export default function AnalyticsPage() {
      }
   };
   
-  const handleBarClick = (data: any) => {
-    if(!data || !data.activePayload) return;
-    const payload = data.activePayload[0].payload;
-     setDialogContent({ 
-        title: `Details for ${payload.month}`, 
-        description: `A snapshot of performance in ${payload.month}.`, 
-        data: (
-            <div className="space-y-2">
-                <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${payload.revenue.toLocaleString()}</span></div>
-                <div className="flex justify-between"><span>New Users:</span> <span className="font-bold">{payload.newUsers}</span></div>
-                <div className="flex justify-between"><span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span></div>
-                <div className="flex justify-between"><span>Successful Transactions:</span> <span className="font-bold">{payload.successfulTransactions}</span></div>
-            </div>
-        )
-    });
-  };
+    const showListDialog = (title: string, data: any[], type: 'merchant' | 'transaction') => {
+        setDialogContent({
+            title: title,
+            description: `A list of ${title.toLowerCase()}.`,
+            data: (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>{type === 'merchant' ? 'Merchant' : 'Transaction ID'}</TableHead>
+                            <TableHead>{type === 'merchant' ? 'Joined On' : 'Status'}</TableHead>
+                            {type === 'transaction' && <TableHead className="text-right">Amount</TableHead>}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.slice(0, 20).map(item => ( // Show top 20
+                            <TableRow key={item.id}>
+                                {type === 'merchant' ? (
+                                    <>
+                                        <TableCell>{item.name}</TableCell>
+                                        <TableCell>{item.joined}</TableCell>
+                                    </>
+                                ) : (
+                                    <>
+                                        <TableCell>{item.id}</TableCell>
+                                        <TableCell><Badge variant={item.status === 'Successful' ? 'default' : 'destructive'}>{item.status}</Badge></TableCell>
+                                        <TableCell className="text-right">${item.amount}</TableCell>
+                                    </>
+                                )}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )
+        });
+    };
+
+    const handleBarClick = (data: any) => {
+        if (!data || !data.activePayload) return;
+        const payload = data.activePayload[0].payload;
+
+        const monthlyMerchants = mockNewMerchants.filter(m => m.monthIndex === payload.monthIndex);
+        const monthlyTransactions = allMockTransactions.filter(t => t.monthIndex === payload.monthIndex);
+        const monthlySuccessfulTransactions = monthlyTransactions.filter(t => t.status === 'Successful');
+
+        setDialogContent({
+            title: `Details for ${payload.month}`,
+            description: `A snapshot of performance in ${payload.month}. Click a number to see details.`,
+            data: (
+                <div className="space-y-2">
+                    <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${payload.revenue.toLocaleString()}</span></div>
+                    
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => showListDialog(`New Users in ${payload.month}`, monthlyMerchants, 'merchant')}>
+                        <span>New Users:</span> <span className="font-bold">{payload.newUsers}</span>
+                    </Button>
+                    
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => showListDialog(`Total Transactions in ${payload.month}`, monthlyTransactions, 'transaction')}>
+                       <span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span>
+                    </Button>
+
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => showListDialog(`Successful Transactions in ${payload.month}`, monthlySuccessfulTransactions, 'transaction')}>
+                        <span>Successful Transactions:</span> <span className="font-bold">{payload.successfulTransactions}</span>
+                    </Button>
+                </div>
+            )
+        });
+    };
 
   const handlePieClick = (data: any) => {
      setDialogContent({ 
