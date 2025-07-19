@@ -51,8 +51,9 @@ import React, { useState } from "react";
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
   { href: "/merchant/analytics", icon: LineChart, label: "Analytics" },
-  { href: "/merchant/payments", icon: Wallet, label: "Payments" },
+  { href: "/merchant/payments", icon: CreditCard, label: "Payments" },
   { href: "/merchant/payment-links", icon: Link2, label: "Payment Links" },
+  { href: "/merchant/wallet", icon: Wallet, label: "Wallet" },
   { href: "/merchant/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/merchant/invoices", icon: FileText, label: "Invoices" },
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
