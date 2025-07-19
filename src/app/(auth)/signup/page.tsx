@@ -11,8 +11,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { countries } from "@/lib/countries";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -33,9 +31,6 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +50,7 @@ export default function SignupPage() {
     });
     router.push('/merchant/dashboard');
   };
-
+  
   const handleSocialSignup = (provider: 'google' | 'github') => {
     // This is where you would initiate the OAuth flow.
     // For a real implementation, you would redirect the user to a URL like:
@@ -69,7 +64,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-3xl shadow-xl">
+      <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <Logo />
@@ -79,39 +74,18 @@ export default function SignupPage() {
         </CardHeader>
         <form onSubmit={handleSignup}>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" type="text" placeholder="John Doe" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input id="username" type="text" placeholder="johndoe" required />
+                    <Input id="name" type="text" placeholder="John Doe" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="merchant@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input id="email" type="email" placeholder="merchant@example.com" required />
                 </div>
-            </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile Number</Label>
                     <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Select required>
-                        <SelectTrigger id="country">
-                            <SelectValue placeholder="Select your country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {countries.map((country) => (
-                                <SelectItem key={country.code} value={country.code.toLowerCase()}>
-                                    {country.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
