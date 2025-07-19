@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -300,9 +300,15 @@ export default function SettingsPage() {
                                         <Input id="terms-url" placeholder="https://your-website.com/terms" />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="privacy-url">Privacy Policy URL</Label>
-                                    <Input id="privacy-url" placeholder="https://your-website.com/privacy" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="privacy-url">Privacy Policy URL</Label>
+                                        <Input id="privacy-url" placeholder="https://your-website.com/privacy" />
+                                    </div>
+                                     <div className="space-y-2">
+                                        <Label htmlFor="support-url">Support URL</Label>
+                                        <Input id="support-url" placeholder="https://your-website.com/support" />
+                                    </div>
                                 </div>
                             </div>
 
