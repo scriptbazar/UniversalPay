@@ -40,6 +40,7 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
   { href: "/dashboard/analytics", icon: BarChart, label: "Analytics" },
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
+  { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud & Risk" },
   { href: "/dashboard/reseller", icon: Briefcase, label: "Reseller Accounts" },
