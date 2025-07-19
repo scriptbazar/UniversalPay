@@ -1,20 +1,8 @@
 
 'use server';
 
-import * as admin from 'firebase-admin';
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
-// Initialize Firebase Admin SDK if not already done
-if (!admin.apps.length) {
-  try {
-    // This relies on the GOOGLE_APPLICATION_CREDENTIALS environment variable
-    // being set in the hosting environment.
-    admin.initializeApp();
-  } catch (e) {
-    console.error('Firebase Admin initialization error in users/actions.ts', e);
-  }
-}
 
 interface User {
     id: string;
@@ -28,15 +16,13 @@ interface User {
 
 export async function fetchUsers(): Promise<User[]> {
     try {
-        // IMPORTANT: By calling getFirestore() from the admin SDK, we bypass
-        // all client-side security rules. This is a privileged operation
-        // that will succeed regardless of the logged-in user's role.
-        const adminDb = admin.firestore();
-        const usersCollection = adminDb.collection("users");
-        const userSnapshot = await getDocs(usersCollection);
+        // Using the standard client-aware 'db' instance.
+        // The security rules have been updated to allow any authenticated user to read.
+        const usersCollectionRef = collection(db, "users");
+        const userSnapshot = await getDocs(usersCollectionRef);
         
         if (userSnapshot.empty) {
-            console.log("No users found via admin action.");
+            console.log("No users found in the users collection.");
             return [];
         }
         
@@ -48,8 +34,8 @@ export async function fetchUsers(): Promise<User[]> {
         return userList;
 
     } catch (error) {
-        console.error("Error fetching users in Server Action with Admin SDK: ", error);
+        console.error("Error fetching users in Server Action: ", error);
         // We throw the error so the client-side component can catch it.
-        throw new Error("Failed to fetch users using admin privileges. Check server logs.");
+        throw new Error("Failed to fetch users. Check Firestore security rules and console logs.");
     }
 }
