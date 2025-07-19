@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Shield, DollarSign, User, Server, AlertCircle, Clock, CheckCircle, XCircle, Ban, FileWarning } from "lucide-react";
+import { MoreHorizontal, Shield, DollarSign, User, Server, AlertCircle, Clock, CheckCircle, XCircle, Ban, FileWarning, Copy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,6 +97,13 @@ export default function FraudDetectionPage() {
     setSelectedTx(null); // Close dialog after action
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+    });
+  };
+
   return (
     <div className="space-y-6">
        <div>
@@ -150,7 +157,11 @@ export default function FraudDetectionPage() {
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Transaction Details</DialogTitle>
-            <DialogDescription>Reviewing transaction <span className="font-mono">{selectedTx?.id}</span></DialogDescription>
+            <DialogDescription>
+                Reviewing transaction 
+                <span className="font-mono mx-1">{selectedTx?.id}</span>
+                <Copy className="h-4 w-4 inline-block text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTx?.id || '', 'Transaction ID')} />
+            </DialogDescription>
           </DialogHeader>
           {selectedTx && (
             <div className="space-y-4 py-4">
