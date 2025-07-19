@@ -12,6 +12,7 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { countries } from "@/lib/countries";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -72,12 +73,11 @@ export default function SignupPage() {
                         <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="in">India</SelectItem>
-                        <SelectItem value="us">United States</SelectItem>
-                        <SelectItem value="gb">United Kingdom</SelectItem>
-                        <SelectItem value="ca">Canada</SelectItem>
-                        <SelectItem value="au">Australia</SelectItem>
-                        <SelectItem value="ae">United Arab Emirates</SelectItem>
+                        {countries.map((country) => (
+                            <SelectItem key={country.code} value={country.code.toLowerCase()}>
+                                {country.name}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>
