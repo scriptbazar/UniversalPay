@@ -45,6 +45,7 @@ import { Logo } from "@/components/logo";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import React, { useState } from "react";
 
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
@@ -64,6 +65,14 @@ export default function MerchantDashboardLayout({
   children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const [merchantName, setMerchantName] = useState("John Doe");
+
+    const childrenWithProps = React.Children.map(children, child => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, { merchantName, setMerchantName } as any);
+      }
+      return child;
+    });
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -166,7 +175,7 @@ export default function MerchantDashboardLayout({
           </DropdownMenu>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-          {children}
+          {childrenWithProps}
         </main>
       </div>
     </div>

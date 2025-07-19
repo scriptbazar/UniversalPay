@@ -61,8 +61,11 @@ const chartData = [
     { name: 'Dec', revenue: Math.floor(Math.random() * 5000) + 1000 },
 ]
 
-export default function Dashboard() {
-  const merchantName = "Merchant"; // Placeholder for the merchant's name
+interface DashboardProps {
+  merchantName?: string;
+}
+
+export default function Dashboard({ merchantName = "Merchant" }: DashboardProps) {
   return (
     <div className="flex flex-col gap-4">
         <div>

@@ -104,8 +104,12 @@ const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: strin
     );
 };
 
+interface SettingsPageProps {
+    merchantName?: string;
+    setMerchantName?: (name: string) => void;
+}
 
-export default function SettingsPage() {
+export default function SettingsPage({ merchantName = "My Awesome Store", setMerchantName = () => {} }: SettingsPageProps) {
   const { toast } = useToast();
   const [geminiApiKey, setGeminiApiKey] = useState('');
   
@@ -198,7 +202,11 @@ export default function SettingsPage() {
                 <div className="space-y-4 p-4 border rounded-md">
                     <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" defaultValue="John Doe" />
+                        <Input 
+                          id="name" 
+                          value={merchantName} 
+                          onChange={(e) => setMerchantName(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
