@@ -82,13 +82,15 @@ export default function SignupPage() {
                   <Input id="email" type="email" placeholder="merchant@example.com" required />
                 </div>
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number</Label>
-                <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="mobile">Mobile Number</Label>
+                    <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" required />
+                </div>
             </div>
              <div className="flex justify-center pt-4">
                 <ReCAPTCHA
