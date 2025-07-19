@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, BarChart } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, BarChart, Shuffle, Settings, AppWindow } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -25,18 +25,33 @@ const features = [
   },
   {
     icon: <Globe className="w-8 h-8 text-primary" />,
-    title: "White-Label Solution",
-    description: "Use your own domain and branding. Resellers can manage client merchants under their own brand.",
+    title: "Global Payment Methods",
+    description: "Enable local payment methods for customers worldwide. They pay locally, you get settled globally in crypto.",
   },
   {
     icon: <Zap className="w-8 h-8 text-primary" />,
-    title: "Real-Time Notifications",
-    description: "Get instant alerts via Telegram, Email, and SMS for payments, withdrawals, and subscriptions.",
+    title: "Simplified Crypto Payouts",
+    description: "Receive all your payments directly in your preferred cryptocurrency, eliminating cross-border complexity.",
   },
   {
     icon: <Users className="w-8 h-8 text-primary" />,
     title: "Subscription Models",
     description: "Choose from flexible subscription tiers (Free, Pro, Premium) with varying limits and features.",
+  },
+  {
+    icon: <Shuffle className="w-8 h-8 text-primary" />,
+    title: "Automatic Currency Conversion",
+    description: "Customers pay in their native currency, and our system automatically converts it to your chosen crypto.",
+  },
+  {
+    icon: <Settings className="w-8 h-8 text-primary" />,
+    title: "Full Admin Control",
+    description: "Manage payment methods, choose your settlement currency, and monitor everything from one powerful dashboard.",
+  },
+  {
+    icon: <AppWindow className="w-8 h-8 text-primary" />,
+    title: "White-Label Solution",
+    description: "Use your own domain and branding. Resellers can manage client merchants under their own brand.",
   },
 ];
 
@@ -47,7 +62,7 @@ const faqItems = [
     },
     {
         question: "What currencies are supported?",
-        answer: "We support all major Indian UPI platforms like Paytm, PhonePe, and BharatPe, as well as major cryptocurrencies such as Bitcoin (BTC), Ethereum (ETH), Tether (USDT), and Binance Coin (BNB)."
+        answer: "We support all major Indian UPI platforms like Paytm, PhonePe, and BharatPe, as well as major cryptocurrencies such as Bitcoin (BTC), Ethereum (ETH), Tether (USDT), and Binance Coin (BNB). We also support local payment methods from various countries."
     },
     {
         question: "Is it secure?",
@@ -56,6 +71,10 @@ const faqItems = [
     {
         question: "Can I use my own branding?",
         answer: "Yes! Our white-label feature allows you to use your own domain, logo, and branding to provide a seamless experience for your customers."
+    },
+    {
+        question: "How do global payments work?",
+        answer: "Your customers pay using their local payment method (like a credit card in the US or SEPA in Europe). Our system automatically converts the payment into your preferred cryptocurrency (like USDT or BTC) and settles it to your wallet."
     }
 ]
 
@@ -201,3 +220,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
