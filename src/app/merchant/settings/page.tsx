@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
+import { Logo } from "@/components/logo";
+
 
 type PaymentMethodsState = {
   paytm: boolean;
@@ -27,6 +29,13 @@ type PaymentMethodsState = {
   aud_becs: boolean;
   cad_eft: boolean;
   paypal: boolean;
+};
+
+type CheckoutDisplayOptions = {
+    upi: boolean;
+    card: boolean;
+    crypto: boolean;
+    paypal: boolean;
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -58,7 +67,7 @@ const CodeSnippet = ({ code }: { code: string }) => {
 };
 
 
-const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: string, logo: string | null, businessName: string }) => {
+const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { brandColor: string, logo: string | null, businessName: string, displayOptions: CheckoutDisplayOptions }) => {
     return (
         <div className="sticky top-24">
             <h3 className="text-lg font-semibold mb-4 text-center">Checkout Preview</h3>
@@ -97,10 +106,10 @@ const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: strin
                         <div className="w-full">
                             <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
                              <div className="flex flex-col space-y-2">
-                                <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
-                                <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
-                                <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
-                                <Button variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> Pay with PayPal</Button>
+                                {displayOptions.upi && <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>}
+                                {displayOptions.card && <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>}
+                                {displayOptions.crypto && <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>}
+                                {displayOptions.paypal && <Button variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> Pay with PayPal</Button>}
                             </div>
                         </div>
 
@@ -110,10 +119,13 @@ const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: strin
                         >
                             Pay ₹1,009.00
                         </Button>
-
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
+                         <div className="flex items-center justify-center pt-2 gap-2 text-xs text-muted-foreground">
+                            <Logo className="h-4 w-4"/>
+                            <span>Powered by UniversalPay</span>
+                         </div>
                     </div>
                 </CardContent>
             </Card>
@@ -133,6 +145,17 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
   const [businessName, setBusinessName] = useState('My Awesome Store');
   const [brandColor, setBrandColor] = useState('#29ABE2');
   const [logo, setLogo] = useState<string | null>(null);
+
+  const [checkoutDisplayOptions, setCheckoutDisplayOptions] = useState<CheckoutDisplayOptions>({
+      upi: true,
+      card: true,
+      crypto: true,
+      paypal: false,
+  });
+
+  const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
+    setCheckoutDisplayOptions(prev => ({ ...prev, [option]: !prev[option] }));
+  };
 
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
@@ -328,8 +351,8 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                     </div>
                                 </div>
                             </div>
-
-                             <div className="space-y-4 p-4 border rounded-lg">
+                            
+                            <div className="space-y-4 p-4 border rounded-lg">
                                 <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5"/> Legal &amp; Links</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -357,6 +380,29 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                 </div>
                             </div>
 
+                            <div className="space-y-4 p-4 border rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2"><CreditCard className="w-5 h-5"/> Checkout Display Options</h3>
+                                <p className="text-sm text-muted-foreground">Choose which payment methods are visible to your customers.</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="flex items-center justify-between rounded-lg border p-3">
+                                        <Label htmlFor="display-upi" className="font-medium flex items-center gap-2"><IndianRupee className="w-4 h-4"/> Show UPI</Label>
+                                        <Switch id="display-upi" checked={checkoutDisplayOptions.upi} onCheckedChange={() => handleDisplayOptionToggle('upi')} />
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-lg border p-3">
+                                        <Label htmlFor="display-card" className="font-medium flex items-center gap-2"><CreditCard className="w-4 h-4"/> Show Card</Label>
+                                        <Switch id="display-card" checked={checkoutDisplayOptions.card} onCheckedChange={() => handleDisplayOptionToggle('card')} />
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-lg border p-3">
+                                        <Label htmlFor="display-crypto" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/> Show Crypto</Label>
+                                        <Switch id="display-crypto" checked={checkoutDisplayOptions.crypto} onCheckedChange={() => handleDisplayOptionToggle('crypto')} />
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-lg border p-3">
+                                        <Label htmlFor="display-paypal" className="font-medium flex items-center gap-2"><PayPalIcon className="w-4 h-4"/> Show PayPal</Label>
+                                        <Switch id="display-paypal" checked={checkoutDisplayOptions.paypal} onCheckedChange={() => handleDisplayOptionToggle('paypal')} />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="flex items-start justify-between rounded-lg border p-4">
                                 <div className="space-y-1">
                                 <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
@@ -374,7 +420,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                     </Card>
                 </div>
                 <div className="lg:col-span-1">
-                    <CheckoutPreview brandColor={brandColor} logo={logo} businessName={businessName} />
+                    <CheckoutPreview brandColor={brandColor} logo={logo} businessName={businessName} displayOptions={checkoutDisplayOptions} />
                 </div>
             </div>
         </TabsContent>
