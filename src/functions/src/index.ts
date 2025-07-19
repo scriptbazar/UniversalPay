@@ -12,18 +12,25 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
+// IMPORTANT: Replace this with your actual admin email address.
+const adminEmail = '[ADMIN_EMAIL_HERE]';
+
 // This Cloud Function triggers whenever a new user is created.
-// It assigns the 'merchant' custom claim by default.
-// The admin role is now set via a dedicated server action in the app
-// to avoid complexity with environment variables.
+// It checks if the new user's email matches the admin email.
+// If it matches, it assigns the 'admin' custom claim.
+// Otherwise, it assigns the 'merchant' custom claim by default.
 exports.addRoleClaim = auth.user().onCreate(async (user) => {
-  const defaultRole = "merchant";
+  let role = "merchant"; // Default role
+  
+  if (user.email && user.email === adminEmail) {
+    role = "admin";
+  }
 
   try {
     await admin.auth().setCustomUserClaims(user.uid, {
-      role: defaultRole,
+      role: role,
     });
-    console.log(`Custom claim '${defaultRole}' set for new user: ${user.uid}`);
+    console.log(`Custom claim '${role}' set for user: ${user.uid}`);
   } catch (error) {
     console.error(`Error setting custom claim for user: ${user.uid}`, error);
   }
