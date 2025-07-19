@@ -36,7 +36,12 @@ const CurrencySelector = ({
           {selected.code} - {selected.name}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[300px]" side="bottom" align="start">
+      <PopoverContent 
+        className="p-0 w-[300px]" 
+        side="bottom" 
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <Command>
           <CommandInput placeholder="Search currency..." />
           <CommandList>
