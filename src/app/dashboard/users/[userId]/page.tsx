@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Landmark, MoreVertical, Percent, Shield, User, UserX, Wallet } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserX, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,12 +75,21 @@ const allTransactions: Transaction[] = [
 
 const recentTransactions = allTransactions.slice(0, 3);
 
+type Withdrawal = {
+  id: string;
+  amount: string;
+  currency: string;
+  destinationType: string;
+  destination: string;
+  status: "Completed" | "Pending" | "Failed";
+  date: string;
+};
 
-const withdrawalHistory = [
-    { id: "wd_1", amount: "500.00", currency: "USDT", status: "Completed", date: "2023-10-25" },
-    { id: "wd_2", amount: "1000.00", currency: "INR", status: "Pending", date: "2023-11-01" },
-    { id: "wd_3", amount: "250.00", currency: "BTC", status: "Failed", date: "2023-10-18" },
-    { id: "wd_4", amount: "750.00", currency: "USDT", status: "Completed", date: "2023-10-15" },
+const withdrawalHistory: Withdrawal[] = [
+    { id: "wd_1", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
+    { id: "wd_2", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
+    { id: "wd_3", amount: "250.00", currency: "BTC", destinationType: "Crypto Wallet", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Failed", date: "2023-10-18" },
+    { id: "wd_4", amount: "750.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-15" },
 ];
 
 const getStatusBadgeVariant = (status: string) => {
@@ -100,9 +109,11 @@ const getStatusBadgeVariant = (status: string) => {
 export default function UserDetailPage({ params }: { params: { userId: string } }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionDetailDialogOpen, setTransactionDetailDialogOpen] = useState(false);
+  const [withdrawalDetailDialogOpen, setWithdrawalDetailDialogOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -117,6 +128,11 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
   const handleTransactionRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setTransactionDetailDialogOpen(true);
+  };
+  
+  const handleWithdrawalRowClick = (withdrawal: Withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setWithdrawalDetailDialogOpen(true);
   };
 
   const paginatedTransactions = useMemo(() => {
@@ -286,7 +302,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                     </TableHeader>
                     <TableBody>
                         {withdrawalHistory.map(w => (
-                            <TableRow key={w.id}>
+                            <TableRow key={w.id} onClick={() => handleWithdrawalRowClick(w)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="font-medium">{w.id}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
@@ -398,6 +414,52 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        {/* Withdrawal Detail Dialog */}
+        <Dialog open={withdrawalDetailDialogOpen} onOpenChange={setWithdrawalDetailDialogOpen}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Withdrawal Details</DialogTitle>
+                </DialogHeader>
+                {selectedWithdrawal && (
+                    <div className="space-y-4 py-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Withdrawal ID:</span>
+                            <span className="font-mono font-semibold">{selectedWithdrawal.id}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Amount:</span>
+                            <span className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Destination Type:</span>
+                            <span className="font-semibold">{selectedWithdrawal.destinationType}</span>
+                        </div>
+                         <Separator/>
+                         <div className="flex flex-col space-y-2">
+                            <span className="text-muted-foreground">Destination Address:</span>
+                            <span className="font-mono font-semibold break-all">{selectedWithdrawal.destination}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Date:</span>
+                            <span className="font-semibold">{selectedWithdrawal.date}</span>
+                        </div>
+                        <Separator/>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Status:</span>
+                            <Badge variant={getStatusBadgeVariant(selectedWithdrawal.status)}>{selectedWithdrawal.status}</Badge>
+                        </div>
+                    </div>
+                )}
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => setWithdrawalDetailDialogOpen(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   )
 }
+
