@@ -199,7 +199,7 @@ export default function SettingsPage() {
                 </div>
                 <Separator />
                 <div>
-                    <h4 className="font-semibold mb-4">Cryptocurrency Wallets</h4>
+                    <h4 className="font-semibold mb-4">Direct Cryptocurrency Payments</h4>
                     <div className="space-y-4">
                          <div className="flex items-center justify-between rounded-lg border p-4">
                             <div>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
                         </div>
                         {paymentMethods.btc && (
                             <div className="space-y-2 pl-4 pb-2">
-                                <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Address for Settlements</Label>
+                                <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
                                 <Input id="btc-wallet" placeholder="bc1..."/>
                             </div>
                         )}
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                         </div>
                         {paymentMethods.usdt && (
                             <div className="space-y-2 pl-4 pb-2">
-                                <Label htmlFor="usdt-wallet">Your USDT (TRC20) Address for Settlements</Label>
+                                <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
                                 <Input id="usdt-wallet" placeholder="T..."/>
                             </div>
                         )}
@@ -233,9 +233,10 @@ export default function SettingsPage() {
                 <Separator />
                  <div>
                     <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h4>
-                     <p className="text-sm text-muted-foreground mb-4">Enable local payment methods for different countries. All payouts will be settled in your chosen cryptocurrency.</p>
-                      <div className="p-4 rounded-lg border bg-card-foreground/5 mb-4">
-                        <Label htmlFor="settlement-crypto">Default Settlement Currency</Label>
+                     <p className="text-sm text-muted-foreground mb-4">Enable local payment methods for your customers. All payments will be automatically converted and settled in your chosen cryptocurrency.</p>
+                      <div className="p-4 rounded-lg border bg-card-foreground/5 mb-4 space-y-2">
+                        <Label htmlFor="settlement-crypto" className="font-semibold">Choose Your Settlement Cryptocurrency</Label>
+                         <p className="text-xs text-muted-foreground">All global payments will be settled to this currency and sent to the corresponding wallet address you've configured above.</p>
                         <Select defaultValue="usdt">
                             <SelectTrigger id="settlement-crypto" className="mt-2">
                                 <SelectValue placeholder="Select crypto for settlement" />
@@ -246,7 +247,6 @@ export default function SettingsPage() {
                                 <SelectItem value="eth">Ethereum (ETH)</SelectItem>
                             </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground mt-2">All payments from global methods will be settled to this currency.</p>
                     </div>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between rounded-lg border p-4">
