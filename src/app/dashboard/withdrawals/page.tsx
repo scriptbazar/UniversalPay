@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from "next/link";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -36,6 +37,7 @@ export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
     const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+    const [filter, setFilter] = useState('all');
 
     useEffect(() => {
         setWithdrawals(getWithdrawals());
@@ -64,10 +66,18 @@ export default function AdminWithdrawalsPage() {
         });
     };
 
+    const filteredWithdrawals = useMemo(() => {
+        if (filter === 'all') return withdrawals;
+        return withdrawals.filter(w => {
+            const method = w.currency === 'INR' ? 'upi' : 'crypto';
+            return method === filter;
+        });
+    }, [withdrawals, filter]);
+
     const itemsPerPage = 5;
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(withdrawals.length / itemsPerPage);
-    const paginatedWithdrawals = withdrawals.slice(
+    const totalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
+    const paginatedWithdrawals = filteredWithdrawals.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
     );
@@ -81,68 +91,76 @@ export default function AdminWithdrawalsPage() {
       </div>
       <Separator />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Withdrawal Requests</CardTitle>
-          <CardDescription>A list of all withdrawal requests across the platform. Click a row to see details.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Request ID</TableHead>
-                <TableHead>Merchant</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Destination</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedWithdrawals.map((w) => (
-                <TableRow key={w.id} onClick={() => handleRowClick(w)} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium">{w.id}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{w.merchantName}</div>
-                    <div className="text-xs text-muted-foreground">{w.merchantId}</div>
-                  </TableCell>
-                  <TableCell>{w.date}</TableCell>
-                  <TableCell>{truncateAddress(w.destination)}</TableCell>
-                  <TableCell>${w.amount} {w.currency}</TableCell>
-                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
-                  </TableCell>
+       <Tabs value={filter} onValueChange={setFilter}>
+        <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="upi">UPI</TabsTrigger>
+            <TabsTrigger value="crypto">Crypto</TabsTrigger>
+        </TabsList>
+
+        <Card className="mt-4">
+            <CardHeader>
+            <CardTitle>Withdrawal Requests</CardTitle>
+            <CardDescription>A list of all withdrawal requests across the platform. Click a row to see details.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Request ID</TableHead>
+                    <TableHead>Merchant</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Destination</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-         <CardFooter>
-            <div className="flex justify-between items-center w-full">
-                <div className="text-xs text-muted-foreground">
-                    Showing <strong>{(currentPage - 1) * itemsPerPage + 1}-{(currentPage - 1) * itemsPerPage + paginatedWithdrawals.length}</strong> of <strong>{withdrawals.length}</strong> withdrawals
+                </TableHeader>
+                <TableBody>
+                {paginatedWithdrawals.map((w) => (
+                    <TableRow key={w.id} onClick={() => handleRowClick(w)} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-medium">{w.id}</TableCell>
+                    <TableCell>
+                        <div className="font-medium">{w.merchantName}</div>
+                        <div className="text-xs text-muted-foreground">{w.merchantId}</div>
+                    </TableCell>
+                    <TableCell>{w.date}</TableCell>
+                    <TableCell>{truncateAddress(w.destination)}</TableCell>
+                    <TableCell>${w.amount} {w.currency}</TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                    </TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+            </CardContent>
+            <CardFooter>
+                <div className="flex justify-between items-center w-full">
+                    <div className="text-xs text-muted-foreground">
+                        Showing <strong>{(currentPage - 1) * itemsPerPage + 1}-{(currentPage - 1) * itemsPerPage + paginatedWithdrawals.length}</strong> of <strong>{filteredWithdrawals.length}</strong> withdrawals
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        </CardFooter>
-      </Card>
+            </CardFooter>
+        </Card>
+      </Tabs>
       
       {selectedWithdrawal && (
         <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
