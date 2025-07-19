@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +27,9 @@ const initialWithdrawals: Withdrawal[] = [
   { id: "wd_2", merchantName: "AnotherShop", merchantId: "merch_789", amount: "1000.00", currency: "USDT", destination: "T...xyz", status: "Completed", date: "2023-10-20" },
   { id: "wd_3", merchantName: "MyStore.com", merchantId: "merch_123", amount: "250.00", currency: "INR", destination: "Bank A/c ...1234", status: "Completed", date: "2023-10-18" },
   { id: "wd_4", merchantName: "AnotherShop", merchantId: "merch_789", amount: "750.00", currency: "USDT", destination: "T...xyz", status: "Failed", date: "2023-10-15" },
+  { id: "wd_6", merchantName: "TechGadgets", merchantId: "merch_101", amount: "300.00", currency: "USDT", destination: "T...def", status: "Pending", date: "2023-10-28" },
+  { id: "wd_7", merchantName: "FashionHub", merchantId: "merch_202", amount: "850.00", currency: "INR", destination: "Bank A/c ...5678", status: "Pending", date: "2023-10-28" },
+
 ];
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
@@ -55,6 +58,15 @@ export default function AdminWithdrawalsPage() {
             description: `The withdrawal request (ID: ${id}) has been updated.`,
         });
     };
+    
+    const itemsPerPage = 5;
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(withdrawals.length / itemsPerPage);
+    const paginatedWithdrawals = withdrawals.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
 
   return (
     <div className="space-y-6">
@@ -83,7 +95,7 @@ export default function AdminWithdrawalsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {withdrawals.map((w) => (
+              {paginatedWithdrawals.map((w) => (
                 <TableRow key={w.id}>
                   <TableCell className="font-medium">{w.id}</TableCell>
                   <TableCell>
@@ -113,6 +125,31 @@ export default function AdminWithdrawalsPage() {
             </TableBody>
           </Table>
         </CardContent>
+         <CardFooter>
+            <div className="flex justify-between items-center w-full">
+                <div className="text-xs text-muted-foreground">
+                    Showing <strong>{(currentPage - 1) * itemsPerPage + 1}-{(currentPage - 1) * itemsPerPage + paginatedWithdrawals.length}</strong> of <strong>{withdrawals.length}</strong> withdrawals
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        </CardFooter>
       </Card>
     </div>
   );
