@@ -125,6 +125,7 @@ export default function CurrencyConverterPage() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   useEffect(() => {
+    // Set time only on the client-side to avoid hydration mismatch
     setLastUpdated(new Date().toLocaleTimeString());
   }, []);
 

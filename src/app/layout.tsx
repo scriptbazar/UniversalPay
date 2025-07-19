@@ -15,14 +15,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   return (
-    <html lang="en" className={isMounted ? 'light' : ''} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>TransactWave</title>
         <meta name="description" content="A secure, scalable, and globally functional third-party payment gateway platform." />
