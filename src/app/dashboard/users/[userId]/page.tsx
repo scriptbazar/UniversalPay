@@ -152,6 +152,13 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
+  const formatTooltipValue = (value: number, name: string) => {
+    if (name === 'UPI') {
+      return `₹${value.toLocaleString()}`;
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -256,7 +263,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                 ))}
                             </Pie>
-                            <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                            <Tooltip formatter={formatTooltipValue} />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
