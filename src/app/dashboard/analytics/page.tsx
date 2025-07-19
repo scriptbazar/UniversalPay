@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
                         <span>New Users:</span> <span className="font-bold">{payload.newUsers}</span>
                     </Button>
                     
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => showListDialog(`Total Transactions in ${payload.month}`, monthlyTransactions, 'transaction')}>
+                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/transactions/${payload.month}`)}>
                        <span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span>
                     </Button>
 
