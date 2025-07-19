@@ -42,8 +42,6 @@ export default function SignupPage() {
       });
       return;
     }
-    // Handle signup logic here
-    // On successful signup, redirect to the merchant dashboard
     toast({
       title: "Account Created",
       description: "Welcome to TransactWave! Redirecting you to your dashboard.",
@@ -51,15 +49,12 @@ export default function SignupPage() {
     router.push('/merchant/dashboard');
   };
   
-  const handleSocialSignup = (provider: 'google' | 'github') => {
-    // This is where you would initiate the OAuth flow.
-    // For a real implementation, you would redirect the user to a URL like:
-    // `https://accounts.google.com/o/oauth2/v2/auth?client_id=...&redirect_uri=...`
-    // Since we can't do that here, we'll just show a toast.
+  const handleSocialSignup = () => {
     toast({
-      title: `Signing up with ${provider}`,
-      description: "Please follow the provider's instructions.",
+      title: "Account Created",
+      description: "Welcome to TransactWave! Redirecting...",
     });
+    router.push('/merchant/dashboard');
   };
 
   return (
@@ -80,12 +75,12 @@ export default function SignupPage() {
                     <Input id="name" type="text" placeholder="John Doe" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="merchant@example.com" required />
+                  <Label htmlFor="mobile">Mobile Number</Label>
+                  <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="mobile">Mobile Number</Label>
-                    <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="merchant@example.com" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
@@ -110,8 +105,8 @@ export default function SignupPage() {
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4 w-full">
-                <Button variant="outline" onClick={() => handleSocialSignup('google')} type="button"><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                <Button variant="outline" onClick={() => handleSocialSignup('github')} type="button"><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                <Button variant="outline" onClick={handleSocialSignup} type="button"><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                <Button variant="outline" onClick={handleSocialSignup} type="button"><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
