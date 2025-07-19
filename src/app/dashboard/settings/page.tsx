@@ -54,6 +54,7 @@ export default function SettingsPage() {
   const [logo, setLogo] = useState<string | null>(null);
   const [isCaptchaEnabled, setIsCaptchaEnabled] = useState(true);
   const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
+  const [isMerchantCaptchaRequired, setIsMerchantCaptchaRequired] = useState(true);
 
   const handleSaveApiKeys = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,10 +187,17 @@ export default function SettingsPage() {
                   <div className="space-y-4 pl-6 border-l">
                       <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
-                          <h4 className="font-medium">Enable Captcha on Login/Signup</h4>
-                          <p className="text-sm text-muted-foreground">Protects your platform from bots.</p>
+                          <h4 className="font-medium">Enable Captcha on Admin Login</h4>
+                          <p className="text-sm text-muted-foreground">Protects your admin login page from bots.</p>
                         </div>
                         <Switch checked={isCaptchaEnabled} onCheckedChange={setIsCaptchaEnabled} />
+                      </div>
+                       <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <h4 className="font-medium">Require Captcha for Merchants</h4>
+                          <p className="text-sm text-muted-foreground">Enforce Captcha on merchant login & signup.</p>
+                        </div>
+                        <Switch checked={isMerchantCaptchaRequired} onCheckedChange={setIsMerchantCaptchaRequired} />
                       </div>
                        <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
@@ -293,3 +301,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
