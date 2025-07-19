@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X } from "lucide-react";
+import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Ticket } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Link from "next/link";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -27,8 +29,8 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
 
 export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
-    const router = useRouter();
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+    const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
 
     useEffect(() => {
         setWithdrawals(getWithdrawals());
@@ -38,14 +40,15 @@ export default function AdminWithdrawalsPage() {
         e.stopPropagation(); // Prevent row click event
         updateWithdrawalStatus(id, newStatus);
         setWithdrawals(getWithdrawals()); // Refresh data from source
+        setSelectedWithdrawal(null); // Close the dialog
         toast({
             title: `Withdrawal ${newStatus}`,
             description: `The withdrawal request (ID: ${id}) has been updated.`,
         });
     };
     
-    const handleRowClick = (withdrawalId: string) => {
-        router.push(`/dashboard/withdrawals/${withdrawalId}`);
+    const handleRowClick = (withdrawal: Withdrawal) => {
+        setSelectedWithdrawal(withdrawal);
     };
 
     const itemsPerPage = 5;
@@ -68,7 +71,7 @@ export default function AdminWithdrawalsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Withdrawal Requests</CardTitle>
-          <CardDescription>A list of all withdrawal requests across the platform.</CardDescription>
+          <CardDescription>A list of all withdrawal requests across the platform. Click a row to see details.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -80,12 +83,11 @@ export default function AdminWithdrawalsPage() {
                 <TableHead>Destination</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedWithdrawals.map((w) => (
-                <TableRow key={w.id} onClick={() => handleRowClick(w.id)} className="cursor-pointer hover:bg-muted/50">
+                <TableRow key={w.id} onClick={() => handleRowClick(w)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{w.id}</TableCell>
                   <TableCell>
                     <div className="font-medium">{w.merchantName}</div>
@@ -96,18 +98,6 @@ export default function AdminWithdrawalsPage() {
                   <TableCell>${w.amount} {w.currency}</TableCell>
                    <TableCell>
                     <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {w.status === "Pending" && (
-                        <div className="flex gap-2 justify-end">
-                            <Button size="sm" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={(e) => handleAction(e, w.id, 'Completed')}>
-                                <Check className="h-4 w-4 mr-2" />Approve
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={(e) => handleAction(e, w.id, 'Failed')}>
-                                <X className="h-4 w-4 mr-2" />Reject
-                            </Button>
-                        </div>
-                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -140,6 +130,93 @@ export default function AdminWithdrawalsPage() {
             </div>
         </CardFooter>
       </Card>
+      
+      {selectedWithdrawal && (
+        <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
+            <DialogContent className="max-w-xl">
+                 <DialogHeader>
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <div className="flex items-center gap-4">
+                                <Landmark className="h-8 w-8 text-muted-foreground" />
+                                <div>
+                                    <DialogTitle className="text-2xl">Withdrawal Details</DialogTitle>
+                                    <p className="text-sm text-muted-foreground font-mono">{selectedWithdrawal.id}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <Badge variant={getStatusBadgeVariant(selectedWithdrawal.status)} className="text-base px-4 py-1">{selectedWithdrawal.status}</Badge>
+                    </div>
+                </DialogHeader>
+                <div className="py-4 space-y-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="flex items-center gap-4">
+                            <User className="w-6 h-6 text-primary" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">Merchant</p>
+                                <Link href={`/dashboard/users/${selectedWithdrawal.merchantId}`} className="font-semibold hover:underline">
+                                    {selectedWithdrawal.merchantName}
+                                </Link>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Calendar className="w-6 h-6 text-primary" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">Requested On</p>
+                                <p className="font-semibold">{selectedWithdrawal.date}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <DollarSign className="w-6 h-6 text-primary" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">Amount</p>
+                                <p className="font-semibold">{selectedWithdrawal.amount} {selectedWithdrawal.currency}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <Separator/>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="flex items-start gap-4">
+                            <Wallet className="w-6 h-6 text-primary mt-1" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">Destination Type</p>
+                                <p className="font-semibold">Crypto Wallet</p> 
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                            <Hash className="w-6 h-6 text-primary mt-1" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">Destination Address</p>
+                                <p className="font-semibold font-mono break-all">{selectedWithdrawal.destination}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {selectedWithdrawal.status === "Pending" && (
+                        <>
+                            <Separator />
+                            <div>
+                                <h3 className="text-lg font-semibold mb-2">Actions</h3>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    Please verify the transaction details before approving. This action cannot be undone.
+                                </p>
+                                <div className="flex gap-4">
+                                    <Button size="lg" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Completed")}>
+                                        <Check className="mr-2 h-5 w-5" />Approve
+                                    </Button>
+                                    <Button size="lg" variant="destructive" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Failed")}>
+                                        <X className="mr-2 h-5 w-5" />Reject
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }
+
