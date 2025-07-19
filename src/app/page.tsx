@@ -80,10 +80,18 @@ const faqItems = [
     {
         question: "How do global payments work?",
         answer: "Your customers pay using their local payment method (like a credit card in the US or SEPA in Europe). Our system automatically converts the payment into your preferred cryptocurrency (like USDT or BTC) and settles it to your wallet."
+    },
+    {
+        question: "What do you have for developers?",
+        answer: "We provide comprehensive SDKs for popular languages like PHP, Node.js, and Python, as well as frameworks like React and Flutter. We also offer a simple embedded Javascript widget for easy integration on any website."
     }
 ]
 
 export default function Home() {
+  const halfLength = Math.ceil(faqItems.length / 2);
+  const firstHalfFaqs = faqItems.slice(0, halfLength);
+  const secondHalfFaqs = faqItems.slice(halfLength);
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -206,18 +214,30 @@ export default function Home() {
         </section>
 
         <section id="faq" className="py-20 px-4 md:px-8 bg-card">
-            <div className="container mx-auto max-w-3xl">
+            <div className="container mx-auto max-w-5xl">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-                <Accordion type="single" collapsible className="w-full">
-                    {faqItems.map((item, index) => (
-                        <AccordionItem value={`item-${index}`} key={index}>
-                            <AccordionTrigger className="text-lg font-medium">{item.question}</AccordionTrigger>
-                            <AccordionContent className="text-base text-muted-foreground">
-                                {item.answer}
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <Accordion type="single" collapsible className="w-full">
+                        {firstHalfFaqs.map((item, index) => (
+                            <AccordionItem value={`item-1-${index}`} key={index}>
+                                <AccordionTrigger className="text-lg font-medium">{item.question}</AccordionTrigger>
+                                <AccordionContent className="text-base text-muted-foreground">
+                                    {item.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                    <Accordion type="single" collapsible className="w-full">
+                        {secondHalfFaqs.map((item, index) => (
+                            <AccordionItem value={`item-2-${index}`} key={index}>
+                                <AccordionTrigger className="text-lg font-medium">{item.question}</AccordionTrigger>
+                                <AccordionContent className="text-base text-muted-foreground">
+                                    {item.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </div>
             </div>
         </section>
       </main>
