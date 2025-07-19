@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Ticket } from "lucide-react";
+import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
@@ -49,6 +49,14 @@ export default function AdminWithdrawalsPage() {
     
     const handleRowClick = (withdrawal: Withdrawal) => {
         setSelectedWithdrawal(withdrawal);
+    };
+
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: `${label} Copied!`,
+            description: `${text} has been copied to your clipboard.`,
+        });
     };
 
     const itemsPerPage = 5;
@@ -141,7 +149,10 @@ export default function AdminWithdrawalsPage() {
                                 <Landmark className="h-8 w-8 text-muted-foreground" />
                                 <div>
                                     <DialogTitle className="text-2xl">Withdrawal Details</DialogTitle>
-                                    <p className="text-sm text-muted-foreground font-mono">{selectedWithdrawal.id}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm text-muted-foreground font-mono">{selectedWithdrawal.id}</p>
+                                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedWithdrawal.id, 'Request ID')} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -187,7 +198,10 @@ export default function AdminWithdrawalsPage() {
                             <Hash className="w-6 h-6 text-primary mt-1" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Destination Address</p>
-                                <p className="font-semibold font-mono break-all">{selectedWithdrawal.destination}</p>
+                                <div className="flex items-center gap-2">
+                                     <p className="font-semibold font-mono break-all">{selectedWithdrawal.destination}</p>
+                                     <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground flex-shrink-0" onClick={() => copyToClipboard(selectedWithdrawal.destination, 'Destination Address')} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -219,4 +233,3 @@ export default function AdminWithdrawalsPage() {
     </div>
   );
 }
-
