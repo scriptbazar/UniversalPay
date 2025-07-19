@@ -1,4 +1,6 @@
 
+'use server';
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -10,25 +12,26 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  // --- YEH BADLAV KIYA GAYA HAI ---
+  // Aam taur par database ID '(default)' hota hai.
+  // Ise yahan batane se app hamesha sahi database se connect hoga.
+  databaseId: '(default)',
+  // -----------------------------
 };
 
 let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-
 if (getApps().length === 0) {
-  if (firebaseConfig.projectId) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    console.error("Firebase configuration is missing or incomplete. Please check your environment variables.");
-    // Provide a dummy implementation or throw an error to prevent the app from running without Firebase.
-    app = {} as FirebaseApp;
-  }
+    if (firebaseConfig.projectId) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        // Yeh error dega agar configuration maujood nahi hai
+        throw new Error("Firebase configuration is missing or incomplete. Please check your environment variables.");
+    }
 } else {
-  app = getApp();
+    app = getApp();
 }
 
-auth = getAuth(app);
-db = getFirestore(app);
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
 
 export { app, auth, db };
