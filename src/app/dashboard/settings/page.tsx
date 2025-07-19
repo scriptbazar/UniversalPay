@@ -167,18 +167,40 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <h3 className="font-medium flex items-center gap-2"><KeyRound className="w-4 h-4" /> Third-Party API Keys</h3>
-                  <div className="space-y-2 pl-6 border-l">
-                    <Label htmlFor="gemini-api-key">Google Gemini API Key</Label>
-                    <Input 
-                      id="gemini-api-key" 
-                      type="password" 
-                      placeholder="Enter your Gemini API Key" 
-                      value={geminiApiKey}
-                      onChange={(e) => setGeminiApiKey(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Required for platform-wide AI features like fraud detection.
-                    </p>
+                  <div className="space-y-4 pl-6 border-l">
+                    <div className="space-y-2">
+                      <Label htmlFor="gemini-api-key">Google Gemini API Key</Label>
+                      <Input 
+                        id="gemini-api-key" 
+                        type="password" 
+                        placeholder="Enter your Gemini API Key" 
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiApiKey(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Required for platform-wide AI features like fraud detection.
+                      </p>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="recaptcha-site-key">Captcha Site Key</Label>
+                        <Input 
+                          id="recaptcha-site-key" 
+                          type="text" 
+                          placeholder="Enter your Captcha Site Key" 
+                          value={reCaptchaSiteKey}
+                          onChange={(e) => setReCaptchaSiteKey(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="recaptcha-secret-key">Captcha Secret Key</Label>
+                        <Input 
+                          id="recaptcha-secret-key" 
+                          type="password" 
+                          placeholder="Enter your Captcha Secret Key" 
+                          value={reCaptchaSecretKey}
+                          onChange={(e) => setReCaptchaSecretKey(e.target.value)}
+                        />
+                      </div>
                   </div>
                 </div>
                 <Separator/>
@@ -205,26 +227,6 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground">Secure your own admin account.</p>
                         </div>
                         <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="recaptcha-site-key">Captcha Site Key</Label>
-                        <Input 
-                          id="recaptcha-site-key" 
-                          type="text" 
-                          placeholder="Enter your Captcha Site Key" 
-                          value={reCaptchaSiteKey}
-                          onChange={(e) => setReCaptchaSiteKey(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="recaptcha-secret-key">Captcha Secret Key</Label>
-                        <Input 
-                          id="recaptcha-secret-key" 
-                          type="password" 
-                          placeholder="Enter your Captcha Secret Key" 
-                          value={reCaptchaSecretKey}
-                          onChange={(e) => setReCaptchaSecretKey(e.target.value)}
-                        />
                       </div>
                   </div>
                 </div>
