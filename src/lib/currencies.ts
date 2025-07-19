@@ -163,5 +163,9 @@ export const currencies = [
   { "code": "ZWL", "name": "Zimbabwean Dollar" },
   { "code": "BTC", "name": "Bitcoin (Crypto)" },
   { "code": "ETH", "name": "Ethereum (Crypto)" },
-  { "code": "USDT", "name": "Tether (Crypto)" }
+  { "code": "USDT", "name": "Tether (Crypto)" },
+  { "code": "BNB", "name": "Binance Coin (Crypto)" },
+  { "code": "XRP", "name": "Ripple (Crypto)" },
+  { "code": "LTC", "name": "Litecoin (Crypto)" },
+  { "code": "DOGE", "name": "Dogecoin (Crypto)" }
 ];

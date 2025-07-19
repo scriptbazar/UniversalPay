@@ -23,14 +23,7 @@ type Currency = {
 };
 
 const fiatCurrencies = currencies.filter(c => !c.name.includes('(Crypto)'));
-const cryptoCurrencies: Currency[] = [
-    { code: 'BTC', name: 'Bitcoin' },
-    { code: 'ETH', name: 'Ethereum' },
-    { code: 'USDT', name: 'Tether' },
-    { code: 'USD', name: 'United States Dollar (Fiat)' },
-    { code: 'INR', name: 'Indian Rupee (Fiat)' },
-];
-
+const cryptoCurrencies = currencies.filter(c => c.name.includes('(Crypto)') || c.code === 'USD' || c.code === 'INR');
 
 function CurrencyList({
   setOpen,
@@ -123,8 +116,8 @@ export default function CurrencyConverterPage() {
   const [toCurrency, setToCurrency] = useState<Currency>({ code: 'INR', name: 'Indian Rupee' });
   
   const [cryptoAmount, setCryptoAmount] = useState(1);
-  const [fromCrypto, setFromCrypto] = useState<Currency>({ code: 'BTC', name: 'Bitcoin' });
-  const [toCrypto, setToCrypto] = useState<Currency>({ code: 'USD', name: 'United States Dollar (Fiat)' });
+  const [fromCrypto, setFromCrypto] = useState<Currency>({ code: 'BTC', name: 'Bitcoin (Crypto)' });
+  const [toCrypto, setToCrypto] = useState<Currency>({ code: 'USD', name: 'United States Dollar' });
 
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
