@@ -201,35 +201,37 @@ export default function SettingsPage() {
               <CardDescription>Manage how you receive notifications.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <h4 className="font-medium">Email Notifications</h4>
-                  <p className="text-sm text-muted-foreground">Receive alerts for payments, withdrawals, and updates.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium">Email Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Receive alerts for payments, withdrawals, and updates.</p>
+                        </div>
+                        <Switch defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium">SMS Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Get critical alerts on your mobile phone.</p>
+                        </div>
+                        <Switch />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium">Telegram Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Connect your Telegram for real-time updates.</p>
+                        </div>
+                        <Switch />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium flex items-center gap-2"><WhatsAppIcon className="w-4 h-4" /> WhatsApp Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Get important updates directly on WhatsApp.</p>
+                        </div>
+                        <Switch />
+                    </div>
                 </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <h4 className="font-medium">SMS Notifications</h4>
-                  <p className="text-sm text-muted-foreground">Get critical alerts on your mobile phone.</p>
-                </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <h4 className="font-medium">Telegram Notifications</h4>
-                  <p className="text-sm text-muted-foreground">Connect your Telegram for real-time updates.</p>
-                </div>
-                <Switch />
-              </div>
-               <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <h4 className="font-medium flex items-center gap-2"><WhatsAppIcon className="w-4 h-4" /> WhatsApp Notifications</h4>
-                  <p className="text-sm text-muted-foreground">Get important updates directly on WhatsApp.</p>
-                </div>
-                <Switch />
-              </div>
-               <Button>Save Changes</Button>
+               <Button className="mt-4">Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
