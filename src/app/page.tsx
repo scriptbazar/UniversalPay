@@ -67,7 +67,7 @@ const faqItems = [
     },
     {
         question: "What currencies are supported?",
-        answer: "We support all major Indian UPI platforms like Paytm, PhonePe, and BharatPe, as well as major cryptocurrencies such as Bitcoin (BTC), Ethereum (ETH), Tether (USDT), and Binance Coin (BNB). We also support local payment methods from various countries."
+        answer: "We support all major Indian UPI platforms like Paytm, PhonePe, and BharatPe, as well as major cryptocurrencies such as Bitcoin (BTC), Ethereum (ETH), and Tether (USDT). We also support local payment methods from various countries, which are automatically converted for you."
     },
     {
         question: "Is it secure?",
@@ -75,7 +75,7 @@ const faqItems = [
     },
     {
         question: "Can I use my own branding?",
-        answer: "Yes! Our white-label feature allows you to use your own domain, logo, and branding to provide a seamless experience for your customers."
+        answer: "Yes! Our white-label feature on the Premium plan allows you to use your own domain, logo, and branding to provide a seamless checkout experience for your customers."
     },
     {
         question: "How do global payments work?",
@@ -84,6 +84,22 @@ const faqItems = [
     {
         question: "What do you have for developers?",
         answer: "We provide comprehensive SDKs for popular languages like PHP, Node.js, and Python, as well as frameworks like React and Flutter. We also offer a simple embedded Javascript widget for easy integration on any website."
+    },
+    {
+        question: "Can I set up recurring payments or subscriptions?",
+        answer: "Yes, our platform supports subscription models. You can create different billing plans and manage recurring payments directly from your merchant dashboard, automating your monthly revenue stream."
+    },
+    {
+        question: "How does the automatic currency conversion work?",
+        answer: "When a customer from another country pays, they see the price in their local currency. Our system handles the real-time conversion at competitive rates and settles the final amount in your chosen cryptocurrency, so you don't have to worry about exchange rate fluctuations."
+    },
+    {
+        question: "What is the white-label solution?",
+        answer: "The white-label solution, available on our Premium plan, allows you to completely rebrand the payment gateway as your own. You can use your custom domain, logo, and color scheme. It's perfect for agencies and resellers."
+    },
+    {
+        question: "How does the reseller program work?",
+        answer: "Our reseller program allows you to act as a payment provider for your own clients. You can onboard and manage multiple sub-merchants under your reseller account, track their sales, and earn a commission on their transaction volume."
     }
 ]
 
