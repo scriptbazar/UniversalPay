@@ -25,11 +25,12 @@ interface UserData {
 
 async function getUserRole(user: User): Promise<string> {
     try {
-        const idTokenResult = await user.getIdTokenResult(true); // Force refresh
+        await user.getIdToken(true); // Force refresh the token
+        const idTokenResult = await user.getIdTokenResult();
         return idTokenResult.claims.role || 'merchant';
     } catch (error) {
         console.error("Error getting user role from token:", error);
-        // Fallback to Firestore if token check fails (e.g., in very rare cases)
+        // Fallback to Firestore if token check fails
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && userDoc.data().role) {
             return userDoc.data().role;
@@ -44,7 +45,7 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function will assign a custom claim upon creation.
+        // The Cloud Function will assign a 'merchant' custom claim upon creation.
         // We still write to Firestore for user profile data.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
