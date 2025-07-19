@@ -44,11 +44,6 @@ const features = [
     description: "Customers pay in their native currency, and our system automatically converts it to your chosen crypto.",
   },
    {
-    icon: <Briefcase className="w-8 h-8 text-primary" />,
-    title: "Reseller Program",
-    description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn commissions.",
-  },
-  {
     icon: <AppWindow className="w-8 h-8 text-primary" />,
     title: "White-Label Solution",
     description: "Use your own domain and branding. Resellers can manage client merchants under their own brand.",
@@ -57,6 +52,11 @@ const features = [
     icon: <FileText className="w-8 h-8 text-primary" />,
     title: "Invoicing System",
     description: "Create and send professional online invoices with payment links directly from your dashboard.",
+  },
+   {
+    icon: <Briefcase className="w-8 h-8 text-primary" />,
+    title: "Reseller Program",
+    description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn commissions.",
   },
 ];
 
