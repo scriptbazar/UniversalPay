@@ -1,14 +1,8 @@
 
 'use client';
-import type {Metadata} from 'next';
+
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { useEffect, useState } from 'react';
-
-// export const metadata: Metadata = {
-//   title: 'UniversalPay',
-//   description: 'A secure, scalable, and globally functional third-party payment gateway platform.',
-// };
 
 export default function RootLayout({
   children,
@@ -17,7 +11,7 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning={true}>
       <head>
         <title>UniversalPay</title>
         <meta name="description" content="A secure, scalable, and globally functional third-party payment gateway platform." />
