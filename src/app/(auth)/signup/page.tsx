@@ -57,18 +57,14 @@ export default function SignupPage() {
   };
 
   const handleSocialSignup = (provider: 'google' | 'github') => {
+    // This is where you would initiate the OAuth flow.
+    // For a real implementation, you would redirect the user to a URL like:
+    // `https://accounts.google.com/o/oauth2/v2/auth?client_id=...&redirect_uri=...`
+    // Since we can't do that here, we'll just show a toast.
     toast({
-      title: "Account Details Fetched",
-      description: "Please complete your registration.",
+      title: `Signing up with ${provider}`,
+      description: "Please follow the provider's instructions.",
     });
-    // Simulate fetching user data from social provider
-    if(provider === 'google') {
-        setFullName('Google User');
-        setEmail('user@google.com');
-    } else {
-        setFullName('GitHub User');
-        setEmail('user@github.com');
-    }
   };
 
   return (
