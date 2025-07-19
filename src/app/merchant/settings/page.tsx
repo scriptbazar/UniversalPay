@@ -27,6 +27,7 @@ type PaymentMethodsState = {
   gbp_bacs: boolean;
   aud_becs: boolean;
   cad_eft: boolean;
+  paypal: boolean;
 };
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -125,6 +126,7 @@ export default function SettingsPage() {
     gbp_bacs: false,
     aud_becs: false,
     cad_eft: false,
+    paypal: true,
   });
 
   const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
@@ -442,6 +444,14 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
+                                <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
+                                    <PayPalIcon className="w-4 h-4" /> PayPal
+                                </Label>
+                            </div>
+                            <Switch id="paypal-switch" checked={paymentMethods.paypal} onCheckedChange={() => handlePaymentMethodToggle('paypal')} />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div>
                                 <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
                             </div>
                             <Switch id="usd-card-switch" checked={paymentMethods.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
@@ -509,3 +519,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
