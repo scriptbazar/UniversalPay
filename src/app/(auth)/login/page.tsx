@@ -48,12 +48,13 @@ export default function LoginPage() {
   const [user, setUser] = useState<any>(null); // To store user data after credential check
   const [isLoading, setIsLoading] = useState(false);
 
+  const isMerchantCaptchaEnabled = process.env.NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA === 'true';
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!recaptchaToken) {
+    if (isMerchantCaptchaEnabled && !recaptchaToken) {
       toast({
         variant: "destructive",
         title: "Verification Failed",
@@ -185,12 +186,14 @@ export default function LoginPage() {
                         disabled={isLoading}
                     />
                     </div>
-                    <div className="flex justify-center">
-                       <ReCAPTCHA
-                            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
-                            onChange={(token) => setRecaptchaToken(token)}
-                        />
-                    </div>
+                    {isMerchantCaptchaEnabled && (
+                        <div className="flex justify-center">
+                        <ReCAPTCHA
+                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
+                                onChange={(token) => setRecaptchaToken(token)}
+                            />
+                        </div>
+                    )}
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
                     <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>

@@ -38,9 +38,32 @@ async function updateEnvFile(updates: Record<string, string>) {
   
   try {
     const currentEnv = await readEnvFile();
+    
+    // Create a new object with all keys, then apply updates.
+    // This ensures that even if a key was previously undefined, it gets added.
     const newEnv = { ...currentEnv, ...updates };
 
+    // Handle keys that might be missing in the update but exist in currentEnv
+    const allKeys = [...Object.keys(currentEnv), ...Object.keys(updates)];
+    const uniqueKeys = [...new Set(allKeys)];
+
+    for (const key of uniqueKeys) {
+        if (updates.hasOwnProperty(key)) {
+            newEnv[key] = updates[key];
+        } else {
+            // This preserves existing keys that are not part of this specific update
+            // newEnv[key] = currentEnv[key]; 
+        }
+    }
+    
+    // Only save non-empty values, except for the boolean flags
     const newEnvContent = Object.entries(newEnv)
+      .filter(([key, value]) => {
+          if (key.startsWith('NEXT_PUBLIC_ENABLE_')) {
+              return true;
+          }
+          return value !== '' && value !== undefined && value !== null;
+      })
       .map(([key, value]) => `${key}=${value}`)
       .join('\n');
 
@@ -59,9 +82,9 @@ export async function getSecuritySettings() {
         geminiApiKey: env['GEMINI_API_KEY'] || '',
         reCaptchaSiteKey: env['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] || '',
         reCaptchaSecretKey: env['RECAPTCHA_SECRET_KEY'] || '',
-        isCaptchaEnabled: env['ENABLE_ADMIN_CAPTCHA'] !== 'false', // default to true
-        isMerchantCaptchaRequired: env['ENABLE_MERCHANT_CAPTCHA'] !== 'false', // default to true
-        isAdmin2faEnabled: env['ENABLE_ADMIN_2FA'] !== 'false', // default to true
+        isCaptchaEnabled: env['NEXT_PUBLIC_ENABLE_ADMIN_CAPTCHA'] !== 'false', // default to true
+        isMerchantCaptchaRequired: env['NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA'] !== 'false', // default to true
+        isAdmin2faEnabled: env['NEXT_PUBLIC_ENABLE_ADMIN_2FA'] !== 'false', // default to true
     };
 }
 
@@ -75,14 +98,14 @@ export async function updateSecuritySettings(data: {
     isAdmin2faEnabled: boolean;
 }) {
     const updates: Record<string, string> = {};
-    // Only add keys to the update object if they have a non-empty value
-    if (data.geminiApiKey) updates['GEMINI_API_KEY'] = data.geminiApiKey;
-    if (data.reCaptchaSiteKey) updates['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey;
-    if (data.reCaptchaSecretKey) updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey;
+
+    updates['GEMINI_API_KEY'] = data.geminiApiKey || '';
+    updates['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey || '';
+    updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey || '';
     
-    updates['ENABLE_ADMIN_CAPTCHA'] = String(data.isCaptchaEnabled);
-    updates['ENABLE_MERCHANT_CAPTCHA'] = String(data.isMerchantCaptchaRequired);
-    updates['ENABLE_ADMIN_2FA'] = String(data.isAdmin2faEnabled);
+    updates['NEXT_PUBLIC_ENABLE_ADMIN_CAPTCHA'] = String(data.isCaptchaEnabled);
+    updates['NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA'] = String(data.isMerchantCaptchaRequired);
+    updates['NEXT_PUBLIC_ENABLE_ADMIN_2FA'] = String(data.isAdmin2faEnabled);
 
     return await updateEnvFile(updates);
 }
