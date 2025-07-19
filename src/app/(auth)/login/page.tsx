@@ -7,14 +7,30 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    router.push('/dashboard');
+    if (email === 'admin@transactwave.com' && password === 'admin123') {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back, Admin!",
+      });
+      router.push('/dashboard');
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+      });
+    }
   };
 
   return (
@@ -31,7 +47,14 @@ export default function LoginPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="merchant@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="admin@transactwave.com" 
+                required 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -40,7 +63,14 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                placeholder="admin123"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
