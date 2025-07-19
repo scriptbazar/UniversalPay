@@ -19,19 +19,38 @@ interface UserData {
     [key: string]: any; // Allow other properties
 }
 
+async function getUserRole(user: any): Promise<string> {
+    try {
+        await user.getIdToken(true); // Force refresh the token
+        const decodedToken = await user.getIdTokenResult();
+        return decodedToken.claims.role || 'merchant';
+    } catch (error) {
+        console.error("Error getting user role from token:", error);
+        // Fallback to Firestore if token check fails
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists() && userDoc.data().role) {
+            return userDoc.data().role;
+        }
+        return 'merchant'; // Default role
+    }
+}
+
+
 // Function to create a new user
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Add user data to Firestore
+        // The Cloud Function will assign a custom claim.
+        // We still write to Firestore for user profile data.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: 'merchant', // Default role for new signups
+            // Role is now set by custom claim, but we can store it here too for reference
+            role: 'merchant', 
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
@@ -50,16 +69,12 @@ export async function signInUser(email: string, password: string) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Fetch user role from Firestore
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        const role = await getUserRole(user);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
 
-        if (userDoc.exists()) {
-            return { success: true, user: { uid: user.uid, ...userDoc.data() } };
-        } else {
-             // This case should ideally not happen if signup is done correctly
-            return { success: false, error: "User data not found." };
-        }
+        return { success: true, user: { uid: user.uid, role, ...userData } };
+        
     } catch (error: any) {
         console.error("Error signing in:", error);
         return { success: false, error: error.message };
@@ -93,21 +108,23 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-            // New user, create a document in Firestore
+            // New user, create a document in Firestore. 
+            // The Cloud Function will handle setting the custom claim.
             await setDoc(userDocRef, {
                 uid: user.uid,
                 email: user.email,
                 fullName: user.displayName || 'Social User',
                 avatar: user.photoURL,
-                role: 'merchant',
+                role: 'merchant', // Default role
                 status: 'Active',
                 plan: 'Free',
                 createdAt: serverTimestamp(),
             });
         }
         
+        const role = await getUserRole(user);
         const finalUserDoc = await getDoc(userDocRef);
-        return { success: true, user: { uid: user.uid, ...finalUserDoc.data() } };
+        return { success: true, user: { uid: user.uid, role, ...finalUserDoc.data() } };
 
     } catch (error: any) {
         console.error(`Error with ${providerName} sign-in:`, error);

@@ -7,28 +7,32 @@
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
-
-import { onCall } from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
-import { auth } from "firebase-functions/v1";
+import { auth, config } from "firebase-functions";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
-// On sign up, add a 'merchant' custom claim to the user
-exports.addMerchantClaim = auth.user().onCreate(async (user) => {
+// This Cloud Function triggers whenever a new user is created.
+// It checks if the new user's email matches the admin email set in the config.
+// If it matches, it assigns the 'admin' custom claim.
+// Otherwise, it assigns the 'merchant' custom claim by default.
+exports.addRoleClaim = auth.user().onCreate(async (user) => {
   if (user.email) {
+    // Get the admin email from Functions config
+    const adminEmail = config().user?.admin_email;
+
+    let role = "merchant"; // Default role
+    if (adminEmail && user.email === adminEmail) {
+      role = "admin";
+    }
+
     try {
       await admin.auth().setCustomUserClaims(user.uid, {
-        role: "merchant",
+        role: role,
       });
-      logger.info(`Custom claim 'merchant' set for user: ${user.uid}`);
-      return;
+      console.log(`Custom claim '${role}' set for user: ${user.uid}`);
     } catch (error) {
-      logger.error(
-        `Error setting custom claim for user: ${user.uid}`,
-        error
-      );
+      console.error(`Error setting custom claim for user: ${user.uid}`, error);
     }
   }
 });
