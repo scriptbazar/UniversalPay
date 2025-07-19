@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRightLeft, Bot } from 'lucide-react';
+import { ArrowRightLeft, Bot, Repeat } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencies } from '@/lib/currencies';
 import { getCurrencyInfo } from '@/ai/flows/currencyInfoFlow';
@@ -22,12 +22,24 @@ type Currency = {
   name: string;
 };
 
+const fiatCurrencies = currencies.filter(c => !c.name.includes('(Crypto)'));
+const cryptoCurrencies: Currency[] = [
+    { code: 'BTC', name: 'Bitcoin' },
+    { code: 'ETH', name: 'Ethereum' },
+    { code: 'USDT', name: 'Tether' },
+    { code: 'USD', name: 'United States Dollar (Fiat)' },
+    { code: 'INR', name: 'Indian Rupee (Fiat)' },
+];
+
+
 function CurrencyList({
   setOpen,
   onSelect,
+  currencyList
 }: {
   setOpen: (open: boolean) => void;
   onSelect: (currency: Currency) => void;
+  currencyList: Currency[];
 }) {
   return (
     <Command>
@@ -35,7 +47,7 @@ function CurrencyList({
       <CommandList>
         <CommandEmpty>No currency found.</CommandEmpty>
         <CommandGroup>
-          {currencies.map((currency) => (
+          {currencyList.map((currency) => (
             <CommandItem
               key={currency.code}
               value={`${currency.code} ${currency.name}`}
@@ -57,9 +69,11 @@ function CurrencyList({
 const CurrencySelector = ({
   selected,
   onSelect,
+  currencyList
 }: {
   selected: Currency;
   onSelect: (currency: Currency) => void;
+  currencyList: Currency[];
 }) => {
   const [open, setOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -72,14 +86,14 @@ const CurrencySelector = ({
             {selected.code} - {selected.name}
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Select Currency</DialogTitle>
             <DialogDescription>
               Choose a currency from the list below.
             </DialogDescription>
           </DialogHeader>
-          <CurrencyList setOpen={setOpen} onSelect={onSelect} />
+          <CurrencyList setOpen={setOpen} onSelect={onSelect} currencyList={currencyList} />
         </DialogContent>
       </Dialog>
     );
@@ -94,7 +108,7 @@ const CurrencySelector = ({
       </DrawerTrigger>
       <DrawerContent>
         <div className="mt-4 border-t">
-          <CurrencyList setOpen={setOpen} onSelect={onSelect} />
+          <CurrencyList setOpen={setOpen} onSelect={onSelect} currencyList={currencyList} />
         </div>
       </DrawerContent>
     </Drawer>
@@ -107,6 +121,11 @@ export default function CurrencyConverterPage() {
   const [amount, setAmount] = useState(100);
   const [fromCurrency, setFromCurrency] = useState<Currency>({ code: 'USD', name: 'United States Dollar' });
   const [toCurrency, setToCurrency] = useState<Currency>({ code: 'INR', name: 'Indian Rupee' });
+  
+  const [cryptoAmount, setCryptoAmount] = useState(1);
+  const [fromCrypto, setFromCrypto] = useState<Currency>({ code: 'BTC', name: 'Bitcoin' });
+  const [toCrypto, setToCrypto] = useState<Currency>({ code: 'USD', name: 'United States Dollar (Fiat)' });
+
   const [aiQuery, setAiQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -117,24 +136,40 @@ export default function CurrencyConverterPage() {
   }, []);
 
   const exchangeRate = 83.5; // Dummy exchange rate for demonstration
+  const cryptoExchangeRate = 65000; // Dummy BTC to USD
 
   const convertedAmount = useMemo(() => {
     if (!amount) return 0;
-    // In a real app, you would fetch this from an API
     if (fromCurrency.code === 'USD' && toCurrency.code === 'INR') {
       return (amount * exchangeRate).toFixed(2);
     }
     if (fromCurrency.code === 'INR' && toCurrency.code === 'USD') {
       return (amount / exchangeRate).toFixed(2);
     }
-    // Dummy conversion for other pairs
-    return (amount * (Math.random() * 2 + 0.5)).toFixed(2);
+    return (amount * (Math.random() * 200 + 0.5)).toFixed(2);
   }, [amount, fromCurrency, toCurrency, exchangeRate]);
+
+  const convertedCryptoAmount = useMemo(() => {
+      if (!cryptoAmount) return 0;
+      if (fromCrypto.code === 'BTC' && toCrypto.code === 'USD') {
+        return (cryptoAmount * cryptoExchangeRate).toFixed(2);
+      }
+      if (fromCrypto.code === 'USD' && toCrypto.code === 'BTC') {
+        return (cryptoAmount / cryptoExchangeRate).toFixed(8);
+      }
+      return (cryptoAmount * (Math.random() * 50000 + 1000)).toFixed(2);
+  }, [cryptoAmount, fromCrypto, toCrypto, cryptoExchangeRate]);
   
   const handleSwap = () => {
       const temp = fromCurrency;
       setFromCurrency(toCurrency);
       setToCurrency(temp);
+  }
+
+  const handleCryptoSwap = () => {
+      const temp = fromCrypto;
+      setFromCrypto(toCrypto);
+      setToCrypto(temp);
   }
   
   const handleAiQuery = async (e: React.FormEvent) => {
@@ -161,16 +196,16 @@ export default function CurrencyConverterPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Live Currency Converter</h1>
-        <p className="text-muted-foreground">Check real-time rates and convert currencies.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Currency Tools</h1>
+        <p className="text-muted-foreground">Convert currencies, check crypto rates, and ask our AI assistant.</p>
       </div>
       <Separator />
 
       <div className="grid lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>Converter</CardTitle>
-            <CardDescription>Select currencies and enter an amount to convert.</CardDescription>
+            <CardTitle>Fiat Currency Converter</CardTitle>
+            <CardDescription>Convert between global government-issued currencies.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-5 gap-4 items-end">
@@ -183,13 +218,13 @@ export default function CurrencyConverterPage() {
                   onChange={(e) => setAmount(Number(e.target.value))}
                 />
               </div>
-              <div className="sm:col-span-2 space-y-2">
+              <div className="sm:col-span-3 space-y-2">
                 <Label>From</Label>
-                <CurrencySelector selected={fromCurrency} onSelect={setFromCurrency} />
+                <CurrencySelector selected={fromCurrency} onSelect={setFromCurrency} currencyList={fiatCurrencies} />
               </div>
             </div>
 
-            <div className="flex justify-center my-4">
+            <div className="flex justify-center my-2">
                 <Button variant="ghost" size="icon" onClick={handleSwap}>
                     <ArrowRightLeft className="w-5 h-5 text-muted-foreground"/>
                 </Button>
@@ -200,14 +235,14 @@ export default function CurrencyConverterPage() {
                     <Label>Converted Amount</Label>
                     <Input value={convertedAmount} readOnly className="font-bold text-lg bg-muted" />
                 </div>
-                <div className="sm:col-span-2 space-y-2">
+                <div className="sm:col-span-3 space-y-2">
                     <Label>To</Label>
-                    <CurrencySelector selected={toCurrency} onSelect={setToCurrency} />
+                    <CurrencySelector selected={toCurrency} onSelect={setToCurrency} currencyList={fiatCurrencies} />
                 </div>
             </div>
 
             <div className="text-sm text-muted-foreground pt-4">
-                1 {fromCurrency.code} = {exchangeRate} {toCurrency.code}
+                1 {fromCurrency.code} = {(convertedAmount / (amount || 1)).toFixed(4)} {toCurrency.code}
                 {lastUpdated && <p className="text-xs">Last updated: {lastUpdated}. Rates are for demonstration purposes.</p>}
             </div>
 
@@ -215,6 +250,53 @@ export default function CurrencyConverterPage() {
         </Card>
 
         <Card>
+          <CardHeader>
+            <CardTitle>Crypto Converter</CardTitle>
+            <CardDescription>Convert between cryptocurrencies and major fiat.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-5 gap-4 items-end">
+              <div className="sm:col-span-2 space-y-2">
+                <Label htmlFor="crypto-amount">Amount</Label>
+                <Input
+                  id="crypto-amount"
+                  type="number"
+                  value={cryptoAmount}
+                  onChange={(e) => setCryptoAmount(Number(e.target.value))}
+                />
+              </div>
+              <div className="sm:col-span-3 space-y-2">
+                <Label>From</Label>
+                <CurrencySelector selected={fromCrypto} onSelect={setFromCrypto} currencyList={cryptoCurrencies} />
+              </div>
+            </div>
+
+            <div className="flex justify-center my-2">
+                <Button variant="ghost" size="icon" onClick={handleCryptoSwap}>
+                    <Repeat className="w-5 h-5 text-muted-foreground"/>
+                </Button>
+            </div>
+
+             <div className="grid sm:grid-cols-5 gap-4 items-end">
+                <div className="sm:col-span-2 space-y-2">
+                    <Label>Converted Amount</Label>
+                    <Input value={convertedCryptoAmount} readOnly className="font-bold text-lg bg-muted" />
+                </div>
+                <div className="sm:col-span-3 space-y-2">
+                    <Label>To</Label>
+                    <CurrencySelector selected={toCrypto} onSelect={setToCrypto} currencyList={cryptoCurrencies} />
+                </div>
+            </div>
+
+            <div className="text-sm text-muted-foreground pt-4">
+                1 {fromCrypto.code} = {(convertedCryptoAmount / (cryptoAmount || 1)).toFixed(4)} {toCrypto.code}
+                 {lastUpdated && <p className="text-xs">Last updated: {lastUpdated}. Rates are for demonstration purposes.</p>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+       <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot /> AI Currency Assistant
@@ -226,7 +308,7 @@ export default function CurrencyConverterPage() {
           <CardContent>
             <form onSubmit={handleAiQuery} className="flex gap-2 mb-4">
               <Input
-                placeholder="e.g., 'Gold Pressed Latinum', 'DogeCoin'"
+                placeholder="e.g., 'Gold Pressed Latinum', 'DogeCoin', '100 JPY to INR'"
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
               />
@@ -248,7 +330,6 @@ export default function CurrencyConverterPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
