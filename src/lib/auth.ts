@@ -130,7 +130,7 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
 
         return { success: true, user: { uid: user.uid, role, ...finalUserDoc.data() } };
 
-    } catch (error: any)
+    } catch (error: any) {
         console.error(`Error with ${providerName} sign-in:`, error);
         if (error.code === 'auth/account-exists-with-different-credential') {
             return { success: false, error: 'An account already exists with the same email address but different sign-in credentials.' };
