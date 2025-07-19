@@ -328,7 +328,7 @@ export default function SettingsPage() {
         <TabsContent value="payment-methods" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Payment & Settlement Configuration</CardTitle>
+              <CardTitle>Payment &amp; Settlement Configuration</CardTitle>
               <CardDescription>
                 Configure how you accept payments and where you receive your funds.
               </CardDescription>
@@ -416,7 +416,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
-                                <p className="text-xs text-muted-foreground">For customers in the USA & North America.</p>
+                                <p className="text-xs text-muted-foreground">For customers in the USA &amp; North America.</p>
                             </div>
                             <Switch id="usd-card-switch" checked={paymentMethods.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
                         </div>
@@ -480,3 +480,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
