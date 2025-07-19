@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Wallet } from "lucide-react";
+import { DollarSign, Wallet, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getWalletLoadRequests, addWalletLoadRequest, type WalletLoadRequest } from "@/lib/walletLoadData";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
   switch (status) {
@@ -31,6 +32,7 @@ export default function MerchantWalletPage() {
   const [requests, setRequests] = useState<WalletLoadRequest[]>([]);
   const [amount, setAmount] = useState("");
   const [transactionId, setTransactionId] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
   const currentBalance = 5430.50; // Placeholder value
 
   const fetchMerchantRequests = () => {
@@ -69,6 +71,13 @@ export default function MerchantWalletPage() {
     toast({
         title: "Request Submitted",
         description: `Your request to load $${numericAmount.toFixed(2)} is being reviewed.`,
+    });
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
     });
   };
 
@@ -134,7 +143,7 @@ export default function MerchantWalletPage() {
           <Card>
             <CardHeader>
               <CardTitle>Wallet Load History</CardTitle>
-              <CardDescription>A record of all your wallet load requests.</CardDescription>
+              <CardDescription>A record of all your wallet load requests. Click row for details.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -148,7 +157,7 @@ export default function MerchantWalletPage() {
                 </TableHeader>
                 <TableBody>
                   {requests.map((req) => (
-                    <TableRow key={req.id}>
+                    <TableRow key={req.id} onClick={() => setSelectedRequest(req)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium">{req.id}</TableCell>
                       <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>${req.amount}</TableCell>
@@ -163,6 +172,49 @@ export default function MerchantWalletPage() {
           </Card>
         </div>
       </div>
+      
+      <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Request Details</DialogTitle>
+                {selectedRequest && <DialogDescription>Details for wallet load request {selectedRequest.id}.</DialogDescription>}
+            </DialogHeader>
+            {selectedRequest && (
+                <div className="space-y-4 py-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Request ID:</span>
+                        <span className="font-mono font-semibold">{selectedRequest.id}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Date:</span>
+                        <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-semibold">${selectedRequest.amount}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Reference ID:</span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono font-semibold">{selectedRequest.transactionId}</span>
+                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedRequest.transactionId, 'Reference ID')} />
+                        </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge variant={getStatusBadgeVariant(selectedRequest.status)}>{selectedRequest.status}</Badge>
+                    </div>
+                </div>
+            )}
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

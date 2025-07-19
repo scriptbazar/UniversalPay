@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type Withdrawal, getWithdrawals, addWithdrawal } from "@/lib/withdrawalsData";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -32,6 +33,7 @@ export default function WithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
   const processingFee = 0.50;
 
   const fetchMerchantWithdrawals = () => {
@@ -72,6 +74,13 @@ export default function WithdrawalsPage() {
     toast({
         title: "Withdrawal Initiated",
         description: `Your withdrawal of ${newWithdrawal.amount} ${newWithdrawal.currency} is being processed.`,
+    });
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
     });
   };
 
@@ -149,7 +158,7 @@ export default function WithdrawalsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Withdrawal History</CardTitle>
-              <CardDescription>A record of all your past withdrawals.</CardDescription>
+              <CardDescription>A record of all your past withdrawals. Click row for details.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -164,7 +173,7 @@ export default function WithdrawalsPage() {
                 </TableHeader>
                 <TableBody>
                   {withdrawals.map((w) => (
-                    <TableRow key={w.id}>
+                    <TableRow key={w.id} onClick={() => setSelectedWithdrawal(w)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium">{w.id}</TableCell>
                       <TableCell>{w.date}</TableCell>
                       <TableCell>{w.destination}</TableCell>
@@ -180,6 +189,52 @@ export default function WithdrawalsPage() {
           </Card>
         </div>
       </div>
+      
+       <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Withdrawal Details</DialogTitle>
+            {selectedWithdrawal && <DialogDescription>Details for withdrawal request {selectedWithdrawal.id}.</DialogDescription>}
+          </DialogHeader>
+          {selectedWithdrawal && (
+            <div className="space-y-4 py-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Request ID:</span>
+                 <div className="flex items-center gap-2">
+                    <span className="font-mono font-semibold">{selectedWithdrawal.id}</span>
+                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedWithdrawal.id, 'Request ID')} />
+                </div>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Date:</span>
+                <span className="font-semibold">{new Date(selectedWithdrawal.date).toLocaleString()}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Amount:</span>
+                <span className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</span>
+              </div>
+              <Separator />
+              <div className="flex flex-col space-y-2">
+                <span className="text-muted-foreground">Destination:</span>
+                <div className="flex items-center gap-2">
+                    <span className="font-mono font-semibold break-all">{selectedWithdrawal.destination}</span>
+                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground flex-shrink-0" onClick={() => copyToClipboard(selectedWithdrawal.destination, 'Destination Address')} />
+                </div>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Status:</span>
+                <Badge variant={getStatusBadgeVariant(selectedWithdrawal.status)}>{selectedWithdrawal.status}</Badge>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedWithdrawal(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
