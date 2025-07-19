@@ -48,7 +48,7 @@ const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
         id: `UVRLP${123456789 + i}`,
         merchant: `Merchant ${i % 4 + 1}`,
         customerEmail: `customer${i + 1}@example.com`,
-        amount: (Math.random() * 500 + 10).toFixed(2),
+        amount: ((i + 1) * 12.34).toFixed(2), // Replaced Math.random()
         status: statuses[i % 3],
         method: methods[i % 4],
         date: date.toISOString().split('T')[0],
@@ -134,7 +134,7 @@ export default function AllTransactionsPage() {
             </div>
             <Tabs value={filter} onValueChange={handleFilterChange}>
                 <div className="flex flex-wrap items-center gap-4">
-                    <TabsList>
+                    <TabsList className="gap-2">
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="success">Success</TabsTrigger>
                         <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -150,7 +150,7 @@ export default function AllTransactionsPage() {
                            <Input
                              type="search"
                              placeholder="Search..."
-                             className="pl-8 w-40"
+                             className="pl-8 w-52"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
