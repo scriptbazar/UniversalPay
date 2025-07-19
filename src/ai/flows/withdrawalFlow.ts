@@ -1,0 +1,50 @@
+'use server';
+/**
+ * @fileOverview A flow to handle withdrawal requests.
+ * 
+ * - requestWithdrawal - A function that simulates a withdrawal request.
+ * - RequestWithdrawalInput - The input type for the requestWithdrawal function.
+ * - RequestWithdrawalOutput - The return type for the requestWithdrawal function.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+
+export const RequestWithdrawalInputSchema = z.object({
+  amount: z.number().describe('The amount to be withdrawn.'),
+  currency: z.string().describe('The currency for the withdrawal (e.g., USDT, INR).'),
+  destinationAddress: z.string().describe('The destination bank account or crypto wallet address.'),
+});
+export type RequestWithdrawalInput = z.infer<typeof RequestWithdrawalInputSchema>;
+
+export const RequestWithdrawalOutputSchema = z.object({
+  withdrawalId: z.string().describe('The unique ID for the withdrawal request.'),
+  status: z.string().describe('The status of the withdrawal (e.g., Pending, Completed, Failed).'),
+  message: z.string().describe('A message detailing the outcome of the request.'),
+});
+export type RequestWithdrawalOutput = z.infer<typeof RequestWithdrawalOutputSchema>;
+
+const requestWithdrawalFlow = ai.defineFlow(
+  {
+    name: 'requestWithdrawalFlow',
+    inputSchema: RequestWithdrawalInputSchema,
+    outputSchema: RequestWithdrawalOutputSchema,
+  },
+  async (input) => {
+    // In a real application, you would add logic here to interact with a payout provider API.
+    // For this example, we'll just simulate a pending withdrawal.
+    console.log('Processing withdrawal for:', input);
+
+    const withdrawalId = `wd_${Date.now()}`;
+
+    return {
+      withdrawalId,
+      status: 'Pending',
+      message: `Withdrawal request for ${input.amount} ${input.currency} has been initiated and is now pending.`,
+    };
+  }
+);
+
+export async function requestWithdrawal(input: RequestWithdrawalInput): Promise<RequestWithdrawalOutput> {
+  return requestWithdrawalFlow(input);
+}
