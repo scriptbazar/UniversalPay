@@ -191,25 +191,33 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
               <div>
                 <h3 className="text-lg font-medium mb-2">Profile Information</h3>
                 <div className="space-y-4 p-4 border rounded-md">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input 
-                          id="name" 
-                          value={merchantName} 
-                          onChange={(e) => setMerchantName(e.target.value)}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Full Name</Label>
+                            <Input 
+                              id="name" 
+                              value={merchantName} 
+                              onChange={(e) => setMerchantName(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" defaultValue="merchant@example.com" />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" defaultValue="merchant@example.com" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="business-name-profile">Business Name</Label>
-                        <Input 
-                            id="business-name-profile" 
-                            value={businessName} 
-                            onChange={(e) => setBusinessName(e.target.value)} 
-                        />
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="business-name-profile">Business Name</Label>
+                            <Input 
+                                id="business-name-profile" 
+                                value={businessName} 
+                                onChange={(e) => setBusinessName(e.target.value)} 
+                            />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="mobile">Mobile Number</Label>
+                            <Input id="mobile" type="tel" defaultValue="+91 98765 43210" />
+                        </div>
                     </div>
                 </div>
               </div>

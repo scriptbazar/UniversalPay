@@ -62,7 +62,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-lg shadow-xl">
+      <Card className="w-full max-w-2xl shadow-xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <Logo />
@@ -78,16 +78,35 @@ export default function SignupPage() {
                     <Input id="name" type="text" placeholder="John Doe" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mobile">Mobile Number</Label>
-                  <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input id="email" type="email" placeholder="merchant@example.com" required />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="merchant@example.com" required />
+                    <Label htmlFor="businessName">Business Name</Label>
+                    <Input id="businessName" type="text" placeholder="My Awesome Store" required />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="mobile">Mobile Number</Label>
+                  <Input id="mobile" type="tel" placeholder="+91 98765 43210" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input id="password" type="password" required />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select>
+                        <SelectTrigger id="country">
+                            <SelectValue placeholder="Select your country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {countries.map(country => (
+                                <SelectItem key={country.code} value={country.code}>
+                                    {country.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
              <div className="flex justify-center pt-4">

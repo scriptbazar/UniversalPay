@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,8 @@ const initialMerchant = {
     id: "user_1",
     name: "John Doe",
     email: "john@example.com",
+    mobile: "+91 98765 43210",
+    businessName: "MyStore.com",
     plan: "Pro",
     status: "Active" as "Active" | "Suspended",
     avatar: "https://placehold.co/80x80.png?text=JD",
@@ -278,7 +280,11 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         </DropdownMenu>
                     </div>
                 </div>
-                <p className="text-muted-foreground">{merchant.email}</p>
+                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+                    <span className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {merchant.email}</span>
+                    <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile}</span>
+                    <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>
+                </div>
                  <div className="flex items-center gap-4 mt-2">
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>{merchant.status}</Badge>
                     <Badge variant="secondary">Plan: {merchant.plan}</Badge>
