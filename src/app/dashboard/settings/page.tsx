@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { updateGeminiApiKey } from './actions';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Image from "next/image";
 
 type PaymentMethodsState = {
   paytm: boolean;
@@ -27,10 +28,77 @@ type PaymentMethodsState = {
   aud_becs: boolean;
 };
 
+const CheckoutPreview = ({ brandColor, logo, businessName }: { brandColor: string, logo: string | null, businessName: string }) => {
+    return (
+        <div className="sticky top-24">
+            <h3 className="text-lg font-semibold mb-4 text-center">Checkout Preview</h3>
+            <Card className="w-full max-w-sm mx-auto shadow-lg">
+                <CardContent className="p-6">
+                    <div className="flex flex-col items-center space-y-4">
+                        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
+                            {logo ? (
+                                <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" />
+                            ) : (
+                                <Globe className="w-10 h-10 text-muted-foreground" />
+                            )}
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground">Paying</p>
+                            <h4 className="font-semibold text-lg">{businessName || 'Your Business Name'}</h4>
+                        </div>
+
+                        <Separator />
+
+                        <div className="w-full space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span>Item Price</span>
+                                <span>₹999.00</span>
+                            </div>
+                             <div className="flex justify-between text-muted-foreground">
+                                <span>Convenience Fee</span>
+                                <span>₹10.00</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-base pt-2">
+                                <span>Total</span>
+                                <span>₹1,009.00</span>
+                            </div>
+                        </div>
+
+                        <div className="w-full">
+                            <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
+                            <div className="space-y-2">
+                                <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
+                                <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
+                            </div>
+                        </div>
+
+                        <Button 
+                            className="w-full text-lg h-12" 
+                            style={{ backgroundColor: brandColor, color: 'hsl(var(--primary-foreground))' }}
+                        >
+                            Pay ₹1,009.00
+                        </Button>
+
+                         <p className="text-xs text-muted-foreground text-center pt-2">
+                            By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
+
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  
+  // Branding states
+  const [businessName, setBusinessName] = useState('My Awesome Store');
   const [brandColor, setBrandColor] = useState('#29ABE2');
+  const [logo, setLogo] = useState<string | null>(null);
+
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
     paytm: true,
@@ -65,6 +133,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -97,8 +177,12 @@ export default function SettingsPage() {
                 <Input id="email" type="email" defaultValue="merchant@example.com" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="business-name">Business Name</Label>
-                <Input id="business-name" defaultValue="My Awesome Store" />
+                <Label htmlFor="business-name-profile">Business Name</Label>
+                <Input 
+                    id="business-name-profile" 
+                    value={businessName} 
+                    onChange={(e) => setBusinessName(e.target.value)} 
+                />
               </div>
                <Button>Save Changes</Button>
             </CardContent>
@@ -137,74 +221,94 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
         <TabsContent value="branding" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Branding &amp; Checkout Customization</CardTitle>
-              <CardDescription>Control what your customers see during checkout.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-                <div className="space-y-4 p-4 border rounded-lg">
-                    <h3 className="font-semibold flex items-center gap-2"><Palette className="w-5 h-5"/> Visuals</h3>
-                    <div className="space-y-2">
-                        <Label>Logo</Label>
-                        <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center">
-                                <Upload className="w-8 h-8 text-muted-foreground" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                     <Card>
+                        <CardHeader>
+                        <CardTitle>Branding &amp; Checkout Customization</CardTitle>
+                        <CardDescription>Control what your customers see during checkout.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-8">
+                            <div className="space-y-4 p-4 border rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2"><Palette className="w-5 h-5"/> Visuals</h3>
+                                <div className="space-y-2">
+                                    <Label>Logo</Label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
+                                           {logo ? (
+                                                <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover"/>
+                                            ) : (
+                                                <Upload className="w-8 h-8 text-muted-foreground" />
+                                            )}
+                                        </div>
+                                        <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+                                        <Button variant="outline" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Your logo will appear on the checkout page. Recommended: 256x256px.</p>
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="brand-color">Brand Color</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input 
+                                            id="brand-color-hex" 
+                                            value={brandColor}
+                                            onChange={(e) => setBrandColor(e.target.value)}
+                                            className="w-32"
+                                        />
+                                        <div className="relative">
+                                            <input 
+                                                id="brand-color" 
+                                                type="color" 
+                                                value={brandColor}
+                                                onChange={(e) => setBrandColor(e.target.value)}
+                                                className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">This color will be used for buttons and highlights on the checkout page.</p>
+                                </div>
                             </div>
-                            <Button variant="outline">Upload Logo</Button>
-                        </div>
-                         <p className="text-xs text-muted-foreground">Your logo will appear on the checkout page. Recommended: 256x256px.</p>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="brand-color">Brand Color</Label>
-                        <div className="flex items-center gap-2">
-                            <Input 
-                                id="brand-color-hex" 
-                                value={brandColor}
-                                onChange={(e) => setBrandColor(e.target.value)}
-                                className="w-32"
-                            />
-                            <div className="relative">
-                                <input 
-                                    id="brand-color" 
-                                    type="color" 
-                                    value={brandColor}
-                                    onChange={(e) => setBrandColor(e.target.value)}
-                                    className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
-                                />
+
+                             <div className="space-y-4 p-4 border rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5"/> Legal &amp; Links</h3>
+                                <div className="space-y-2">
+                                    <Label htmlFor="business-name-checkout">Business Name on Checkout</Label>
+                                    <Input 
+                                        id="business-name-checkout" 
+                                        value={businessName} 
+                                        onChange={(e) => setBusinessName(e.target.value)}
+                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="terms-url">Terms of Service URL</Label>
+                                    <Input id="terms-url" placeholder="https://your-website.com/terms" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="privacy-url">Privacy Policy URL</Label>
+                                    <Input id="privacy-url" placeholder="https://your-website.com/privacy" />
+                                </div>
                             </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">This color will be used for buttons and highlights on the checkout page.</p>
-                    </div>
-                </div>
 
-                <div className="space-y-4 p-4 border rounded-lg">
-                    <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5"/> Legal &amp; Links</h3>
-                     <div className="space-y-2">
-                        <Label htmlFor="terms-url">Terms of Service URL</Label>
-                        <Input id="terms-url" placeholder="https://your-website.com/terms" />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="privacy-url">Privacy Policy URL</Label>
-                        <Input id="privacy-url" placeholder="https://your-website.com/privacy" />
-                    </div>
+                            <div className="flex items-start justify-between rounded-lg border p-4">
+                                <div className="space-y-1">
+                                <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
+                                    <ShieldQuestion className="w-5 h-5" />
+                                    Hide My Identity &amp; Show 'TransactWave' Branding
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                    Turn ON to always show "TransactWave" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
+                                </p>
+                                </div>
+                                <Switch id="branding-switch" defaultChecked />
+                            </div>
+                            <Button>Save Branding Changes</Button>
+                        </CardContent>
+                    </Card>
                 </div>
-
-                <div className="flex items-start justify-between rounded-lg border p-4">
-                    <div className="space-y-1">
-                      <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
-                        <ShieldQuestion className="w-5 h-5" />
-                        Hide My Identity &amp; Show 'TransactWave' Branding
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Turn ON to always show "TransactWave" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
-                      </p>
-                    </div>
-                    <Switch id="branding-switch" defaultChecked />
+                <div className="lg:col-span-1">
+                    <CheckoutPreview brandColor={brandColor} logo={logo} businessName={businessName} />
                 </div>
-                <Button>Save Branding Changes</Button>
-            </CardContent>
-          </Card>
+            </div>
         </TabsContent>
         <TabsContent value="payment-methods" className="pt-4">
           <Card>
