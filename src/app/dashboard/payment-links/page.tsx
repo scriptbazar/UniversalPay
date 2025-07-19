@@ -1,235 +1,67 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Copy, Link2, MoreVertical, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
-type PaymentLink = {
-  id: string;
-  title: string;
-  url: string;
-  type: 'Fixed' | 'Dynamic';
-  amount: string | null;
-  isActive: boolean;
-  createdAt: string;
-};
-
-const initialLinks: PaymentLink[] = [
-  {
-    id: 'plink_1',
-    title: 'T-Shirt Sale',
-    url: 'https://transactwave.com/pay/t-shirt-sale',
-    type: 'Fixed',
-    amount: '25.00',
-    isActive: true,
-    createdAt: '2023-10-26',
-  },
-  {
-    id: 'plink_2',
-    title: 'General Donation',
-    url: 'https://transactwave.com/pay/donation',
-    type: 'Dynamic',
-    amount: null,
-    isActive: true,
-    createdAt: '2023-10-25',
-  },
-  {
-    id: 'plink_3',
-    title: 'Workshop Registration',
-    url: 'https://transactwave.com/pay/workshop',
-    type: 'Fixed',
-    amount: '100.00',
-    isActive: false,
-    createdAt: '2023-10-22',
-  },
+const allLinks = [
+  { id: 'plink_1', merchant: 'MyStore.com', title: 'T-Shirt Sale', payments: 120, fraud: 2, status: 'Active', createdAt: '2023-10-26' },
+  { id: 'plink_2', merchant: 'CreativeGoods', title: 'General Donation', payments: 50, fraud: 0, status: 'Active', createdAt: '2023-10-25' },
+  { id: 'plink_3', merchant: 'AnotherShop', title: 'Workshop Registration', payments: 75, fraud: 5, status: 'Inactive', createdAt: '2023-10-22' },
+  { id: 'plink_4', merchant: 'MyStore.com', title: 'Ebook Download', payments: 250, fraud: 1, status: 'Active', createdAt: '2023-10-21' },
 ];
 
-export default function PaymentLinksPage() {
-  const { toast } = useToast();
-  const [links, setLinks] = useState<PaymentLink[]>(initialLinks);
-  const [title, setTitle] = useState('');
-  const [isDynamic, setIsDynamic] = useState(false);
-  const [amount, setAmount] = useState('');
-
-  const handleCreateLink = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || (!isDynamic && !amount)) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please fill in all required fields.',
-      });
-      return;
-    }
-
-    const newLink: PaymentLink = {
-      id: `plink_${Date.now()}`,
-      title,
-      url: `https://transactwave.com/pay/${title.toLowerCase().replace(/\s+/g, '-')}`,
-      type: isDynamic ? 'Dynamic' : 'Fixed',
-      amount: isDynamic ? null : parseFloat(amount).toFixed(2),
-      isActive: true,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setLinks((prev) => [newLink, ...prev]);
-    setTitle('');
-    setIsDynamic(false);
-    setAmount('');
-    toast({
-      title: 'Success!',
-      description: 'New payment link has been created.',
-    });
-  };
-  
-  const copyToClipboard = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({ title: 'Copied to clipboard!' });
-  };
-
-
+export default function AdminPaymentLinksPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Payment Links</h1>
-        <p className="text-muted-foreground">Create and manage links to accept payments from anyone.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Payment Links Monitoring</h1>
+        <p className="text-muted-foreground">Oversee all payment links created across the platform.</p>
       </div>
       <Separator />
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create a New Link</CardTitle>
-              <CardDescription>Generate a new link to share with your customers.</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleCreateLink}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Link Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., T-Shirt Sale, Donation"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="type-switch">Dynamic Price</Label>
-                    <p className="text-xs text-muted-foreground">Allow customers to enter the amount.</p>
-                  </div>
-                  <Switch
-                    id="type-switch"
-                    checked={isDynamic}
-                    onCheckedChange={setIsDynamic}
-                  />
-                </div>
-                {!isDynamic && (
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount (USD)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="e.g., 25.00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
-              </CardContent>
-              <div className="p-6 pt-0">
-                <Button className="w-full" type="submit">
-                  <Link2 className="mr-2 h-4 w-4" /> Create Link
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Payment Links</CardTitle>
-              <CardDescription>Here is a list of all your created links.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {links.map((link) => (
-                    <TableRow key={link.id}>
-                      <TableCell>
-                        <div className="font-medium">{link.title}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            {link.url}
-                            <Copy className="h-3 w-3 cursor-pointer" onClick={() => copyToClipboard(link.url)} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{link.type}</Badge>
-                      </TableCell>
-                       <TableCell>{link.amount ? `$${link.amount}` : 'N/A'}</TableCell>
-                      <TableCell>
-                        <Badge variant={link.isActive ? 'default' : 'secondary'}>
-                          {link.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => copyToClipboard(link.url)}>
-                              <Copy className="mr-2 h-4 w-4" /> Copy Link
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
-                                setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
-                              }}/> {link.isActive ? 'Deactivate' : 'Activate'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Platform Links</CardTitle>
+          <CardDescription>A complete list of payment links created by all merchants.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Merchant</TableHead>
+                <TableHead>Link Title</TableHead>
+                <TableHead>Payments</TableHead>
+                <TableHead>Fraudulent Payments</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created At</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allLinks.map((link) => (
+                <TableRow key={link.id}>
+                  <TableCell className="font-medium">{link.merchant}</TableCell>
+                  <TableCell>{link.title}</TableCell>
+                  <TableCell>{link.payments}</TableCell>
+                  <TableCell>
+                    <Badge variant={link.fraud > 0 ? "destructive" : "outline"}>
+                      {link.fraud}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={link.status === 'Active' ? 'default' : 'secondary'}>
+                      {link.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{link.createdAt}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
