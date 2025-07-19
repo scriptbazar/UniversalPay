@@ -18,7 +18,8 @@ import {
   FileText,
   CreditCard,
   Briefcase,
-  Landmark
+  Landmark,
+  Link2
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
   { href: "/dashboard/payments", icon: Wallet, label: "Payments" },
+  { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/invoices", icon: FileText, label: "Invoices" },
   { href: "/dashboard/subscriptions", icon: CreditCard, label: "Subscriptions" },
