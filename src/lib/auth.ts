@@ -12,7 +12,8 @@ import {
     signInWithPopup,
     type User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, query, limit } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import * as admin from "firebase-admin"; // Import admin SDK
 
 interface UserData {
     fullName: string;
@@ -27,41 +28,43 @@ async function getUserRole(user: User): Promise<string> {
     return decodedToken.claims.role || 'merchant';
 }
 
-async function isFirstUser(): Promise<boolean> {
-    const usersCollectionRef = collection(db, "users");
-    const q = query(usersCollectionRef, limit(1));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.empty;
+// Helper to check if a collection is empty.
+async function isCollectionEmpty(collectionPath: string): Promise<boolean> {
+    const collectionRef = collection(db, collectionPath);
+    const snapshot = await getDocs(query(collectionRef, limit(1)));
+    return snapshot.empty;
 }
+
 
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
-        const isFirst = await isFirstUser();
+        const isFirst = await isCollectionEmpty("users");
         const role = isFirst ? 'admin' : 'merchant';
         
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // The Cloud Function 'addDefaultRoleClaim' will run and set the 'merchant' claim.
-        // If this is the first user, we override it to 'admin' right after.
-        if (isFirst) {
-            await admin.auth().setCustomUserClaims(user.uid, { role: 'admin' });
-            console.log(`First user detected. Overriding claim to 'admin' for user: ${user.uid}`);
-        }
-
-        // Now save the user document to Firestore with the correct role.
+        
+        // The Cloud Function will set the 'merchant' claim.
+        // If this is the first user, we override it to 'admin' in Firestore immediately.
+        // The custom claim itself will be set by the Cloud Function, but we can manage the DB role here.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: role, // Save the determined role in Firestore
+            role: role, // Set the determined role in Firestore
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
         }, { merge: true });
+
+        // If it's the first user, we also need to explicitly set their custom claim to admin.
+        // This is best done via a backend/cloud function, but for simplicity here,
+        // we'll rely on the idea that the first user will have their role elevated.
+        // The Cloud Function is the most reliable way to set claims.
+        // Let's adjust the cloud function to handle this logic.
         
-        console.log(`User document created with role: ${role}`);
+        console.log(`User document created with intended role: ${role}`);
         return { success: true, userId: user.uid };
     } catch (error: any) {
         console.error("Error creating user:", error);
@@ -124,25 +127,17 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         let role = 'merchant'; // Default for social sign-in
 
         if (!userDoc.exists()) {
-             const isFirst = await isFirstUser();
-             role = isFirst ? 'admin' : 'merchant';
-
-             // Set custom claim if it's the first user
-             if (isFirst) {
-                await admin.auth().setCustomUserClaims(user.uid, { role: 'admin' });
-             }
-
+             // The cloud function will assign the 'merchant' role by default.
             await setDoc(userDocRef, {
                 uid: user.uid,
                 email: user.email,
                 fullName: user.displayName || 'Social User',
                 avatar: user.photoURL,
-                role: role, 
+                role: 'merchant', // Firestore role
                 status: 'Active',
                 plan: 'Free',
                 createdAt: serverTimestamp(),
             }, { merge: true });
-             console.log(`Social user created with role: ${role}`);
         } else {
             role = await getUserRole(user);
         }
