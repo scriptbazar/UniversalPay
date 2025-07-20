@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -22,8 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { updateUserRole } from "./actions";
 
 // MOCK DATA - This will be replaced by dynamic data where needed
 const stats = {
@@ -130,26 +132,25 @@ export default function UserDetailPage() {
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
 
   useEffect(() => {
-    const fetchUser = async () => {
-        if (!userId) return;
-        setLoading(true);
-        try {
-            const userDocRef = doc(db, "users", userId);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                setMerchant({ id: userDoc.id, ...userDoc.data() } as UserProfile);
-            } else {
-                toast({ variant: "destructive", title: "Error", description: "User not found." });
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
-            toast({ variant: "destructive", title: "Error", description: "Failed to fetch user data." });
-        } finally {
-            setLoading(false);
+    if (!userId) return;
+    setLoading(true);
+    const userDocRef = doc(db, "users", userId);
+    
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+            setMerchant({ id: doc.id, ...doc.data() } as UserProfile);
+        } else {
+            toast({ variant: "destructive", title: "Error", description: "User not found." });
+            setMerchant(null);
         }
-    };
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching user:", error);
+        toast({ variant: "destructive", title: "Error", description: "Failed to fetch user data." });
+        setLoading(false);
+    });
 
-    fetchUser();
+    return () => unsubscribe();
   }, [userId, toast]);
 
 
@@ -159,7 +160,7 @@ export default function UserDetailPage() {
     const userDocRef = doc(db, "users", merchant.id);
     try {
         await setDoc(userDocRef, { status: newStatus }, { merge: true });
-        setMerchant(prev => prev ? {...prev, status: newStatus} : null);
+        // The onSnapshot listener will update the state automatically
         toast({
             title: `Merchant ${newStatus}`,
             description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
@@ -169,6 +170,24 @@ export default function UserDetailPage() {
     }
   };
   
+  const handleRoleChange = async () => {
+      if (!merchant) return;
+      const newRole = merchant.role === 'admin' ? 'merchant' : 'admin';
+      const result = await updateUserRole(merchant.id, newRole);
+      if(result.success) {
+          toast({
+              title: 'Role Updated!',
+              description: `${merchant.fullName} is now a ${newRole}.`
+          });
+      } else {
+          toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: result.error
+          });
+      }
+  };
+
   const handleWalletAdjustment = (type: 'credit' | 'debit') => {
       const amount = parseFloat(adjustmentAmount);
       if (isNaN(amount) || amount <= 0) {
@@ -294,20 +313,27 @@ export default function UserDetailPage() {
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
                     <div className="flex gap-2">
-                         <Button variant="outline" onClick={handleToggleSuspend}>
-                           {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
-                           {merchant.status === 'Active' ? 'Suspend' : 'Unsuspend'} Merchant
-                        </Button>
-                        <Button variant="outline" onClick={handleLoginAsUser}>Login As User</Button>
+                         <Button variant="outline" onClick={handleLoginAsUser}>Login As User</Button>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button size="icon" variant="ghost">
-                                <MoreVertical className="h-4 w-4" />
+                                <Button size="default" variant="outline">
+                                    Actions
+                                <MoreVertical className="h-4 w-4 ml-2" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleRoleChange}>
+                                    <ShieldIcon className="mr-2 h-4 w-4" />
+                                    {merchant.role === 'admin' ? 'Make Merchant' : 'Make Admin'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleToggleSuspend}>
+                                   {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
+                                   {merchant.status === 'Active' ? 'Suspend Merchant' : 'Unsuspend Merchant'}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem>Change Plan</DropdownMenuItem>
                                 <DropdownMenuItem>Reset Password</DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive">Delete Merchant</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -321,6 +347,7 @@ export default function UserDetailPage() {
                  <div className="flex items-center gap-4 mt-2">
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>{merchant.status}</Badge>
                     <Badge variant="secondary">Plan: {merchant.plan || 'Free'}</Badge>
+                    <Badge variant={merchant.role === 'admin' ? 'destructive' : 'outline'}>Role: {merchant.role || 'merchant'}</Badge>
                     <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4"/> Joined: {joinedDate}</span>
                 </div>
             </div>
@@ -703,3 +730,5 @@ export default function UserDetailPage() {
     </div>
   )
 }
+
+    
