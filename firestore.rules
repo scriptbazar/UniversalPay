@@ -1,23 +1,24 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
     match /users/{userId} {
-      // Allows a user to create, read, and write to their own document.
-      // Also allows an admin to read and write to any user document.
-      allow read, write: if request.auth.uid == userId || request.auth.token.role == 'admin';
-    }
+      // 1. Any authenticated user can create their own user document.
+      allow create: if request.auth.uid == userId;
 
-    match /users/{document=**} {
-      // Allows an admin to list all documents in the users collection.
+      // 2. Admins can list all users.
       allow list: if request.auth.token.role == 'admin';
-    }
+      
+      // 3. Admins can get any user's document.
+      //    Users can only get their own document.
+      allow get: if request.auth.token.role == 'admin' || request.auth.uid == userId;
 
-    // Fallback security rule for any other collection
-    match /{document=**} {
-      allow read, write: if false;
+      // 4. Admins can update any user's document.
+      //    Users can update their own document, BUT CANNOT update the 'role' field.
+      allow update: if (request.auth.token.role == 'admin') || 
+                       (request.auth.uid == userId && !('role' in request.resource.data));
+      
+      // 5. No one can delete users from the client. Deletion should be handled server-side or in console.
+      allow delete: if false;
     }
   }
 }
