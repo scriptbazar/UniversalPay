@@ -43,43 +43,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
-const data = [
-  { name: "Jan", total: 4230, monthIndex: 0 },
-  { name: "Feb", total: 3120, monthIndex: 1 },
-  { name: "Mar", total: 5890, monthIndex: 2 },
-  { name: "Apr", total: 4500, monthIndex: 3 },
-  { name: "May", total: 6200, monthIndex: 4 },
-  { name: "Jun", total: 7100, monthIndex: 5 },
-  { name: "Jul", total: 6800, monthIndex: 6 },
-  { name: "Aug", total: 7500, monthIndex: 7 },
-  { name: "Sep", total: 6400, monthIndex: 8 },
-  { name: "Oct", total: 8100, monthIndex: 9 },
-  { name: "Nov", total: 8500, monthIndex: 10 },
-  { name: "Dec", total: 9200, monthIndex: 11 },
-];
-
-const allTransactions = Array.from({ length: 150 }, (_, i) => {
-    const monthIndex = Math.floor(i / (150/12));
-    const date = new Date(2023, monthIndex, (i % 28) + 1);
-    return {
-        id: `UVRLP${123456789 + i}`,
-        name: `Customer ${i + 1}`,
-        email: `customer${i + 1}@example.com`,
-        amount: (Math.random() * 500 + 20).toFixed(2),
-        status: Math.random() > 0.1 ? "Success" : "Failed",
-        date: date,
-        monthIndex: monthIndex,
-    }
-});
-
-const recentSignups = [
-    { id: 'user_1', name: 'Liam Johnson', email: 'liam@example.com', plan: 'Pro' },
-    { id: 'user_2', name: 'CreativeGoods', email: 'support@creative.co', plan: 'Free' },
-    { id: 'user_3', name: 'MyStore.com', email: 'contact@mystore.com', plan: 'Pro' },
-    { id: 'user_4', name: 'AnotherShop', email: 'sales@anothershop.io', plan: 'Premium' },
-];
-
-type Transaction = typeof allTransactions[0];
+// --- MOCK DATA REMOVED ---
+const chartData: any[] = [];
+const allTransactions: any[] = [];
+const recentSignups: any[] = [];
+type Transaction = { id: string; name: string; email: string; amount: string; status: string; date: Date };
+// --- END MOCK DATA REMOVED ---
 
 
 export default function AdminDashboard() {
@@ -109,8 +78,8 @@ export default function AdminDashboard() {
     const month = payload.name;
     const monthIndex = payload.monthIndex;
 
-    const transactionsForMonth = allTransactions.filter(tx => tx.monthIndex === monthIndex);
-    setMonthlyTransactions({ month, transactions: transactionsForMonth });
+    // In a real app, you would fetch transactions for the selected month.
+    setMonthlyTransactions({ month, transactions: [] });
   };
   
   return (
@@ -129,9 +98,9 @@ export default function AdminDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$1,452,231.89</div>
+              <div className="text-2xl font-bold">$0.00</div>
               <p className="text-xs text-muted-foreground">
-                +15.2% from last month
+                No data available
               </p>
             </CardContent>
           </Link>
@@ -144,9 +113,9 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
-              +201 since last month
+              No data available
             </p>
           </CardContent>
         </Card>
@@ -156,9 +125,9 @@ export default function AdminDashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+572,234</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              No data available
             </p>
           </CardContent>
         </Card>
@@ -170,9 +139,9 @@ export default function AdminDashboard() {
             <ShieldAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
-              -5% from last week
+              No data available
             </p>
           </CardContent>
         </Card>
@@ -187,7 +156,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="pl-2">
              <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={data} onClick={handleBarClick}>
+              <BarChart data={chartData} onClick={handleBarClick}>
                 <XAxis
                   dataKey="name"
                   stroke="#888888"
@@ -229,7 +198,7 @@ export default function AdminDashboard() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {recentSignups.map((signup) => (
+                        {recentSignups.length > 0 ? recentSignups.map((signup) => (
                             <TableRow key={signup.email} onClick={() => handleRowClick(signup.id)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="px-6 py-4">
                                     <div className="font-medium">{signup.name}</div>
@@ -241,7 +210,11 @@ export default function AdminDashboard() {
                                     <Badge variant={signup.plan === 'Free' ? 'secondary' : 'default'} className="capitalize">{signup.plan}</Badge>
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        )) : (
+                           <TableRow>
+                               <TableCell colSpan={2} className="text-center p-8">No recent signups.</TableCell>
+                           </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>

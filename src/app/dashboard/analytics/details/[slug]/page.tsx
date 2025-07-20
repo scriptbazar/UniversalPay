@@ -14,36 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 
-// --- MOCK DATA ---
-const allMockTransactions = Array.from({ length: 6 * 50 }, (_, i) => {
-    const monthIndex = Math.floor(i / 50);
-    const months = ["jan", "feb", "mar", "apr", "may", "jun"];
-    const success = i % 5 !== 0; // Make some fail
-    return {
-        id: `txn_${i + 1}`,
-        merchant: `Merchant ${i % 4 + 1}`,
-        amount: (Math.random() * 500 + 10).toFixed(2),
-        date: `2023-10-${28-Math.floor(i/2)}`,
-        month: months[monthIndex],
-        status: success ? 'Successful' : 'Failed'
-    }
-});
-
-const mockNewMerchants = Array.from({ length: 12 }, (_, i) => {
-    const monthIndex = i % 6;
-    const months = ["jan", "feb", "mar", "apr", "may", "jun"];
-    return {
-    id: `user_${i + 1}`,
-    name: `Merchant ${i + 1}`,
-    email: `merchant${i + 1}@example.com`,
-    avatar: `https://placehold.co/40x40.png?text=M${i+1}`,
-    joined: `2023-10-${28-i}`,
-    month: months[monthIndex],
-}});
-
-type Transaction = typeof allMockTransactions[0];
-type User = typeof mockNewMerchants[0];
-// --- END MOCK DATA ---
+// --- MOCK DATA REMOVED ---
+type Transaction = { id: string; merchant: string; amount: string; date: string; month: string; status: 'Successful' | 'Failed' };
+type User = { id: string; name: string; email: string; avatar: string; joined: string; month: string };
+// --- END MOCK DATA REMOVED ---
 
 type DetailDialogContent = {
     type: 'user' | 'transaction';
@@ -74,20 +48,19 @@ export default function AnalyticsDetailPage() {
     useEffect(() => {
         if (!slug) return;
         
+        // In a real app, you would fetch data based on the slug here.
+        // For now, it will be empty as mock data is removed.
         const [type, month] = slug.split('_');
-        const monthMap: { [key: string]: number } = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5 };
-        const monthIndex = monthMap[month];
         
         let pageTitle = '';
         let fetchedData: (User | Transaction)[] = [];
         let tableColumns: any[] = [];
         
-        const monthName = month.charAt(0).toUpperCase() + month.slice(1);
+        const monthName = month ? month.charAt(0).toUpperCase() + month.slice(1) : 'All';
         
         switch(type) {
             case 'new-users':
                 pageTitle = `New Users in ${monthName}`;
-                fetchedData = mockNewMerchants.filter(u => month === 'all' || u.month === month);
                 tableColumns = [
                     { header: 'Merchant', accessor: 'name' },
                     { header: 'Joined On', accessor: 'joined' },
@@ -95,7 +68,6 @@ export default function AnalyticsDetailPage() {
                 break;
             case 'total-transactions':
                 pageTitle = `Total Transactions in ${monthName}`;
-                fetchedData = allMockTransactions.filter(t => month === 'all' || t.month === month);
                  tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
                     { header: 'Status', accessor: 'status' },
@@ -104,7 +76,6 @@ export default function AnalyticsDetailPage() {
                 break;
             case 'successful-transactions':
                 pageTitle = `Successful Transactions in ${monthName}`;
-                fetchedData = allMockTransactions.filter(t => t.status === 'Successful' && (month === 'all' || t.month === month));
                 tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
                     { header: 'Merchant', accessor: 'merchant' },
@@ -113,7 +84,6 @@ export default function AnalyticsDetailPage() {
                 break;
             case 'new-merchants': // from stat card
                  pageTitle = 'All New Merchants';
-                 fetchedData = mockNewMerchants;
                  tableColumns = [
                     { header: 'Merchant', accessor: 'name' },
                     { header: 'Joined On', accessor: 'joined' },

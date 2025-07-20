@@ -12,7 +12,7 @@ import {
     signInWithPopup,
     type User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 
 interface UserData {
     fullName: string;
@@ -33,24 +33,32 @@ async function getUserRole(user: User): Promise<string> {
     }
 }
 
+async function isFirstUser(): Promise<boolean> {
+    const usersCollectionRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersCollectionRef);
+    return querySnapshot.empty;
+}
+
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
+        const firstUser = await isFirstUser();
+        const role = firstUser ? 'admin' : 'merchant';
+        
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function `addUserRoleToFirestore` will automatically create a
-        // document with the 'merchant' role. Here, we just add the profile data.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: 'merchant',
+            role: role,
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
-        }, { merge: true }); // use merge to be safe
+        }, { merge: true });
         
+        console.log(`User created with role: ${role}`);
         return { success: true, userId: user.uid };
     } catch (error: any) {
         console.error("Error creating user:", error);
@@ -99,16 +107,19 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
+             const firstUser = await isFirstUser();
+             const role = firstUser ? 'admin' : 'merchant';
             await setDoc(userDocRef, {
                 uid: user.uid,
                 email: user.email,
                 fullName: user.displayName || 'Social User',
                 avatar: user.photoURL,
-                role: 'merchant', 
+                role: role, 
                 status: 'Active',
                 plan: 'Free',
                 createdAt: serverTimestamp(),
             }, { merge: true });
+             console.log(`Social user created with role: ${role}`);
         }
         
         const role = await getUserRole(user);

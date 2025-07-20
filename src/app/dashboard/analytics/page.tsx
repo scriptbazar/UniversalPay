@@ -13,55 +13,11 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-const allMockTransactions = Array.from({ length: 6 * 50 }, (_, i) => {
-    const monthIndex = Math.floor(i / 50);
-    const success = Math.random() > 0.1;
-    return {
-        id: `txn_${i + 1}`,
-        merchant: `Merchant ${i % 4 + 1}`,
-        amount: (Math.random() * 500 + 10).toFixed(2),
-        date: `2023-10-${28-Math.floor(i/2)}`,
-        monthIndex: monthIndex,
-        status: success ? 'Successful' : 'Failed'
-    }
-});
-
-
-const revenueData = [
-  { month: "Jan", revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 390, monthIndex: 0 },
-  { month: "Feb", revenue: 3000, newUsers: 13, totalTransactions: 350, successfulTransactions: 340, monthIndex: 1 },
-  { month: "Mar", revenue: 5000, newUsers: 84, totalTransactions: 500, successfulTransactions: 490, monthIndex: 2 },
-  { month: "Apr", revenue: 4500, newUsers: 45, totalTransactions: 480, successfulTransactions: 470, monthIndex: 3 },
-  { month: "May", revenue: 6000, newUsers: 56, totalTransactions: 600, successfulTransactions: 580, monthIndex: 4 },
-  { month: "Jun", revenue: 5500, newUsers: 34, totalTransactions: 550, successfulTransactions: 540, monthIndex: 5 },
-];
-
-const paymentMethodData = [
-  { name: 'UPI', value: 400, color: '#0088FE' },
-  { name: 'Crypto', value: 300, color: '#00C49F' },
-  { name: 'Cards', value: 300, color: '#FFBB28' },
-  { name: 'Payment Links', value: 250, color: '#FF8042' },
-];
-
-const geoData = [
-    { country: 'India', volume: 40000, transactions: 1200, merchants: 250, flag: 'IN' },
-    { country: 'United States', volume: 25000, transactions: 800, merchants: 150, flag: 'US' },
-    { country: 'United Kingdom', volume: 15000, transactions: 500, merchants: 80, flag: 'GB' },
-    { country: 'Germany', volume: 10000, transactions: 300, merchants: 50, flag: 'DE' },
-    { country: 'UAE', volume: 8000, transactions: 250, merchants: 40, flag: 'AE' },
-];
-
-const mockNewMerchants = Array.from({ length: 12 }, (_, i) => ({
-    id: `user_${i + 1}`,
-    name: `Merchant ${i + 1}`,
-    email: `merchant${i + 1}@example.com`,
-    avatar: `https://placehold.co/40x40.png?text=M${i+1}`,
-    joined: `2023-10-${28-i}`,
-    monthIndex: i % 6,
-}));
-
-const mockSuccessfulPayments = allMockTransactions.filter(tx => tx.status === 'Successful');
-
+// --- MOCK DATA REMOVED ---
+const revenueData: any[] = [];
+const paymentMethodData: any[] = [];
+const geoData: any[] = [];
+// --- END MOCK DATA REMOVED ---
 
 type DialogContentData = {
   title: string;
@@ -73,20 +29,11 @@ type DialogContentData = {
 export default function AnalyticsPage() {
   const router = useRouter();
   const [dialogContent, setDialogContent] = useState<DialogContentData>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
-  const paginatedMerchants = useMemo(() => {
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      return mockNewMerchants.slice(startIndex, startIndex + itemsPerPage);
-  }, [currentPage]);
-
-  const totalPages = Math.ceil(mockNewMerchants.length / itemsPerPage);
-
+  
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
          case 'volume':
-             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$1,452,231.89</p> });
+             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$0.00</p> });
              break;
          case 'payments':
              router.push(`/dashboard/analytics/details/successful-transactions_all`);
@@ -95,7 +42,7 @@ export default function AnalyticsPage() {
             router.push(`/dashboard/analytics/details/new-merchants_all`);
              break;
         case 'avg_transaction':
-            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$25.40</p> });
+            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$0.00</p> });
             break;
      }
   };
@@ -138,7 +85,7 @@ export default function AnalyticsPage() {
     });
   };
 
-  const handleCountryClick = (country: typeof geoData[0]) => {
+  const handleCountryClick = (country: any) => {
      router.push('/dashboard/users');
   };
 
@@ -157,8 +104,8 @@ export default function AnalyticsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$1,452,231.89</div>
-            <p className="text-xs text-muted-foreground">+15.2% from last month</p>
+            <div className="text-2xl font-bold">$0.00</div>
+            <p className="text-xs text-muted-foreground">No data available</p>
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -167,8 +114,8 @@ export default function AnalyticsPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">572,234</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">No data available</p>
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('merchants')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -177,8 +124,8 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-muted-foreground">+201 since last month</p>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">No data available</p>
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('avg_transaction')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -187,8 +134,8 @@ export default function AnalyticsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$25.40</div>
-            <p className="text-xs text-muted-foreground">-2.1% from last month</p>
+            <div className="text-2xl font-bold">$0.00</div>
+            <p className="text-xs text-muted-foreground">No data available</p>
           </CardContent>
         </Card>
       </div>
@@ -251,7 +198,7 @@ export default function AnalyticsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {geoData.map(geo => (
+                    {geoData.length > 0 ? geoData.map(geo => (
                         <TableRow key={geo.country}>
                             <TableCell className="font-medium flex items-center gap-2">
                                 <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} />
@@ -264,7 +211,11 @@ export default function AnalyticsPage() {
                                 <Button variant="outline" size="sm" onClick={() => handleCountryClick(geo)}>View Merchants</Button>
                             </TableCell>
                         </TableRow>
-                    ))}
+                    )) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center">No geographical data available.</TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
         </CardContent>
@@ -287,5 +238,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-
-    
