@@ -208,7 +208,7 @@ export default function WithdrawalsPage() {
               <Separator />
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Date:</span>
-                <span className="font-semibold">{new Date(selectedWithdrawal.date).toLocaleString()}</span>
+                <span className="font-semibold">{new Date(selectedWithdrawal.date).toLocaleDateString()}</span>
               </div>
               <Separator />
               <div className="flex justify-between items-center">

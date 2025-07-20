@@ -33,6 +33,14 @@ const getPriorityVariant = (priority: Ticket['priority']) => {
   }
 };
 
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+};
+
 export default function AdminTicketDetailPage() {
   const params = useParams();
   const ticketId = params.ticketId as string;
@@ -164,7 +172,7 @@ export default function AdminTicketDetailPage() {
                     </div>
                      <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                        <span>Created: {formatDate(ticket.createdAt)}</span>
                     </div>
                      <Separator />
                      <div>
