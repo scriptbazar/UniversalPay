@@ -24,7 +24,7 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
       role: role,
     });
     console.log(`Custom claim '${role}' set for user: ${user.uid}`);
-
+    
     // Also, ensure the user document exists in Firestore with the default role
     const userDocRef = db.collection("users").doc(user.uid);
     await userDocRef.set({

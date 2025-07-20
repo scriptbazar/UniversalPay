@@ -26,8 +26,7 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function will set the custom claim and the initial role in Firestore.
-        // This client-side write ensures all user data is present immediately.
+        // The Cloud Function will now ONLY write to Firestore. No more custom claims from there.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
@@ -39,57 +38,46 @@ export async function createUser(email: string, password: string, additionalData
             createdAt: serverTimestamp(),
         }, { merge: true });
 
-        // We can force a token refresh here to try and get the claim faster, but it's not guaranteed.
-        // The primary check should be in signInUser.
-        await user.getIdToken(true);
-
         return { success: true, userId: user.uid };
-    } catch (error: any) {
+    } catch (error: any) => {
         console.error("Error creating user:", error);
         return { success: false, error: error.message };
     }
 }
 
-
+// **NEW AND IMPROVED LOGIN LOGIC**
 export async function signInUser(email: string, password: string, loginType: 'admin' | 'merchant') {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Force refresh the ID token to get the latest custom claims.
-        // This is a critical step.
-        await user.getIdToken(true); 
-        const idTokenResult = await user.getIdTokenResult();
-        const tokenRole = idTokenResult.claims.role || 'merchant';
-        
-        console.log(`User ${user.uid} signed in. Token Role from claim: ${tokenRole}`);
-
-        // Security Check: Enforce login page types based on the reliable token role
-        if (loginType === 'admin' && tokenRole !== 'admin') {
-            await signOut(auth);
-            return { success: false, error: "Access denied. Only administrators can log in here." };
-        }
-
-        if (loginType === 'merchant' && tokenRole === 'admin') {
-            await signOut(auth);
-            return { success: false, error: "Admin accounts should use the Admin Login page." };
-        }
-        
-        // Fetch user data from Firestore to complete the user profile for the app
+        // **THE FIX: Directly fetch the user role from Firestore, ignoring the token.**
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-             // This is a fallback in case the Firestore document wasn't created
-             // which can happen with social logins or race conditions.
-            console.warn("User document not found in Firestore for UID:", user.uid, "Creating it now.");
-            await setDoc(userDocRef, { role: tokenRole, email: user.email, fullName: user.displayName || "N/A" }, { merge: true });
-            const newUserDoc = await getDoc(userDocRef);
-            return { success: true, user: { uid: user.uid, ...newUserDoc.data() } };
+            // This should not happen for email/password users, but it's a good fallback.
+            await signOut(auth);
+            return { success: false, error: "User data not found. Please contact support." };
         }
 
+        const userData = userDoc.data();
+        const firestoreRole = userData.role || 'merchant';
+        
+        console.log(`User ${user.uid} signed in. Role from Firestore: ${firestoreRole}`);
 
-        return { success: true, user: { uid: user.uid, ...userDoc.data() } };
+        // Security Check: Enforce login page types based on the reliable Firestore role
+        if (loginType === 'admin' && firestoreRole !== 'admin') {
+            await signOut(auth);
+            return { success: false, error: "Access denied. Only administrators can log in here." };
+        }
+
+        if (loginType === 'merchant' && firestoreRole === 'admin') {
+            await signOut(auth);
+            return { success: false, error: "Admin accounts should use the Admin Login page." };
+        }
+
+        return { success: true, user: { uid: user.uid, ...userData } };
         
     } catch (error: any) {
         console.error("Error signing in:", error);
@@ -126,7 +114,6 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-             // The onCreate cloud function will trigger to set the 'merchant' role claim.
             await setDoc(userDocRef, {
                 uid: user.uid,
                 email: user.email,
