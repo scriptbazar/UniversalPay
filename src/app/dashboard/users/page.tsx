@@ -42,9 +42,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from "@/lib/firebase";
 
 interface User {
     id: string;
@@ -64,32 +63,19 @@ export default function UsersPage() {
     useEffect(() => {
         const loadUsers = async () => {
             setLoading(true);
-            if (!db) {
-                toast({
-                    variant: "destructive",
-                    title: "Firestore not initialized",
-                    description: "Please check your Firebase configuration.",
-                });
-                setLoading(false);
-                return;
-            }
             try {
-                const usersCollectionRef = collection(db, "users");
-                const userSnapshot = await getDocs(usersCollectionRef);
-                
-                const userList = userSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                } as User));
-                
+                const functions = getFunctions(app);
+                const getUsers = httpsCallable(functions, 'getUsers');
+                const result = await getUsers();
+                const userList = result.data as User[];
                 setUsers(userList);
 
             } catch (error: any) {
-                console.error("Error fetching users from client: ", error);
+                console.error("Error fetching users via function: ", error);
                 toast({
                     variant: "destructive",
                     title: "Failed to load users",
-                    description: error.message || "Please check your Firestore rules and console.",
+                    description: error.message || "Please check the console and function logs.",
                 });
             } finally {
                 setLoading(false);
