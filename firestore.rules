@@ -1,16 +1,23 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
     match /users/{userId} {
-      // A newly authenticated user can create their own user document.
-      allow create: if request.auth.uid == userId;
-      
-      // An existing user can only get or update their own document.
-      allow get, update: if request.auth.uid == userId;
-      
-      // An admin can read the entire list of users or any specific user document.
-      allow read: if request.auth.token.role == 'admin';
+      // Allows a user to create, read, and write to their own document.
+      // Also allows an admin to read and write to any user document.
+      allow read, write: if request.auth.uid == userId || request.auth.token.role == 'admin';
+    }
+
+    match /users/{document=**} {
+      // Allows an admin to list all documents in the users collection.
+      allow list: if request.auth.token.role == 'admin';
+    }
+
+    // Fallback security rule for any other collection
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
