@@ -17,11 +17,13 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 
+// Check if all required Firebase config keys are present and not placeholders
+const isConfigValid = 
+    firebaseConfig.apiKey && firebaseConfig.apiKey !== 'YOUR_API_KEY_HERE' &&
+    firebaseConfig.projectId && firebaseConfig.projectId !== 'YOUR_PROJECT_ID_HERE';
+
 if (!getApps().length) {
-  if (
-    firebaseConfig.apiKey &&
-    firebaseConfig.projectId
-  ) {
+  if (isConfigValid) {
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
@@ -35,9 +37,9 @@ if (!getApps().length) {
     }
   } else {
     console.error(
-      "Firebase config is missing. Make sure to set NEXT_PUBLIC_FIREBASE environment variables in your .env file."
+      "Firebase config is missing or invalid. Make sure to set NEXT_PUBLIC_FIREBASE environment variables in your .env file."
     );
-    // Assign dummy objects if config is missing
+    // Assign dummy objects if config is missing or invalid
     app = {} as FirebaseApp;
     auth = {} as Auth;
     db = {} as Firestore;
