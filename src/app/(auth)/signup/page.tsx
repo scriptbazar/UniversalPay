@@ -10,7 +10,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import ReCAPTCHA from "react-google-recaptcha";
 import { createUser, signInWithSocial } from "@/lib/auth";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -38,7 +37,6 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
       fullName: '',
@@ -46,8 +44,6 @@ export default function SignupPage() {
       mobile: '',
       password: '',
   });
-
-  const isMerchantCaptchaEnabled = process.env.NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA === 'true';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { id, value } = e.target;
@@ -58,16 +54,6 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (isMerchantCaptchaEnabled && !recaptchaToken) {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: "Please complete the reCAPTCHA challenge.",
-      });
-      setIsLoading(false);
-      return;
-    }
-    
     try {
         const { success, error } = await createUser(formData.email, formData.password, {
             fullName: formData.fullName,
@@ -155,14 +141,6 @@ export default function SignupPage() {
                     <Input id="password" type="password" required value={formData.password} onChange={handleInputChange} disabled={isLoading} />
                 </div>
             </div>
-             {isMerchantCaptchaEnabled && (
-                <div className="flex justify-center pt-4">
-                    <ReCAPTCHA
-                        sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
-                        onChange={(token) => setRecaptchaToken(token)}
-                    />
-                </div>
-             )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>

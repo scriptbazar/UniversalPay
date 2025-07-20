@@ -10,7 +10,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import ReCAPTCHA from "react-google-recaptcha";
 import { signInUser } from "@/lib/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldCheck } from "lucide-react";
@@ -21,27 +20,15 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
 
-  const isAdminCaptchaEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN_CAPTCHA === 'true';
   const isAdmin2faEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN_2FA !== 'false';
 
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (isAdminCaptchaEnabled && !recaptchaToken) {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description: "Please complete the reCAPTCHA challenge.",
-      });
-      setIsLoading(false);
-      return;
-    }
-    
     try {
       const { success, user, error } = await signInUser(email, password, 'admin');
       
@@ -130,14 +117,6 @@ export default function AdminLoginPage() {
                   disabled={isLoading}
                 />
               </div>
-              {isAdminCaptchaEnabled && (
-                <div className="flex justify-center">
-                  <ReCAPTCHA
-                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
-                    onChange={(token) => setRecaptchaToken(token)}
-                  />
-                </div>
-              )}
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
