@@ -42,8 +42,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, query } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 interface User {
     id: string;
@@ -58,33 +59,71 @@ interface User {
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
-        const loadUsers = async () => {
+        console.log("UsersPage: useEffect triggered.");
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("UsersPage: User is authenticated, attempting to fetch users.");
+                fetchUsers();
+            } else {
+                console.log("UsersPage: User is not authenticated.");
+                setLoading(false);
+                setError("You must be logged in to view this page.");
+            }
+        });
+
+        const fetchUsers = async () => {
             setLoading(true);
+            setError(null);
+            console.log("UsersPage: fetchUsers function started.");
+
             try {
-                // This is a direct client-side fetch. It relies on the firestore.rules.
-                const querySnapshot = await getDocs(collection(db, "users"));
+                // Ensure db object is valid
+                if (!db) {
+                    throw new Error("Firestore database is not initialized.");
+                }
+
+                console.log("UsersPage: Querying 'users' collection...");
+                const usersCollectionRef = collection(db, "users");
+                const q = query(usersCollectionRef);
+                const querySnapshot = await getDocs(q);
+                
+                console.log(`UsersPage: Firestore query returned ${querySnapshot.size} documents.`);
+
+                if (querySnapshot.empty) {
+                    console.log("UsersPage: No users found in the 'users' collection.");
+                }
+
                 const userList: User[] = [];
                 querySnapshot.forEach((doc) => {
-                    userList.push({ id: doc.id, ...doc.data() } as User);
+                    const userData = doc.data();
+                    console.log(`UsersPage: Fetched user data for doc ID ${doc.id}:`, userData);
+                    userList.push({ id: doc.id, ...userData } as User);
                 });
-                setUsers(userList);
 
-            } catch (error: any) {
-                console.error("Error fetching users from Firestore: ", error);
+                setUsers(userList);
+                console.log("UsersPage: State updated with fetched users.", userList);
+
+            } catch (err: any) {
+                console.error("UsersPage: Error fetching users from Firestore: ", err);
+                setError("Failed to load users. Check the browser console and Firestore security rules for more details. Error: " + err.message);
                 toast({
                     variant: "destructive",
                     title: "Failed to load users",
-                    description: "Could not fetch users from the database. Please check Firestore security rules and console for errors.",
+                    description: err.message,
                 });
             } finally {
                 setLoading(false);
+                console.log("UsersPage: fetchUsers function finished.");
             }
         };
 
-        loadUsers();
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
     }, [toast]);
 
   return (
@@ -120,70 +159,76 @@ export default function UsersPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-               {loading ? (
-                <div className="text-center p-8">Loading users...</div>
-                ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                     <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                            <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 hover:underline">
-                                <Image src={user.avatar || `https://placehold.co/40x40.png?text=${(user.fullName || 'U').charAt(0)}`} width={40} height={40} alt={user.fullName || 'User'} className="rounded-full" data-ai-hint="user avatar" />
-                                <div>
-                                    <div>{user.fullName || 'Unnamed User'}</div>
-                                    <div className="text-sm text-muted-foreground">{user.email}</div>
-                                </div>
-                            </Link>
-                        </TableCell>
-                        <TableCell>
-                           <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>{user.role || 'Merchant'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                           <Badge variant={user.status === 'Active' ? 'default' : 'outline'}>{user.status || 'Active'}</Badge>
-                        </TableCell>
-                         <TableCell>{user.plan || 'Free'}</TableCell>
-                        <TableCell>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                    aria-haspopup="true"
-                                    size="icon"
-                                    variant="ghost"
-                                    >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem asChild>
-                                      <Link href={`/dashboard/users/${user.id}`}>View Details</Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>Login as User</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-destructive">
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+               {loading && <div className="text-center p-8">Loading users... Please wait.</div>}
+               
+               {error && <div className="text-center p-8 text-red-500">{error}</div>}
+
+               {!loading && !error && users.length === 0 && (
+                   <div className="text-center p-8 text-muted-foreground">No users found in the database.</div>
+               )}
+
+               {!loading && !error && users.length > 0 && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>
+                          <span className="sr-only">Actions</span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                         <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                                <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 hover:underline">
+                                    <Image src={user.avatar || `https://placehold.co/40x40.png?text=${(user.fullName || 'U').charAt(0)}`} width={40} height={40} alt={user.fullName || 'User'} className="rounded-full" data-ai-hint="user avatar" />
+                                    <div>
+                                        <div>{user.fullName || 'Unnamed User'}</div>
+                                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                                    </div>
+                                </Link>
+                            </TableCell>
+                            <TableCell>
+                               <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>{user.role || 'Merchant'}</Badge>
+                            </TableCell>
+                            <TableCell>
+                               <Badge variant={user.status === 'Active' ? 'default' : 'outline'}>{user.status || 'Active'}</Badge>
+                            </TableCell>
+                             <TableCell>{user.plan || 'Free'}</TableCell>
+                            <TableCell>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                        aria-haspopup="true"
+                                        size="icon"
+                                        variant="ghost"
+                                        >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem asChild>
+                                          <Link href={`/dashboard/users/${user.id}`}>View Details</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem>Login as User</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-destructive">
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 )}
             </CardContent>
             <CardFooter>

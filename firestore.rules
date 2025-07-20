@@ -3,16 +3,16 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow any authenticated user to read the list of users.
-    // This is required for the admin dashboard to display the user list.
-    // Writes are still restricted to prevent unauthorized modifications.
+    // Allow read access to the users collection for any authenticated user.
+    // This is necessary for the client-side user list fetching.
+    // Write access is restricted to the user themselves to update their own profile.
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Default deny all other collections for security
+
+    // Default deny all other collections for now.
+    // Add rules for other collections as needed.
     match /{document=**} {
       allow read, write: if false;
     }
