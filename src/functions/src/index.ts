@@ -7,7 +7,7 @@
  *
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
-import { auth, https } from "firebase-functions";
+import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();

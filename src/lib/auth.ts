@@ -21,16 +21,10 @@ interface UserData {
 }
 
 async function getUserRole(user: User): Promise<string> {
-    try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().role) {
-            return userDoc.data().role;
-        }
-        return 'merchant'; // Default role
-    } catch (error) {
-        console.error("Error getting user role from firestore:", error);
-        return 'merchant'; // Default role on error
-    }
+    // Force a token refresh to get the latest custom claims.
+    await user.getIdToken(true);
+    const decodedToken = await user.getIdTokenResult();
+    return decodedToken.claims.role || 'merchant';
 }
 
 async function isFirstUser(): Promise<boolean> {
@@ -42,24 +36,32 @@ async function isFirstUser(): Promise<boolean> {
 
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
-        const firstUser = await isFirstUser();
-        const role = firstUser ? 'admin' : 'merchant';
+        const isFirst = await isFirstUser();
+        const role = isFirst ? 'admin' : 'merchant';
         
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        // The Cloud Function 'addDefaultRoleClaim' will run and set the 'merchant' claim.
+        // If this is the first user, we override it to 'admin' right after.
+        if (isFirst) {
+            await admin.auth().setCustomUserClaims(user.uid, { role: 'admin' });
+            console.log(`First user detected. Overriding claim to 'admin' for user: ${user.uid}`);
+        }
+
+        // Now save the user document to Firestore with the correct role.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: role,
+            role: role, // Save the determined role in Firestore
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
         }, { merge: true });
         
-        console.log(`User created with role: ${role}`);
+        console.log(`User document created with role: ${role}`);
         return { success: true, userId: user.uid };
     } catch (error: any) {
         console.error("Error creating user:", error);
@@ -73,14 +75,15 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const user = userCredential.user;
         
         const role = await getUserRole(user);
+        console.log(`User ${user.uid} signed in with role: ${role}`);
 
         if (loginType === 'admin' && role !== 'admin') {
-             await signOut(auth); // Sign out the user
+            await signOut(auth); // Sign out the user
             return { success: false, error: "Access denied. Only administrators can log in here." };
         }
 
         if (loginType === 'merchant' && role === 'admin') {
-             await signOut(auth); // Sign out the user
+            await signOut(auth); // Sign out the user
             return { success: false, error: "Admin accounts should use the Admin Login page." };
         }
 
@@ -118,9 +121,17 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
+        let role = 'merchant'; // Default for social sign-in
+
         if (!userDoc.exists()) {
-             const firstUser = await isFirstUser();
-             const role = firstUser ? 'admin' : 'merchant';
+             const isFirst = await isFirstUser();
+             role = isFirst ? 'admin' : 'merchant';
+
+             // Set custom claim if it's the first user
+             if (isFirst) {
+                await admin.auth().setCustomUserClaims(user.uid, { role: 'admin' });
+             }
+
             await setDoc(userDocRef, {
                 uid: user.uid,
                 email: user.email,
@@ -132,9 +143,9 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
                 createdAt: serverTimestamp(),
             }, { merge: true });
              console.log(`Social user created with role: ${role}`);
+        } else {
+            role = await getUserRole(user);
         }
-        
-        const role = await getUserRole(user);
         
         if (role === 'admin') {
             await signOut(auth);
