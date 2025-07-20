@@ -1,20 +1,23 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read access to the users collection for any authenticated user.
-    // This is necessary for the client-side user list fetching.
-    // Write access is restricted to the user themselves to update their own profile.
+
+    // Allow users to access only their own document
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Admins can read/write any user document
+      allow read, write: if request.auth.token.role == 'admin';
+      
+      // Logged-in users can read, create, update their own document
+      allow read, create, update: if request.auth.uid == userId;
+      
+      // Deletion restricted to admin only
+      allow delete: if request.auth.token.role == 'admin';
     }
 
-    // Default deny all other collections for now.
-    // Add rules for other collections as needed.
+    // All other documents in any collection (wildcard)
     match /{document=**} {
-      allow read, write: if false;
+      // Admins can read/write everything
+      allow read, write: if request.auth.token.role == 'admin';
     }
   }
 }
