@@ -1,24 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 👤 USERS collection
     match /users/{userId} {
-      // 1. Any authenticated user can create their own user document.
+
+      // 1️⃣ Koi bhi naya user apna document bana sakta hai
       allow create: if request.auth.uid == userId;
 
-      // 2. Admins can list all users.
-      allow list: if request.auth.token.role == 'admin';
-      
-      // 3. Admins can get any user's document.
-      //    Users can only get their own document.
+      // 2️⃣ Admin kisi bhi user ka data dekh sakta hai, user apna hi dekh sakta hai
       allow get: if request.auth.token.role == 'admin' || request.auth.uid == userId;
 
-      // 4. Admins can update any user's document.
-      //    Users can update their own document, BUT CANNOT update the 'role' field.
+      // 3️⃣ Admin kisi bhi user ka document update kar sakta hai
+      //     User apna document update kar sakta hai, lekin 'role' nahi
       allow update: if (request.auth.token.role == 'admin') || 
-                       (request.auth.uid == userId && !('role' in request.resource.data));
-      
-      // 5. No one can delete users from the client. Deletion should be handled server-side or in console.
-      allow delete: if false;
+                    (request.auth.uid == userId && !('role' in request.resource.data));
+
+      // 4️⃣ Sirf admin user documents delete kar sakta hai
+      allow delete: if request.auth.token.role == 'admin';
+    }
+
+    // 5️⃣ Sirf admin sabhi users ki list dekh sakta hai (dashboard ke liye)
+    match /users/{document=**} {
+      allow list: if request.auth.token.role == 'admin';
     }
   }
 }
