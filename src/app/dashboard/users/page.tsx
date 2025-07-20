@@ -103,14 +103,6 @@ export default function UsersPage() {
     };
 
     const renderContent = () => {
-        if (!currentUser && loading) {
-            return <div className="text-center p-8 text-muted-foreground">Authenticating... Please wait.</div>;
-        }
-
-        if (!currentUser) {
-            return <div className="text-center p-8 text-destructive font-semibold">You must be logged in to view this page. Redirecting to login...</div>;
-        }
-
         if (loading) {
             return <div className="text-center p-8 text-muted-foreground">Loading users...</div>;
         }
