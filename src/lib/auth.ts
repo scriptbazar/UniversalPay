@@ -12,7 +12,7 @@ import {
     signInWithPopup,
     type User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, query, limit } from "firebase/firestore";
 
 interface UserData {
     fullName: string;
@@ -35,7 +35,8 @@ async function getUserRole(user: User): Promise<string> {
 
 async function isFirstUser(): Promise<boolean> {
     const usersCollectionRef = collection(db, "users");
-    const querySnapshot = await getDocs(usersCollectionRef);
+    const q = query(usersCollectionRef, limit(1));
+    const querySnapshot = await getDocs(q);
     return querySnapshot.empty;
 }
 
@@ -66,12 +67,23 @@ export async function createUser(email: string, password: string, additionalData
     }
 }
 
-export async function signInUser(email: string, password: string) {
+export async function signInUser(email: string, password: string, loginType: 'admin' | 'merchant') {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
         const role = await getUserRole(user);
+
+        if (loginType === 'admin' && role !== 'admin') {
+             await signOut(auth); // Sign out the user
+            return { success: false, error: "Access denied. Only administrators can log in here." };
+        }
+
+        if (loginType === 'merchant' && role === 'admin') {
+             await signOut(auth); // Sign out the user
+            return { success: false, error: "Admin accounts should use the Admin Login page." };
+        }
+
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
 
@@ -123,6 +135,12 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         }
         
         const role = await getUserRole(user);
+        
+        if (role === 'admin') {
+            await signOut(auth);
+            return { success: false, error: 'Admin accounts cannot use social login.' };
+        }
+
         const finalUserDoc = await getDoc(userDocRef);
 
         return { success: true, user: { uid: user.uid, role, ...finalUserDoc.data() } };

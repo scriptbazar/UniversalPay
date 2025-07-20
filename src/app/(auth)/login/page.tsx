@@ -13,8 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
 import { signInUser, signInWithSocial } from "@/lib/auth";
 
-type LoginStep = 'credentials' | 'otp';
-
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
         <title>Google</title>
@@ -42,10 +40,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [step, setStep] = useState<LoginStep>('credentials');
-  const [user, setUser] = useState<any>(null); // To store user data after credential check
   const [isLoading, setIsLoading] = useState(false);
 
   const isMerchantCaptchaEnabled = process.env.NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA === 'true';
@@ -65,22 +60,16 @@ export default function LoginPage() {
     }
     
     try {
-      const { success, user, error } = await signInUser(email, password);
+      const { success, user, error } = await signInUser(email, password, 'merchant');
       
       if (success && user) {
-        setUser(user);
-        if (user.role === 'admin') {
-            toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
-            router.push('/dashboard');
-        } else {
-            toast({ title: "Login Successful", description: "Welcome back to your Merchant Dashboard!" });
-            router.push('/merchant/dashboard');
-        }
+        toast({ title: "Login Successful", description: "Welcome back to your Merchant Dashboard!" });
+        router.push('/merchant/dashboard');
       } else {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: error || "Invalid credentials. Please try again.",
+          description: error || "Invalid credentials or not a merchant account.",
         });
       }
     } catch (error: any) {
@@ -94,37 +83,13 @@ export default function LoginPage() {
     }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp.length === 6 && /^\d+$/.test(otp)) {
-        if (user?.role === 'admin') {
-            toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
-            router.push('/dashboard');
-        } else {
-            toast({ title: "Login Successful", description: "Welcome back to your Merchant Dashboard!" });
-            router.push('/merchant/dashboard');
-        }
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Invalid OTP",
-            description: "Please enter a valid 6-digit OTP.",
-        });
-    }
-  };
-
   const handleSocialLogin = async (provider: 'google' | 'github' | 'facebook') => {
     setIsLoading(true);
     try {
         const { success, user, error } = await signInWithSocial(provider);
         if (success && user) {
-            if (user.role === 'admin') {
-                toast({ title: "Admin Login Successful", description: `Welcome back, ${user.fullName}!` });
-                router.push('/dashboard');
-            } else {
-                toast({ title: "Login Successful", description: `Welcome back, ${user.fullName}!` });
-                router.push('/merchant/dashboard');
-            }
+            toast({ title: "Login Successful", description: `Welcome back, ${user.fullName}!` });
+            router.push('/merchant/dashboard');
         } else {
             toast({
                 variant: "destructive",
@@ -146,115 +111,80 @@ export default function LoginPage() {
 
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
-        {step === 'credentials' && (
-            <Card className="w-full max-w-md shadow-xl">
-                <CardHeader className="space-y-1 text-center">
-                <div className="flex justify-center mb-4">
-                    <Logo />
+        <Card className="w-full max-w-md shadow-xl">
+            <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+                <Logo />
+            </div>
+            <CardTitle className="text-2xl">Merchant Login</CardTitle>
+            <CardDescription>Enter your credentials to access your merchant dashboard</CardDescription>
+            </CardHeader>
+            <form onSubmit={handleCredentialSubmit}>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="m@example.com" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                />
                 </div>
-                <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                <CardDescription>Enter your credentials to access your account</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleCredentialSubmit}>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="m@example.com" 
-                        required 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isLoading}
-                    />
-                    </div>
-                    <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
-                        <Link href="#" className="text-sm text-primary hover:underline">
-                        Forgot password?
-                        </Link>
-                    </div>
-                    <Input 
-                        id="password" 
-                        type="password" 
-                        required 
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={isLoading}
-                    />
-                    </div>
-                    {isMerchantCaptchaEnabled && (
-                        <div className="flex justify-center">
-                        <ReCAPTCHA
-                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
-                                onChange={(token) => setRecaptchaToken(token)}
-                            />
-                        </div>
-                    )}
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                    <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
-                        {isLoading ? 'Logging in...' : 'Log In'}
-                    </Button>
-                    <div className="relative w-full">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-2 w-full">
-                        <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('google')} disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                        <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('github')} disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
-                        <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('facebook')} disabled={isLoading}><FacebookIcon className="mr-2 h-4 w-4" /> Facebook</Button>
-                    </div>
-                    <p className="text-sm text-center text-muted-foreground mt-4">
-                    Don't have an account?{' '}
-                    <Link href="/signup" className="font-semibold text-primary hover:underline">
-                        Sign up
+                <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link href="#" className="text-sm text-primary hover:underline">
+                    Forgot password?
                     </Link>
-                    </p>
-                </CardFooter>
-                </form>
-            </Card>
-        )}
-
-        {step === 'otp' && (
-             <Card className="w-full max-w-md shadow-xl">
-                <CardHeader className="space-y-1 text-center">
-                    <div className="flex justify-center mb-4">
-                        <Logo />
+                </div>
+                <Input 
+                    id="password" 
+                    type="password" 
+                    required 
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                />
+                </div>
+                {isMerchantCaptchaEnabled && (
+                    <div className="flex justify-center">
+                    <ReCAPTCHA
+                            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
+                            onChange={(token) => setRecaptchaToken(token)}
+                        />
                     </div>
-                    <CardTitle className="text-2xl">Two-Step Verification</CardTitle>
-                    <CardDescription>Enter the 6-digit code from your authenticator app.</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleOtpSubmit}>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="otp">One-Time Password</Label>
-                            <Input 
-                                id="otp" 
-                                type="text"
-                                maxLength={6}
-                                placeholder="_ _ _ _ _ _" 
-                                required 
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                className="text-center tracking-[0.5em]"
-                            />
-                        </div>
-                    </CardContent>
-                    <CardFooter className="flex-col gap-4">
-                        <Button className="w-full" type="submit">Verify</Button>
-                        <Button variant="link" onClick={() => setStep('credentials')}>Back to Login</Button>
-                    </CardFooter>
-                </form>
-            </Card>
-        )}
+                )}
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
+                    {isLoading ? 'Logging in...' : 'Log In'}
+                </Button>
+                <div className="relative w-full">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                    </div>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 w-full">
+                    <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('google')} disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
+                    <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('github')} disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
+                    <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('facebook')} disabled={isLoading}><FacebookIcon className="mr-2 h-4 w-4" /> Facebook</Button>
+                </div>
+                <p className="text-sm text-center text-muted-foreground mt-4">
+                Don't have an account?{' '}
+                <Link href="/signup" className="font-semibold text-primary hover:underline">
+                    Sign up
+                </Link>
+                </p>
+            </CardFooter>
+            </form>
+        </Card>
     </div>
   );
 }

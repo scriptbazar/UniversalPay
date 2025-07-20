@@ -130,7 +130,7 @@ export default function SignupPage() {
           <div className="flex justify-center mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
+          <CardTitle className="text-2xl">Create a Merchant Account</CardTitle>
           <CardDescription>Join UniversalPay and start accepting payments today</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>

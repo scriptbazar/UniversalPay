@@ -1,0 +1,189 @@
+
+'use client';
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/logo";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import ReCAPTCHA from "react-google-recaptcha";
+import { signInUser } from "@/lib/auth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldCheck } from "lucide-react";
+
+export default function AdminLoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
+
+  const isAdminCaptchaEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN_CAPTCHA === 'true';
+  const isAdmin2faEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN_2FA !== 'false';
+
+  const handleCredentialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (isAdminCaptchaEnabled && !recaptchaToken) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: "Please complete the reCAPTCHA challenge.",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const { success, user, error } = await signInUser(email, password, 'admin');
+      
+      if (success && user) {
+        if (isAdmin2faEnabled) {
+            setShowOtp(true);
+            toast({ title: "Verification Required", description: "Please enter your One-Time Password." });
+        } else {
+            toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
+            router.push('/dashboard');
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Admin Login Failed",
+          description: error || "Invalid credentials or not an admin account.",
+        });
+      }
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Login Error",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // This is a placeholder for actual OTP validation logic
+    if (otp.length === 6 && /^\d+$/.test(otp)) {
+        toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
+        router.push('/dashboard');
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Invalid OTP",
+            description: "Please enter a valid 6-digit OTP.",
+        });
+    }
+  };
+
+  return (
+    <div className="flex-grow flex items-center justify-center bg-background p-4">
+      {!showOtp ? (
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <Logo />
+            </div>
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
+            <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
+          </CardHeader>
+          <form onSubmit={handleCredentialSubmit}>
+            <CardContent className="space-y-4">
+               <Alert>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>Secure Access</AlertTitle>
+                <AlertDescription>
+                  This login page is for authorized administrators only.
+                </AlertDescription>
+              </Alert>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="admin@example.com" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              {isAdminCaptchaEnabled && (
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_SITE_KEY"}
+                    onChange={(token) => setRecaptchaToken(token)}
+                  />
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
+                {isLoading ? 'Logging in...' : 'Log In'}
+              </Button>
+               <p className="text-sm text-center text-muted-foreground mt-4">
+                Not an admin?{' '}
+                <Link href="/login" className="font-semibold text-primary hover:underline">
+                    Go to Merchant Login
+                </Link>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
+      ) : (
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <Logo />
+            </div>
+            <CardTitle className="text-2xl">Two-Step Verification</CardTitle>
+            <CardDescription>Enter the 6-digit code from your authenticator app.</CardDescription>
+          </CardHeader>
+          <form onSubmit={handleOtpSubmit}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">One-Time Password</Label>
+                <Input 
+                  id="otp" 
+                  type="text"
+                  maxLength={6}
+                  placeholder="_ _ _ _ _ _" 
+                  required 
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="text-center tracking-[0.5em]"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex-col gap-4">
+              <Button className="w-full" type="submit">Verify</Button>
+              <Button variant="link" onClick={() => setShowOtp(false)}>Back to Login</Button>
+            </CardFooter>
+          </form>
+        </Card>
+      )}
+    </div>
+  );
+}
