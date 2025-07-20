@@ -1,27 +1,13 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Rules for the 'users' collection
+    // Grant admins read access (get, list) to the entire users collection.
+    // Grant non-admins access only to their own document.
     match /users/{userId} {
-      // Allow admin to perform any action on any user document.
-      allow read, create, update, delete: if request.auth.token.role == 'admin';
-
-      // Allow a non-admin user to read their own document.
-      allow get: if request.auth.uid == userId;
-    }
-
-    // Explicitly allow admins to list the entire 'users' collection.
-    // This is the key rule that fixes the "Permission Denied" error on the users page.
-    match /users/{document=**} {
-        allow list: if request.auth.token.role == 'admin';
-    }
-
-    // By default, deny access to all other collections.
-    // This is a security best practice. Add specific rules for other collections as needed.
-    match /{path=**}/documents/{document} {
-      allow read, write: if false;
+      allow read: if request.auth.token.role == 'admin';
+      allow get, update: if request.auth.uid == userId;
     }
   }
 }
