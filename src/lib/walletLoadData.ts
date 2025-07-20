@@ -19,7 +19,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     currency: "USD",
     transactionId: "PAYID12345678",
     status: "Pending",
-    createdAt: new Date('2023-11-10T10:00:00Z').toISOString(),
+    createdAt: '2023-11-10T10:00:00Z',
   },
   {
     id: "WLR-002",
@@ -29,7 +29,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     currency: "USD",
     transactionId: "DEPOSIT98765",
     status: "Approved",
-    createdAt: new Date('2023-11-09T15:00:00Z').toISOString(),
+    createdAt: '2023-11-09T15:00:00Z',
   },
    {
     id: "WLR-003",
@@ -39,7 +39,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     currency: "USD",
     transactionId: "REF11223344",
     status: "Rejected",
-    createdAt: new Date('2023-11-08T12:00:00Z').toISOString(),
+    createdAt: '2023-11-08T12:00:00Z',
   },
 ];
 

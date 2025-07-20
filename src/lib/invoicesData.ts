@@ -82,7 +82,9 @@ let invoices: Invoice[] = [
 
 // Helper to check for overdue invoices
 const checkOverdueInvoices = () => {
-    const today = new Date();
+    // This function is now static and won't cause hydration issues.
+    // For real-world apps, this logic would be server-side.
+    const today = new Date("2023-11-15T00:00:00Z"); // Use a fixed date for consistent behavior
     invoices.forEach(invoice => {
         if (invoice.status === 'Pending' && new Date(invoice.dueDate) < today) {
             invoice.status = 'Overdue';
