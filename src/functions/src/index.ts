@@ -9,8 +9,10 @@
  */
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 
 admin.initializeApp();
+const db = getFirestore();
 
 // This function now only assigns a default 'merchant' role upon creation.
 // This simplifies the logic and removes potential points of failure.
@@ -22,6 +24,15 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
       role: role,
     });
     console.log(`Custom claim '${role}' set for user: ${user.uid}`);
+
+    // Also, ensure the user document exists in Firestore with the default role
+    const userDocRef = db.collection("users").doc(user.uid);
+    await userDocRef.set({
+        role: role
+    }, { merge: true });
+    
+    console.log(`Firestore role '${role}' set for user: ${user.uid}`);
+
   } catch (error) {
     console.error(`Error setting custom claim for user: ${user.uid}`, error);
   }
