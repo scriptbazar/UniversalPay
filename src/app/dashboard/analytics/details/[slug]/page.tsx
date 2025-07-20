@@ -14,10 +14,44 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 
-// --- MOCK DATA REMOVED ---
 type Transaction = { id: string; merchant: string; amount: string; date: string; month: string; status: 'Successful' | 'Failed' };
 type User = { id: string; name: string; email: string; avatar: string; joined: string; month: string };
-// --- END MOCK DATA REMOVED ---
+
+const generateMockData = () => {
+    const months = ["jan", "feb", "mar", "apr", "may", "jun"];
+    const users: User[] = [];
+    const transactions: Transaction[] = [];
+
+    for (let i = 0; i < 50; i++) {
+        const monthIndex = i % 6;
+        const month = months[monthIndex];
+        users.push({
+            id: `user_${i + 1}`,
+            name: `User ${i + 1}`,
+            email: `user${i+1}@example.com`,
+            avatar: `https://placehold.co/40x40.png?text=U${i+1}`,
+            joined: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
+            month: month,
+        });
+    }
+
+    for (let i = 0; i < 150; i++) {
+         const monthIndex = i % 6;
+         const month = months[monthIndex];
+         const success = Math.random() > 0.2;
+         transactions.push({
+            id: `txn_${i + 1}`,
+            merchant: `Merchant ${i % 10 + 1}`,
+            amount: (Math.random() * 200 + 10).toFixed(2),
+            date: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
+            month: month,
+            status: success ? 'Successful' : 'Failed'
+         });
+    }
+
+    return { users, transactions };
+};
+
 
 type DetailDialogContent = {
     type: 'user' | 'transaction';
@@ -47,9 +81,9 @@ export default function AnalyticsDetailPage() {
     
     useEffect(() => {
         if (!slug) return;
-        
-        // In a real app, you would fetch data based on the slug here.
-        // For now, it will be empty as mock data is removed.
+
+        const { users, transactions } = generateMockData();
+
         const [type, month] = slug.split('_');
         
         let pageTitle = '';
@@ -61,6 +95,7 @@ export default function AnalyticsDetailPage() {
         switch(type) {
             case 'new-users':
                 pageTitle = `New Users in ${monthName}`;
+                fetchedData = users.filter(u => month === 'all' || u.month === month);
                 tableColumns = [
                     { header: 'Merchant', accessor: 'name' },
                     { header: 'Joined On', accessor: 'joined' },
@@ -68,6 +103,7 @@ export default function AnalyticsDetailPage() {
                 break;
             case 'total-transactions':
                 pageTitle = `Total Transactions in ${monthName}`;
+                fetchedData = transactions.filter(t => month === 'all' || t.month === month);
                  tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
                     { header: 'Status', accessor: 'status' },
@@ -76,6 +112,7 @@ export default function AnalyticsDetailPage() {
                 break;
             case 'successful-transactions':
                 pageTitle = `Successful Transactions in ${monthName}`;
+                fetchedData = transactions.filter(t => t.status === 'Successful' && (month === 'all' || t.month === month));
                 tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
                     { header: 'Merchant', accessor: 'merchant' },
@@ -84,6 +121,7 @@ export default function AnalyticsDetailPage() {
                 break;
             case 'new-merchants': // from stat card
                  pageTitle = 'All New Merchants';
+                 fetchedData = users;
                  tableColumns = [
                     { header: 'Merchant', accessor: 'name' },
                     { header: 'Joined On', accessor: 'joined' },
