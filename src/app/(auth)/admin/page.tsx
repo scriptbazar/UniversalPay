@@ -12,14 +12,13 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { signInUser } from "@/lib/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Info } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
 
@@ -35,7 +34,7 @@ export default function AdminLoginPage() {
       if (success && user) {
         if (isAdmin2faEnabled) {
             setShowOtp(true);
-            toast({ title: "Verification Required", description: "Please enter your One-Time Password." });
+            toast({ title: "Verification Required", description: "Proceed to the next step." });
         } else {
             toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
             router.push('/dashboard');
@@ -58,19 +57,10 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleProceedToDashboard = (e: React.FormEvent) => {
     e.preventDefault();
-    // This is a placeholder for actual OTP validation logic
-    if (otp.length === 6 && /^\d+$/.test(otp)) {
-        toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
-        router.push('/dashboard');
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Invalid OTP",
-            description: "Please enter a valid 6-digit OTP.",
-        });
-    }
+    toast({ title: "Admin Login Successful", description: "Welcome back, Admin!" });
+    router.push('/dashboard');
   };
 
   return (
@@ -138,26 +128,20 @@ export default function AdminLoginPage() {
               <Logo />
             </div>
             <CardTitle className="text-2xl">Two-Step Verification</CardTitle>
-            <CardDescription>Enter the 6-digit code from your authenticator app.</CardDescription>
+            <CardDescription>This is a placeholder for a real 2FA implementation.</CardDescription>
           </CardHeader>
-          <form onSubmit={handleOtpSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otp">One-Time Password</Label>
-                <Input 
-                  id="otp" 
-                  type="text"
-                  maxLength={6}
-                  placeholder="_ _ _ _ _ _" 
-                  required 
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="text-center tracking-[0.5em]"
-                />
-              </div>
+          <form onSubmit={handleProceedToDashboard}>
+            <CardContent>
+                <Alert variant="destructive">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Feature Not Implemented</AlertTitle>
+                    <AlertDescription>
+                        A real-world app would integrate an authenticator app or SMS-based OTP. For now, you can proceed to the dashboard.
+                    </AlertDescription>
+                </Alert>
             </CardContent>
             <CardFooter className="flex-col gap-4">
-              <Button className="w-full" type="submit">Verify</Button>
+              <Button className="w-full" type="submit">Continue to Dashboard</Button>
               <Button variant="link" onClick={() => setShowOtp(false)}>Back to Login</Button>
             </CardFooter>
           </form>
