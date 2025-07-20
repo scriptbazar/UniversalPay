@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged, type User as AuthUser } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 interface User {
     id: string;
@@ -43,17 +44,20 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("Authentication state changed: User is logged in.", user);
+                console.log("Authentication state confirmed: User is logged in.", user.uid);
                 setCurrentUser(user);
                 fetchUsers();
             } else {
-                console.log("Authentication state changed: User is logged out.");
+                console.log("Authentication state confirmed: User is logged out.");
                 setCurrentUser(null);
                 setLoading(false);
+                // Optional: redirect to login if not authenticated
+                // router.push('/admin'); 
             }
         });
 
@@ -64,7 +68,7 @@ export default function UsersPage() {
     const fetchUsers = async () => {
         setLoading(true);
         setError(null);
-        console.log("Starting to fetch users from Firestore...");
+        console.log("Fetching users from Firestore...");
         try {
             if (!db) {
                 throw new Error("Firestore database is not initialized.");
@@ -82,7 +86,12 @@ export default function UsersPage() {
 
         } catch (err: any) {
             console.error("Error fetching users from Firestore: ", err);
-            setError("Failed to load users. Check the browser console for more details.");
+            // This is the specific error the user was seeing.
+            if (err.code === 'permission-denied') {
+                 setError("Permission Denied: Your account does not have the necessary permissions to view all users. Please check your security rules in Firebase to ensure admins can list the 'users' collection.");
+            } else {
+                setError(`Failed to load users: ${err.message}`);
+            }
             toast({
                 variant: "destructive",
                 title: "Failed to load users",
@@ -94,20 +103,24 @@ export default function UsersPage() {
     };
 
     const renderContent = () => {
-        if (loading) {
-            return <div className="text-center p-8">Loading users... Please wait.</div>;
+        if (!currentUser && loading) {
+            return <div className="text-center p-8 text-muted-foreground">Authenticating... Please wait.</div>;
         }
 
         if (!currentUser) {
-            return <div className="text-center p-8 text-red-500 font-semibold">You must be logged in to view this page. Please try logging in again.</div>;
+            return <div className="text-center p-8 text-destructive font-semibold">You must be logged in to view this page. Redirecting to login...</div>;
+        }
+
+        if (loading) {
+            return <div className="text-center p-8 text-muted-foreground">Loading users...</div>;
         }
         
         if (error) {
-            return <div className="text-center p-8 text-destructive">{error}</div>
+            return <div className="text-center p-8 text-destructive">{error}</div>;
         }
 
         if (users.length === 0) {
-            return <div className="text-center p-8 text-muted-foreground">No users found. This might be because the database is empty or there is a permission issue.</div>
+            return <div className="text-center p-8 text-muted-foreground">No users found in the database.</div>;
         }
 
         return (
