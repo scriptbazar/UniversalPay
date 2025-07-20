@@ -12,8 +12,7 @@ import {
     signInWithPopup,
     type User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import * as admin from "firebase-admin"; // Import admin SDK
+import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, query, limit } from "firebase/firestore";
 
 interface UserData {
     fullName: string;
@@ -21,50 +20,40 @@ interface UserData {
     [key: string]: any; 
 }
 
-async function getUserRole(user: User): Promise<string> {
-    // Force a token refresh to get the latest custom claims.
-    await user.getIdToken(true);
-    const decodedToken = await user.getIdTokenResult();
-    return decodedToken.claims.role || 'merchant';
+// Helper to get user's role from their token's custom claims.
+async function getRoleFromToken(user: User): Promise<string> {
+    await user.getIdToken(true); // Force refresh the token
+    const idTokenResult = await user.getIdTokenResult();
+    return idTokenResult.claims.role || 'merchant';
 }
 
-// Helper to check if a collection is empty.
-async function isCollectionEmpty(collectionPath: string): Promise<boolean> {
-    const collectionRef = collection(db, collectionPath);
-    const snapshot = await getDocs(query(collectionRef, limit(1)));
+// Helper to check if the users collection is empty.
+async function isUsersCollectionEmpty(): Promise<boolean> {
+    const usersCollectionRef = collection(db, "users");
+    const q = query(usersCollectionRef, limit(1));
+    const snapshot = await getDocs(q);
     return snapshot.empty;
 }
 
-
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
-        const isFirst = await isCollectionEmpty("users");
-        const role = isFirst ? 'admin' : 'merchant';
-        
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
-        // The Cloud Function will set the 'merchant' claim.
-        // If this is the first user, we override it to 'admin' in Firestore immediately.
-        // The custom claim itself will be set by the Cloud Function, but we can manage the DB role here.
+
+        // The associated Cloud Function (functions/src/index.ts) is responsible
+        // for setting the initial custom claim to 'merchant'.
+        // We will also set the role in Firestore here for consistency.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: role, // Set the determined role in Firestore
+            role: 'merchant', // Default role in Firestore
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
         }, { merge: true });
 
-        // If it's the first user, we also need to explicitly set their custom claim to admin.
-        // This is best done via a backend/cloud function, but for simplicity here,
-        // we'll rely on the idea that the first user will have their role elevated.
-        // The Cloud Function is the most reliable way to set claims.
-        // Let's adjust the cloud function to handle this logic.
-        
-        console.log(`User document created with intended role: ${role}`);
         return { success: true, userId: user.uid };
     } catch (error: any) {
         console.error("Error creating user:", error);
@@ -76,30 +65,49 @@ export async function signInUser(email: string, password: string, loginType: 'ad
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
-        const role = await getUserRole(user);
-        console.log(`User ${user.uid} signed in with role: ${role}`);
 
-        if (loginType === 'admin' && role !== 'admin') {
-            await signOut(auth); // Sign out the user
+        // **PRIMARY FIX:** Directly fetch the user's role from Firestore.
+        // This is more reliable than waiting for token propagation.
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            await signOut(auth);
+            return { success: false, error: "User data not found in database." };
+        }
+
+        const userData = userDoc.data();
+        const firestoreRole = userData.role || 'merchant';
+
+        // Security Check: Enforce login page types
+        if (loginType === 'admin' && firestoreRole !== 'admin') {
+            await signOut(auth);
             return { success: false, error: "Access denied. Only administrators can log in here." };
         }
 
-        if (loginType === 'merchant' && role === 'admin') {
-            await signOut(auth); // Sign out the user
+        if (loginType === 'merchant' && firestoreRole === 'admin') {
+            await signOut(auth);
             return { success: false, error: "Admin accounts should use the Admin Login page." };
         }
-
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-
-        return { success: true, user: { uid: user.uid, role, ...userData } };
         
-    } catch (error: any) {
+        // Also get role from token for other parts of the app that might use it
+        const tokenRole = await getRoleFromToken(user);
+        
+        console.log(`User ${user.uid} signed in. Firestore Role: ${firestoreRole}, Token Role: ${tokenRole}`);
+
+        return { success: true, user: { uid: user.uid, ...userData } };
+        
+    } catch (error: any)
+        {
         console.error("Error signing in:", error);
-        return { success: false, error: error.message };
+        let errorMessage = error.message;
+        if (error.code === 'auth/invalid-credential') {
+            errorMessage = 'Invalid email or password. Please try again.';
+        }
+        return { success: false, error: errorMessage };
     }
 }
+
 
 export async function signInWithSocial(providerName: 'google' | 'github' | 'facebook') {
     let provider;
@@ -124,32 +132,28 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
-        let role = 'merchant'; // Default for social sign-in
-
         if (!userDoc.exists()) {
-             // The cloud function will assign the 'merchant' role by default.
             await setDoc(userDocRef, {
                 uid: user.uid,
                 email: user.email,
                 fullName: user.displayName || 'Social User',
                 avatar: user.photoURL,
-                role: 'merchant', // Firestore role
+                role: 'merchant',
                 status: 'Active',
                 plan: 'Free',
                 createdAt: serverTimestamp(),
             }, { merge: true });
-        } else {
-            role = await getUserRole(user);
         }
         
-        if (role === 'admin') {
+        const finalUserDoc = await getDoc(userDocRef);
+        const userData = finalUserDoc.data();
+
+        if (userData?.role === 'admin') {
             await signOut(auth);
             return { success: false, error: 'Admin accounts cannot use social login.' };
         }
 
-        const finalUserDoc = await getDoc(userDocRef);
-
-        return { success: true, user: { uid: user.uid, role, ...finalUserDoc.data() } };
+        return { success: true, user: { uid: user.uid, ...userData } };
 
     } catch (error: any) {
         console.error(`Error with ${providerName} sign-in:`, error);

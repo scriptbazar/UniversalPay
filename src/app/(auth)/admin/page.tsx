@@ -32,6 +32,7 @@ export default function AdminLoginPage() {
       const { success, user, error } = await signInUser(email, password, 'admin');
       
       if (success && user) {
+        // The role check is now inside signInUser
         if (isAdmin2faEnabled) {
             setShowOtp(true);
             toast({ title: "Verification Required", description: "Proceed to the next step." });
