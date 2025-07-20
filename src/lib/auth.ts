@@ -13,7 +13,6 @@ import {
     type User
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { setAdminClaimForCurrentUser } from './admin-actions';
 
 
 interface UserData {
@@ -25,17 +24,14 @@ interface UserData {
 
 async function getUserRole(user: User): Promise<string> {
     try {
-        await user.getIdToken(true); // Force refresh the token
-        const idTokenResult = await user.getIdTokenResult();
-        return idTokenResult.claims.role || 'merchant';
-    } catch (error) {
-        console.error("Error getting user role from token:", error);
-        // Fallback to Firestore if token check fails
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && userDoc.data().role) {
             return userDoc.data().role;
         }
         return 'merchant'; // Default role
+    } catch (error) {
+        console.error("Error getting user role from firestore:", error);
+        return 'merchant'; // Default role on error
     }
 }
 
@@ -45,18 +41,19 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function will assign a 'merchant' custom claim upon creation.
-        // We still write to Firestore for user profile data.
+        // The Cloud Function `addUserRoleToFirestore` will automatically create a
+        // document with the 'merchant' role. Here, we just add the profile data.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: 'merchant', // Default role in Firestore
+            // The role will be set by the cloud function, but we can set a default here.
+            role: 'merchant',
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
-        });
+        }, { merge: true }); // use merge to be safe
         
         return { success: true, userId: user.uid };
     } catch (error: any) {
@@ -70,12 +67,7 @@ export async function signInUser(email: string, password: string) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // After successful sign-in, check if this user *should* be an admin.
-        // This server action will set the claim if the email matches.
-        await setAdminClaimForCurrentUser(user.uid);
-
-        // Get the role and other data to return to the client.
+        
         const role = await getUserRole(user);
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.exists() ? userDoc.data() : {};
@@ -112,6 +104,8 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
+        // The cloud function will handle creating the user doc if it doesn't exist
+        // but we can ensure it's created immediately on the client as a fallback.
         if (!userDoc.exists()) {
             await setDoc(userDocRef, {
                 uid: user.uid,
@@ -122,10 +116,9 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
                 status: 'Active',
                 plan: 'Free',
                 createdAt: serverTimestamp(),
-            });
+            }, { merge: true });
         }
         
-        await setAdminClaimForCurrentUser(user.uid);
         const role = await getUserRole(user);
         const finalUserDoc = await getDoc(userDocRef);
 

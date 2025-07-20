@@ -42,13 +42,13 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface User {
     id: string;
-    fullName: string;
-    email: string;
+    fullName?: string;
+    email?: string;
     plan?: string;
     status?: string;
     avatar?: string;
@@ -64,18 +64,20 @@ export default function UsersPage() {
         const loadUsers = async () => {
             setLoading(true);
             try {
-                const functions = getFunctions(app);
-                const getUsers = httpsCallable(functions, 'getUsers');
-                const result = await getUsers();
-                const userList = result.data as User[];
+                // This is a direct client-side fetch. It relies on the firestore.rules.
+                const querySnapshot = await getDocs(collection(db, "users"));
+                const userList: User[] = [];
+                querySnapshot.forEach((doc) => {
+                    userList.push({ id: doc.id, ...doc.data() } as User);
+                });
                 setUsers(userList);
 
             } catch (error: any) {
-                console.error("Error fetching users via function: ", error);
+                console.error("Error fetching users from Firestore: ", error);
                 toast({
                     variant: "destructive",
                     title: "Failed to load users",
-                    description: error.message || "Please check the console and function logs.",
+                    description: "Could not fetch users from the database. Please check Firestore security rules and console for errors.",
                 });
             } finally {
                 setLoading(false);
@@ -138,9 +140,9 @@ export default function UsersPage() {
                      <TableRow key={user.id}>
                         <TableCell className="font-medium">
                             <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 hover:underline">
-                                <Image src={user.avatar || `https://placehold.co/40x40.png?text=${user.fullName.charAt(0)}`} width={40} height={40} alt={user.fullName} className="rounded-full" data-ai-hint="user avatar" />
+                                <Image src={user.avatar || `https://placehold.co/40x40.png?text=${(user.fullName || 'U').charAt(0)}`} width={40} height={40} alt={user.fullName || 'User'} className="rounded-full" data-ai-hint="user avatar" />
                                 <div>
-                                    <div>{user.fullName}</div>
+                                    <div>{user.fullName || 'Unnamed User'}</div>
                                     <div className="text-sm text-muted-foreground">{user.email}</div>
                                 </div>
                             </Link>
