@@ -12,14 +12,21 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
-// This function now only assigns a default 'merchant' role upon creation
-// by writing directly to the user's document in Firestore.
-// This is more reliable than custom claims for this use case.
+// This function assigns a role to new users.
+// It makes the VERY FIRST user an 'admin', and all subsequent users 'merchant'.
 exports.addUserRoleToFirestore = auth.user().onCreate(async (user) => {
-  const role = "merchant"; // Default role for all new users
+  const usersCollection = admin.firestore().collection("users");
+  
+  // Check if this is the first user document being created.
+  // We check for 2 because this function runs AFTER the user is created,
+  // but before the document might be written from the client.
+  // A count of 1 or 0 means this is the first real user.
+  const snapshot = await usersCollection.limit(2).get();
+  
+  const role = (snapshot.size <= 1) ? "admin" : "merchant";
 
   try {
-    const userRef = admin.firestore().collection("users").doc(user.uid);
+    const userRef = usersCollection.doc(user.uid);
     await userRef.set({
         role: role,
         email: user.email,
