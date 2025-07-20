@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 
-// Mock data, in a real app this would be fetched from an API
+// Mock data generation function
 const generateMockTransactions = () => {
     return Array.from({ length: 6 * 50 }, (_, i) => {
         const monthIndex = Math.floor(i / 50);
@@ -56,6 +56,7 @@ export default function MonthlyTransactionsPage() {
     }, []);
 
     const monthlyTransactions = useMemo(() => {
+        if (!allMockTransactions.length) return [];
         return allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
     }, [month, allMockTransactions]);
 

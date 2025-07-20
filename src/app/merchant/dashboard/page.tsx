@@ -82,7 +82,14 @@ const generateAllTransactions = () => {
     });
 };
 
-type Transaction = ReturnType<typeof generateAllTransactions>[0];
+type Transaction = {
+    id: string;
+    name: string;
+    email: string;
+    amount: string;
+    status: "Success" | "Failed";
+    date: Date;
+};
 
 interface DashboardProps {
   merchantName?: string;
