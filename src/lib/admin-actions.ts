@@ -23,6 +23,7 @@ if (!admin.apps.length) {
 export async function setAdminClaimForCurrentUser(uid: string) {
     try {
         // This environment variable should be set in your hosting environment's settings.
+        // For local development, you can replace process.env.ADMIN_EMAIL with your actual email string.
         const adminEmail = process.env.ADMIN_EMAIL; 
         if (!adminEmail) {
             console.log('ADMIN_EMAIL environment variable is not set. Skipping admin claim check.');
@@ -33,8 +34,9 @@ export async function setAdminClaimForCurrentUser(uid: string) {
         
         // If the user's email matches the admin email, set the custom claim.
         if (user.email === adminEmail) {
-            if (user.customClaims?.role !== 'admin') {
-                await admin.auth().setCustomUserClaims(uid, { role: 'admin' });
+            const currentClaims = user.customClaims || {};
+            if (currentClaims.role !== 'admin') {
+                await admin.auth().setCustomUserClaims(uid, { ...currentClaims, role: 'admin' });
                 console.log(`Admin role granted to ${user.email}`);
                 return { success: true, message: `Admin role granted to ${user.email}` };
             }

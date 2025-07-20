@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -58,8 +59,8 @@ interface User {
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [authChecked, setAuthChecked] = useState(false); // New state to track if auth check is complete
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // New state to track login status
+    const [authChecked, setAuthChecked] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -69,12 +70,11 @@ export default function UsersPage() {
                 fetchUsers();
             } else {
                 setIsLoggedIn(false);
-                setLoading(false); // Stop loading if user is not logged in
+                setLoading(false);
             }
-            setAuthChecked(true); // Mark auth check as complete
+            setAuthChecked(true);
         });
 
-        // Cleanup subscription on unmount
         return () => unsubscribe();
     }, []);
 
@@ -106,18 +106,14 @@ export default function UsersPage() {
     };
 
   const renderContent = () => {
-    if (!authChecked) {
-      return <div className="text-center p-8">Authenticating... Please wait.</div>;
+    if (!authChecked || loading) {
+      return <div className="text-center p-8">Loading users...</div>;
     }
 
     if (!isLoggedIn) {
       return <div className="text-center p-8 text-red-500">You must be logged in to view this page.</div>;
     }
     
-    if (loading) {
-       return <div className="text-center p-8">Loading users...</div>;
-    }
-
     if (users.length === 0) {
       return <div className="text-center p-8 text-muted-foreground">No users found in the database.</div>
     }
@@ -207,13 +203,13 @@ export default function UsersPage() {
           <div className="ml-auto flex items-center gap-2">
             <Button size="sm" variant="outline" className="h-8 gap-1">
               <File className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+              <span className="sr-only sm:not-sr-only sm:whitespace-rap">
                 Export
               </span>
             </Button>
             <Button size="sm" className="h-8 gap-1">
               <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+              <span className="sr-only sm:not-sr-only sm:whitespace-rap">
                 Add User
               </span>
             </Button>
