@@ -20,26 +20,28 @@ interface UserData {
     [key: string]: any; 
 }
 
-// This function is now more reliable for creating the user document.
+// This function now just writes to Firestore.
+// The Cloud Function will handle setting the custom claim.
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function will now ONLY write to Firestore. No more custom claims from there.
+        // The Cloud Function is responsible for setting the custom claim.
+        // The client-side code is responsible for creating the user document in Firestore.
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
             mobile: additionalData.mobile,
-            role: 'merchant', // Default role in Firestore
+            role: 'merchant', // All new users start as merchants
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
-        }, { merge: true });
+        });
 
         return { success: true, userId: user.uid };
-    } catch (error: any) => {
+    } catch (error: any) {
         console.error("Error creating user:", error);
         return { success: false, error: error.message };
     }
@@ -51,14 +53,14 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // **THE FIX: Directly fetch the user role from Firestore, ignoring the token.**
+        // **THE FIX: Directly fetch the user role from Firestore, ignoring the token initially.**
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-            // This should not happen for email/password users, but it's a good fallback.
+            // This case might happen if Firestore write failed after auth creation.
             await signOut(auth);
-            return { success: false, error: "User data not found. Please contact support." };
+            return { success: false, error: "User data not found in database. Please contact support." };
         }
 
         const userData = userDoc.data();
@@ -123,7 +125,7 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
                 status: 'Active',
                 plan: 'Free',
                 createdAt: serverTimestamp(),
-            }, { merge: true });
+            });
         }
         
         const finalUserDoc = await getDoc(userDocRef);
