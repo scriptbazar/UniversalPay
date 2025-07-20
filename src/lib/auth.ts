@@ -75,8 +75,9 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         }
 
         if (loginType === 'merchant' && firestoreRole === 'admin') {
-            await signOut(auth);
-            return { success: false, error: "Admin accounts should use the Admin Login page." };
+            // This can be allowed, but for strictness, we can redirect them.
+            // For now, let's allow it but a real app might redirect.
+            console.log("Admin is logging in via merchant page. Allowing...");
         }
 
         return { success: true, user: { uid: user.uid, ...userData } };

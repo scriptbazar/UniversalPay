@@ -36,4 +36,5 @@ export async function updateUserRole(uid: string, role: 'admin' | 'merchant') {
         return { success: false, error: "Failed to update user role. Please check server logs." };
     }
 }
+
     
