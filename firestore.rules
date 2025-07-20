@@ -1,29 +1,38 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow admins to read the full list of users for the dashboard
-    match /users/{userId} {
-      allow list: if request.auth.token.role == 'admin';
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      return request.auth.token.role == 'admin';
     }
 
-    // Allow users to access only their own document
-    match /users/{userId} {
-      // Admins can read/write any user document
-      allow read, write: if request.auth.token.role == 'admin';
-      
-      // Logged-in users can read, create, update their own document
-      allow read, create, update: if request.auth.uid == userId;
-      
-      // Deletion restricted to admin only
-      allow delete: if request.auth.token.role == 'admin';
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // All other documents in any collection (wildcard)
-    match /{document=**} {
-      // Admins can read/write everything
-      allow read, write: if request.auth.token.role == 'admin';
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Admins can read and write any user document
+      // Users can read and write their own document
+      allow read, write: if isAdmin() || isOwner(userId);
+    }
+    
+    // Admins can list all users
+    match /users/{userId=**} {
+      allow list: if isAdmin();
+    }
+
+    // Rules for settings, accessible only by admins
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
     }
   }
 }
