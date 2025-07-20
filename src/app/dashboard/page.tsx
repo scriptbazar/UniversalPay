@@ -17,7 +17,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Card,
@@ -43,13 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
-// --- MOCK DATA REMOVED ---
-const chartData: any[] = [];
-const allTransactions: any[] = [];
-const recentSignups: any[] = [];
-type Transaction = { id: string; name: string; email: string; amount: string; status: string; date: Date };
-// --- END MOCK DATA REMOVED ---
-
+type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -60,6 +54,47 @@ export default function AdminDashboard() {
   const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
   const [isAllTransactionsOpen, setIsAllTransactionsOpen] = useState(false);
 
+  // State for mock data to avoid hydration errors
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [recentSignups, setRecentSignups] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Generate mock data on the client side
+    const generateAllTransactions = (): Transaction[] => {
+      return Array.from({ length: 50 }, (_, i) => {
+          const monthIndex = Math.floor(i / 4);
+          const date = new Date(2023, monthIndex, (i % 28) + 1);
+          return {
+              id: `TXN${12345 + i}`,
+              name: `Customer ${i + 1}`,
+              email: `customer${i + 1}@example.com`,
+              amount: (Math.random() * 500 + 20).toFixed(2),
+              status: Math.random() > 0.1 ? "Success" : "Failed",
+              date: date
+          }
+      });
+    };
+
+    const allTxns = generateAllTransactions();
+    setAllTransactions(allTxns);
+    
+    setRecentSignups([
+      { id: "user_a", name: "Alice Johnson", email: "alice@example.com", plan: "Pro" },
+      { id: "user_b", name: "Bob Williams", email: "bob@example.com", plan: "Free" },
+      { id: "user_c", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium" },
+    ]);
+
+    setChartData([
+      { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 0 },
+      { name: 'Feb', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 1 },
+      { name: 'Mar', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 2 },
+      { name: 'Apr', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 3 },
+      { name: 'May', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 4 },
+      { name: 'Jun', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 5 },
+    ]);
+
+  }, []);
 
   const handleRowClick = (userId: string) => {
     router.push(`/dashboard/users/${userId}`);
@@ -78,10 +113,12 @@ export default function AdminDashboard() {
     const month = payload.name;
     const monthIndex = payload.monthIndex;
 
-    // In a real app, you would fetch transactions for the selected month.
-    setMonthlyTransactions({ month, transactions: [] });
+    const transactionsForMonth = allTransactions.filter(tx => tx.date.getMonth() === monthIndex);
+    setMonthlyTransactions({ month, transactions: transactionsForMonth });
   };
   
+  const successfulTransactions = allTransactions.filter(tx => tx.status === 'Success');
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -98,9 +135,9 @@ export default function AdminDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0.00</div>
+              <div className="text-2xl font-bold">${successfulTransactions.reduce((acc, tx) => acc + parseFloat(tx.amount), 0).toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
-                No data available
+                from {successfulTransactions.length} successful transactions
               </p>
             </CardContent>
           </Link>
@@ -113,9 +150,9 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{recentSignups.length}</div>
             <p className="text-xs text-muted-foreground">
-              No data available
+              +3 in the last week
             </p>
           </CardContent>
         </Card>
@@ -125,9 +162,9 @@ export default function AdminDashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{allTransactions.length}</div>
             <p className="text-xs text-muted-foreground">
-              No data available
+              Total attempted transactions
             </p>
           </CardContent>
         </Card>
@@ -139,9 +176,9 @@ export default function AdminDashboard() {
             <ShieldAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">4</div>
             <p className="text-xs text-muted-foreground">
-              No data available
+              Review required
             </p>
           </CardContent>
         </Card>
@@ -339,6 +376,9 @@ export default function AdminDashboard() {
                     ))}
                 </TableBody>
             </Table>
+             {allTransactions.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">No transactions found.</p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAllTransactionsOpen(false)}>Close</Button>
