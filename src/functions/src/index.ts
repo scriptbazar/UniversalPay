@@ -22,7 +22,6 @@ exports.addUserRoleToFirestore = auth.user().onCreate(async (user) => {
     const userRef = admin.firestore().collection("users").doc(user.uid);
     await userRef.set({
         role: role,
-        // We can set other default fields here as well if needed
         email: user.email,
         fullName: user.displayName || 'New User',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
