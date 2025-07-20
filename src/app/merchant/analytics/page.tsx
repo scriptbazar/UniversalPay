@@ -7,8 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, Bar, BarChart, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from "react";
 
-const revenueData = [
+const initialRevenueData = [
   { name: 'Jan', revenue: 4000 },
   { name: 'Feb', revenue: 3000 },
   { name: 'Mar', revenue: 5000 },
@@ -23,7 +24,7 @@ const revenueData = [
   { name: 'Dec', revenue: 8000 },
 ];
 
-const topCustomers = [
+const initialTopCustomers = [
     { email: 'liam@example.com', name: 'Liam Johnson', totalSpent: 250.00 },
     { email: 'olivia@example.com', name: 'Olivia Smith', totalSpent: 150.00 },
     { email: 'noah@example.com', name: 'Noah Williams', totalSpent: 350.00 },
@@ -31,7 +32,7 @@ const topCustomers = [
     { email: 'ava@example.com', name: 'Ava Jones', totalSpent: 200.00 },
 ];
 
-const paymentMethodData = [
+const initialPaymentMethodData = [
     { name: 'UPI', value: 400, color: '#0088FE' },
     { name: 'Crypto', value: 300, color: '#00C49F' },
     { name: 'Cards', value: 300, color: '#FFBB28' },
@@ -39,6 +40,17 @@ const paymentMethodData = [
 ];
 
 export default function AnalyticsPage() {
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [topCustomers, setTopCustomers] = useState<any[]>([]);
+  const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Set data on client-side to avoid hydration errors
+    setRevenueData(initialRevenueData);
+    setTopCustomers(initialTopCustomers);
+    setPaymentMethodData(initialPaymentMethodData);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
