@@ -130,6 +130,7 @@ export default function UserDetailPage() {
 
   const [walletBalance, setWalletBalance] = useState(parseFloat(stats.walletBalance.replace(/,/g, '')));
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
+  const [joinedDate, setJoinedDate] = useState('N/A');
 
   useEffect(() => {
     if (!userId) return;
@@ -138,7 +139,11 @@ export default function UserDetailPage() {
     
     const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
-            setMerchant({ id: doc.id, ...doc.data() } as UserProfile);
+            const userData = { id: doc.id, ...doc.data() } as UserProfile;
+            setMerchant(userData);
+            if (userData.createdAt) {
+                setJoinedDate(new Date(userData.createdAt.seconds * 1000).toLocaleDateString());
+            }
         } else {
             toast({ variant: "destructive", title: "Error", description: "User not found." });
             setMerchant(null);
@@ -296,8 +301,6 @@ export default function UserDetailPage() {
   if (!merchant) {
     return <div>User not found.</div>;
   }
-
-  const joinedDate = merchant.createdAt ? new Date(merchant.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
 
   return (
     <div className="space-y-6">
@@ -730,5 +733,3 @@ export default function UserDetailPage() {
     </div>
   )
 }
-
-    
