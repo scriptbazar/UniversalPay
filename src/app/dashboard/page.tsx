@@ -83,6 +83,7 @@ export default function AdminDashboard() {
       { id: "user_a", name: "Alice Johnson", email: "alice@example.com", plan: "Pro" },
       { id: "user_b", name: "Bob Williams", email: "bob@example.com", plan: "Free" },
       { id: "user_c", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium" },
+      { id: "user_d", name: "Diana Miller", email: "diana@example.com", plan: "Pro" },
     ]);
 
     setChartData([
@@ -152,7 +153,7 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{recentSignups.length}</div>
             <p className="text-xs text-muted-foreground">
-              +3 in the last week
+              +4 in the last week
             </p>
           </CardContent>
         </Card>
