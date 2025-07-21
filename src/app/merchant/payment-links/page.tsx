@@ -1,16 +1,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Link2, MoreVertical, Trash2, IndianRupee, Eye } from 'lucide-react';
+import { Copy, Link2, MoreVertical, Trash2, Calendar, Clock, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -18,70 +17,59 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-import { addPaymentLink, getPaymentLinks, type PaymentLink } from '@/lib/paymentLinksData';
+
+type TempLink = {
+  id: string;
+  url: string;
+  amount: number;
+  description: string;
+  createdAt: Date;
+  expiresAt: Date;
+  status: 'Active' | 'Expired' | 'Paid';
+};
 
 export default function PaymentLinksPage() {
   const { toast } = useToast();
-  const [links, setLinks] = useState<PaymentLink[]>([]);
+  const [links, setLinks] = useState<TempLink[]>([]);
   
   // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [isDynamic, setIsDynamic] = useState(false);
   const [amount, setAmount] = useState('');
-  const [brandColor, setBrandColor] = useState('#29ABE2');
-  const [collectPhone, setCollectPhone] = useState(false);
-
-  const fetchLinks = () => {
-    setLinks(getPaymentLinks());
-  }
-
-  useEffect(() => {
-    fetchLinks();
-  }, []);
+  const [description, setDescription] = useState('');
 
   const handleCreateLink = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || (!isDynamic && !amount)) {
+    if (!amount || !description) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all fields.',
       });
       return;
     }
 
-    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setDate(now.getDate() + 7);
 
-    const newLink = {
-      title,
+    const newLink: TempLink = {
+      id: `tmplink_${Date.now()}`,
+      url: `/pay/temp/${Date.now()}`, // Simple unique URL
+      amount: parseFloat(amount),
       description,
-      slug,
-      url: `/pay/${slug}`,
-      type: isDynamic ? 'Dynamic' : 'Fixed',
-      amount: isDynamic ? null : parseFloat(amount),
-      isActive: true,
-      brandColor,
-      collectPhone,
-      payments: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      expiresAt: expires,
+      status: 'Active',
     };
     
-    addPaymentLink(newLink as PaymentLink);
-    fetchLinks(); // Re-fetch links to include the new one
+    setLinks(prev => [newLink, ...prev]);
 
-    setTitle('');
-    setDescription('');
-    setIsDynamic(false);
     setAmount('');
-    setBrandColor('#29ABE2');
-    setCollectPhone(false);
+    setDescription('');
     
     toast({
       title: 'Success!',
-      description: 'New payment page has been created.',
+      description: 'New payment link has been created and is valid for 7 days.',
     });
   };
   
@@ -91,28 +79,11 @@ export default function PaymentLinksPage() {
     toast({ title: 'Copied to clipboard!', description: fullUrl });
   };
 
-  const simulatePayment = (linkId: string) => {
-    const link = links.find(l => l.id === linkId);
-    if (link) {
-      toast({
-        title: "Payment Successful",
-        description: `Payment received for page "${link.title}".`
-      });
-       const updatedLinks = links.map(l => 
-        l.id === linkId ? { ...l, payments: l.payments + 1 } : l
-      );
-      // In a real app, this update would come from a backend.
-      // For now, we simulate by just updating local state for the demo.
-      setLinks(updatedLinks);
-    }
-  };
-
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Payment Pages</h1>
-        <p className="text-muted-foreground">Create and manage custom pages to accept payments from anyone.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Payment Links</h1>
+        <p className="text-muted-foreground">Quickly generate temporary payment links for specific amounts. Links are valid for 7 days.</p>
       </div>
       <Separator />
 
@@ -120,94 +91,36 @@ export default function PaymentLinksPage() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Create a New Page</CardTitle>
-              <CardDescription>Generate a new page to share with your customers.</CardDescription>
+              <CardTitle>Create a New Link</CardTitle>
+              <CardDescription>Generate a one-time or multi-use link.</CardDescription>
             </CardHeader>
             <form onSubmit={handleCreateLink}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Page Title</Label>
+                  <Label htmlFor="amount">Amount (USD)</Label>
                   <Input
-                    id="title"
-                    placeholder="e.g., T-Shirt Sale, Donation"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    id="amount"
+                    type="number"
+                    placeholder="e.g., 50.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
                     required
                   />
                 </div>
                  <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
+                  <Label htmlFor="description">Description (for your reference)</Label>
+                  <Input
                     id="description"
-                    placeholder="Describe what the payment is for."
+                    placeholder="e.g., Payment for Invoice #123"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    required
                   />
                 </div>
-
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="type-switch">Dynamic Amount</Label>
-                    <p className="text-xs text-muted-foreground">Allow customers to enter the amount.</p>
-                  </div>
-                  <Switch
-                    id="type-switch"
-                    checked={isDynamic}
-                    onCheckedChange={setIsDynamic}
-                  />
-                </div>
-
-                {!isDynamic && (
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount (USD)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="e.g., 25.00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
-                
-                 <div className="space-y-2">
-                    <Label htmlFor="brand-color">Brand Color</Label>
-                    <div className="flex items-center gap-2">
-                        <Input 
-                            id="brand-color-hex" 
-                            value={brandColor}
-                            onChange={(e) => setBrandColor(e.target.value)}
-                            className="w-32"
-                        />
-                        <div className="relative">
-                            <input 
-                                id="brand-color" 
-                                type="color" 
-                                value={brandColor}
-                                onChange={(e) => setBrandColor(e.target.value)}
-                                className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                 <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="collect-phone">Collect Phone Number</Label>
-                    <p className="text-xs text-muted-foreground">Add a phone number field to the page.</p>
-                  </div>
-                  <Switch
-                    id="collect-phone"
-                    checked={collectPhone}
-                    onCheckedChange={setCollectPhone}
-                  />
-                </div>
-
               </CardContent>
               <div className="p-6 pt-0">
                 <Button className="w-full" type="submit">
-                  <Link2 className="mr-2 h-4 w-4" /> Create Page
+                  <Link2 className="mr-2 h-4 w-4" /> Generate Link
                 </Button>
               </div>
             </form>
@@ -217,67 +130,57 @@ export default function PaymentLinksPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Your Payment Pages</CardTitle>
-              <CardDescription>Here is a list of all your created pages.</CardDescription>
+              <CardTitle>Your Active Links</CardTitle>
+              <CardDescription>A list of your recently created payment links.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Payments</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Expires In</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {links.map((link) => (
-                    <TableRow key={link.id}>
-                      <TableCell>
-                        <div className="font-medium">{link.title}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            {link.url}
-                            <Copy className="h-3 w-3 cursor-pointer" onClick={() => copyToClipboard(link.url)} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{link.payments}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={link.isActive ? 'default' : 'secondary'}>
-                          {link.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                         <div className="flex justify-end items-center gap-2">
-                            <Button asChild size="sm" variant="outline">
-                                <Link href={link.url} target="_blank"><Eye className="mr-2 h-4 w-4"/> View</Link>
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button size="icon" variant="ghost">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => copyToClipboard(link.url)}>
-                                  <Copy className="mr-2 h-4 w-4" /> Copy Link
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
-                                    // In a real app, this would be an API call
-                                    setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
-                                  }}/> {link.isActive ? 'Deactivate' : 'Activate'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                      </TableCell>
+                  {links.length === 0 ? (
+                     <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24">
+                            No active links. Create one to get started.
+                        </TableCell>
                     </TableRow>
-                  ))}
+                  ) : links.map((link) => {
+                    const expiresIn = Math.ceil((link.expiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return (
+                        <TableRow key={link.id}>
+                        <TableCell>
+                            <div className="font-medium">{link.description}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                {link.url}
+                            </div>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant="secondary">${link.amount.toFixed(2)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4 text-muted-foreground"/> {expiresIn > 0 ? `${expiresIn} days` : 'Expired'}
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <div className="flex justify-end items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={() => copyToClipboard(link.url)}>
+                                    <Copy className="mr-2 h-4 w-4"/> Copy
+                                </Button>
+                                <Button size="icon" variant="destructive" onClick={() => setLinks(prev => prev.filter(l => l.id !== link.id))}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </TableCell>
+                        </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -287,4 +190,3 @@ export default function PaymentLinksPage() {
     </div>
   );
 }
-
