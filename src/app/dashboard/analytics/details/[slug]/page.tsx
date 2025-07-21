@@ -82,6 +82,7 @@ export default function AnalyticsDetailPage() {
     useEffect(() => {
         if (!slug) return;
 
+        // Generate data on the client side to avoid hydration issues
         const { users, transactions } = generateMockData();
 
         const [type, month] = slug.split('_');

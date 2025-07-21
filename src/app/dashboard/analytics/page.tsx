@@ -7,17 +7,11 @@ import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
-// --- MOCK DATA REMOVED ---
-const revenueData: any[] = [];
-const paymentMethodData: any[] = [];
-const geoData: any[] = [];
-// --- END MOCK DATA REMOVED ---
 
 type DialogContentData = {
   title: string;
@@ -29,11 +23,44 @@ type DialogContentData = {
 export default function AnalyticsPage() {
   const router = useRouter();
   const [dialogContent, setDialogContent] = useState<DialogContentData>(null);
+
+  // State for mock data to avoid hydration errors
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
+  const [geoData, setGeoData] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // Generate mock data on the client side
+    setRevenueData([
+        { month: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380 },
+        { month: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320 },
+        { month: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, successfulTransactions: 480 },
+        { month: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, successfulTransactions: 450 },
+        { month: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, successfulTransactions: 530 },
+        { month: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, successfulTransactions: 510 },
+    ]);
+
+    setPaymentMethodData([
+        { name: 'UPI', value: 400, color: '#0088FE' },
+        { name: 'Crypto', value: 300, color: '#00C49F' },
+        { name: 'Cards', value: 300, color: '#FFBB28' },
+        { name: 'Bank Transfer', value: 200, color: '#FF8042' },
+    ]);
+
+    setGeoData([
+        { country: 'India', flag: 'in', volume: 120500, transactions: 1250, merchants: 45 },
+        { country: 'United States', flag: 'us', volume: 85200, transactions: 890, merchants: 22 },
+        { country: 'United Kingdom', flag: 'gb', volume: 45300, transactions: 512, merchants: 15 },
+        { country: 'Germany', flag: 'de', volume: 32100, transactions: 450, merchants: 18 },
+        { country: 'Australia', flag: 'au', volume: 28000, transactions: 300, merchants: 8 },
+    ]);
+  }, []);
+
   
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
          case 'volume':
-             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$0.00</p> });
+             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$2,86,300</p> });
              break;
          case 'payments':
              router.push(`/dashboard/analytics/details/successful-transactions_all`);
@@ -42,7 +69,7 @@ export default function AnalyticsPage() {
             router.push(`/dashboard/analytics/details/new-merchants_all`);
              break;
         case 'avg_transaction':
-            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$0.00</p> });
+            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$125.50</p> });
             break;
      }
   };
@@ -104,8 +131,8 @@ export default function AnalyticsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
-            <p className="text-xs text-muted-foreground">No data available</p>
+            <div className="text-2xl font-bold">$2,86,300</div>
+            <p className="text-xs text-muted-foreground">+15.2% from last month</p>
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -114,8 +141,8 @@ export default function AnalyticsPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">No data available</p>
+            <div className="text-2xl font-bold">+2,670</div>
+            <p className="text-xs text-muted-foreground">+12.4% from last month</p>
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('merchants')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -124,8 +151,8 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">No data available</p>
+            <div className="text-2xl font-bold">+177</div>
+            <p className="text-xs text-muted-foreground">+8.1% from last month</p>
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('avg_transaction')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -134,8 +161,8 @@ export default function AnalyticsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
-            <p className="text-xs text-muted-foreground">No data available</p>
+            <div className="text-2xl font-bold">$125.50</div>
+            <p className="text-xs text-muted-foreground">+1.2% from last month</p>
           </CardContent>
         </Card>
       </div>
