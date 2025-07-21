@@ -46,7 +46,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend
+  Legend,
+  CartesianGrid
 } from "recharts"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -105,7 +106,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   useEffect(() => {
     const generated = generateAllTransactions();
     setAllTransactions(generated);
-    setRecentTransactionsData(generated.slice(-4).reverse());
+    setRecentTransactionsData(generated.slice(-5).reverse());
   }, []);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -206,6 +207,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           <CardContent className="pl-2">
             <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={chartData} onClick={handleBarClick}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
                     <XAxis
                     dataKey="name"
                     stroke="#888888"
@@ -218,11 +220,16 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
+                    tickFormatter={(value) => `$${value/1000}K`}
                     />
                     <Tooltip
-                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                        contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: 'var(--radius)'
+                        }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        cursor={{fill: 'hsl(var(--muted))'}}
                     />
                     <Legend iconType="circle" />
                     <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="cursor-pointer" />
@@ -231,11 +238,13 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>
-              Your most recent transactions.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center">
+            <div className="grid gap-2">
+              <CardTitle>Recent Transactions</CardTitle>
+              <CardDescription>
+                Your most recent transactions.
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
              <Table>
@@ -346,5 +355,3 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
     </div>
   )
 }
-
-    

@@ -16,6 +16,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
+  CartesianGrid,
 } from "recharts"
 import React, { useState, useEffect } from "react";
 
@@ -87,12 +89,12 @@ export default function AdminDashboard() {
     ]);
 
     setChartData([
-      { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 0 },
-      { name: 'Feb', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 1 },
-      { name: 'Mar', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 2 },
-      { name: 'Apr', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 3 },
-      { name: 'May', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 4 },
-      { name: 'Jun', total: Math.floor(Math.random() * 5000) + 1000, monthIndex: 5 },
+      { name: 'Jan', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 0 },
+      { name: 'Feb', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 1 },
+      { name: 'Mar', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 2 },
+      { name: 'Apr', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 3 },
+      { name: 'May', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 4 },
+      { name: 'Jun', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 5 },
     ]);
 
   }, []);
@@ -195,6 +197,7 @@ export default function AdminDashboard() {
           <CardContent className="pl-2">
              <ResponsiveContainer width="100%" height={350}>
               <BarChart data={chartData} onClick={handleBarClick}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
                 <XAxis
                   dataKey="name"
                   stroke="#888888"
@@ -203,29 +206,55 @@ export default function AdminDashboard() {
                   axisLine={false}
                 />
                 <YAxis
+                  yAxisId="left"
+                  orientation="left"
                   stroke="#888888"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `$${value/1000}K`}
+                />
+                 <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
                 />
                 <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                    contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: 'var(--radius)' 
+                    }}
                     labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    cursor={{fill: 'hsl(var(--muted))'}}
                 />
+                <Legend />
                 <Bar
-                  dataKey="total"
-                  fill="currentColor"
+                  yAxisId="left"
+                  dataKey="revenue"
+                  fill="hsl(var(--primary))"
                   radius={[4, 4, 0, 0]}
-                  className="fill-primary cursor-pointer"
+                  className="cursor-pointer"
+                  name="Revenue"
+                />
+                 <Bar
+                  yAxisId="right"
+                  dataKey="newUsers"
+                  fill="hsl(var(--accent))"
+                  radius={[4, 4, 0, 0]}
+                  className="cursor-pointer"
+                  name="New Users"
                 />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         <Card>
-            <CardHeader className="p-6 pb-4">
-                <CardTitle>Recent Merchant Signups</CardTitle>
+            <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-2xl">Recent Merchant Signups</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
                 <Table>
