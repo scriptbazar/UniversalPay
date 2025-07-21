@@ -16,14 +16,12 @@ export function ThemeToggle() {
 
   return (
     <div className="flex items-center gap-2">
-      <Sun className={`h-5 w-5 transition-colors ${isDark ? 'text-muted-foreground' : 'text-primary'}`} />
       <Switch
         id="theme-toggle"
         checked={isDark}
         onCheckedChange={handleToggle}
         aria-label="Toggle theme"
       />
-      <Moon className={`h-5 w-5 transition-colors ${isDark ? 'text-primary' : 'text-muted-foreground'}`} />
     </div>
   )
 }
