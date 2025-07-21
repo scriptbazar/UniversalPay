@@ -101,6 +101,10 @@ export default function UsersPage() {
             setLoading(false);
         }
     };
+    
+    const handleRowClick = (userId: string) => {
+        router.push(`/dashboard/users/${userId}`);
+    };
 
     const renderContent = () => {
         if (loading) {
@@ -128,15 +132,15 @@ export default function UsersPage() {
                     </TableHeader>
                     <TableBody>
                         {users.map((user) => (
-                           <TableRow key={user.id}>
+                           <TableRow key={user.id} onClick={() => handleRowClick(user.id)} className="cursor-pointer hover:bg-muted/50">
                               <TableCell className="font-medium">
-                                  <Link href={`/dashboard/users/${user.id}`} className="flex items-center gap-3 hover:underline">
+                                  <div className="flex items-center gap-3">
                                       <Image src={user.avatar || `https://placehold.co/40x40.png?text=${(user.fullName || 'U').charAt(0)}`} width={40} height={40} alt={user.fullName || 'User'} className="rounded-full" data-ai-hint="user avatar" />
                                       <div>
                                           <div>{user.fullName || 'Unnamed User'}</div>
                                           <div className="text-sm text-muted-foreground">{user.email}</div>
                                       </div>
-                                  </Link>
+                                  </div>
                               </TableCell>
                               <TableCell>
                                  <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>{user.role || 'Merchant'}</Badge>
