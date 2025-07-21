@@ -234,9 +234,6 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           <CardHeader className="flex flex-row items-center">
              <div className="grid gap-2">
                 <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>
-                You made {recentTransactionsData.length} transactions this month.
-                </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
                 <Link href="/merchant/payments">
