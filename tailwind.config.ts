@@ -115,7 +115,7 @@ export default {
         'collapsible-up': 'collapsible-up 0.2s ease-out',
         'content-show': 'content-show 0.2s ease-out',
         'content-hide': 'content-hide 0.2s ease-out',
-        'bounce-subtle': 'bounce-subtle 1s ease-in-out',
+        'bounce-subtle': 'bounce-subtle 1s infinite',
       },
     },
   },
