@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { randomBytes } from 'crypto';
 
 export const ProcessPaymentInputSchema = z.object({
   amount: z.number().describe('The amount to be paid.'),
@@ -37,7 +38,7 @@ const processPaymentFlow = ai.defineFlow(
     // For this example, we'll just simulate a successful payment.
     console.log('Processing payment for:', input);
 
-    const transactionId = `UVRLP${Math.floor(100000000 + Math.random() * 900000000)}`;
+    const transactionId = `txn_${randomBytes(16).toString('hex')}`;
     
     return {
       transactionId,
