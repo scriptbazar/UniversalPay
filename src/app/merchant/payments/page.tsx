@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/table";
 import {
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
@@ -133,11 +132,15 @@ export default function MerchantPaymentsPage() {
             </div>
             <Tabs value={filter} onValueChange={handleFilterChange}>
                 <div className="flex flex-wrap items-center gap-4">
-                    <TabsList className="gap-2">
+                    <TabsList className="flex-wrap h-auto">
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="success">Success</TabsTrigger>
                         <TabsTrigger value="pending">Pending</TabsTrigger>
                         <TabsTrigger value="failed">Failed</TabsTrigger>
+                        <TabsTrigger value="upi">UPI</TabsTrigger>
+                        <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                        <TabsTrigger value="card">Card</TabsTrigger>
+                        <TabsTrigger value="link">Link</TabsTrigger>
                     </TabsList>
                     <div className="flex-grow flex justify-end items-center gap-2">
                         <div className="relative">
@@ -145,7 +148,7 @@ export default function MerchantPaymentsPage() {
                            <Input
                              type="search"
                              placeholder="Search..."
-                             className="pl-8 w-32"
+                             className="pl-8 w-32 sm:w-auto"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
