@@ -231,14 +231,11 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-2xl">Recent Transactions</CardTitle>
-            <Button asChild size="sm" variant="default">
-              <Link href="/merchant/payments">
-                View All
-                <ArrowUpRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
+          <CardHeader>
+            <CardTitle>Recent Transactions</CardTitle>
+            <CardDescription>
+              Your most recent transactions.
+            </CardDescription>
           </CardHeader>
           <CardContent>
              <Table>
