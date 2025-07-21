@@ -47,7 +47,6 @@ import {
   YAxis,
   Tooltip,
   Legend,
-  CartesianGrid
 } from "recharts"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -207,7 +206,6 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           <CardContent className="pl-2">
             <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={chartData} onClick={handleBarClick}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
                     <XAxis
                     dataKey="name"
                     stroke="#888888"
@@ -238,13 +236,19 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center">
+          <CardHeader className="flex flex-row items-center justify-between">
             <div className="grid gap-2">
               <CardTitle>Recent Transactions</CardTitle>
               <CardDescription>
                 Your most recent transactions.
               </CardDescription>
             </div>
+            <Button asChild size="sm" className="ml-auto gap-1">
+              <Link href="/merchant/payments">
+                View All
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
              <Table>
