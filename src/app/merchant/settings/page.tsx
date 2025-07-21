@@ -105,11 +105,11 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
 
                         <div className="w-full">
                             <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
-                             <div className="flex flex-col space-y-2">
-                                {displayOptions.upi && <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>}
-                                {displayOptions.card && <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>}
-                                {displayOptions.crypto && <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>}
-                                {displayOptions.paypal && <Button variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> Pay with PayPal</Button>}
+                             <div className="grid grid-cols-2 gap-2">
+                                {displayOptions.upi && <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> UPI</Button>}
+                                {displayOptions.card && <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Card</Button>}
+                                {displayOptions.crypto && <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Crypto</Button>}
+                                {displayOptions.paypal && <Button variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> PayPal</Button>}
                             </div>
                         </div>
 
