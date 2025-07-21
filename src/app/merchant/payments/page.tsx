@@ -1,10 +1,14 @@
+
+'use client';
+
+import { useState, useMemo } from 'react';
 import {
   File,
-  ListFilter,
-} from "lucide-react"
-
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+  Search,
+  Copy
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,15 +16,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -28,112 +24,281 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/tabs";
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
-const payments = [
-    { id: "UVRLP123456701", amount: "250.00", currency: "USD", method: "Crypto (BTC)", status: "Success", date: "2023-11-01" },
-    { id: "UVRLP123456702", amount: "150.00", currency: "INR", method: "UPI (PhonePe)", status: "Success", date: "2023-11-01" },
-    { id: "UVRLP123456703", amount: "350.00", currency: "INR", method: "UPI (Paytm)", status: "Failed", date: "2023-11-02" },
-    { id: "UVRLP123456704", amount: "450.00", currency: "USD", method: "Crypto (ETH)", status: "Success", date: "2023-11-02" },
-    { id: "UVRLP123456705", amount: "550.00", currency: "INR", method: "UPI (GPay)", status: "Pending", date: "2023-11-03" },
-]
+const allTransactionsData = Array.from({ length: 25 }, (_, i) => {
+    const statuses = ["Success", "Failed", "Pending"] as const;
+    const methods = ["UPI", "Crypto", "Card", "Link"] as const;
+    const day = 28 - Math.floor(i / 2);
+    const dateStr = `2023-11-${day < 10 ? '0' + day : day}`;
+    return {
+        id: `UVRLP${987654321 - i}`,
+        customerEmail: `customer${i + 1}@example.com`,
+        amount: ((i + 1) * 15.50).toFixed(2),
+        status: statuses[i % 3],
+        method: methods[i % 4],
+        date: dateStr,
+    };
+});
 
-export default function PaymentsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-            <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
-            <p className="text-muted-foreground">View and manage all transactions.</p>
+type Transaction = typeof allTransactionsData[0];
+
+export default function MerchantPaymentsPage() {
+    const { toast } = useToast();
+    const [transactions, setTransactions] = useState<Transaction[]>(allTransactionsData);
+    const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    const filteredTransactions = useMemo(() => {
+        let filtered = transactions;
+
+        const filterLower = filter.toLowerCase();
+        const statusFilters = ['success', 'pending', 'failed'];
+        const methodFilters = ['upi', 'crypto', 'card', 'link'];
+        
+        if (statusFilters.includes(filterLower)) {
+            filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
+        } else if (methodFilters.includes(filterLower)) {
+            filtered = filtered.filter(tx => tx.method.toLowerCase() === filterLower);
+        }
+
+        if (searchTerm) {
+            filtered = filtered.filter(tx =>
+                tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        if (dateRange?.from) {
+            filtered = filtered.filter(tx => new Date(tx.date) >= dateRange.from!);
+        }
+        if (dateRange?.to) {
+            filtered = filtered.filter(tx => new Date(tx.date) <= dateRange.to!);
+        }
+
+        return filtered;
+    }, [transactions, filter, searchTerm, dateRange]);
+    
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const paginatedTransactions = filteredTransactions.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
+    const handleFilterChange = (newFilter: string) => {
+        setFilter(newFilter);
+        setCurrentPage(1);
+    };
+    
+    const getStatusBadgeVariant = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'success': return 'default';
+            case 'pending': return 'secondary';
+            case 'failed': return 'destructive';
+            default: return 'outline';
+        }
+    };
+
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: `${label} Copied!`,
+            description: `${text} has been copied to your clipboard.`,
+        });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">All Transactions</h1>
+                <p className="text-muted-foreground">Search, filter, and view all your transactions.</p>
+            </div>
+            <Tabs value={filter} onValueChange={handleFilterChange}>
+                <div className="flex flex-wrap items-center gap-4">
+                    <TabsList className="gap-2">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="success">Success</TabsTrigger>
+                        <TabsTrigger value="pending">Pending</TabsTrigger>
+                        <TabsTrigger value="failed">Failed</TabsTrigger>
+                    </TabsList>
+                    <div className="flex-grow flex justify-end items-center gap-2">
+                        <div className="relative">
+                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                           <Input
+                             type="search"
+                             placeholder="Search..."
+                             className="pl-8 w-32"
+                             value={searchTerm}
+                             onChange={(e) => setSearchTerm(e.target.value)}
+                           />
+                        </div>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-auto justify-start text-left font-normal">
+                                    <span>
+                                        {dateRange?.from ? (
+                                            dateRange.to ? (
+                                                <>
+                                                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                                                </>
+                                            ) : (
+                                                format(dateRange.from, "LLL dd, y")
+                                            )
+                                        ) : (
+                                            "Filter by date"
+                                        )}
+                                    </span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={setDateRange}
+                                    numberOfMonths={2}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <Button size="sm" variant="outline" className="h-9 gap-1">
+                            <File className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                        </Button>
+                    </div>
+                </div>
+                <Card className='mt-4'>
+                    <CardHeader>
+                        <CardTitle>Transaction History</CardTitle>
+                        <CardDescription>
+                            A complete list of all payments processed through your account.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Transaction ID</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedTransactions.map(tx => (
+                                    <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
+                                        <TableCell className="font-medium">{tx.id}</TableCell>
+                                        <TableCell>{tx.customerEmail}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
+                                        </TableCell>
+                                        <TableCell>{tx.method}</TableCell>
+                                        <TableCell>{tx.date}</TableCell>
+                                        <TableCell className="text-right">${tx.amount}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                         {filteredTransactions.length === 0 && (
+                            <div className="text-center p-8 text-muted-foreground">
+                                No transactions found for the selected filters.
+                            </div>
+                         )}
+                    </CardContent>
+                    <CardFooter>
+                         <div className="flex justify-between items-center w-full">
+                            <div className="text-xs text-muted-foreground">
+                                Page {currentPage} of {totalPages}. Total {filteredTransactions.length} transactions.
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                </Card>
+            </Tabs>
+             <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+                <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Transaction Details</DialogTitle>
+                    <DialogDescription>
+                    Full details for transaction {selectedTransaction?.id}
+                    </DialogDescription>
+                </DialogHeader>
+                {selectedTransaction && (
+                    <div className="space-y-4 py-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Transaction ID:</span>
+                        <div className="flex items-center gap-2">
+                                <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                            </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Customer Email:</span>
+                        <div className="flex items-center gap-2">
+                                <span className="font-semibold">{selectedTransaction.customerEmail}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
+                            </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-semibold">${selectedTransaction.amount}</span>
+                    </div>
+                     <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Method:</span>
+                        <span className="font-semibold">{selectedTransaction.method}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+                    </div>
+                    </div>
+                )}
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-      <Tabs defaultValue="all">
-        <div className="flex items-center">
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="upi">UPI</TabsTrigger>
-            <TabsTrigger value="crypto">Crypto</TabsTrigger>
-            <TabsTrigger value="successful">Successful</TabsTrigger>
-            <TabsTrigger value="failed">Failed</TabsTrigger>
-          </TabsList>
-          <div className="ml-auto flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
-                  <ListFilter className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Filter
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked>
-                  Successful
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Pending</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>
-                  Failed
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button size="sm" variant="outline" className="h-8 gap-1">
-              <File className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Export
-              </span>
-            </Button>
-          </div>
-        </div>
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-              <CardDescription>
-                A complete list of all payments processed through your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Transaction ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.id}</TableCell>
-                      <TableCell>
-                        <Badge variant={p.status === 'Success' ? 'default' : p.status === 'Failed' ? 'destructive' : 'secondary'}>{p.status}</Badge>
-                      </TableCell>
-                      <TableCell>{p.method}</TableCell>
-                      <TableCell>{p.date}</TableCell>
-                      <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-            <CardFooter>
-              <div className="text-xs text-muted-foreground">
-                Showing <strong>1-5</strong> of <strong>{payments.length}</strong>{" "}
-                payments
-              </div>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
+    );
 }
