@@ -197,8 +197,8 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </Link>
         </Card>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>Click on a month to view its transactions.</CardDescription>
@@ -224,7 +224,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
                         contentStyle={{ 
                             backgroundColor: 'hsl(var(--background))', 
                             border: '1px solid hsl(var(--border))',
-                            borderRadius: 'var(--radius)'
+                            borderRadius: 'var(--radius)' 
                         }}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         cursor={{fill: 'hsl(var(--muted))'}}
@@ -235,9 +235,12 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-2xl">Recent Transactions</CardTitle>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+              <CardTitle>Recent Transactions</CardTitle>
+              <CardDescription>
+                Your most recent transactions.
+              </CardDescription>
           </CardHeader>
           <CardContent>
              <Table>
