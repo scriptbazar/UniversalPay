@@ -105,7 +105,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   useEffect(() => {
     const generated = generateAllTransactions();
     setAllTransactions(generated);
-    setRecentTransactionsData(generated.slice(-5).reverse());
+    setRecentTransactionsData(generated.slice(-3).reverse());
   }, []);
 
   const copyToClipboard = (text: string, label: string) => {
