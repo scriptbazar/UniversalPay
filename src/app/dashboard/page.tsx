@@ -191,7 +191,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle>Platform Growth</CardTitle>
              <CardDescription>
-                Overview of new merchants and transaction volume.
+                Click on a bar to see monthly transaction details.
               </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
         <Card>
-            <CardHeader className="p-6 pb-4 flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <CardTitle className="text-2xl">Recent Merchant Signups</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
