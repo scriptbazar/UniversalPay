@@ -239,11 +239,8 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="grid gap-2">
               <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>
-                Your most recent transactions.
-              </CardDescription>
             </div>
-            <Button asChild size="sm" className="ml-auto gap-1">
+            <Button asChild className="ml-auto gap-1" variant="outline">
               <Link href="/merchant/payments">
                 View All
                 <ArrowUpRight className="h-4 w-4" />
