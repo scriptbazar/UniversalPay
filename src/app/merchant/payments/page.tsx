@@ -41,7 +41,7 @@ import { Separator } from '@/components/ui/separator';
 
 const allTransactionsData = Array.from({ length: 25 }, (_, i) => {
     const statuses = ["Success", "Failed", "Pending"] as const;
-    const methods = ["UPI", "Crypto", "Card", "Link", "Page"] as const;
+    const methods = ["UPI", "Crypto", "Link", "Page"] as const;
     const day = 28 - Math.floor(i / 2);
     const dateStr = `2023-11-${day < 10 ? '0' + day : day}`;
     return {
@@ -49,7 +49,7 @@ const allTransactionsData = Array.from({ length: 25 }, (_, i) => {
         customerEmail: `customer${i + 1}@example.com`,
         amount: ((i + 1) * 15.50).toFixed(2),
         status: statuses[i % 3],
-        method: methods[i % 5],
+        method: methods[i % 4],
         date: dateStr,
     };
 });
@@ -71,7 +71,7 @@ export default function MerchantPaymentsPage() {
 
         const filterLower = filter.toLowerCase();
         const statusFilters = ['success', 'pending', 'failed'];
-        const methodFilters = ['upi', 'crypto', 'card', 'link', 'page'];
+        const methodFilters = ['upi', 'crypto', 'link', 'page'];
         
         if (statusFilters.includes(filterLower)) {
             filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
@@ -139,7 +139,6 @@ export default function MerchantPaymentsPage() {
                         <TabsTrigger value="failed">Failed</TabsTrigger>
                         <TabsTrigger value="upi">UPI</TabsTrigger>
                         <TabsTrigger value="crypto">Crypto</TabsTrigger>
-                        <TabsTrigger value="card">Card</TabsTrigger>
                         <TabsTrigger value="link">Link</TabsTrigger>
                         <TabsTrigger value="page">Page</TabsTrigger>
                     </TabsList>
@@ -149,7 +148,7 @@ export default function MerchantPaymentsPage() {
                            <Input
                              type="search"
                              placeholder="Search..."
-                             className="pl-8 w-32"
+                             className="pl-8 w-24"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />

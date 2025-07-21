@@ -42,7 +42,7 @@ import { Separator } from '@/components/ui/separator';
 
 const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
     const statuses = ["Success", "Failed", "Pending"] as const;
-    const methods = ["UPI", "Crypto", "Card", "Link"] as const;
+    const methods = ["UPI", "Crypto", "Page", "Link"] as const;
     const day = 28 - Math.floor(i / 2);
     const dateStr = `2023-11-${day < 10 ? '0' + day : day}`;
     return {
@@ -73,7 +73,7 @@ export default function AllTransactionsPage() {
 
         const filterLower = filter.toLowerCase();
         const statusFilters = ['success', 'pending', 'failed'];
-        const methodFilters = ['upi', 'crypto', 'card', 'link'];
+        const methodFilters = ['upi', 'crypto', 'page', 'link'];
         
         if (statusFilters.includes(filterLower)) {
             filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
@@ -142,8 +142,8 @@ export default function AllTransactionsPage() {
                         <TabsTrigger value="failed">Failed</TabsTrigger>
                         <TabsTrigger value="upi">UPI</TabsTrigger>
                         <TabsTrigger value="crypto">Crypto</TabsTrigger>
-                        <TabsTrigger value="card">Card</TabsTrigger>
                         <TabsTrigger value="link">Link</TabsTrigger>
+                        <TabsTrigger value="page">Page</TabsTrigger>
                     </TabsList>
                     <div className="flex-grow flex justify-end items-center gap-2">
                         <div className="relative">
