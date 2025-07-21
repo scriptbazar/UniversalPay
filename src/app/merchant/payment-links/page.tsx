@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Link2, MoreVertical, Trash2, IndianRupee } from 'lucide-react';
+import { Copy, Link2, MoreVertical, Trash2, IndianRupee, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -18,73 +18,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-type PaymentLink = {
-  id: string;
-  title: string;
-  url: string;
-  type: 'Fixed' | 'Dynamic';
-  amount: string | null;
-  isActive: boolean;
-  createdAt: string;
-  expiresAt: string;
-  payments: number;
-};
-
-const initialLinks: PaymentLink[] = [
-  {
-    id: 'plink_1',
-    title: 'T-Shirt Sale',
-    url: 'https://universalpay.com/pay/t-shirt-sale',
-    type: 'Fixed',
-    amount: '25.00',
-    isActive: true,
-    createdAt: '2023-10-26',
-    expiresAt: '', // Will be set in useEffect
-    payments: 120,
-  },
-  {
-    id: 'plink_2',
-    title: 'General Donation',
-    url: 'https://universalpay.com/pay/donation',
-    type: 'Dynamic',
-    amount: null,
-    isActive: true,
-    createdAt: '2023-10-25',
-    expiresAt: '', // Will be set in useEffect
-    payments: 50,
-  },
-  {
-    id: 'plink_3',
-    title: 'Workshop Registration',
-    url: 'https://universalpay.com/pay/workshop',
-    type: 'Fixed',
-    amount: '100.00',
-    isActive: false,
-    createdAt: '2023-10-22',
-    expiresAt: '', // Will be set in useEffect
-    payments: 75,
-  },
-];
+import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
+import { addPaymentLink, getPaymentLinks, type PaymentLink } from '@/lib/paymentLinksData';
 
 export default function PaymentLinksPage() {
   const { toast } = useToast();
   const [links, setLinks] = useState<PaymentLink[]>([]);
+  
+  // Form state
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [isDynamic, setIsDynamic] = useState(false);
   const [amount, setAmount] = useState('');
+  const [brandColor, setBrandColor] = useState('#29ABE2');
+  const [collectPhone, setCollectPhone] = useState(false);
+
+  const fetchLinks = () => {
+    setLinks(getPaymentLinks());
+  }
 
   useEffect(() => {
-    // Set expiry dates on client side to avoid hydration mismatch
-    const updatedLinks = initialLinks.map(link => {
-        const creationDate = new Date(link.createdAt);
-        const expiryDate = new Date(creationDate.getTime() + 15 * 24 * 60 * 60 * 1000);
-        return {
-            ...link,
-            expiresAt: expiryDate.toISOString().split('T')[0],
-        }
-    });
-    setLinks(updatedLinks);
+    fetchLinks();
   }, []);
 
   const handleCreateLink = (e: React.FormEvent) => {
@@ -98,71 +53,80 @@ export default function PaymentLinksPage() {
       return;
     }
 
-    const creationDate = new Date();
-    const expiryDate = new Date(creationDate.getTime() + 15 * 24 * 60 * 60 * 1000);
+    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-    const newLink: PaymentLink = {
-      id: `plink_${Date.now()}`,
+    const newLink = {
       title,
-      url: `https://universalpay.com/pay/${title.toLowerCase().replace(/\s+/g, '-')}`,
+      description,
+      slug,
+      url: `/pay/${slug}`,
       type: isDynamic ? 'Dynamic' : 'Fixed',
-      amount: isDynamic ? null : parseFloat(amount).toFixed(2),
+      amount: isDynamic ? null : parseFloat(amount),
       isActive: true,
-      createdAt: creationDate.toISOString().split('T')[0],
-      expiresAt: expiryDate.toISOString().split('T')[0],
+      brandColor,
+      collectPhone,
       payments: 0,
+      createdAt: new Date().toISOString(),
     };
+    
+    addPaymentLink(newLink as PaymentLink);
+    fetchLinks(); // Re-fetch links to include the new one
 
-    setLinks((prev) => [newLink, ...prev]);
     setTitle('');
+    setDescription('');
     setIsDynamic(false);
     setAmount('');
+    setBrandColor('#29ABE2');
+    setCollectPhone(false);
+    
     toast({
       title: 'Success!',
-      description: 'New payment link has been created. It will expire in 15 days.',
+      description: 'New payment page has been created.',
     });
   };
   
   const copyToClipboard = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({ title: 'Copied to clipboard!' });
+    const fullUrl = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
+    toast({ title: 'Copied to clipboard!', description: fullUrl });
   };
 
   const simulatePayment = (linkId: string) => {
-    setLinks(prevLinks => {
-      const link = prevLinks.find(l => l.id === linkId);
-      if (link) {
-         toast({
-          title: "Payment Successful",
-          description: `Payment received for link "${link.title}".`
-        });
-      }
-       return prevLinks.map(l => 
+    const link = links.find(l => l.id === linkId);
+    if (link) {
+      toast({
+        title: "Payment Successful",
+        description: `Payment received for page "${link.title}".`
+      });
+       const updatedLinks = links.map(l => 
         l.id === linkId ? { ...l, payments: l.payments + 1 } : l
       );
-    });
+      // In a real app, this update would come from a backend.
+      // For now, we simulate by just updating local state for the demo.
+      setLinks(updatedLinks);
+    }
   };
 
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Payment Links</h1>
-        <p className="text-muted-foreground">Create and manage links to accept payments from anyone.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Payment Pages</h1>
+        <p className="text-muted-foreground">Create and manage custom pages to accept payments from anyone.</p>
       </div>
       <Separator />
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Create a New Link</CardTitle>
-              <CardDescription>Generate a new link to share with your customers. Links expire after 15 days.</CardDescription>
+              <CardTitle>Create a New Page</CardTitle>
+              <CardDescription>Generate a new page to share with your customers.</CardDescription>
             </CardHeader>
             <form onSubmit={handleCreateLink}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Link Title</Label>
+                  <Label htmlFor="title">Page Title</Label>
                   <Input
                     id="title"
                     placeholder="e.g., T-Shirt Sale, Donation"
@@ -171,9 +135,19 @@ export default function PaymentLinksPage() {
                     required
                   />
                 </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what the payment is for."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <div>
-                    <Label htmlFor="type-switch">Dynamic Price</Label>
+                    <Label htmlFor="type-switch">Dynamic Amount</Label>
                     <p className="text-xs text-muted-foreground">Allow customers to enter the amount.</p>
                   </div>
                   <Switch
@@ -182,6 +156,7 @@ export default function PaymentLinksPage() {
                     onCheckedChange={setIsDynamic}
                   />
                 </div>
+
                 {!isDynamic && (
                   <div className="space-y-2">
                     <Label htmlFor="amount">Amount (USD)</Label>
@@ -195,10 +170,44 @@ export default function PaymentLinksPage() {
                     />
                   </div>
                 )}
+                
+                 <div className="space-y-2">
+                    <Label htmlFor="brand-color">Brand Color</Label>
+                    <div className="flex items-center gap-2">
+                        <Input 
+                            id="brand-color-hex" 
+                            value={brandColor}
+                            onChange={(e) => setBrandColor(e.target.value)}
+                            className="w-32"
+                        />
+                        <div className="relative">
+                            <input 
+                                id="brand-color" 
+                                type="color" 
+                                value={brandColor}
+                                onChange={(e) => setBrandColor(e.target.value)}
+                                className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                 <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <Label htmlFor="collect-phone">Collect Phone Number</Label>
+                    <p className="text-xs text-muted-foreground">Add a phone number field to the page.</p>
+                  </div>
+                  <Switch
+                    id="collect-phone"
+                    checked={collectPhone}
+                    onCheckedChange={setCollectPhone}
+                  />
+                </div>
+
               </CardContent>
               <div className="p-6 pt-0">
                 <Button className="w-full" type="submit">
-                  <Link2 className="mr-2 h-4 w-4" /> Create Link
+                  <Link2 className="mr-2 h-4 w-4" /> Create Page
                 </Button>
               </div>
             </form>
@@ -208,16 +217,15 @@ export default function PaymentLinksPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Your Payment Links</CardTitle>
-              <CardDescription>Here is a list of all your created links.</CardDescription>
+              <CardTitle>Your Payment Pages</CardTitle>
+              <CardDescription>Here is a list of all your created pages.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <TableHead>Payments</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -233,9 +241,8 @@ export default function PaymentLinksPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{link.type}</Badge>
+                        <Badge variant="secondary">{link.payments}</Badge>
                       </TableCell>
-                       <TableCell>{link.amount ? `$${link.amount}` : 'N/A'}</TableCell>
                       <TableCell>
                         <Badge variant={link.isActive ? 'default' : 'secondary'}>
                           {link.isActive ? 'Active' : 'Inactive'}
@@ -243,8 +250,8 @@ export default function PaymentLinksPage() {
                       </TableCell>
                       <TableCell className="text-right">
                          <div className="flex justify-end items-center gap-2">
-                            <Button size="sm" variant="outline" disabled={!link.isActive} onClick={() => simulatePayment(link.id)}>
-                                <IndianRupee className="mr-2 h-4 w-4" /> Pay
+                            <Button asChild size="sm" variant="outline">
+                                <Link href={link.url} target="_blank"><Eye className="mr-2 h-4 w-4"/> View</Link>
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -258,6 +265,7 @@ export default function PaymentLinksPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
+                                    // In a real app, this would be an API call
                                     setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
                                   }}/> {link.isActive ? 'Deactivate' : 'Activate'}
                                 </DropdownMenuItem>
@@ -279,3 +287,4 @@ export default function PaymentLinksPage() {
     </div>
   );
 }
+
