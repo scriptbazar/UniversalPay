@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -235,8 +236,8 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <CardTitle className="text-2xl">Recent Transactions</CardTitle>
           </CardHeader>
           <CardContent>
              <Table>
@@ -284,7 +285,13 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
               <Separator />
                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Customer:</span>
-                  <span className="font-semibold">{selectedTransaction.name} ({selectedTransaction.email})</span>
+                  <div className="flex items-center gap-2">
+                      <div className="text-right">
+                          <p className="font-semibold">{selectedTransaction.name}</p>
+                          <p className="text-sm text-muted-foreground">{selectedTransaction.email}</p>
+                      </div>
+                      <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.email, 'Customer Email')} />
+                  </div>
               </div>
               <Separator />
               <div className="flex justify-between items-center">
