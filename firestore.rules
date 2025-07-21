@@ -1,21 +1,24 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      // A user can read and update their own document.
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      
-      // Any authenticated user can create their own user document during signup.
-      allow create: if request.auth != null;
 
-      // An admin can read or write any specific user's document.
-      allow get, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    // Rule for listing documents in the 'users' collection.
+    // This allows an admin to fetch all users for the dashboard.
+    match /users/{document=**} {
+      allow list: if request.auth.token.role == 'admin';
     }
 
-    match /users/{document=**} {
-        // Admins are allowed to list all documents in the 'users' collection.
-        allow list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    // Rules for individual user documents.
+    match /users/{userId} {
+      // Allow any authenticated user to create their own document upon signup.
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow a user to read or update their own data.
+      // Also allows an admin to read any user's data.
+      allow read, update: if (request.auth != null && request.auth.uid == userId) || (request.auth.token.role == 'admin');
+
+      // Only allow an admin to delete a user document.
+      allow delete: if request.auth.token.role == 'admin';
     }
   }
 }
