@@ -122,7 +122,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-grow">
-        <section className="text-center py-20 px-4 bg-card">
+        <section className="text-center py-20 px-4">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">The Future of Payments is Here</h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             A secure, scalable, and globally functional payment gateway. Integrate UPI, Crypto, and more with our powerful APIs and SDKs.
@@ -142,7 +142,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {features.map((feature, index) => (
-                <Card key={index} className="bg-card border-2 border-transparent hover:border-primary transition-all duration-300 transform hover:-translate-y-1 shadow-lg rounded-xl">
+                <Card key={index} variant="interactive" className="bg-card border">
                   <CardHeader className="flex flex-col items-center text-center">
                     <div className="p-3 bg-primary/10 rounded-full mb-4">
                       {feature.icon}
@@ -158,7 +158,7 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="py-20 px-4 md:px-8 bg-card">
+        <section className="py-20 px-4 md:px-8 bg-card/50">
             <div className="container mx-auto text-center">
                  <h2 className="text-3xl md:text-4xl font-bold mb-4">One Platform, Global Reach</h2>
                  <p className="text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
@@ -179,7 +179,7 @@ export default function Home() {
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <Card className="flex flex-col rounded-xl shadow-lg">
+              <Card className="flex flex-col rounded-lg shadow-lg">
                 <CardHeader className="text-center">
                   <CardTitle className="text-2xl font-bold">Free</CardTitle>
                   <CardDescription>For startups and small businesses</CardDescription>
@@ -196,7 +196,7 @@ export default function Home() {
                   <Button className="w-full" variant="outline">Get Started</Button>
                 </div>
               </Card>
-              <Card className="flex flex-col rounded-xl shadow-lg border-2 border-primary relative">
+              <Card className="flex flex-col rounded-lg shadow-lg border-2 border-primary relative">
                  <div className="absolute top-0 -translate-y-1/2 w-full flex justify-center">
                     <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">Most Popular</div>
                 </div>
@@ -217,7 +217,7 @@ export default function Home() {
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Choose Pro</Button>
                 </div>
               </Card>
-              <Card className="flex flex-col rounded-xl shadow-lg">
+              <Card className="flex flex-col rounded-lg shadow-lg">
                 <CardHeader className="text-center">
                   <CardTitle className="text-2xl font-bold">Premium</CardTitle>
                   <CardDescription>For large-scale enterprises</CardDescription>
@@ -239,7 +239,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="faq" className="py-20 px-4 md:px-8 bg-card">
+        <section id="faq" className="py-20 px-4 md:px-8 bg-card/50">
             <div className="container mx-auto max-w-5xl">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
