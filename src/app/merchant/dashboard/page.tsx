@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -105,7 +104,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   useEffect(() => {
     const generated = generateAllTransactions();
     setAllTransactions(generated);
-    setRecentTransactionsData(generated.slice(-5).reverse());
+    setRecentTransactionsData(generated.slice(-4).reverse());
   }, []);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -236,16 +235,8 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="grid gap-2">
-              <CardTitle>Recent Transactions</CardTitle>
-            </div>
-            <Button asChild className="ml-auto gap-1" variant="outline">
-              <Link href="/merchant/payments">
-                View All
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
+          <CardHeader>
+            <CardTitle>Recent Transactions</CardTitle>
           </CardHeader>
           <CardContent>
              <Table>
