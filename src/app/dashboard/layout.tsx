@@ -41,6 +41,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOutUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
@@ -145,6 +146,7 @@ export default function AdminDashboardLayout({
           <div className="w-full flex-1">
             {/* Can add a search bar here if needed */}
           </div>
+           <ThemeToggle />
            <Button variant="outline" size="icon" className="h-8 w-8">
               <Bell className="h-4 w-4" />
               <span className="sr-only">Toggle notifications</span>
