@@ -21,7 +21,8 @@ import {
   Replace,
   LifeBuoy,
   PlusCircle,
-  LogOut
+  LogOut,
+  AppWindow,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ const navItems = [
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
   { href: "/dashboard/transactions", icon: CreditCard, label: "All Transactions" },
   { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
+  { href: "/dashboard/payment-pages", icon: AppWindow, label: "Payment Pages" },
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/wallet-loads", icon: PlusCircle, label: "Wallet Loads" },
   { href: "/dashboard/subscriptions", icon: Replace, label: "Subscriptions" },
