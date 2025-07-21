@@ -165,7 +165,7 @@ export default function Home() {
                     From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale.
                  </p>
                  <Image 
-                    src="https://placehold.co/1200x600"
+                    src="https://placehold.co/1200x600.png"
                     alt="Global Payments Map"
                     width={1200}
                     height={600}
