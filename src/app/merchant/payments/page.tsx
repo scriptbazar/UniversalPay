@@ -148,7 +148,7 @@ export default function MerchantPaymentsPage() {
                            <Input
                              type="search"
                              placeholder="Search..."
-                             className="pl-8 w-24"
+                             className="pl-8 w-48"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
