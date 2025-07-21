@@ -12,6 +12,7 @@ import {
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -185,8 +186,8 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Platform Growth</CardTitle>
              <CardDescription>
@@ -250,7 +251,7 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
                 <CardTitle className="text-2xl">Recent Merchant Signups</CardTitle>
             </CardHeader>
