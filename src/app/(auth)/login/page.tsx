@@ -46,6 +46,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Pass 'merchant' as loginType to enforce correct role check
       const { success, user, error } = await signInUser(email, password, 'merchant');
       
       if (success && user) {
