@@ -295,11 +295,11 @@ export default function UserDetailPage() {
   };
 
   if (loading) {
-    return <div>Loading user details...</div>;
+    return <div className="flex-grow flex items-center justify-center">Loading user details...</div>;
   }
   
   if (!merchant) {
-    return <div>User not found.</div>;
+    return <div className="flex-grow flex items-center justify-center">User not found.</div>;
   }
 
   return (

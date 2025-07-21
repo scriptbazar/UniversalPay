@@ -32,7 +32,7 @@ export default function InvoiceDetailPage() {
   const invoice = getInvoiceById(invoiceId);
 
   if (!invoice) {
-    return notFound();
+    notFound();
   }
   
   const statusInfo = getStatusInfo(invoice.status);
@@ -99,7 +99,7 @@ export default function InvoiceDetailPage() {
              <div className="text-left md:text-right">
                 <h2 className="font-semibold mb-2">From:</h2>
                 <p className="font-semibold text-lg">{invoice.merchantName}</p>
-                <a href={`https://transactwave.com/pay/${invoice.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 md:justify-end">
+                <a href={`/pay/${invoice.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1 md:justify-end">
                     View Payment Link <ExternalLink className="h-3 w-3" />
                 </a>
             </div>

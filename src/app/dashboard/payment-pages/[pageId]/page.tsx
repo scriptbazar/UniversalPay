@@ -55,6 +55,8 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
     const link = getPaymentLinkBySlug(params.pageId);
     if (link) {
       setLinkDetails(link);
+    } else {
+        notFound();
     }
   }, [params.pageId]);
 
@@ -71,7 +73,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
 
   if (!linkDetails) {
     // This can be a loading state in a real app
-    return notFound();
+    return null;
   }
 
   return (
