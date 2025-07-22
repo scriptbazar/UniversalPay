@@ -33,6 +33,9 @@ const allTransactions: Transaction[] = [
     { id: "UVRLP107107107", customer: "suspicious_user@mail.com", amount: "1500.00", currency: "USD", status: "Flagged", date: "2023-11-02" },
 ];
 
+const successfulTransactions = allTransactions.filter(tx => tx.status === 'Success');
+const fraudulentTransactions = allTransactions.filter(tx => tx.status === 'Flagged');
+
 const getStatusBadgeVariant = (status: Transaction["status"]) => {
     switch (status) {
         case 'Success':
@@ -50,6 +53,8 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
   const { toast } = useToast();
   const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode } | null>(null);
+
 
   useEffect(() => {
     const link = getPaymentLinkBySlug(params.pageId);
@@ -70,7 +75,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
   const handleTransactionRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
   }
-
+  
   if (!linkDetails) {
     // This can be a loading state in a real app
     return null;
@@ -78,6 +83,60 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
   
   const totalVolume = linkDetails.payments * (linkDetails.amount || 50);
   const averagePayment = linkDetails.payments > 0 ? totalVolume / linkDetails.payments : 0;
+  
+  const handleCardClick = (type: 'volume' | 'payments' | 'avg' | 'fraud') => {
+    switch (type) {
+        case 'volume':
+        case 'payments':
+            setDialogContent({
+                title: "Successful Payments",
+                description: "A list of all successful payments made via this page.",
+                data: (
+                    <Table>
+                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {successfulTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
+                                <TableCell>{tx.id}</TableCell>
+                                <TableCell>{tx.customer}</TableCell>
+                                <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>)}
+                        </TableBody>
+                    </Table>
+                )
+            });
+            break;
+        case 'avg':
+             setDialogContent({
+                title: "Average Payment Value",
+                description: "This is the average value of all successful payments.",
+                 data: (
+                    <div className="space-y-2 text-center p-4">
+                        <p className="text-4xl font-bold">${averagePayment.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">Calculated from {successfulTransactions.length} successful payments totalling ${totalVolume.toFixed(2)}.</p>
+                    </div>
+                 )
+            });
+            break;
+        case 'fraud':
+             setDialogContent({
+                title: "Fraud Alerts",
+                description: "A list of all payments flagged for suspicious activity.",
+                data: (
+                     <Table>
+                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {fraudulentTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
+                                <TableCell>{tx.id}</TableCell>
+                                <TableCell>{tx.customer}</TableCell>
+                                <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>)}
+                        </TableBody>
+                    </Table>
+                )
+            });
+            break;
+    }
+  };
 
 
   return (
@@ -117,7 +176,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
         </Card>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card onClick={() => handleCardClick('volume')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -126,7 +185,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                     <div className="text-2xl font-bold">${totalVolume.toFixed(2)}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Successful Payments</CardTitle>
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -135,7 +194,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                     <div className="text-2xl font-bold">{linkDetails.payments}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('avg')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -144,7 +203,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                     <div className="text-2xl font-bold">${averagePayment.toFixed(2)}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('fraud')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Fraud Alerts</CardTitle>
                     <Shield className="h-4 w-4 text-muted-foreground" />
@@ -222,6 +281,19 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                         <Link href={`/dashboard/users/user_1`}>View Merchant Profile</Link>
                     </Button>
                 </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        
+        {/* Dialog for Stat Cards */}
+        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
+            <DialogContent className="max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>{dialogContent?.title}</DialogTitle>
+                    <DialogDescription>{dialogContent?.description}</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 max-h-[60vh] overflow-y-auto">
+                    {dialogContent?.data}
+                </div>
             </DialogContent>
         </Dialog>
     </div>
