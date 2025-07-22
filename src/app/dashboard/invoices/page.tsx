@@ -79,24 +79,9 @@ export default function InvoicesPage() {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             
-            const canvasAspectRatio = canvas.width / canvas.height;
-            const pdfAspectRatio = pdf.internal.pageSize.getWidth() / pdf.internal.pageSize.getHeight();
-
-            let finalWidth, finalHeight;
-            
-            if (canvasAspectRatio > pdfAspectRatio) {
-                finalWidth = pdfWidth;
-                finalHeight = pdfWidth / canvasAspectRatio;
-            } else {
-                finalHeight = pdf.internal.pageSize.getHeight();
-                finalWidth = finalHeight * canvasAspectRatio;
-            }
-
-            const x = (pdfWidth - finalWidth) / 2;
-            const y = 0; // Start from top
-
-            pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`invoice-${selectedInvoice.id}.pdf`);
           });
         }
