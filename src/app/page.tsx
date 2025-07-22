@@ -1,9 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -113,6 +114,53 @@ const faqItems = [
     }
 ]
 
+const tiers = [
+  {
+    name: "Free",
+    price: "$0",
+    freq: "/month",
+    description: "Perfect for individuals and small businesses getting started.",
+    features: [
+      "Up to 100 transactions/month",
+      "Basic UPI Gateway Support",
+      "Standard Fraud Detection",
+      "Email Support",
+    ],
+    cta: "Get Started",
+    popular: false,
+  },
+  {
+    name: "Pro",
+    price: "$49",
+    freq: "/month",
+    description: "Ideal for growing businesses that need more power and flexibility.",
+    features: [
+      "Up to 1,000 transactions/month",
+      "UPI & Crypto Support",
+      "AI-Powered Fraud Detection",
+      "Developer API & SDK Access",
+      "Priority Email Support",
+    ],
+    cta: "Choose Pro",
+    popular: true,
+  },
+  {
+    name: "Premium",
+    price: "$99",
+    freq: "/month",
+    description: "For established businesses and enterprises at scale.",
+    features: [
+      "Unlimited transactions",
+      "White-Label & Reseller Mode",
+      "Advanced Fraud Controls",
+      "All Country-Specific Methods",
+      "24/7 Dedicated Support",
+    ],
+    cta: "Contact Sales",
+    popular: false,
+  },
+];
+
 export default function Home() {
   const halfLength = Math.ceil(faqItems.length / 2);
   const firstHalfFaqs = faqItems.slice(0, halfLength);
@@ -167,7 +215,7 @@ export default function Home() {
                     From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale.
                  </p>
                  <Image 
-                    src="https://placehold.co/1200x600/22252a/a9a9a9.png"
+                    src="https://placehold.co/1200x600/e5f5f9/29abe2.png"
                     alt="Global Payments Map"
                     width={1200}
                     height={600}
@@ -178,67 +226,43 @@ export default function Home() {
         </section>
 
         <section id="pricing" className="py-20 px-4 md:px-8">
-          <div className="container mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <Card className="flex flex-col rounded-lg shadow-lg">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl font-bold">Free</CardTitle>
-                  <CardDescription>For startups and small businesses</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-4xl font-bold text-center mb-6">$0<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
-                  <ul className="space-y-3 text-muted-foreground">
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> Up to 100 transactions/month</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> Basic UPI Support</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> Email Support</li>
-                  </ul>
-                </CardContent>
-                <div className="p-6">
-                  <Button className="w-full" variant="outline">Get Started</Button>
+            <div className="container mx-auto">
+                <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+                  {tiers.map((tier) => (
+                    <Card key={tier.name} className={`flex flex-col rounded-xl shadow-lg ${tier.popular ? 'border-2 border-primary' : ''}`}>
+                      {tier.popular && (
+                        <div className="bg-primary text-primary-foreground text-center py-1.5 text-sm font-semibold rounded-t-lg">
+                          Most Popular
+                        </div>
+                      )}
+                      <CardHeader className="text-center">
+                        <CardTitle className="text-2xl font-bold">{tier.name}</CardTitle>
+                        <CardDescription>{tier.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow flex flex-col">
+                        <div className="text-center mb-6">
+                          <span className="text-5xl font-bold">{tier.price}</span>
+                          <span className="text-muted-foreground">{tier.freq}</span>
+                        </div>
+                        <ul className="space-y-4 flex-grow">
+                          {tier.features.map((feature) => (
+                            <li key={feature} className="flex items-start">
+                              <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                              <span className="text-muted-foreground">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                      <div className="p-6">
+                        <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-primary-foreground'}`} variant={tier.popular ? 'default' : 'outline'}>
+                          {tier.cta}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-              </Card>
-              <Card className="flex flex-col rounded-lg shadow-lg border-2 border-primary relative">
-                 <div className="absolute top-0 -translate-y-1/2 w-full flex justify-center">
-                    <div className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">Most Popular</div>
-                </div>
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl font-bold">Pro</CardTitle>
-                  <CardDescription>For growing businesses</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-4xl font-bold text-center mb-6">$49<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
-                  <ul className="space-y-3 text-muted-foreground">
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> Up to 1000 transactions/month</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> UPI & Crypto Support</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> API & SDK Access</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> Priority Email Support</li>
-                  </ul>
-                </CardContent>
-                <div className="p-6">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Choose Pro</Button>
-                </div>
-              </Card>
-              <Card className="flex flex-col rounded-lg shadow-lg">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl font-bold">Premium</CardTitle>
-                  <CardDescription>For large-scale enterprises</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-4xl font-bold text-center mb-6">$99<span className="text-lg font-normal text-muted-foreground">/mo</span></p>
-                  <ul className="space-y-3 text-muted-foreground">
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> Unlimited transactions</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> White-Label & Reseller Mode</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> AI Fraud Prevention</li>
-                    <li className="flex items-center"><Zap className="w-4 h-4 mr-2 text-green-500" /> 24/7 Dedicated Support</li>
-                  </ul>
-                </CardContent>
-                <div className="p-6">
-                  <Button className="w-full" variant="outline">Contact Sales</Button>
-                </div>
-              </Card>
             </div>
-          </div>
         </section>
 
         <section id="faq" className="py-20 px-4 md:px-8 bg-card/50">
@@ -248,7 +272,7 @@ export default function Home() {
                     <Accordion type="single" collapsible className="w-full">
                         {firstHalfFaqs.map((item, index) => (
                             <AccordionItem value={`item-1-${index}`} key={index}>
-                                <AccordionTrigger className="text-lg font-medium">{item.question}</AccordionTrigger>
+                                <AccordionTrigger className="text-lg font-medium text-left">{item.question}</AccordionTrigger>
                                 <AccordionContent className="text-base text-muted-foreground">
                                     {item.answer}
                                 </AccordionContent>
@@ -258,7 +282,7 @@ export default function Home() {
                     <Accordion type="single" collapsible className="w-full">
                         {secondHalfFaqs.map((item, index) => (
                             <AccordionItem value={`item-2-${index}`} key={index}>
-                                <AccordionTrigger className="text-lg font-medium">{item.question}</AccordionTrigger>
+                                <AccordionTrigger className="text-lg font-medium text-left">{item.question}</AccordionTrigger>
                                 <AccordionContent className="text-base text-muted-foreground">
                                     {item.answer}
                                 </AccordionContent>

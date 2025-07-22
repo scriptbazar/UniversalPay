@@ -94,7 +94,7 @@ export default function PricingPage() {
                     </ul>
                   </CardContent>
                   <div className="p-6">
-                    <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-primary-foreground'}`} variant={tier.popular ? 'default' : 'outline'}>
+                    <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
                       {tier.cta}
                     </Button>
                   </div>
