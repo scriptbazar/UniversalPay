@@ -628,8 +628,8 @@ export default function UserDetailPage() {
                         </div>
                     </div>
                 )}
-                 <DialogFooter className="justify-between">
-                    <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
+                 <DialogFooter className="sm:justify-between gap-2">
+                    <Button variant="ghost" onClick={() => setDialogOpen(null)}>Close</Button>
                     {merchant && (
                         <Button asChild>
                             <Link href={`/dashboard/users/${merchant.id}`}>View Full Profile</Link>

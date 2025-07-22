@@ -271,53 +271,53 @@ export default function AllTransactionsPage() {
                 </DialogHeader>
                 {selectedTransaction && (
                     <div className="space-y-4 py-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Transaction ID:</span>
-                        <div className="flex items-center gap-2">
-                                <span className="font-mono font-semibold">{selectedTransaction.id}</span>
-                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
-                            </div>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Merchant:</span>
-                        <span className="font-semibold">{selectedTransaction.merchant}</span>
-                    </div>
-                     <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Customer Email:</span>
-                        <div className="flex items-center gap-2">
-                                <span className="font-semibold">{selectedTransaction.customerEmail}</span>
-                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
-                            </div>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">${selectedTransaction.amount}</span>
-                    </div>
-                     <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Method:</span>
-                        <span className="font-semibold">{selectedTransaction.method}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Status:</span>
-                        <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Date:</span>
-                        <span className="font-semibold">{selectedTransaction.date}</span>
-                    </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Transaction ID:</span>
+                            <div className="flex items-center gap-2">
+                                    <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                                </div>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Merchant:</span>
+                            <span className="font-semibold">{selectedTransaction.merchant}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Customer Email:</span>
+                            <div className="flex items-center gap-2">
+                                    <span className="font-semibold">{selectedTransaction.customerEmail}</span>
+                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
+                                </div>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Amount:</span>
+                            <span className="font-semibold">${selectedTransaction.amount}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Method:</span>
+                            <span className="font-semibold">{selectedTransaction.method}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Status:</span>
+                            <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Date:</span>
+                            <span className="font-semibold">{selectedTransaction.date}</span>
+                        </div>
                     </div>
                 )}
-                <DialogFooter className="justify-between">
-                    <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                <DialogFooter className="sm:justify-between gap-2">
+                    <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
                     {selectedTransaction && (
                         <Button asChild>
-                            <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant</Link>
+                            <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
                         </Button>
                     )}
                 </DialogFooter>

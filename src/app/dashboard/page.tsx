@@ -338,11 +338,11 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-          <DialogFooter className="justify-between">
-            <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+          <DialogFooter className="sm:justify-between gap-2">
+            <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
             {selectedTransaction && (
               <Button asChild>
-                <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant</Link>
+                <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
               </Button>
             )}
           </DialogFooter>
@@ -464,8 +464,8 @@ export default function AdminDashboard() {
                </div>
              </div>
           )}
-          <DialogFooter className="justify-between">
-             <Button variant="outline" onClick={() => setSelectedSignup(null)}>Close</Button>
+          <DialogFooter className="sm:justify-between gap-2">
+             <Button variant="ghost" onClick={() => setSelectedSignup(null)}>Close</Button>
              <Button variant="default" asChild>
                 <Link href={`/dashboard/users/${selectedSignup?.id}`}>View Full Profile</Link>
              </Button>
