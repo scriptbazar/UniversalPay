@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, AppWindow } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, AppWindow, BadgeEuro } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +75,10 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
     // This can be a loading state in a real app
     return null;
   }
+  
+  const totalVolume = linkDetails.payments * (linkDetails.amount || 50);
+  const averagePayment = linkDetails.payments > 0 ? totalVolume / linkDetails.payments : 0;
+
 
   return (
     <div className="space-y-6">
@@ -112,14 +116,14 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
             </CardHeader>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${(linkDetails.payments * (linkDetails.amount || 50)).toFixed(2)}</div>
+                    <div className="text-2xl font-bold">${totalVolume.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -129,6 +133,15 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{linkDetails.payments}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">${averagePayment.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
