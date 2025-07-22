@@ -358,8 +358,14 @@ export default function ResellerPage() {
                  <DialogDescription>Details of your earnings for this month.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-                <div className="flex justify-between"><span className="text-muted-foreground">Total Sub-Merchant Sales:</span> <span className="font-semibold">${totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Average Commission Rate:</span> <span className="font-semibold">~5.5%</span></div>
+                <Button variant="ghost" className="h-auto w-full justify-between p-0" onClick={() => openDialog('sales')}>
+                    <span className="text-muted-foreground">Total Sub-Merchant Sales:</span>
+                    <span className="font-semibold">${totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </Button>
+                <Button variant="ghost" className="h-auto w-full justify-between p-0" onClick={() => openDialog('avg_commission')}>
+                    <span className="text-muted-foreground">Average Commission Rate:</span> 
+                    <span className="font-semibold">~5.5%</span>
+                </Button>
                 <Separator/>
                 <div className="flex justify-between font-bold text-lg"><span>Total Commission Earned:</span> <span>$1,260.00</span></div>
             </div>
