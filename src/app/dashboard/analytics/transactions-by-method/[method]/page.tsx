@@ -1,30 +1,36 @@
 
 'use client';
 
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Copy, Search, File } from "lucide-react"; // Import Search and File
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input"; // Import Input
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
+import { Calendar } from "@/components/ui/calendar"; // Import Calendar
+import { DateRange } from "react-day-picker"; // Import DateRange
+import { format } from "date-fns"; // Import format
 
 // Mock data generation function - in a real app, this would be an API call
 const generateMockTransactions = () => {
     return Array.from({ length: 150 }, (_, i) => {
         const methods = ["UPI", "Crypto", "Page", "Link"];
         const success = Math.random() > 0.1;
+        const day = 28 - Math.floor(i / 6);
         return {
             id: `UVRLP${987654321 - i}`,
             merchant: `Merchant ${i % 4 + 1}`,
             merchantId: `user_${(i%4)+1}`,
             customerEmail: `customer${i + 1}@example.com`,
             amount: (Math.random() * 500 + 10).toFixed(2),
-            date: new Date(2023, 10, (i % 28) + 1).toISOString().split('T')[0],
+            date: new Date(2023, 10, day).toISOString().split('T')[0],
             method: methods[i % 4],
             status: success ? 'Success' : 'Failed'
         }
@@ -48,6 +54,10 @@ export default function TransactionsByMethodPage() {
 
     const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         // Generate data on the client side to avoid hydration issues
@@ -56,10 +66,32 @@ export default function TransactionsByMethodPage() {
 
     const pageTitle = method ? `${method.charAt(0).toUpperCase() + method.slice(1)} Transactions` : 'Transactions';
 
-    const methodTransactions = useMemo(() => {
-        if (!allMockTransactions.length || !method) return [];
-        return allMockTransactions.filter(tx => tx.method.toLowerCase() === method.toLowerCase());
-    }, [method, allMockTransactions]);
+    const filteredTransactions = useMemo(() => {
+        let filtered = allMockTransactions.filter(tx => tx.method.toLowerCase() === method.toLowerCase());
+
+        if (searchTerm) {
+            filtered = filtered.filter(tx =>
+                tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        if (dateRange?.from) {
+            filtered = filtered.filter(tx => new Date(tx.date) >= dateRange.from!);
+        }
+        if (dateRange?.to) {
+            filtered = filtered.filter(tx => new Date(tx.date) <= dateRange.to!);
+        }
+        
+        return filtered;
+    }, [method, allMockTransactions, searchTerm, dateRange]);
+
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const paginatedTransactions = filteredTransactions.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
 
     const handleRowClick = (transaction: Transaction) => {
         setSelectedTransaction(transaction);
@@ -82,8 +114,57 @@ export default function TransactionsByMethodPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">{pageTitle}</CardTitle>
-                    <CardDescription>A list of all transactions for this payment method. Click a row for details.</CardDescription>
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="text-2xl">{pageTitle}</CardTitle>
+                            <CardDescription>A list of all transactions for this payment method. Click a row for details.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                               <Input
+                                 type="search"
+                                 placeholder="Search ID, Merchant, Email..."
+                                 className="pl-8 w-48"
+                                 value={searchTerm}
+                                 onChange={(e) => setSearchTerm(e.target.value)}
+                               />
+                            </div>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
+                                        <span>
+                                            {dateRange?.from ? (
+                                                dateRange.to ? (
+                                                    <>
+                                                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                                                    </>
+                                                ) : (
+                                                    format(dateRange.from, "LLL dd, y")
+                                                )
+                                            ) : (
+                                                "Filter by date"
+                                            )}
+                                        </span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                    <Calendar
+                                        initialFocus
+                                        mode="range"
+                                        defaultMonth={dateRange?.from}
+                                        selected={dateRange}
+                                        onSelect={setDateRange}
+                                        numberOfMonths={2}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <Button size="sm" variant="outline" className="h-9 gap-1">
+                                <File className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                            </Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -98,7 +179,7 @@ export default function TransactionsByMethodPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {methodTransactions.map(tx => (
+                            {paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.id}</TableCell>
                                     <TableCell>{tx.merchant}</TableCell>
@@ -112,10 +193,35 @@ export default function TransactionsByMethodPage() {
                             ))}
                         </TableBody>
                     </Table>
-                    {methodTransactions.length === 0 && (
-                        <p className="text-center text-muted-foreground py-8">No transactions found for this method.</p>
+                    {filteredTransactions.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No transactions found for the selected filters.</p>
                     )}
                 </CardContent>
+                 <CardFooter>
+                     <div className="flex justify-between items-center w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Page {currentPage} of {totalPages}. Total {filteredTransactions.length} transactions.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
 
             <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
