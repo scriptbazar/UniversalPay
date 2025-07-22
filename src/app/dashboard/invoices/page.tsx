@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
@@ -159,7 +158,13 @@ export default function InvoicesPage() {
         
         <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
             <DialogContent className="max-w-3xl p-0 border-0">
-                <div className="max-h-[90vh] overflow-y-auto">
+                 {selectedInvoice && (
+                    <div className="p-6 flex justify-end items-center gap-2 border-b">
+                         <Button variant="outline" size="sm" onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> PDF</Button>
+                         <Button variant="secondary" size="sm" onClick={() => setSelectedInvoice(null)}>Close</Button>
+                    </div>
+                 )}
+                <div className="max-h-[80vh] overflow-y-auto">
                     <div id="invoice-dialog-content" className="p-8 md:p-12 bg-background">
                         {selectedInvoice && (
                             <>
@@ -177,8 +182,6 @@ export default function InvoicesPage() {
                                                     {selectedInvoice.status}
                                                 </Badge>
                                             )}
-                                            <Button variant="outline" size="sm" onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> PDF</Button>
-                                            <Button variant="secondary" size="sm" onClick={() => setSelectedInvoice(null)}>Close</Button>
                                         </div>
                                     </div>
                                 </div>
