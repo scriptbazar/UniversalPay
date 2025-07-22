@@ -107,7 +107,7 @@ const allSubMerchantTransactions: Transaction[] = [
     { id: 'UVRLP911202322', merchantId: 'sub_2', merchantName: 'AnotherShop', merchantEmail: 'sales@anothershop.io', amount: 40.00, date: '2023-11-05', method: 'Crypto', status: 'Failed' },
 ];
 
-type DialogType = 'subMerchants' | 'commission' | 'avg_commission' | null;
+type DialogType = 'subMerchants' | 'avg_commission' | null;
 
 const getStatusBadgeVariant = (status: Transaction["status"]) => {
     switch (status) {
@@ -193,7 +193,7 @@ export default function ResellerPage() {
             <p className="text-xs text-muted-foreground">Total sales this month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => openDialog('commission')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/dashboard/reseller/transactions')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Your Commission</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
@@ -300,27 +300,6 @@ export default function ResellerPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog for Commission Details */}
-       <Dialog open={dialogOpen === 'commission'} onOpenChange={() => setDialogOpen(null)}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Commission Breakdown</DialogTitle>
-                 <DialogDescription>Details of your earnings for this month.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <Button variant="link" className="h-auto w-full justify-between p-0" onClick={() => router.push('/dashboard/reseller/transactions')}>
-                    <span className="text-muted-foreground">Total Sub-Merchant Sales:</span>
-                    <span className="font-semibold">${totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </Button>
-                <Separator/>
-                <div className="flex justify-between font-bold text-lg"><span>Total Commission Earned:</span> <span>$1,260.00</span></div>
-            </div>
-             <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Dialog for Avg Commission Rate */}
        <Dialog open={dialogOpen === 'avg_commission'} onOpenChange={() => setDialogOpen(null)}>
         <DialogContent>
