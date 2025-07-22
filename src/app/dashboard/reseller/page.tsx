@@ -107,7 +107,7 @@ const allSubMerchantTransactions: Transaction[] = [
     { id: 'UVRLP911202322', merchantId: 'sub_2', merchantName: 'AnotherShop', merchantEmail: 'sales@anothershop.io', amount: 40.00, date: '2023-11-05', method: 'Crypto', status: 'Failed' },
 ];
 
-type DialogType = 'subMerchants' | 'sales' | 'commission' | 'avg_commission' | null;
+type DialogType = 'subMerchants' | 'commission' | 'avg_commission' | null;
 
 const getStatusBadgeVariant = (status: Transaction["status"]) => {
     switch (status) {
@@ -157,13 +157,6 @@ export default function ResellerPage() {
   );
   const totalSubMerchantPages = Math.ceil(subMerchants.length / itemsPerPage);
 
-  // Memoized pagination logic for transactions
-  const paginatedTransactions = allSubMerchantTransactions.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-  );
-  const totalTransactionPages = Math.ceil(allSubMerchantTransactions.length / itemsPerPage);
-
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -190,7 +183,7 @@ export default function ResellerPage() {
             <p className="text-xs text-muted-foreground">+2 since last month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => openDialog('sales')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/dashboard/reseller/transactions')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sub-Merchant Sales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -307,49 +300,6 @@ export default function ResellerPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog for Sub-Merchant Sales */}
-      <Dialog open={dialogOpen === 'sales'} onOpenChange={() => setDialogOpen(null)}>
-        <DialogContent className="max-w-xl">
-            <DialogHeader>
-                <DialogTitle>All Sub-Merchant Transactions</DialogTitle>
-                <DialogDescription>A list of all successful transactions from your sub-merchants.</DialogDescription>
-            </DialogHeader>
-            <div className="max-h-[60vh] overflow-y-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Transaction ID</TableHead>
-                            <TableHead>Merchant</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {paginatedTransactions.map(tx => (
-                            <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
-                                <TableCell className="font-mono">{tx.id}</TableCell>
-                                <TableCell>{tx.merchantName}</TableCell>
-                                <TableCell>{tx.date}</TableCell>
-                                <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-            <DialogFooter className="sm:justify-between pt-4">
-                <div className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalTransactionPages}
-                </div>
-                {totalTransactionPages > 1 && (
-                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Previous</Button>
-                        <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, totalTransactionPages))} disabled={currentPage === totalTransactionPages}>Next</Button>
-                    </div>
-                )}
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Dialog for Commission Details */}
        <Dialog open={dialogOpen === 'commission'} onOpenChange={() => setDialogOpen(null)}>
         <DialogContent>
@@ -358,11 +308,11 @@ export default function ResellerPage() {
                  <DialogDescription>Details of your earnings for this month.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-                <Button variant="ghost" className="h-auto w-full justify-between p-0" onClick={() => openDialog('sales')}>
+                <Button variant="link" className="h-auto w-full justify-between p-0" onClick={() => router.push('/dashboard/reseller/transactions')}>
                     <span className="text-muted-foreground">Total Sub-Merchant Sales:</span>
                     <span className="font-semibold">${totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </Button>
-                <Button variant="ghost" className="h-auto w-full justify-between p-0" onClick={() => openDialog('avg_commission')}>
+                <Button variant="link" className="h-auto w-full justify-between p-0" onClick={() => openDialog('avg_commission')}>
                     <span className="text-muted-foreground">Average Commission Rate:</span> 
                     <span className="font-semibold">~5.5%</span>
                 </Button>
