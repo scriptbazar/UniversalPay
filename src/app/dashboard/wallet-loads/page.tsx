@@ -130,7 +130,7 @@ export default function AdminWalletLoadsPage() {
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedRequest.status)}>{selectedRequest.status}</Badge></div>
             </div>
           )}
-           <DialogFooter className="flex flex-row items-center justify-start gap-2">
+           <DialogFooter className="flex flex-row items-center justify-start gap-2 pt-4">
             {selectedRequest && (
                 <Button asChild variant="default">
                     <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
