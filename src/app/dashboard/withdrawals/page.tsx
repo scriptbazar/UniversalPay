@@ -11,7 +11,7 @@ import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy, Sea
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,6 @@ export default function AdminWithdrawalsPage() {
         navigator.clipboard.writeText(text);
         toast({
             title: `${label} Copied!`,
-            description: `${text} has been copied to your clipboard.`,
         });
     };
 
@@ -190,8 +189,7 @@ export default function AdminWithdrawalsPage() {
         </Card>
       </Tabs>
       
-      {selectedWithdrawal && (
-        <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
+      <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
             <DialogContent className="max-w-xl">
                  <DialogHeader>
                     <div className="flex items-start justify-between">
@@ -201,86 +199,86 @@ export default function AdminWithdrawalsPage() {
                                 <div>
                                     <DialogTitle className="text-2xl">Withdrawal Details</DialogTitle>
                                     <div className="flex items-center gap-2">
-                                        <p className="text-sm text-muted-foreground font-mono">{selectedWithdrawal.id}</p>
-                                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedWithdrawal.id, 'Request ID')} />
+                                        <p className="text-sm text-muted-foreground font-mono">{selectedWithdrawal?.id}</p>
+                                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedWithdrawal!.id, 'Request ID')} />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <Badge variant={getStatusBadgeVariant(selectedWithdrawal.status)} className="text-base px-4 py-1">{selectedWithdrawal.status}</Badge>
+                        <Badge variant={getStatusBadgeVariant(selectedWithdrawal!.status)} className="text-base px-4 py-1">{selectedWithdrawal!.status}</Badge>
                     </div>
                 </DialogHeader>
-                <div className="py-4 space-y-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="flex items-center gap-4">
-                            <User className="w-6 h-6 text-primary" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Merchant</p>
-                                <Link href={`/dashboard/users/${selectedWithdrawal.merchantId}`} className="font-semibold hover:underline">
-                                    {selectedWithdrawal.merchantName}
-                                </Link>
+                {selectedWithdrawal && (
+                    <div className="py-4 space-y-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="flex items-center gap-4">
+                                <User className="w-6 h-6 text-primary" />
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Merchant</p>
+                                    <Link href={`/dashboard/users/${selectedWithdrawal.merchantId}`} className="font-semibold hover:underline">
+                                        {selectedWithdrawal.merchantName}
+                                    </Link>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <Calendar className="w-6 h-6 text-primary" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Requested On</p>
-                                <p className="font-semibold">{selectedWithdrawal.date}</p>
+                            <div className="flex items-center gap-4">
+                                <Calendar className="w-6 h-6 text-primary" />
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Requested On</p>
+                                    <p className="font-semibold">{selectedWithdrawal.date}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <DollarSign className="w-6 h-6 text-primary" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Amount</p>
-                                <p className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <Separator/>
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="flex items-start gap-4">
-                            <Wallet className="w-6 h-6 text-primary mt-1" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Destination Type</p>
-                                <p className="font-semibold">{selectedWithdrawal.destination.startsWith('bc1') ? 'Bitcoin Wallet' : selectedWithdrawal.destination.startsWith('T') ? 'USDT (TRC20) Wallet' : 'Bank Account'}</p> 
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                            <Hash className="w-6 h-6 text-primary mt-1" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Destination Address</p>
-                                <div className="flex items-center gap-2">
-                                     <p className="font-semibold font-mono break-all">{selectedWithdrawal.destination}</p>
-                                     <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground flex-shrink-0" onClick={() => copyToClipboard(selectedWithdrawal.destination, 'Destination Address')} />
+                            <div className="flex items-center gap-4">
+                                <DollarSign className="w-6 h-6 text-primary" />
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Amount</p>
+                                    <p className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        <Separator/>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="flex items-start gap-4">
+                                <Wallet className="w-6 h-6 text-primary mt-1" />
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Destination Type</p>
+                                    <p className="font-semibold">{selectedWithdrawal.destination.startsWith('bc1') ? 'Bitcoin Wallet' : selectedWithdrawal.destination.startsWith('T') ? 'USDT (TRC20) Wallet' : 'Bank Account'}</p> 
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <Hash className="w-6 h-6 text-primary mt-1" />
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Destination Address</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold font-mono break-all">{selectedWithdrawal.destination}</p>
+                                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground flex-shrink-0" onClick={() => copyToClipboard(selectedWithdrawal!.destination, 'Destination Address')} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    {selectedWithdrawal.status === "Pending" && (
-                        <>
-                            <Separator />
-                            <div>
-                                <h3 className="text-lg font-semibold mb-2">Actions</h3>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Please verify the transaction details before approving. This action cannot be undone.
-                                </p>
-                                <div className="flex gap-4">
-                                    <Button size="lg" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Completed")}>
-                                        <Check className="mr-2 h-5 w-5" />Approve
-                                    </Button>
-                                    <Button size="lg" variant="destructive" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Failed")}>
-                                        <X className="mr-2 h-5 w-5" />Reject
-                                    </Button>
+                        {selectedWithdrawal.status === "Pending" && (
+                            <>
+                                <Separator />
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2">Actions</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Please verify the transaction details before approving. This action cannot be undone.
+                                    </p>
+                                    <div className="flex gap-4">
+                                        <Button size="lg" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Completed")}>
+                                            <Check className="mr-2 h-5 w-5" />Approve
+                                        </Button>
+                                        <Button size="lg" variant="destructive" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Failed")}>
+                                            <X className="mr-2 h-5 w-5" />Reject
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </DialogContent>
-        </Dialog>
-      )}
-
+      </Dialog>
     </div>
   );
 }
