@@ -66,8 +66,6 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const userData = userDoc.data();
         const firestoreRole = userData.role || 'merchant';
         
-        console.log(`User ${user.uid} signed in. Role from Firestore: ${firestoreRole}`);
-
         // Security Check: Enforce login page types based on the reliable Firestore role
         if (loginType === 'admin' && firestoreRole !== 'admin') {
             await signOut(auth);
@@ -77,7 +75,6 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         if (loginType === 'merchant' && firestoreRole === 'admin') {
             // This can be allowed, but for strictness, we can redirect them.
             // For now, let's allow it but a real app might redirect.
-            console.log("Admin is logging in via merchant page. Allowing...");
         }
 
         return { success: true, user: { uid: user.uid, ...userData } };

@@ -23,7 +23,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged, type User as AuthUser } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -42,65 +42,43 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
     const { toast } = useToast();
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("Authentication state confirmed: User is logged in.", user.uid);
-                setCurrentUser(user);
-                fetchUsers();
+                const usersCollectionRef = collection(db, "users");
+                const unsubscribeSnapshot = onSnapshot(usersCollectionRef, (querySnapshot) => {
+                    const userList: User[] = [];
+                    querySnapshot.forEach((doc) => {
+                        userList.push({ id: doc.id, ...doc.data() } as User);
+                    });
+                    setUsers(userList);
+                    setLoading(false);
+                }, (err: any) => {
+                    console.error("Error fetching users from Firestore: ", err);
+                    if (err.code === 'permission-denied') {
+                        setError("Permission Denied: Your account does not have the necessary permissions to view all users. Please check your security rules in Firebase to ensure admins can list the 'users' collection.");
+                    } else {
+                        setError(`Failed to load users: ${err.message}`);
+                    }
+                    toast({
+                        variant: "destructive",
+                        title: "Failed to load users",
+                        description: err.message,
+                    });
+                    setLoading(false);
+                });
+
+                return () => unsubscribeSnapshot();
             } else {
-                console.log("Authentication state confirmed: User is logged out.");
-                setCurrentUser(null);
                 setLoading(false);
-                // Optional: redirect to login if not authenticated
-                // router.push('/admin'); 
             }
         });
 
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, []);
-
-    const fetchUsers = async () => {
-        setLoading(true);
-        setError(null);
-        console.log("Fetching users from Firestore...");
-        try {
-            if (!db) {
-                throw new Error("Firestore database is not initialized.");
-            }
-            const usersCollectionRef = collection(db, "users");
-            const querySnapshot = await getDocs(usersCollectionRef);
-            
-            const userList: User[] = [];
-            querySnapshot.forEach((doc) => {
-                userList.push({ id: doc.id, ...doc.data() } as User);
-            });
-            
-            console.log(`Successfully fetched ${userList.length} users.`);
-            setUsers(userList);
-
-        } catch (err: any) {
-            console.error("Error fetching users from Firestore: ", err);
-            // This is the specific error the user was seeing.
-            if (err.code === 'permission-denied') {
-                 setError("Permission Denied: Your account does not have the necessary permissions to view all users. Please check your security rules in Firebase to ensure admins can list the 'users' collection.");
-            } else {
-                setError(`Failed to load users: ${err.message}`);
-            }
-            toast({
-                variant: "destructive",
-                title: "Failed to load users",
-                description: err.message,
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+        return () => unsubscribeAuth();
+    }, [toast]);
     
     const handleRowClick = (userId: string) => {
         router.push(`/dashboard/users/${userId}`);

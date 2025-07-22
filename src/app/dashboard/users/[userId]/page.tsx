@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -165,7 +165,6 @@ export default function UserDetailPage() {
     const userDocRef = doc(db, "users", merchant.id);
     try {
         await setDoc(userDocRef, { status: newStatus }, { merge: true });
-        // The onSnapshot listener will update the state automatically
         toast({
             title: `Merchant ${newStatus}`,
             description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
@@ -316,7 +315,6 @@ export default function UserDetailPage() {
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
                     <div className="flex gap-2">
-                         <Button variant="outline" onClick={handleLoginAsUser}>Login As User</Button>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button size="default" variant="outline">
@@ -325,6 +323,10 @@ export default function UserDetailPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleLoginAsUser}>
+                                    <LogIn className="mr-2 h-4 w-4" />
+                                    Login As User
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleRoleChange}>
                                     <ShieldIcon className="mr-2 h-4 w-4" />
                                     {merchant.role === 'admin' ? 'Make Merchant' : 'Make Admin'}
