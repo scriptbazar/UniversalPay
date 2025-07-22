@@ -3,6 +3,7 @@ export type WalletLoadRequest = {
   id: string;
   merchantId: string;
   merchantName: string;
+  merchantEmail: string; // Added email
   amount: string;
   currency: 'USD';
   transactionId: string;
@@ -15,6 +16,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     id: "WLR-001",
     merchantId: "merch_123",
     merchantName: "MyStore.com",
+    merchantEmail: "contact@mystore.com",
     amount: "1000.00",
     currency: "USD",
     transactionId: "PAYID12345678",
@@ -25,6 +27,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     id: "WLR-002",
     merchantId: "merch_456",
     merchantName: "CreativeGoods",
+    merchantEmail: "support@creative.co",
     amount: "500.00",
     currency: "USD",
     transactionId: "DEPOSIT98765",
@@ -35,6 +38,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     id: "WLR-003",
     merchantId: "merch_123",
     merchantName: "MyStore.com",
+    merchantEmail: "contact@mystore.com",
     amount: "2500.00",
     currency: "USD",
     transactionId: "REF11223344",

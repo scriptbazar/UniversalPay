@@ -83,7 +83,10 @@ export default function AdminWalletLoadsPage() {
               {requests.map((req) => (
                 <TableRow key={req.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedRequest(req)}>
                   <TableCell className="font-medium">{req.id}</TableCell>
-                  <TableCell>{req.merchantName}</TableCell>
+                  <TableCell>
+                      <div>{req.merchantName}</div>
+                      <div className="text-xs text-muted-foreground">{req.merchantEmail}</div>
+                  </TableCell>
                   <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="font-mono">{req.transactionId}</TableCell>
                   <TableCell>${req.amount}</TableCell>
@@ -105,7 +108,13 @@ export default function AdminWalletLoadsPage() {
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4 py-4">
-                <div className="flex justify-between items-center"><span className="text-muted-foreground">Merchant:</span> <Link href={`/dashboard/users/${selectedRequest.merchantId}`} className="font-semibold hover:underline">{selectedRequest.merchantName}</Link></div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Merchant:</span> 
+                    <Link href={`/dashboard/users/${selectedRequest.merchantId}`} className="font-semibold hover:underline text-right">
+                        <p>{selectedRequest.merchantName}</p>
+                        <p className="text-sm text-primary/80">{selectedRequest.merchantEmail}</p>
+                    </Link>
+                </div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedRequest.amount}</span></div>
                 <div className="flex justify-between items-center">
