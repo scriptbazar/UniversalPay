@@ -35,8 +35,17 @@ exports.setAdminRole = onCall(async (request) => {
     throw new HttpsError('unauthenticated', 'The function must be called while authenticated.');
   }
 
+  const callingUserUid = request.auth.uid;
+  const callingUserEmail = request.auth.token.email || 'Unknown';
+
+
   // SECURITY FIX: Enforce that only existing admins can call this function.
   if (request.auth.token.role !== 'admin') {
+    await admin.firestore().collection('audit_logs').add({
+        type: 'SECURITY_ALERT',
+        message: `Non-admin user ${callingUserEmail} (${callingUserUid}) attempted to set an admin role.`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
     throw new HttpsError(
       'permission-denied',
       'Only admins can set user roles.'
@@ -44,9 +53,10 @@ exports.setAdminRole = onCall(async (request) => {
   }
 
   const targetUid = request.data.uid;
+  const targetEmail = request.data.email; // Assuming target email is passed for logging
 
-  if (!targetUid) {
-    throw new HttpsError('invalid-argument', 'The function must be called with a "uid" argument.');
+  if (!targetUid || !targetEmail) {
+    throw new HttpsError('invalid-argument', 'The function must be called with "uid" and "email" arguments.');
   }
 
   try {
@@ -56,11 +66,28 @@ exports.setAdminRole = onCall(async (request) => {
     // Also update the role in Firestore user document (optional, but good for consistency)
     const userRef = admin.firestore().collection('users').doc(targetUid);
     await userRef.update({ role: 'admin' });
+    
+    // Create an audit log entry
+    await admin.firestore().collection('audit_logs').add({
+        type: 'ROLE_CHANGE',
+        message: `Admin ${callingUserEmail} (${callingUserUid}) promoted ${targetEmail} (${targetUid}) to admin.`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        level: 'CRITICAL',
+    });
+
 
     console.log(`User ${targetUid} has been assigned the 'admin' role.`);
     return { success: true };
   } catch (error) {
     console.error(`Error setting admin role for user ${targetUid}:`, error);
+    // Log failure as well
+     await admin.firestore().collection('audit_logs').add({
+        type: 'ERROR',
+        message: `Admin ${callingUserEmail} (${callingUserUid}) failed to promote ${targetEmail} (${targetUid}) to admin.`,
+        error: (error as Error).message,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        level: 'ERROR',
+    });
     throw new HttpsError('internal', 'An internal error occurred while setting the admin role.');
   }
 });
