@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { type Invoice, getInvoiceById, getInvoices } from "@/lib/invoicesData";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Logo } from "@/components/logo";
@@ -80,17 +80,14 @@ export default function InvoicesPage() {
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const canvasAspectRatio = canvasWidth / canvasHeight;
-            const pdfAspectRatio = pdfWidth / pdfHeight;
-
+            const canvasAspectRatio = canvas.width / canvas.height;
+            
             let finalWidth, finalHeight;
+            
+            finalWidth = pdfWidth;
+            finalHeight = pdfWidth / canvasAspectRatio;
 
-            if (canvasAspectRatio > pdfAspectRatio) {
-                finalWidth = pdfWidth;
-                finalHeight = pdfWidth / canvasAspectRatio;
-            } else {
+            if (finalHeight > pdfHeight) {
                 finalHeight = pdfHeight;
                 finalWidth = pdfHeight * canvasAspectRatio;
             }
@@ -175,8 +172,8 @@ export default function InvoicesPage() {
         </Card>
         
         <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
-            <DialogContent className="max-w-2xl p-0 border-0">
-                 <div id="invoice-dialog-content" className="p-6 md:p-10 bg-background">
+            <DialogContent className="max-w-3xl p-0 border-0">
+                 <div id="invoice-dialog-content" className="p-8 md:p-12 bg-background">
                     {selectedInvoice && (
                         <>
                              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
@@ -184,25 +181,25 @@ export default function InvoicesPage() {
                                     <Logo />
                                 </div>
                                 <div className="flex flex-col items-start md:items-end gap-2">
-                                    <h1 className="text-3xl font-bold text-right">Invoice</h1>
+                                    <h1 className="text-4xl font-bold text-right">INVOICE</h1>
                                     <p className="font-mono text-muted-foreground">{selectedInvoice.id}</p>
                                 </div>
                             </div>
                             <Separator className="my-8" />
                             <div className="grid md:grid-cols-2 gap-8 mb-8">
                                 <div>
-                                    <h2 className="font-semibold mb-2">Billed To:</h2>
-                                    <p className="font-semibold text-lg">{selectedInvoice.customerName}</p>
+                                    <h2 className="font-semibold mb-2 text-muted-foreground">BILLED TO</h2>
+                                    <p className="font-bold text-lg">{selectedInvoice.customerName}</p>
                                     <p className="text-sm text-muted-foreground">{selectedInvoice.customerEmail}</p>
                                 </div>
                                 <div className="text-left md:text-right">
-                                    <h2 className="font-semibold mb-2">From:</h2>
-                                    <p className="font-semibold text-lg">{selectedInvoice.merchantName}</p>
+                                    <h2 className="font-semibold mb-2 text-muted-foreground">FROM</h2>
+                                    <p className="font-bold text-lg">{selectedInvoice.merchantName}</p>
                                 </div>
                             </div>
-                             <div className="flex justify-between items-center mb-8">
+                             <div className="flex justify-between items-center mb-8 bg-muted p-3 rounded-lg">
                                 <div className="text-sm">
-                                    <p className="text-muted-foreground">Issued Date</p>
+                                    <p className="text-muted-foreground">Issue Date</p>
                                     <p className="font-semibold">{selectedInvoice.issueDate}</p>
                                 </div>
                                  <div className="text-sm text-right">
@@ -214,22 +211,22 @@ export default function InvoicesPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Description</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
+                                            <TableHead className="text-base">Description</TableHead>
+                                            <TableHead className="text-right text-base">Amount</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {selectedInvoice.items.map((item, index) => (
                                             <TableRow key={index}>
-                                                <TableCell className="font-medium">{item.description}</TableCell>
-                                                <TableCell className="text-right">${item.amount.toFixed(2)}</TableCell>
+                                                <TableCell className="font-medium text-base py-4">{item.description}</TableCell>
+                                                <TableCell className="text-right font-medium text-base py-4">${item.amount.toFixed(2)}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
                             </div>
                             <div className="flex justify-end mt-6">
-                                <div className="w-full max-w-sm space-y-4">
+                                <div className="w-full max-w-xs space-y-4">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Subtotal</span>
                                         <span>${selectedInvoice.totalAmount.toFixed(2)}</span>
@@ -245,7 +242,7 @@ export default function InvoicesPage() {
                                     </div>
                                 </div>
                             </div>
-                              <div className="mt-8 pt-4 border-t">
+                              <div className="mt-8 pt-6 border-t">
                                 {statusInfo && (
                                     <Badge variant={statusInfo.variant} className="text-base px-4 py-2 flex items-center w-fit">
                                         {statusInfo.icon}
@@ -256,10 +253,10 @@ export default function InvoicesPage() {
                         </>
                     )}
                  </div>
-                 <div className="flex justify-end gap-2 p-6 pt-0 bg-background border-t">
+                 <DialogFooter className="flex justify-end gap-2 p-4 bg-muted border-t">
                     <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
                     <Button onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> Download PDF</Button>
-                </div>
+                 </DialogFooter>
             </DialogContent>
         </Dialog>
     </div>
