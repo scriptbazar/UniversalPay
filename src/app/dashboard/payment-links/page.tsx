@@ -1,12 +1,15 @@
-
 'use client';
 
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const allLinks = [
   { id: 'plink_1', merchant: 'MyStore.com', title: 'T-Shirt Sale', payments: 120, fraud: 2, status: 'Active', expiresAt: '2023-11-10' },
@@ -17,10 +20,22 @@ const allLinks = [
 
 export default function AdminPaymentLinksPage() {
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const handleRowClick = (linkId: string) => {
     router.push(`/dashboard/payment-links/${linkId}`);
   };
+
+  const filteredLinks = useMemo(() => {
+    return allLinks.filter(link => {
+      const matchesSearch = searchTerm === '' || 
+                            link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            link.merchant.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || link.status.toLowerCase() === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchTerm, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -32,8 +47,34 @@ export default function AdminPaymentLinksPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Platform Links</CardTitle>
-          <CardDescription>A complete list of payment links created by all merchants.</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>All Platform Links</CardTitle>
+                <CardDescription>A complete list of payment links created by all merchants.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                 <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search by title or merchant..."
+                        className="pl-8 w-64"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                 <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -48,7 +89,7 @@ export default function AdminPaymentLinksPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allLinks.map((link) => (
+              {filteredLinks.map((link) => (
                 <TableRow key={link.id} onClick={() => handleRowClick(link.id)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{link.title}</TableCell>
                   <TableCell>{link.merchant}</TableCell>
@@ -66,6 +107,13 @@ export default function AdminPaymentLinksPage() {
                   <TableCell>{link.expiresAt}</TableCell>
                 </TableRow>
               ))}
+               {filteredLinks.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                        No links found for the current filters.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

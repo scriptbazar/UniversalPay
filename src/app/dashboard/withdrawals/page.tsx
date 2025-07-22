@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -89,7 +88,7 @@ export default function AdminWithdrawalsPage() {
         return results;
     }, [withdrawals, filter, searchTerm]);
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
     const paginatedWithdrawals = filteredWithdrawals.slice(
@@ -158,6 +157,13 @@ export default function AdminWithdrawalsPage() {
                     </TableCell>
                     </TableRow>
                 ))}
+                 {filteredWithdrawals.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center h-24">
+                            No withdrawals found for the current filters.
+                        </TableCell>
+                    </TableRow>
+                )}
                 </TableBody>
             </Table>
             </CardContent>

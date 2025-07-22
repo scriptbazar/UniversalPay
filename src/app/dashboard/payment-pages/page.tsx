@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,23 +6,33 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { getPaymentLinks, type PaymentLink } from "@/lib/paymentLinksData";
-import { useEffect, useState } from "react";
-
-const allLinks = getPaymentLinks();
+import { useEffect, useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminPaymentPagesPage() {
   const router = useRouter();
   const [links, setLinks] = useState<PaymentLink[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     // In a real app, this would fetch from a database.
-    // Here we are using local data.
     setLinks(getPaymentLinks());
   }, []);
 
   const handleRowClick = (linkId: string) => {
     router.push(`/dashboard/payment-pages/${linkId}`);
   };
+
+  const filteredLinks = useMemo(() => {
+    return links.filter(link => {
+      const matchesSearch = searchTerm === '' || link.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || (link.isActive ? 'active' : 'inactive') === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [links, searchTerm, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -35,8 +44,34 @@ export default function AdminPaymentPagesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Platform Pages</CardTitle>
-          <CardDescription>A complete list of payment pages created by all merchants.</CardDescription>
+           <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>All Platform Pages</CardTitle>
+                    <CardDescription>A complete list of payment pages created by all merchants.</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by title..."
+                            className="pl-8 w-64"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -50,7 +85,7 @@ export default function AdminPaymentPagesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {links.map((link) => (
+              {filteredLinks.map((link) => (
                 <TableRow key={link.id} onClick={() => handleRowClick(link.slug)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{link.title}</TableCell>
                   <TableCell>MyStore.com</TableCell>
@@ -63,6 +98,13 @@ export default function AdminPaymentPagesPage() {
                   <TableCell>{new Date(link.createdAt).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
+               {filteredLinks.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">
+                        No pages found for the current filters.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

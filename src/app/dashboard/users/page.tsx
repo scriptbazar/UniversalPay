@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +28,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Copy } from "lucide-react";
+import { Copy, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 interface User {
     id: string;
@@ -48,6 +50,13 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+
+    // Filtering and Searching State
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -84,6 +93,27 @@ export default function UsersPage() {
         return () => unsubscribeAuth();
     }, [toast]);
     
+    const filteredUsers = useMemo(() => {
+        return users.filter(user => {
+            const matchesSearch = searchTerm === '' || 
+                                  user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                  user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesRole = roleFilter === 'all' || (user.role || 'merchant').toLowerCase() === roleFilter;
+            
+            const matchesStatus = statusFilter === 'all' || (user.status || 'Active').toLowerCase() === statusFilter;
+
+            return matchesSearch && matchesRole && matchesStatus;
+        });
+    }, [users, searchTerm, roleFilter, statusFilter]);
+
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const paginatedUsers = filteredUsers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
+
     const handleRowClick = (user: User) => {
         setSelectedUser(user);
     };
@@ -121,7 +151,7 @@ export default function UsersPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.map((user) => (
+                        {paginatedUsers.map((user) => (
                            <TableRow key={user.id} onClick={() => handleRowClick(user)} className="cursor-pointer hover:bg-muted/50">
                               <TableCell className="font-medium">
                                   <div className="flex items-center gap-3">
@@ -143,11 +173,9 @@ export default function UsersPage() {
                         ))}
                     </TableBody>
                 </Table>
-                <CardFooter>
-                    <div className="text-xs text-muted-foreground">
-                      Showing <strong>1-{users.length}</strong> of <strong>{users.length}</strong> users.
-                    </div>
-                </CardFooter>
+                {filteredUsers.length === 0 && (
+                    <div className="text-center p-8 text-muted-foreground">No users match the current filters.</div>
+                )}
             </>
         );
     }
@@ -156,14 +184,75 @@ export default function UsersPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Users & Merchants</CardTitle>
-                    <CardDescription>
-                        Manage all users on the platform, including merchants and administrators. Click a user to see details.
-                    </CardDescription>
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <CardTitle>Users & Merchants</CardTitle>
+                            <CardDescription>
+                                Manage all users on the platform, including merchants and administrators. Click a user to see details.
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    type="search"
+                                    placeholder="Search by name or email..."
+                                    className="pl-8 w-64"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                <SelectTrigger className="w-[150px]">
+                                    <SelectValue placeholder="Filter by role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    <SelectItem value="merchant">Merchant</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                            </Select>
+                             <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-[150px]">
+                                    <SelectValue placeholder="Filter by status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="suspended">Suspended</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {renderContent()}
                 </CardContent>
+                <CardFooter>
+                    <div className="flex justify-between items-center w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Page {currentPage} of {totalPages}. Total {filteredUsers.length} users.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
 
             <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
