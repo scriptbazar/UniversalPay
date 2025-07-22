@@ -46,7 +46,7 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import Image from "next/image";
 
-type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; };
+type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
 type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; };
 
 export default function AdminDashboard() {
@@ -79,6 +79,7 @@ export default function AdminDashboard() {
               status: Math.random() > 0.1 ? "Success" : "Failed",
               date: date,
               method: methods[i % 4],
+              merchantId: `user_${(i%4)+1}`
           }
       });
     };
@@ -337,8 +338,13 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="justify-between">
             <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+            {selectedTransaction && (
+              <Button asChild>
+                <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant</Link>
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

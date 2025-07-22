@@ -38,6 +38,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
     const statuses = ["Success", "Failed", "Pending"] as const;
@@ -47,6 +48,7 @@ const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
     return {
         id: `UVRLP${123456789 + i}`,
         merchant: `Merchant ${i % 4 + 1}`,
+        merchantId: `user_${(i%4)+1}`,
         customerEmail: `customer${i + 1}@example.com`,
         amount: ((i + 1) * 12.34).toFixed(2),
         status: statuses[i % 3],
@@ -311,8 +313,13 @@ export default function AllTransactionsPage() {
                     </div>
                     </div>
                 )}
-                <DialogFooter>
+                <DialogFooter className="justify-between">
                     <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                    {selectedTransaction && (
+                        <Button asChild>
+                            <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant</Link>
+                        </Button>
+                    )}
                 </DialogFooter>
                 </DialogContent>
             </Dialog>
