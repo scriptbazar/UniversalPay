@@ -425,12 +425,10 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-
-
-                <div className="pt-4">
-                  <Button onClick={handleSaveGateways}>Save Gateway Configuration</Button>
-                </div>
             </CardContent>
+            <CardFooter>
+                <Button onClick={handleSaveGateways}>Save Gateway Configuration</Button>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
