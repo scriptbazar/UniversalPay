@@ -312,10 +312,6 @@ export default function ResellerPage() {
                     <span className="text-muted-foreground">Total Sub-Merchant Sales:</span>
                     <span className="font-semibold">${totalSales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </Button>
-                <Button variant="link" className="h-auto w-full justify-between p-0" onClick={() => openDialog('avg_commission')}>
-                    <span className="text-muted-foreground">Average Commission Rate:</span> 
-                    <span className="font-semibold">~5.5%</span>
-                </Button>
                 <Separator/>
                 <div className="flex justify-between font-bold text-lg"><span>Total Commission Earned:</span> <span>$1,260.00</span></div>
             </div>
