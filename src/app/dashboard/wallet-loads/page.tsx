@@ -110,10 +110,15 @@ export default function AdminWalletLoadsPage() {
             <div className="space-y-4 py-4">
                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Merchant:</span> 
-                    <Link href={`/dashboard/users/${selectedRequest.merchantId}`} className="font-semibold hover:underline text-right">
-                        <p>{selectedRequest.merchantName}</p>
-                        <p className="text-sm text-primary/80">{selectedRequest.merchantEmail}</p>
-                    </Link>
+                    <div className="text-right">
+                        <Link href={`/dashboard/users/${selectedRequest.merchantId}`} className="font-semibold hover:underline">
+                            {selectedRequest.merchantName}
+                        </Link>
+                         <div className="flex items-center gap-2 justify-end">
+                            <p className="text-sm text-muted-foreground">{selectedRequest.merchantEmail}</p>
+                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedRequest.merchantEmail, 'Merchant Email')} />
+                        </div>
+                    </div>
                 </div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedRequest.amount}</span></div>
