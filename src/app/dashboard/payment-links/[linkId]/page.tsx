@@ -69,6 +69,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [dialogContent, setDialogContent] = useState<{ title: string; description: string; transactions: Transaction[] } | null>(null);
 
+  const averagePayment = linkDetails.payments > 0 ? (parseFloat(linkDetails.volume) / linkDetails.payments).toFixed(2) : "0.00";
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -135,7 +136,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
             </CardHeader>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
@@ -152,6 +153,15 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{linkDetails.payments}</div>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Avg. Payment Value</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">${averagePayment}</div>
                 </CardContent>
             </Card>
             <Card onClick={() => handleCardClick('fraud')} className="cursor-pointer hover:bg-muted/50 transition-colors">
