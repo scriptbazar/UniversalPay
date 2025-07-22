@@ -5,12 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Users, DollarSign, Percent } from "lucide-react";
+import { PlusCircle, Users, DollarSign, Percent, Copy, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import Image from "next/image";
 
-const subMerchants = [
+type SubMerchant = {
+    id: string;
+    name: string;
+    email: string;
+    sales: string;
+    commission: string;
+    status: "Active" | "Inactive";
+};
+
+const subMerchants: SubMerchant[] = [
   {
     id: "user_1",
     name: "MyStore.com",
@@ -88,7 +100,9 @@ type DialogType = 'subMerchants' | 'sales' | 'commission' | 'avg_commission' | n
 
 export default function ResellerPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
+  const [selectedMerchant, setSelectedMerchant] = useState<SubMerchant | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   
@@ -97,6 +111,10 @@ export default function ResellerPage() {
   const handleRowClick = (merchantId: string) => {
     router.push(`/dashboard/users/${merchantId}`);
   };
+
+  const handleSubMerchantRowClick = (merchant: SubMerchant) => {
+    setSelectedMerchant(merchant);
+  }
 
   const openDialog = (type: DialogType) => {
     setCurrentPage(1); // Reset page to 1 when opening a new dialog
@@ -116,6 +134,13 @@ export default function ResellerPage() {
       currentPage * itemsPerPage
   );
   const totalTransactionPages = Math.ceil(allSubMerchantTransactions.length / itemsPerPage);
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -224,7 +249,7 @@ export default function ResellerPage() {
                     </TableHeader>
                     <TableBody>
                         {paginatedSubMerchants.map(merchant => (
-                            <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
+                            <TableRow key={merchant.id} onClick={() => handleSubMerchantRowClick(merchant)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell>
                                     <div className="font-medium">{merchant.name}</div>
                                     <div className="text-sm text-muted-foreground">{merchant.email}</div>
@@ -341,6 +366,45 @@ export default function ResellerPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog for Selected Merchant Details */}
+       <Dialog open={!!selectedMerchant} onOpenChange={() => setSelectedMerchant(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Sub-Merchant Details</DialogTitle>
+                <DialogDescription>
+                    Summary for {selectedMerchant?.name}.
+                </DialogDescription>
+            </DialogHeader>
+            {selectedMerchant && (
+                <div className="py-4 space-y-4">
+                    <div className="flex items-center gap-4">
+                        <Image src={`https://placehold.co/64x64.png?text=${selectedMerchant.name.charAt(0)}`} alt={selectedMerchant.name} width={64} height={64} className="rounded-full" data-ai-hint="user avatar" />
+                        <div>
+                            <h3 className="text-lg font-semibold">{selectedMerchant.name}</h3>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-muted-foreground">{selectedMerchant.email}</p>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedMerchant.email, 'Email')} />
+                            </div>
+                        </div>
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground"/> <span>Status:</span> <Badge variant={selectedMerchant.status === "Active" ? "default" : "secondary"}>{selectedMerchant.status}</Badge></div>
+                        <div className="flex items-center gap-2"><Percent className="h-4 w-4 text-muted-foreground"/> <span>Commission:</span> <span className="font-semibold">{selectedMerchant.commission}</span></div>
+                        <div className="flex items-center gap-2 col-span-2"><DollarSign className="h-4 w-4 text-muted-foreground"/> <span>Total Sales:</span> <span className="font-semibold">${parseFloat(selectedMerchant.sales).toLocaleString()}</span></div>
+                    </div>
+                </div>
+            )}
+            <DialogFooter className="sm:justify-between gap-2">
+                <Button variant="ghost" onClick={() => setSelectedMerchant(null)}>Close</Button>
+                {selectedMerchant && (
+                    <Button asChild>
+                        <Link href={`/dashboard/users/${selectedMerchant.id}`}>View Full Profile</Link>
+                    </Button>
+                )}
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
