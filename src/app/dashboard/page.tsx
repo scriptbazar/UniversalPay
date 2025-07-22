@@ -57,7 +57,6 @@ export default function AdminDashboard() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedSignup, setSelectedSignup] = useState<Signup | null>(null);
   const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
-  const [isAllTransactionsOpen, setIsAllTransactionsOpen] = useState(false);
 
   // State for mock data to avoid hydration errors
   const [chartData, setChartData] = useState<any[]>([]);
@@ -165,7 +164,7 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setIsAllTransactionsOpen(true)}>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/transactions')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -386,47 +385,6 @@ export default function AdminDashboard() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={isAllTransactionsOpen} onOpenChange={setIsAllTransactionsOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>All Platform Transactions</DialogTitle>
-            <DialogDescription>
-                A complete list of all transactions processed across the platform.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {allTransactions.map((tx) => (
-                        <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
-                            <TableCell className="font-medium">{tx.id}</TableCell>
-                            <TableCell>{tx.name}</TableCell>
-                            <TableCell>
-                                <Badge variant={tx.status === 'Success' ? 'default' : 'destructive'}>{tx.status}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">${tx.amount}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-             {allTransactions.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No transactions found.</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAllTransactionsOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
