@@ -75,12 +75,30 @@ export default function InvoicesPage() {
     const handleDownloadPdf = () => {
         const input = document.getElementById('invoice-dialog-content');
         if (input && selectedInvoice) {
-          html2canvas(input, { scale: 2 }).then((canvas) => {
+          html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const canvasAspectRatio = canvasWidth / canvasHeight;
+            const pdfAspectRatio = pdfWidth / pdfHeight;
+
+            let finalWidth, finalHeight;
+
+            if (canvasAspectRatio > pdfAspectRatio) {
+                finalWidth = pdfWidth;
+                finalHeight = pdfWidth / canvasAspectRatio;
+            } else {
+                finalHeight = pdfHeight;
+                finalWidth = pdfHeight * canvasAspectRatio;
+            }
+
+            const x = (pdfWidth - finalWidth) / 2;
+            const y = (pdfHeight - finalHeight) / 2;
+
+            pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
             pdf.save(`invoice-${selectedInvoice.id}.pdf`);
           });
         }
@@ -157,7 +175,7 @@ export default function InvoicesPage() {
         </Card>
         
         <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl p-0 border-0">
                  <div id="invoice-dialog-content" className="p-6 md:p-10 bg-background">
                     {selectedInvoice && (
                         <>
@@ -238,7 +256,7 @@ export default function InvoicesPage() {
                         </>
                     )}
                  </div>
-                 <div className="flex justify-end gap-2 p-6 pt-0">
+                 <div className="flex justify-end gap-2 p-6 pt-0 bg-background border-t">
                     <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
                     <Button onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> Download PDF</Button>
                 </div>
