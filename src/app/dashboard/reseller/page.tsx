@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -107,8 +108,6 @@ const allSubMerchantTransactions: Transaction[] = [
     { id: 'UVRLP911202322', merchantId: 'sub_2', merchantName: 'AnotherShop', merchantEmail: 'sales@anothershop.io', amount: 40.00, date: '2023-11-05', method: 'Crypto', status: 'Failed' },
 ];
 
-type DialogType = 'subMerchants' | null;
-
 const getStatusBadgeVariant = (status: Transaction["status"]) => {
     switch (status) {
         case 'Success':
@@ -125,37 +124,12 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
 export default function ResellerPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
-  const [selectedMerchant, setSelectedMerchant] = useState<SubMerchant | null>(null);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  
+
   const totalSales = subMerchants.reduce((acc, m) => acc + parseFloat(m.sales), 0);
 
   const handleRowClick = (merchantId: string) => {
     router.push(`/dashboard/users/${merchantId}`);
   };
-
-  const handleSubMerchantRowClick = (merchant: SubMerchant) => {
-    setSelectedMerchant(merchant);
-  }
-
-  const handleTransactionRowClick = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-  }
-
-  const openDialog = (type: DialogType) => {
-    setCurrentPage(1); // Reset page to 1 when opening a new dialog
-    setDialogOpen(type);
-  }
-
-  // Memoized pagination logic for sub-merchants
-  const paginatedSubMerchants = subMerchants.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-  );
-  const totalSubMerchantPages = Math.ceil(subMerchants.length / itemsPerPage);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -173,7 +147,7 @@ export default function ResellerPage() {
       <Separator />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card onClick={() => openDialog('subMerchants')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/dashboard/users')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Sub-Merchants</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -253,156 +227,6 @@ export default function ResellerPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Dialog for Sub-Merchants List */}
-      <Dialog open={dialogOpen === 'subMerchants'} onOpenChange={() => setDialogOpen(null)}>
-        <DialogContent className="max-w-xl">
-            <DialogHeader>
-                <DialogTitle>All Sub-Merchants</DialogTitle>
-                <DialogDescription>Click on a merchant to view their detailed dashboard.</DialogDescription>
-            </DialogHeader>
-            <div className="max-h-[60vh] overflow-y-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Merchant</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {paginatedSubMerchants.map(merchant => (
-                            <TableRow key={merchant.id} onClick={() => handleSubMerchantRowClick(merchant)} className="cursor-pointer hover:bg-muted/50">
-                                <TableCell>
-                                    <div className="font-medium">{merchant.name}</div>
-                                    <div className="text-sm text-muted-foreground">{merchant.email}</div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={merchant.status === "Active" ? "default" : "secondary"}>
-                                    {merchant.status}
-                                    </Badge>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-             <DialogFooter className="sm:justify-between pt-4">
-                <div className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalSubMerchantPages}
-                </div>
-                {totalSubMerchantPages > 1 && (
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Previous</Button>
-                        <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(p + 1, totalSubMerchantPages))} disabled={currentPage === totalSubMerchantPages}>Next</Button>
-                    </div>
-                )}
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Dialog for Selected Merchant Details */}
-       <Dialog open={!!selectedMerchant} onOpenChange={() => setSelectedMerchant(null)}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Sub-Merchant Details</DialogTitle>
-                <DialogDescription>
-                    Summary for {selectedMerchant?.name}.
-                </DialogDescription>
-            </DialogHeader>
-            {selectedMerchant && (
-                <div className="py-4 space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Image src={`https://placehold.co/64x64.png?text=${selectedMerchant.name.charAt(0)}`} alt={selectedMerchant.name} width={64} height={64} className="rounded-full" data-ai-hint="user avatar" />
-                        <div>
-                            <h3 className="text-lg font-semibold">{selectedMerchant.name}</h3>
-                            <div className="flex items-center gap-2">
-                                <p className="text-sm text-muted-foreground">{selectedMerchant.email}</p>
-                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedMerchant.email, 'Email')} />
-                            </div>
-                        </div>
-                    </div>
-                    <Separator />
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2"><Users className="h-4 w-4 text-muted-foreground"/> <span>Status:</span> <Badge variant={selectedMerchant.status === "Active" ? "default" : "secondary"}>{selectedMerchant.status}</Badge></div>
-                        <div className="flex items-center gap-2"><Percent className="h-4 w-4 text-muted-foreground"/> <span>Commission:</span> <span className="font-semibold">{selectedMerchant.commission}</span></div>
-                        <div className="flex items-center gap-2 col-span-2"><DollarSign className="h-4 w-4 text-muted-foreground"/> <span>Total Sales:</span> <span className="font-semibold">${parseFloat(selectedMerchant.sales).toLocaleString()}</span></div>
-                    </div>
-                </div>
-            )}
-            <DialogFooter className="sm:justify-between gap-2">
-                <Button variant="ghost" onClick={() => setSelectedMerchant(null)}>Close</Button>
-                {selectedMerchant && (
-                    <Button asChild>
-                        <Link href={`/dashboard/users/${selectedMerchant.id}`}>View Full Profile</Link>
-                    </Button>
-                )}
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-       {/* Dialog for Selected Transaction Details */}
-       <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Transaction Details</DialogTitle>
-                <DialogDescription>
-                    Details for transaction {selectedTransaction?.id}.
-                </DialogDescription>
-            </DialogHeader>
-            {selectedTransaction && (
-                <div className="py-4 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Transaction ID:</span>
-                        <div className="flex items-center gap-2">
-                            <span className="font-mono">{selectedTransaction.id}</span>
-                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
-                        </div>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Merchant:</span>
-                        <span className="font-semibold">{selectedTransaction.merchantName}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Customer Email:</span>
-                         <div className="flex items-center gap-2">
-                            <span className="font-semibold">{selectedTransaction.merchantEmail}</span>
-                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.merchantEmail, 'Customer Email')} />
-                        </div>
-                    </div>
-                     <Separator />
-                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">${selectedTransaction.amount.toFixed(2)}</span>
-                    </div>
-                     <Separator />
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Method:</span>
-                        <span className="font-semibold">{selectedTransaction.method}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Status:</span>
-                        <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
-                    </div>
-                    <Separator />
-                     <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Date:</span>
-                        <span className="font-semibold">{selectedTransaction.date}</span>
-                    </div>
-                </div>
-            )}
-            <DialogFooter className="sm:justify-between gap-2">
-                <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
-                {selectedTransaction && (
-                    <Button asChild>
-                        <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
-                    </Button>
-                )}
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
