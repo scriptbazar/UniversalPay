@@ -161,6 +161,73 @@ const tiers = [
   },
 ];
 
+const WorldMap = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 1200 600"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+        <feMerge>
+          <feMergeNode in="coloredBlur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      <style>
+        {`
+          @keyframes dash {
+            to {
+              stroke-dashoffset: 1000;
+            }
+          }
+          .map-path {
+            fill: hsl(var(--card));
+            stroke: hsl(var(--border));
+            stroke-width: 1;
+          }
+          .dark .map-path {
+             fill: hsl(var(--muted) / 0.5);
+          }
+          .map-point {
+            fill: hsl(var(--primary));
+            filter: url(#glow);
+          }
+          .map-line {
+            stroke: hsl(var(--primary) / 0.8);
+            stroke-width: 2;
+            stroke-dasharray: 8;
+            animation: dash 50s linear infinite;
+          }
+        `}
+      </style>
+    </defs>
+    {/* Replace with actual map path data for a more detailed map */}
+    <path className="map-path" d="M599.999 0.23L1199.77 299.885L599.999 599.77L0.229 299.885L599.999 0.23Z" fill="hsl(var(--muted)/0.3)" />
+    <path className="map-path" d="M495,195 L250,120 M720,130 L900,200 M200,300 L450,450 M800,400 L950,500 M300,200 C 400,100 700,100 800,200 M250,400 C 400,500 700,500 850,400 M150,250 C 50,350 50,450 150,550 M1050,250 C 1150,350 1150,450 1050,550" stroke="none" />
+    <circle cx="250" cy="120" r="5" className="map-point" />
+    <circle cx="495" cy="195" r="5" className="map-point" />
+    <circle cx="720" cy="130" r="5" className="map-point" />
+    <circle cx="900" cy="200" r="5" className="map-point" />
+    <circle cx="200" cy="300" r="5" className="map-point" />
+    <circle cx="450" cy="450" r="5" className="map-point" />
+    <circle cx="800" cy="400" r="5" className="map-point" />
+    <circle cx="950" cy="500" r="5" className="map-point" />
+    <circle cx="800" cy="200" r="5" className="map-point" />
+    <circle cx="300" cy="200" r="5" className="map-point" />
+    <circle cx="850" cy="400" r="5" className="map-point" />
+    <circle cx="250" cy="400" r="5" className="map-point" />
+    <path className="map-line" d="M250,120 Q 372.5,157.5 495,195" fill="none" />
+    <path className="map-line" d="M720,130 Q 810,165 900,200" fill="none" />
+    <path className="map-line" d="M200,300 Q 325,375 450,450" fill="none" />
+    <path className="map-line" d="M800,400 Q 875,450 950,500" fill="none" />
+    <path className="map-line" d="M300,200 C 400,100 700,100 800,200" fill="none" />
+    <path className="map-line" d="M250,400 C 400,500 700,500 850,400" fill="none" />
+  </svg>
+);
+
+
 export default function Home() {
   const halfLength = Math.ceil(faqItems.length / 2);
   const firstHalfFaqs = faqItems.slice(0, halfLength);
@@ -214,14 +281,9 @@ export default function Home() {
                  <p className="text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
                     From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale.
                  </p>
-                 <Image 
-                    src="https://placehold.co/1200x600/e5f5f9/29abe2.png"
-                    alt="Global Payments Map"
-                    width={1200}
-                    height={600}
-                    data-ai-hint="world map connections"
-                    className="rounded-lg shadow-2xl mx-auto"
-                 />
+                 <div className="rounded-lg shadow-2xl mx-auto overflow-hidden">
+                    <WorldMap className="w-full h-auto" />
+                 </div>
             </div>
         </section>
 
@@ -255,7 +317,7 @@ export default function Home() {
                         </ul>
                       </CardContent>
                       <div className="p-6">
-                        <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-primary-foreground'}`} variant={tier.popular ? 'default' : 'outline'}>
+                        <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
                           {tier.cta}
                         </Button>
                       </div>
