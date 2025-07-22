@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon, Mail, Landmark } from "lucide-react";
+import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon, Mail, Landmark, ShieldCheck, FileText } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
@@ -25,12 +25,22 @@ type Transaction = {
     status: 'Successful' | 'Failed';
     method: string; // Added for details
 };
-type User = { id: string; name: string; email: string; avatar: string; joined: string; month: string };
+type User = { 
+    id: string; 
+    name: string; 
+    email: string; 
+    avatar: string; 
+    joined: string; 
+    month: string;
+    status: 'Active' | 'Suspended';
+    plan: 'Free' | 'Pro' | 'Premium';
+};
 
 const generateMockData = () => {
     const months = ["jan", "feb", "mar", "apr", "may", "jun"];
     const users: User[] = [];
     const transactions: Transaction[] = [];
+    const plans: User['plan'][] = ['Free', 'Pro', 'Premium'];
 
     for (let i = 0; i < 50; i++) {
         const monthIndex = i % 6;
@@ -42,6 +52,8 @@ const generateMockData = () => {
             avatar: `https://placehold.co/40x40.png?text=U${i+1}`,
             joined: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
             month: month,
+            status: Math.random() > 0.1 ? 'Active' : 'Suspended',
+            plan: plans[i % 3]
         });
     }
 
@@ -75,8 +87,12 @@ type DetailDialogContent = {
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-        case 'Successful': return 'default';
-        case 'Failed': return 'destructive';
+        case 'Successful': 
+        case 'Active':
+            return 'default';
+        case 'Failed': 
+        case 'Suspended':
+            return 'destructive';
         default: return 'secondary';
     }
 };
@@ -115,6 +131,8 @@ export default function AnalyticsDetailPage() {
                 tableColumns = [
                     { header: 'Merchant', accessor: 'name' },
                     { header: 'Joined On', accessor: 'joined' },
+                    { header: 'Plan', accessor: 'plan' },
+                    { header: 'Status', accessor: 'status' },
                 ];
                 break;
             case 'total-transactions':
@@ -144,6 +162,8 @@ export default function AnalyticsDetailPage() {
                  tableColumns = [
                     { header: 'Merchant', accessor: 'name' },
                     { header: 'Joined On', accessor: 'joined' },
+                    { header: 'Plan', accessor: 'plan' },
+                    { header: 'Status', accessor: 'status' },
                 ];
                  break;
         }
@@ -209,8 +229,12 @@ export default function AnalyticsDetailPage() {
                                                     </div>
                                                 </div>
                                             ) : col.accessor === 'status' ? (
-                                                <Badge variant={getStatusBadgeVariant((item as Transaction).status)}>
-                                                    {(item as Transaction).status}
+                                                <Badge variant={getStatusBadgeVariant((item as any).status)}>
+                                                    {(item as any).status}
+                                                </Badge>
+                                             ) : col.accessor === 'plan' ? (
+                                                <Badge variant="secondary">
+                                                    {(item as User).plan}
                                                 </Badge>
                                             ) : col.accessor === 'amount' ? (
                                                 `$${(item as Transaction).amount}`
@@ -272,22 +296,30 @@ export default function AnalyticsDetailPage() {
                                         <p className="text-sm text-muted-foreground">{(dialogContent.data as User).email}</p>
                                         <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as User).email, 'Email')} />
                                     </div>
+                                     <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                        <span>ID: {(dialogContent.data as User).id}</span>
+                                        <Copy className="h-3 w-3 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as User).id, 'User ID')} />
+                                    </div>
                                 </div>
                             </div>
                             <Separator />
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Joined On:</span>
-                                <span className="font-semibold">{(dialogContent.data as User).joined}</span>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground"/> <span>Status:</span> <Badge variant={getStatusBadgeVariant((dialogContent.data as User).status)}>{(dialogContent.data as User).status}</Badge></div>
+                                <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground"/> <span>Plan:</span> <span className="font-semibold">{(dialogContent.data as User).plan}</span></div>
+                                <div className="flex justify-between items-center col-span-2">
+                                    <span className="text-muted-foreground">Joined On:</span>
+                                    <span className="font-semibold">{(dialogContent.data as User).joined}</span>
+                                </div>
                             </div>
                         </div>
                     )}
                      {dialogContent?.type === 'transaction' && (
                         <div className="py-4 space-y-4">
-                            <div className="flex justify-between items-center">
+                           <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Transaction ID:</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="font-mono">{(dialogContent.data as Transaction).id}</span>
-                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as Transaction).id, 'Transaction ID')} />
+                                    <span className="font-mono">{dialogContent.data.id}</span>
+                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(dialogContent.data.id, 'Transaction ID')} />
                                 </div>
                             </div>
                             <Separator />
@@ -322,9 +354,9 @@ export default function AnalyticsDetailPage() {
                     )}
                     <DialogFooter className="sm:justify-between gap-2">
                          <Button variant="ghost" onClick={() => setDialogContent(null)}>Close</Button>
-                         {dialogContent?.type === 'transaction' && (
+                         {(dialogContent?.type === 'transaction' || dialogContent?.type === 'user') && (
                             <Button asChild>
-                                <Link href={`/dashboard/users/${(dialogContent.data as Transaction).merchantId}`}>View Merchant Profile</Link>
+                                <Link href={`/dashboard/users/${(dialogContent.data as any).merchantId || (dialogContent.data as any).id}`}>View Full Profile</Link>
                             </Button>
                          )}
                     </DialogFooter>
