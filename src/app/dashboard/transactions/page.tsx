@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/table";
 import {
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
@@ -135,7 +134,7 @@ export default function AllTransactionsPage() {
             </div>
             <Tabs value={filter} onValueChange={handleFilterChange}>
                 <div className="flex flex-wrap items-center gap-4">
-                    <TabsList className="gap-2">
+                    <TabsList className="flex-wrap h-auto">
                         <TabsTrigger value="all">All</TabsTrigger>
                         <TabsTrigger value="success">Success</TabsTrigger>
                         <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -150,8 +149,8 @@ export default function AllTransactionsPage() {
                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                            <Input
                              type="search"
-                             placeholder="Search..."
-                             className="pl-8 w-32"
+                             placeholder="Search ID, Merchant, Email..."
+                             className="pl-8 w-60"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
@@ -315,3 +314,5 @@ export default function AllTransactionsPage() {
         </div>
     );
 }
+
+    

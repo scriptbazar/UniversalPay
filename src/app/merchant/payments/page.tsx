@@ -147,7 +147,7 @@ export default function MerchantPaymentsPage() {
                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                            <Input
                              type="search"
-                             placeholder="Search..."
+                             placeholder="Search ID or Email..."
                              className="pl-8 w-48"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
@@ -305,3 +305,5 @@ export default function MerchantPaymentsPage() {
         </div>
     );
 }
+
+    
