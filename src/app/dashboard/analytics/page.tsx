@@ -146,17 +146,29 @@ export default function AnalyticsPage() {
         const monthSlug = payload.month.toLowerCase();
         
         const monthDetails = (
-             <div className="space-y-2">
-                <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${payload.revenue.toLocaleString()}</span></div>
-                <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/new-users_${monthSlug}`)}>
-                    <span>New Users:</span> <span className="font-bold">{payload.newUsers}</span>
-                </Button>
-                <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${monthSlug}`)}>
-                    <span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span>
-                </Button>
-                <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${monthSlug}`)}>
-                    <span>Successful Transactions:</span> <span className="font-bold">{payload.successfulTransactions}</span>
-                </Button>
+             <div className="space-y-3 text-base">
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Revenue:</span>
+                    <span className="font-bold">${payload.revenue.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <Button variant="link" className="p-0 h-auto text-base" onClick={() => router.push(`/dashboard/analytics/details/new-users_${monthSlug}`)}>
+                        New Users:
+                    </Button>
+                    <span className="font-bold text-primary">{payload.newUsers}</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                     <Button variant="link" className="p-0 h-auto text-base" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${monthSlug}`)}>
+                        Total Transactions:
+                    </Button>
+                    <span className="font-bold text-primary">{payload.totalTransactions}</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <Button variant="link" className="p-0 h-auto text-base" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${monthSlug}`)}>
+                        Successful Transactions:
+                    </Button>
+                    <span className="font-bold text-primary">{payload.successfulTransactions}</span>
+                </div>
             </div>
         )
         setDialogContent({
@@ -332,7 +344,7 @@ export default function AnalyticsPage() {
       </Card>
       
        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className={dialogContent?.type === 'month' ? 'max-w-md' : 'max-w-xl'}>
             <DialogHeader>
                 <DialogTitle>{dialogContent?.title}</DialogTitle>
                 <DialogDescription>{dialogContent?.description}</DialogDescription>
