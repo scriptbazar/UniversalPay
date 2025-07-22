@@ -142,6 +142,7 @@ export default function AnalyticsDetailPage() {
                     { header: 'Transaction ID', accessor: 'id' },
                     { header: 'Merchant', accessor: 'merchant' },
                     { header: 'Date', accessor: 'date' },
+                    { header: 'Method', accessor: 'method' },
                     { header: 'Status', accessor: 'status' },
                     { header: 'Amount', accessor: 'amount', isNumeric: true },
                 ];
@@ -153,6 +154,7 @@ export default function AnalyticsDetailPage() {
                     { header: 'Transaction ID', accessor: 'id' },
                     { header: 'Merchant', accessor: 'merchant' },
                     { header: 'Date', accessor: 'date' },
+                    { header: 'Method', accessor: 'method' },
                     { header: 'Amount', accessor: 'amount', isNumeric: true },
                 ];
                 break;
