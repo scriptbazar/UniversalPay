@@ -327,7 +327,10 @@ export default function AnalyticsDetailPage() {
                                 <span className="text-muted-foreground">Merchant:</span>
                                 <div className="text-right">
                                     <p className="font-semibold">{(dialogContent.data as Transaction).merchant}</p>
-                                    <p className="text-sm text-muted-foreground">{(dialogContent.data as Transaction).merchantEmail}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm text-muted-foreground">{(dialogContent.data as Transaction).merchantEmail}</p>
+                                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as Transaction).merchantEmail, 'Email')} />
+                                    </div>
                                 </div>
                             </div>
                              <Separator />
@@ -365,3 +368,4 @@ export default function AnalyticsDetailPage() {
         </div>
     );
 }
+
