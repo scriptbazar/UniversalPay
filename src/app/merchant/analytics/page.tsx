@@ -21,27 +21,31 @@ type Transaction = {
     status: 'Successful' | 'Failed';
 };
 
-const mockTransactions: Transaction[] = Array.from({ length: 50 }, (_, i) => ({
-    id: `TXN20${i + 1}`,
-    method: ['UPI', 'Crypto', 'Page', 'Link'][i % 4],
-    amount: (Math.random() * 250).toFixed(2),
-    date: `2023-11-${(i % 10) + 1}`,
-    status: Math.random() > 0.2 ? 'Successful' : 'Failed'
-}));
+const mockTransactions: Transaction[] = Array.from({ length: 100 }, (_, i) => {
+    const monthIndex = Math.floor(i / 8); // Spread across 12 months
+    const date = new Date(2023, monthIndex, (i % 28) + 1);
+    return {
+        id: `TXN20${i + 1}`,
+        method: ['UPI', 'Crypto', 'Page', 'Link'][i % 4],
+        amount: (Math.random() * 250).toFixed(2),
+        date: date.toISOString().split('T')[0], // YYYY-MM-DD
+        status: Math.random() > 0.2 ? 'Successful' : 'Failed'
+    };
+});
 
 const initialRevenueData = [
-  { name: 'Jan', revenue: 4000 },
-  { name: 'Feb', revenue: 3000 },
-  { name: 'Mar', revenue: 5000 },
-  { name: 'Apr', revenue: 4500 },
-  { name: 'May', revenue: 6000 },
-  { name: 'Jun', revenue: 5500 },
-  { name: 'Jul', revenue: 6200 },
-  { name: 'Aug', revenue: 7000 },
-  { name: 'Sep', revenue: 6800 },
-  { name: 'Oct', revenue: 7500 },
-  { name: 'Nov', revenue: 7100 },
-  { name: 'Dec', revenue: 8000 },
+  { name: 'Jan', revenue: 4000, monthIndex: 0 },
+  { name: 'Feb', revenue: 3000, monthIndex: 1 },
+  { name: 'Mar', revenue: 5000, monthIndex: 2 },
+  { name: 'Apr', revenue: 4500, monthIndex: 3 },
+  { name: 'May', revenue: 6000, monthIndex: 4 },
+  { name: 'Jun', revenue: 5500, monthIndex: 5 },
+  { name: 'Jul', revenue: 6200, monthIndex: 6 },
+  { name: 'Aug', revenue: 7000, monthIndex: 7 },
+  { name: 'Sep', revenue: 6800, monthIndex: 8 },
+  { name: 'Oct', revenue: 7500, monthIndex: 9 },
+  { name: 'Nov', revenue: 7100, monthIndex: 10 },
+  { name: 'Dec', revenue: 8000, monthIndex: 11 },
 ];
 
 type TopCustomer = {
@@ -147,6 +151,21 @@ export default function AnalyticsPage() {
     setPaymentMethodData(initialPaymentMethodData);
   }, []);
 
+  const handleBarClick = (data: any) => {
+    if (!data || !data.activePayload) return;
+    const payload = data.activePayload[0].payload;
+    const month = payload.name;
+    const monthIndex = payload.monthIndex;
+
+    const transactionsForMonth = mockTransactions.filter(tx => new Date(tx.date).getMonth() === monthIndex);
+    
+    setDialogContent({
+        title: `Transactions for ${month}`,
+        description: `A list of all transactions that occurred in ${month}.`,
+        data: <PaginatedTransactionTable transactions={transactionsForMonth} />
+    });
+  };
+
   const handlePieClick = (data: any) => {
      const methodName = data.name;
      const transactions = mockTransactions.filter(t => t.method === methodName);
@@ -223,10 +242,11 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Revenue Over Time</CardTitle>
+            <CardDescription>Click a bar to see transaction details for that month.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={revenueData}>
+              <BarChart data={revenueData} onClick={handleBarClick}>
                 <XAxis 
                   dataKey="name" 
                   stroke="#888888" 
@@ -244,9 +264,10 @@ export default function AnalyticsPage() {
                 <Tooltip
                   contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  cursor={{fill: 'hsl(var(--muted))'}}
                 />
                 <Legend />
-                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="cursor-pointer" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
