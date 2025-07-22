@@ -11,11 +11,21 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-type DialogContentData = {
-  title: string;
-  description: string;
-  data: React.ReactNode;
-} | null;
+type Transaction = {
+    id: string;
+    method: string;
+    amount: string;
+    date: string;
+    status: 'Successful' | 'Failed';
+};
+
+const mockTransactions: Transaction[] = Array.from({ length: 50 }, (_, i) => ({
+    id: `TXN20${i + 1}`,
+    method: ['UPI', 'Crypto', 'Page', 'Link'][i % 4],
+    amount: (Math.random() * 250).toFixed(2),
+    date: `2023-11-${(i % 10) + 1}`,
+    status: Math.random() > 0.2 ? 'Successful' : 'Failed'
+}));
 
 const initialRevenueData = [
   { name: 'Jan', revenue: 4000 },
@@ -47,15 +57,6 @@ const initialPaymentMethodData = [
     { name: 'Link', value: 150, color: '#FF8042' },
 ];
 
-const mockTransactions = [
-    { id: 'TXN201', method: 'UPI', amount: '15.00', date: '2023-11-10', status: 'Successful' },
-    { id: 'TXN202', method: 'Crypto', amount: '250.00', date: '2023-11-10', status: 'Successful' },
-    { id: 'TXN203', method: 'Page', amount: '75.00', date: '2023-11-09', status: 'Successful' },
-    { id: 'TXN204', method: 'UPI', amount: '20.00', date: '2023-11-09', status: 'Failed' },
-    { id: 'TXN205', method: 'Link', amount: '100.00', date: '2023-11-08', status: 'Successful' },
-    { id: 'TXN206', method: 'Crypto', amount: '85.00', date: '2023-11-08', status: 'Successful' },
-];
-
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
         case 'Successful': return 'default';
@@ -64,11 +65,70 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
+const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction[] }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+    const totalPages = Math.ceil(transactions.length / itemsPerPage);
+
+    const paginatedData = transactions.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    return (
+        <div>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {paginatedData.map(tx => (
+                        <TableRow key={tx.id}>
+                            <TableCell>{tx.id}</TableCell>
+                            <TableCell>${tx.amount}</TableCell>
+                            <TableCell>{tx.date}</TableCell>
+                            <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <div className="flex justify-between items-center w-full pt-4">
+                <div className="text-xs text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function AnalyticsPage() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
-  const [dialogContent, setDialogContent] = useState<DialogContentData>(null);
+  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; } | null>(null);
 
   useEffect(() => {
     // Set data on client-side to avoid hydration errors
@@ -83,28 +143,7 @@ export default function AnalyticsPage() {
      setDialogContent({ 
         title: `${methodName} Transactions`, 
         description: `List of recent transactions made via ${methodName}.`, 
-        data: (
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {transactions.map(tx => (
-                        <TableRow key={tx.id}>
-                            <TableCell>{tx.id}</TableCell>
-                            <TableCell>${tx.amount}</TableCell>
-                            <TableCell>{tx.date}</TableCell>
-                            <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        )
+        data: <PaginatedTransactionTable transactions={transactions} />
     });
   };
 
@@ -241,7 +280,7 @@ export default function AnalyticsPage() {
       </Card>
       
       <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
             <DialogHeader>
                 <DialogTitle>{dialogContent?.title}</DialogTitle>
                 <DialogDescription>{dialogContent?.description}</DialogDescription>
