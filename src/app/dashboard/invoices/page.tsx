@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { Logo } from "@/components/logo";
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -162,25 +163,11 @@ export default function InvoicesPage() {
                         <>
                              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
                                 <div>
-                                <div className="flex items-center gap-4">
-                                    <FileText className="h-10 w-10 text-muted-foreground" />
-                                    <div>
-                                    <h1 className="text-3xl font-bold">Invoice</h1>
-                                    <p className="font-mono text-muted-foreground">{selectedInvoice.id}</p>
-                                    </div>
-                                </div>
+                                    <Logo />
                                 </div>
                                 <div className="flex flex-col items-start md:items-end gap-2">
-                                    {statusInfo && (
-                                        <Badge variant={statusInfo.variant} className="text-base px-4 py-1 flex items-center">
-                                            {statusInfo.icon}
-                                            {selectedInvoice.status}
-                                        </Badge>
-                                    )}
-                                    <div className='text-right'>
-                                        <p className="text-sm text-muted-foreground">Issued: {selectedInvoice.issueDate}</p>
-                                        <p className="text-sm text-muted-foreground">Due: {selectedInvoice.dueDate}</p>
-                                    </div>
+                                    <h1 className="text-3xl font-bold text-right">Invoice</h1>
+                                    <p className="font-mono text-muted-foreground">{selectedInvoice.id}</p>
                                 </div>
                             </div>
                             <Separator className="my-8" />
@@ -195,6 +182,16 @@ export default function InvoicesPage() {
                                     <p className="font-semibold text-lg">{selectedInvoice.merchantName}</p>
                                 </div>
                             </div>
+                             <div className="flex justify-between items-center mb-8">
+                                <div className="text-sm">
+                                    <p className="text-muted-foreground">Issued Date</p>
+                                    <p className="font-semibold">{selectedInvoice.issueDate}</p>
+                                </div>
+                                 <div className="text-sm text-right">
+                                    <p className="text-muted-foreground">Due Date</p>
+                                    <p className="font-semibold">{selectedInvoice.dueDate}</p>
+                                </div>
+                             </div>
                             <div className="rounded-lg border">
                                 <Table>
                                     <TableHeader>
@@ -229,6 +226,14 @@ export default function InvoicesPage() {
                                         <span>${selectedInvoice.totalAmount.toFixed(2)}</span>
                                     </div>
                                 </div>
+                            </div>
+                              <div className="mt-8 pt-4 border-t">
+                                {statusInfo && (
+                                    <Badge variant={statusInfo.variant} className="text-base px-4 py-2 flex items-center w-fit">
+                                        {statusInfo.icon}
+                                        {selectedInvoice.status}
+                                    </Badge>
+                                )}
                             </div>
                         </>
                     )}
