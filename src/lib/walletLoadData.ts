@@ -3,9 +3,10 @@ export type WalletLoadRequest = {
   id: string;
   merchantId: string;
   merchantName: string;
-  merchantEmail: string; // Added email
+  merchantEmail: string;
   amount: string;
   currency: 'USD';
+  method: string; // Method used for payment
   transactionId: string;
   status: "Pending" | "Approved" | "Rejected";
   createdAt: string;
@@ -19,6 +20,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     merchantEmail: "contact@mystore.com",
     amount: "1000.00",
     currency: "USD",
+    method: "Bank Transfer",
     transactionId: "PAYID12345678",
     status: "Pending",
     createdAt: '2023-11-10T10:00:00Z',
@@ -30,6 +32,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     merchantEmail: "support@creative.co",
     amount: "500.00",
     currency: "USD",
+    method: "Crypto (USDT)",
     transactionId: "DEPOSIT98765",
     status: "Approved",
     createdAt: '2023-11-09T15:00:00Z',
@@ -41,6 +44,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     merchantEmail: "contact@mystore.com",
     amount: "2500.00",
     currency: "USD",
+    method: "Bank Transfer",
     transactionId: "REF11223344",
     status: "Rejected",
     createdAt: '2023-11-08T12:00:00Z',

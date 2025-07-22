@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, User, Calendar, DollarSign, Hash, Copy } from "lucide-react";
+import { Check, X, User, Calendar, DollarSign, Hash, Copy, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getWalletLoadRequests, updateWalletLoadRequestStatus, type WalletLoadRequest } from "@/lib/walletLoadData";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -72,7 +72,7 @@ export default function AdminWalletLoadsPage() {
                 <TableHead>Request ID</TableHead>
                 <TableHead>Merchant</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Reference/Txn ID</TableHead>
+                <TableHead>Method</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -86,7 +86,7 @@ export default function AdminWalletLoadsPage() {
                       <div className="text-xs text-muted-foreground">{req.merchantEmail}</div>
                   </TableCell>
                   <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell className="font-mono">{req.transactionId}</TableCell>
+                  <TableCell>{req.method}</TableCell>
                   <TableCell>${req.amount}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(req.status)}>{req.status}</Badge>
@@ -119,6 +119,7 @@ export default function AdminWalletLoadsPage() {
                     </div>
                 </div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Method:</span> <span className="font-semibold flex items-center gap-2"><CreditCard className="w-4 h-4" />{selectedRequest.method}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedRequest.amount}</span></div>
                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Reference ID:</span>

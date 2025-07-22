@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -9,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Wallet, Copy } from "lucide-react";
+import { DollarSign, Wallet, Copy, Banknote, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getWalletLoadRequests, addWalletLoadRequest, type WalletLoadRequest } from "@/lib/walletLoadData";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
   switch (status) {
@@ -32,6 +32,7 @@ export default function MerchantWalletPage() {
   const [requests, setRequests] = useState<WalletLoadRequest[]>([]);
   const [amount, setAmount] = useState("");
   const [transactionId, setTransactionId] = useState("");
+  const [method, setMethod] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
   const currentBalance = 5430.50; // Placeholder value
 
@@ -47,11 +48,11 @@ export default function MerchantWalletPage() {
   const handleRequestLoad = (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = parseFloat(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0 || !transactionId) {
+    if (isNaN(numericAmount) || numericAmount <= 0 || !transactionId || !method) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter a valid amount and transaction ID.",
+        description: "Please enter a valid amount, transaction ID, and select a payment method.",
       });
       return;
     }
@@ -59,14 +60,17 @@ export default function MerchantWalletPage() {
     addWalletLoadRequest({
         amount: numericAmount.toFixed(2),
         currency: "USD",
+        method: method,
         transactionId: transactionId,
         merchantId: "merch_123", // Hardcoded for this example
         merchantName: "MyStore.com", // Hardcoded for this example
+        merchantEmail: "contact@mystore.com",
     });
     
     fetchMerchantRequests(); // Re-fetch to show the new request
     setAmount("");
     setTransactionId("");
+    setMethod("");
     
     toast({
         title: "Request Submitted",
@@ -106,8 +110,23 @@ export default function MerchantWalletPage() {
                         <span className="text-muted-foreground">USD</span>
                     </div>
                 </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="method">Payment Method Used</Label>
+                  <Select value={method} onValueChange={setMethod}>
+                    <SelectTrigger id="method">
+                      <SelectValue placeholder="Select method used" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Crypto (USDT)">Crypto (USDT)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                   <p className="text-xs text-muted-foreground">
+                    Please transfer funds to our company account first.
+                  </p>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount to Load (USD)</Label>
+                  <Label htmlFor="amount">Amount Sent (USD)</Label>
                   <Input 
                     id="amount" 
                     type="number" 
@@ -127,9 +146,6 @@ export default function MerchantWalletPage() {
                     onChange={(e) => setTransactionId(e.target.value)}
                     required 
                   />
-                   <p className="text-xs text-muted-foreground">
-                    Please transfer funds to our company bank account and enter the transaction ID here.
-                  </p>
                 </div>
               </CardContent>
               <div className="p-6 pt-0">
@@ -189,6 +205,11 @@ export default function MerchantWalletPage() {
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Date:</span>
                         <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span>
+                    </div>
+                    <Separator />
+                     <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Method:</span>
+                        <span className="font-semibold">{selectedRequest.method}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between items-center">
