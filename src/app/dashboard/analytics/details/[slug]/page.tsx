@@ -107,6 +107,7 @@ export default function AnalyticsDetailPage() {
                 fetchedData = transactions.filter(t => month === 'all' || t.month === month);
                  tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
+                    { header: 'Date', accessor: 'date' },
                     { header: 'Status', accessor: 'status' },
                     { header: 'Amount', accessor: 'amount', isNumeric: true },
                 ];
@@ -116,6 +117,7 @@ export default function AnalyticsDetailPage() {
                 fetchedData = transactions.filter(t => t.status === 'Successful' && (month === 'all' || t.month === month));
                 tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
+                    { header: 'Date', accessor: 'date' },
                     { header: 'Merchant', accessor: 'merchant' },
                     { header: 'Amount', accessor: 'amount', isNumeric: true },
                 ];

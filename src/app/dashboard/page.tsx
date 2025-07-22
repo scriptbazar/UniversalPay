@@ -85,10 +85,10 @@ export default function AdminDashboard() {
     setAllTransactions(allTxns);
     
     setRecentSignups([
-      { id: "user_a", name: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A" },
-      { id: "user_b", name: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B" },
-      { id: "user_c", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C" },
-      { id: "user_d", name: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D" },
+      { id: "user_1", name: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A" },
+      { id: "user_2", name: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B" },
+      { id: "user_3", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C" },
+      { id: "user_4", name: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D" },
     ]);
 
     setChartData([
@@ -451,11 +451,11 @@ export default function AdminDashboard() {
                </div>
              </div>
           )}
-          <DialogFooter>
-             <Button variant="ghost" asChild>
+          <DialogFooter className="justify-between">
+             <Button variant="outline" onClick={() => setSelectedSignup(null)}>Close</Button>
+             <Button variant="default" asChild>
                 <Link href={`/dashboard/users/${selectedSignup?.id}`}>View Full Profile</Link>
              </Button>
-            <Button variant="outline" onClick={() => setSelectedSignup(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
