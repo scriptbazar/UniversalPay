@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -50,7 +49,6 @@ export default function AdminWalletLoadsPage() {
         navigator.clipboard.writeText(text);
         toast({
             title: `${label} Copied!`,
-            description: `${text} has been copied to your clipboard.`,
         });
     };
 
@@ -145,13 +143,15 @@ export default function AdminWalletLoadsPage() {
                 )}
             </div>
           )}
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
-            {selectedRequest && (
-                <Button asChild>
-                    <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
-                </Button>
-            )}
+          <DialogFooter>
+             <div className="flex w-full justify-between items-center">
+                <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
+                {selectedRequest && (
+                    <Button asChild>
+                        <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
+                    </Button>
+                )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
