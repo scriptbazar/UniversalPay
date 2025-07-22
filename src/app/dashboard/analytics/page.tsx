@@ -143,7 +143,7 @@ export default function AnalyticsPage() {
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
          case 'volume':
-             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: null, type: 'month' });
+             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-center p-4">Total Volume: <span className="font-bold">$2,86,300</span></p>, type: 'month' });
              break;
          case 'payments':
              router.push(`/dashboard/analytics/details/successful-transactions_all`);
@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
             router.push(`/dashboard/analytics/details/new-users_all`);
              break;
         case 'avg_transaction':
-            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: null, type: 'month' });
+            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-center p-4">Average Value: <span className="font-bold">$125.50</span></p>, type: 'month' });
             break;
      }
   };
@@ -451,3 +451,5 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
+    

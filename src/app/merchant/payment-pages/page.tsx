@@ -250,6 +250,7 @@ export default function PaymentPagesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                          <div className="flex justify-end items-center gap-2">
+                            <Button size="sm" variant="secondary" onClick={() => simulatePayment(link.id)}>Simulate Payment</Button>
                             <Button asChild size="sm" variant="outline">
                                 <Link href={link.url} target="_blank"><Eye className="mr-2 h-4 w-4"/> View</Link>
                             </Button>
@@ -287,3 +288,5 @@ export default function PaymentPagesPage() {
     </div>
   );
 }
+
+    

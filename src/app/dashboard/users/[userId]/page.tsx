@@ -27,6 +27,8 @@ import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { updateUserRole } from "./actions";
 import { onAuthStateChanged } from "firebase/auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 // MOCK DATA - This will be replaced by dynamic data where needed
 const stats = {
@@ -60,8 +62,6 @@ const allTransactions: Transaction[] = [
     { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Link", status: "Success", date: "2023-11-03" },
 ];
 
-const recentTransactions = allTransactions.slice(0, 3);
-
 type Withdrawal = {
   id: string;
   amount: string;
@@ -94,7 +94,7 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-type DialogType = 'revenue' | 'wallet' | 'withdraw' | 'success' | 'method' | 'transaction' | 'withdrawalDetail' | 'transactionList' | null;
+type DialogType = 'transaction' | 'withdrawalDetail' | null;
 
 interface UserProfile {
     id: string;
@@ -120,14 +120,12 @@ export default function UserDetailPage() {
   const [loading, setLoading] = useState(true);
   
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
-  const [dialogTitle, setDialogTitle] = useState('');
   
-  const [selectedMethod, setSelectedMethod] = useState('');
-  const [filteredTransactions, setFilteredTransactions] = useState(allTransactions);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [txCurrentPage, setTxCurrentPage] = useState(1);
+  const [wdCurrentPage, setWdCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [walletBalance, setWalletBalance] = useState(parseFloat(stats.walletBalance.replace(/,/g, '')));
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
@@ -219,14 +217,6 @@ export default function UserDetailPage() {
     router.push('/merchant/dashboard');
   };
 
-  const handlePieClick = (data: any) => {
-    const method = data.name;
-    setSelectedMethod(method);
-    setFilteredTransactions(allTransactions.filter(t => t.method === method));
-    setCurrentPage(1);
-    setDialogOpen('method');
-  };
-  
   const handleTransactionRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setDialogOpen('transaction');
@@ -237,48 +227,19 @@ export default function UserDetailPage() {
     setDialogOpen('withdrawalDetail');
   };
 
-  const openStatDialog = (type: DialogType) => {
-    if (type === 'revenue') {
-      setFilteredTransactions(allTransactions.filter(t => t.status === 'Success'));
-      setCurrentPage(1);
-    }
-    if (type === 'success') {
-      openTransactionListDialog('total');
-      return;
-    }
-    setDialogOpen(type);
-  };
-
-  const openTransactionListDialog = (type: 'total' | 'successful' | 'failed') => {
-    let transactions;
-    let title;
-    switch(type) {
-      case 'successful':
-        transactions = allTransactions.filter(t => t.status === 'Success');
-        title = 'Successful Transactions';
-        break;
-      case 'failed':
-        transactions = allTransactions.filter(t => t.status === 'Failed');
-        title = 'Failed Transactions';
-        break;
-      case 'total':
-      default:
-        transactions = allTransactions;
-        title = 'All Attempted Transactions';
-        break;
-    }
-    setFilteredTransactions(transactions);
-    setDialogTitle(title);
-    setCurrentPage(1);
-    setDialogOpen('transactionList');
-  }
-
   const paginatedTransactions = useMemo(() => {
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredTransactions, currentPage, itemsPerPage]);
+      const startIndex = (txCurrentPage - 1) * itemsPerPage;
+      return allTransactions.slice(startIndex, startIndex + itemsPerPage);
+  }, [txCurrentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const txTotalPages = Math.ceil(allTransactions.length / itemsPerPage);
+  
+  const paginatedWithdrawals = useMemo(() => {
+      const startIndex = (wdCurrentPage - 1) * itemsPerPage;
+      return withdrawalHistory.slice(startIndex, startIndex + itemsPerPage);
+  }, [wdCurrentPage, itemsPerPage]);
+
+  const wdTotalPages = Math.ceil(withdrawalHistory.length / itemsPerPage);
 
   const formatTooltipValue = (value: number, name: string) => {
     if (name === 'UPI') {
@@ -358,240 +319,233 @@ export default function UserDetailPage() {
                 </div>
             </div>
         </div>
-        <Separator/>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card onClick={() => openStatDialog('revenue')} className="cursor-pointer hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">${stats.revenue}</div>
-                </CardContent>
-            </Card>
-            <Card onClick={() => openStatDialog('wallet')} className="cursor-pointer hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Available Wallet Balance</CardTitle>
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">${walletBalance.toFixed(2)}</div>
-                </CardContent>
-            </Card>
-            <Card onClick={() => openStatDialog('withdraw')} className="cursor-pointer hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Available to Withdraw</CardTitle>
-                    <Landmark className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">${stats.availableToWithdraw}</div>
-                </CardContent>
-            </Card>
-            <Card onClick={() => openStatDialog('success')} className="cursor-pointer hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                    <Percent className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{stats.successRate}</div>
-                </CardContent>
-            </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8 items-start">
-            <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle>Payment Method Mix</CardTitle>
-                    <CardDescription>Breakdown of transactions by type. Click a slice to view details.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                            <Pie 
-                                data={paymentMethodData} 
-                                dataKey="value" 
-                                nameKey="name" 
-                                cx="50%" 
-                                cy="50%" 
-                                outerRadius={80} 
-                                label 
-                                onClick={handlePieClick}
-                                className="cursor-pointer"
-                            >
-                                {paymentMethodData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={formatTooltipValue} />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-             <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Recent Transactions</CardTitle>
-                    <CardDescription>The latest transactions from this merchant.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Transaction ID</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Method</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {recentTransactions.map(p => (
-                                <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
-                                <TableCell className="font-medium">{p.id}</TableCell>
-                                <TableCell>
-                                    <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
-                                </TableCell>
-                                <TableCell>{p.method}</TableCell>
-                                <TableCell>{p.date}</TableCell>
-                                <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        </div>
         
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Withdrawal History</CardTitle>
-                    <CardDescription>Full withdrawal history for this merchant.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Withdrawal ID</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {withdrawalHistory.map(w => (
-                                <TableRow key={w.id} onClick={() => handleWithdrawalRowClick(w)} className="cursor-pointer hover:bg-muted/50">
-                                    <TableCell className="font-medium">{w.id}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
-                                    </TableCell>
-                                    <TableCell>{w.date}</TableCell>
-                                    <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
+        <Tabs defaultValue="overview">
+            <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+                <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="mt-4">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">${stats.revenue}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Available Wallet Balance</CardTitle>
+                            <Wallet className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">${walletBalance.toFixed(2)}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Available to Withdraw</CardTitle>
+                            <Landmark className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">${stats.availableToWithdraw}</div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                            <Percent className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.successRate}</div>
+                        </CardContent>
+                    </Card>
+                </div>
+                 <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>Payment Method Mix</CardTitle>
+                        <CardDescription>Breakdown of transactions by type.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <Pie 
+                                    data={paymentMethodData} 
+                                    dataKey="value" 
+                                    nameKey="name" 
+                                    cx="50%" 
+                                    cy="50%" 
+                                    outerRadius={80} 
+                                    label 
+                                >
+                                    {paymentMethodData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={formatTooltipValue} />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="transactions" className="mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>All Transactions</CardTitle>
+                        <CardDescription>The full transaction history for this merchant.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Transaction ID</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Wallet Management</CardTitle>
-                    <CardDescription>Manually adjust the merchant's wallet balance.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
-                        <Wallet className="w-6 h-6 text-muted-foreground"/>
-                        <span className="text-muted-foreground">Current Balance:</span>
-                        <span className="text-2xl font-bold">${walletBalance.toFixed(2)}</span>
-                    </div>
-                    <Separator/>
-                    <div className="space-y-2">
-                        <Label htmlFor="adjustment-amount">Adjustment Amount (USD)</Label>
-                        <Input
-                            id="adjustment-amount"
-                            type="number"
-                            placeholder="e.g., 100.00"
-                            value={adjustmentAmount}
-                            onChange={(e) => setAdjustmentAmount(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <Button onClick={() => handleWalletAdjustment('credit')}>
-                            <PlusCircle className="mr-2 h-4 w-4"/> Credit (Add Funds)
-                        </Button>
-                        <Button variant="destructive" onClick={() => handleWalletAdjustment('debit')}>
-                            <MinusCircle className="mr-2 h-4 w-4"/> Debit (Remove Funds)
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-
-
-        {/* Transaction List Dialog (For Revenue, Payment Method and Success Rate clicks) */}
-        <Dialog open={dialogOpen === 'method' || dialogOpen === 'revenue' || dialogOpen === 'transactionList'} onOpenChange={() => setDialogOpen(null)}>
-            <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                    <DialogTitle>
-                        {dialogOpen === 'revenue' && 'All Successful Transactions'}
-                        {dialogOpen === 'method' && `${selectedMethod} Transactions`}
-                        {dialogOpen === 'transactionList' && dialogTitle}
-                    </DialogTitle>
-                     <DialogDescription>
-                        A complete list of transactions. Click a row to see details.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="max-h-[60vh] overflow-y-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Transaction ID</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedTransactions.map(p => (
-                                <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedTransactions.map(p => (
+                                    <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{p.id}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
                                     </TableCell>
+                                    <TableCell>{p.method}</TableCell>
                                     <TableCell>{p.date}</TableCell>
                                     <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                     <CardFooter>
+                        <div className="flex justify-between items-center w-full">
+                            <div className="text-xs text-muted-foreground">
+                                Page {txCurrentPage} of {txTotalPages}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setTxCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={txCurrentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setTxCurrentPage(prev => Math.min(prev + 1, txTotalPages))}
+                                    disabled={txCurrentPage === txTotalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                </Card>
+             </TabsContent>
+              <TabsContent value="withdrawals" className="mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Withdrawal History</CardTitle>
+                        <CardDescription>Full withdrawal history for this merchant.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Withdrawal ID</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-                 <DialogFooter className="flex justify-between items-center w-full pt-4">
-                    <div className="text-xs text-muted-foreground">
-                        Page {currentPage} of {totalPages}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                        >
-                            Previous
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedWithdrawals.map(w => (
+                                    <TableRow key={w.id} onClick={() => handleWithdrawalRowClick(w)} className="cursor-pointer hover:bg-muted/50">
+                                        <TableCell className="font-medium">{w.id}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                                        </TableCell>
+                                        <TableCell>{w.date}</TableCell>
+                                        <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                     <CardFooter>
+                        <div className="flex justify-between items-center w-full">
+                            <div className="text-xs text-muted-foreground">
+                                Page {wdCurrentPage} of {wdTotalPages}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setWdCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={wdCurrentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setWdCurrentPage(prev => Math.min(prev + 1, wdTotalPages))}
+                                    disabled={wdCurrentPage === wdTotalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                </Card>
+             </TabsContent>
+             <TabsContent value="wallet" className="mt-4">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Wallet Management</CardTitle>
+                        <CardDescription>Manually adjust the merchant's wallet balance.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
+                            <Wallet className="w-6 h-6 text-muted-foreground"/>
+                            <span className="text-muted-foreground">Current Balance:</span>
+                            <span className="text-2xl font-bold">${walletBalance.toFixed(2)}</span>
+                        </div>
+                        <Separator/>
+                        <div className="space-y-2">
+                            <Label htmlFor="adjustment-amount">Adjustment Amount (USD)</Label>
+                            <Input
+                                id="adjustment-amount"
+                                type="number"
+                                placeholder="e.g., 100.00"
+                                value={adjustmentAmount}
+                                onChange={(e) => setAdjustmentAmount(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Button onClick={() => handleWalletAdjustment('credit')}>
+                                <PlusCircle className="mr-2 h-4 w-4"/> Credit (Add Funds)
+                            </Button>
+                            <Button variant="destructive" onClick={() => handleWalletAdjustment('debit')}>
+                                <MinusCircle className="mr-2 h-4 w-4"/> Debit (Remove Funds)
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+             </TabsContent>
+        </Tabs>
+        
         {/* Transaction Detail Dialog */}
         <Dialog open={dialogOpen === 'transaction'} onOpenChange={() => setDialogOpen(null)}>
             <DialogContent className="max-w-md">
@@ -631,11 +585,6 @@ export default function UserDetailPage() {
                 )}
                  <DialogFooter className="sm:justify-between gap-2">
                     <Button variant="ghost" onClick={() => setDialogOpen(null)}>Close</Button>
-                    {merchant && (
-                        <Button asChild>
-                            <Link href={`/dashboard/users/${merchant.id}`}>View Full Profile</Link>
-                        </Button>
-                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -690,54 +639,8 @@ export default function UserDetailPage() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
-        {/* Other Stat Dialogs */}
-        <Dialog open={['wallet', 'withdraw', 'success'].includes(dialogOpen || '')} onOpenChange={() => setDialogOpen(null)}>
-            <DialogContent className="max-w-md">
-                <DialogHeader>
-                     {dialogOpen === 'wallet' && <DialogTitle>Wallet Balance Details</DialogTitle>}
-                     {dialogOpen === 'withdraw' && <DialogTitle>Available to Withdraw Details</DialogTitle>}
-                     {dialogOpen === 'success' && <DialogTitle>Success Rate Details</DialogTitle>}
-                </DialogHeader>
-                 <div className="py-4">
-                    {dialogOpen === 'wallet' && (
-                        <div className="space-y-4">
-                            <div className="flex justify-between"><span className="text-muted-foreground">Total Credits:</span> <span className="font-semibold">$50,123.45</span></div>
-                            <div className="flex justify-between"><span className="text-muted-foreground">Total Debits (Withdrawals + Fees):</span> <span className="font-semibold">$44,692.95</span></div>
-                            <Separator/>
-                            <div className="flex justify-between font-bold text-lg"><span>Current Balance:</span> <span>${walletBalance.toFixed(2)}</span></div>
-                        </div>
-                    )}
-                     {dialogOpen === 'withdraw' && (
-                        <div className="space-y-4">
-                             <div className="flex justify-between"><span className="text-muted-foreground">Wallet Balance:</span> <span className="font-semibold">${walletBalance.toFixed(2)}</span></div>
-                             <div className="flex justify-between"><span className="text-muted-foreground">Pending Settlements:</span> <span className="font-semibold">-$230.50</span></div>
-                             <Separator/>
-                            <div className="flex justify-between font-bold text-lg"><span>Available to Withdraw:</span> <span>${stats.availableToWithdraw}</span></div>
-                            <p className="text-xs text-muted-foreground pt-2">This is the amount you can currently withdraw. It excludes payments that are still being processed.</p>
-                        </div>
-                    )}
-                    {dialogOpen === 'success' && (
-                         <div className="space-y-4">
-                             <Button variant="link" className="p-0 h-auto justify-start w-full" onClick={() => openTransactionListDialog('total')}>
-                                <div className="flex justify-between w-full"><span className="text-muted-foreground">Total Transactions Attempted:</span> <span className="font-semibold">{allTransactions.length}</span></div>
-                             </Button>
-                              <Button variant="link" className="p-0 h-auto justify-start w-full" onClick={() => openTransactionListDialog('successful')}>
-                                <div className="flex justify-between w-full"><span className="text-muted-foreground">Successful Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Success').length}</span></div>
-                             </Button>
-                             <Button variant="link" className="p-0 h-auto justify-start w-full" onClick={() => openTransactionListDialog('failed')}>
-                                <div className="flex justify-between w-full"><span className="text-muted-foreground">Failed Transactions:</span> <span className="font-semibold">{allTransactions.filter(t => t.status === 'Failed').length}</span></div>
-                             </Button>
-                            <Separator/>
-                            <div className="flex justify-between font-bold text-lg pt-2"><span>Success Rate:</span> <span>{stats.successRate}</span></div>
-                        </div>
-                    )}
-                 </div>
-                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     </div>
   )
 }
+
+    

@@ -238,11 +238,14 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>
-                Your most recent transactions.
-              </CardDescription>
+              <Button asChild variant="link" className="text-sm">
+                <Link href="/merchant/payments">
+                    View all
+                    <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
           </CardHeader>
           <CardContent>
              <Table>
@@ -364,3 +367,5 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
     </div>
   )
 }
+
+    
