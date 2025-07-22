@@ -46,8 +46,8 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import Image from "next/image";
 
-type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date };
-type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string };
+type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; };
+type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -67,6 +67,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     // Generate mock data on the client side
     const generateAllTransactions = (): Transaction[] => {
+      const methods = ["UPI", "Crypto", "Page", "Link"];
       return Array.from({ length: 50 }, (_, i) => {
           const monthIndex = Math.floor(i / 4);
           const date = new Date(2023, monthIndex, (i % 28) + 1);
@@ -76,7 +77,8 @@ export default function AdminDashboard() {
               email: `customer${i + 1}@example.com`,
               amount: (Math.random() * 500 + 20).toFixed(2),
               status: Math.random() > 0.1 ? "Success" : "Failed",
-              date: date
+              date: date,
+              method: methods[i % 4],
           }
       });
     };
@@ -322,6 +324,11 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Amount:</span>
                   <span className="font-semibold">${selectedTransaction.amount}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Method:</span>
+                  <span className="font-semibold">{selectedTransaction.method}</span>
               </div>
               <Separator />
                <div className="flex justify-between items-center">

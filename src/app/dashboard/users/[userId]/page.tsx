@@ -38,8 +38,8 @@ const stats = {
 const paymentMethodData = [
   { name: 'UPI', value: 20050, color: '#0088FE' },
   { name: 'Crypto', value: 15125, color: '#00C49F' },
-  { name: 'Cards', value: 8056.89, color: '#FFBB28' },
-  { name: 'Payment Links', value: 2000, color: '#FF8042' },
+  { name: 'Page', value: 8056.89, color: '#FFBB28' },
+  { name: 'Link', value: 2000, color: '#FF8042' },
 ];
 
 type Transaction = {
@@ -55,8 +55,8 @@ const allTransactions: Transaction[] = [
     { id: "UVRLP111111111", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-01" },
     { id: "UVRLP222222222", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-01" },
     { id: "UVRLP333333333", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
-    { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Cards", status: "Success", date: "2023-11-02" },
-    { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Payment Links", status: "Success", date: "2023-11-03" },
+    { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Page", status: "Success", date: "2023-11-02" },
+    { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Link", status: "Success", date: "2023-11-03" },
 ];
 
 const recentTransactions = allTransactions.slice(0, 3);

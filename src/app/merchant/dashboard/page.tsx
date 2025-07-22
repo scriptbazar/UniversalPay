@@ -68,6 +68,7 @@ const chartData = [
 ];
 
 const generateAllTransactions = () => {
+    const methods = ["UPI", "Crypto", "Page", "Link"];
     return Array.from({ length: 50 }, (_, i) => {
         const monthIndex = Math.floor(i / 4);
         const date = new Date(2023, monthIndex, (i % 28) + 1);
@@ -77,7 +78,8 @@ const generateAllTransactions = () => {
             email: `customer${i + 1}@example.com`,
             amount: (Math.random() * 500 + 20).toFixed(2),
             status: Math.random() > 0.1 ? "Success" : "Failed",
-            date: date
+            date: date,
+            method: methods[i % 4],
         }
     });
 };
@@ -89,6 +91,7 @@ type Transaction = {
     amount: string;
     status: "Success" | "Failed";
     date: Date;
+    method: string;
 };
 
 interface DashboardProps {
@@ -300,6 +303,11 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
               <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Amount:</span>
                   <span className="font-semibold">${selectedTransaction.amount}</span>
+              </div>
+              <Separator />
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Method:</span>
+                  <span className="font-semibold">{selectedTransaction.method}</span>
               </div>
               <Separator />
                <div className="flex justify-between items-center">
