@@ -180,6 +180,70 @@ export default function AnalyticsPage() {
     setSelectedCustomer(customer);
   };
   
+  const handleStatCardClick = (stat: 'revenue' | 'transactions' | 'success' | 'customers') => {
+    switch (stat) {
+      case 'revenue':
+        setDialogContent({
+          title: "Revenue Details",
+          description: "This is the total value of all your successful transactions.",
+          data: <PaginatedTransactionTable transactions={mockTransactions.filter(t => t.status === 'Successful')} />
+        });
+        break;
+      case 'transactions':
+        setDialogContent({
+          title: "All Transactions",
+          description: "This is a list of all attempted transactions.",
+          data: <PaginatedTransactionTable transactions={mockTransactions} />
+        });
+        break;
+      case 'success':
+        const successfulTxns = mockTransactions.filter(t => t.status === 'Successful').length;
+        const totalTxns = mockTransactions.length;
+        setDialogContent({
+          title: "Success Rate Details",
+          description: "Breakdown of your transaction success rate.",
+          data: (
+            <div className="space-y-2">
+              <div className="flex justify-between"><span>Total Transactions:</span> <span className="font-bold">{totalTxns}</span></div>
+              <div className="flex justify-between"><span>Successful Transactions:</span> <span className="font-bold">{successfulTxns}</span></div>
+              <div className="flex justify-between"><span>Failed Transactions:</span> <span className="font-bold">{totalTxns - successfulTxns}</span></div>
+              <Separator className="my-2"/>
+              <div className="flex justify-between text-lg"><span>Success Rate:</span> <span className="font-bold">98.2%</span></div>
+            </div>
+          )
+        });
+        break;
+      case 'customers':
+         setDialogContent({
+          title: "All Customers",
+          description: "This is a list of your top customers.",
+          data: (
+            <Table>
+              <TableHeader>
+                  <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className="text-right">Total Spent</TableHead>
+                  </TableRow>
+              </TableHeader>
+              <TableBody>
+                  {topCustomers.map(customer => (
+                      <TableRow key={customer.email} onClick={() => handleCustomerClick(customer)} className="cursor-pointer hover:bg-muted/50">
+                          <TableCell>
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-muted-foreground">{customer.email}</div>
+                          </TableCell>
+                          <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
+                      </TableRow>
+                  ))}
+              </TableBody>
+          </Table>
+          )
+        });
+        break;
+    }
+  };
+
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -196,7 +260,7 @@ export default function AnalyticsPage() {
       <Separator />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card onClick={() => handleStatCardClick('revenue')} className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Your Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -206,7 +270,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card onClick={() => handleStatCardClick('transactions')} className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Transactions</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -216,7 +280,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">+19% from last month</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card onClick={() => handleStatCardClick('success')} className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
@@ -226,7 +290,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">+2.1% from last month</p>
           </CardContent>
         </Card>
-         <Card>
+         <Card onClick={() => handleStatCardClick('customers')} className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
