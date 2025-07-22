@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -46,7 +45,7 @@ const allSubMerchantTransactions = [
     { id: 'UVRLP911202315', merchantName: 'AnotherShop', amount: 30.00, date: '2023-11-08' },
 ];
 
-type DialogType = 'subMerchants' | 'sales' | 'commission' | null;
+type DialogType = 'subMerchants' | 'sales' | 'commission' | 'avg_commission' | null;
 
 export default function ResellerPage() {
   const router = useRouter();
@@ -66,7 +65,7 @@ export default function ResellerPage() {
       </div>
       <Separator />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card onClick={() => setDialogOpen('subMerchants')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Sub-Merchants</CardTitle>
@@ -95,6 +94,16 @@ export default function ResellerPage() {
           <CardContent>
             <div className="text-2xl font-bold">$1,260.00</div>
             <p className="text-xs text-muted-foreground">Earned this month</p>
+          </CardContent>
+        </Card>
+        <Card onClick={() => setDialogOpen('avg_commission')} className="cursor-pointer hover:bg-muted/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Commission Rate</CardTitle>
+            <Percent className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">~5.5%</div>
+            <p className="text-xs text-muted-foreground">Across all sub-merchants</p>
           </CardContent>
         </Card>
       </div>
@@ -217,6 +226,32 @@ export default function ResellerPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Average Commission Rate:</span> <span className="font-semibold">~5.5%</span></div>
                 <Separator/>
                 <div className="flex justify-between font-bold text-lg"><span>Total Commission Earned:</span> <span>$1,260.00</span></div>
+            </div>
+             <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog for Avg Commission Rate */}
+       <Dialog open={dialogOpen === 'avg_commission'} onOpenChange={() => setDialogOpen(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Average Commission Rate</DialogTitle>
+                 <DialogDescription>This is a weighted average based on sales volume and individual commission rates.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                {subMerchants.map(m => (
+                    <div key={m.id} className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">{m.name}</span>
+                        <div className="text-right">
+                           <p className="font-semibold">{m.commission}</p>
+                           <p className="text-xs text-muted-foreground">on ${parseFloat(m.sales).toLocaleString()}</p>
+                        </div>
+                    </div>
+                ))}
+                <Separator/>
+                <div className="flex justify-between font-bold text-lg"><span>Average Rate:</span> <span>~5.5%</span></div>
             </div>
              <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
