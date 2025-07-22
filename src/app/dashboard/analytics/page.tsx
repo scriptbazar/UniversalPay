@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
                     {dialogContent?.type === 'payment-method' && dialogContent.transactions.length > itemsPerPage && (
                         <>
                             <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
@@ -373,7 +373,7 @@ export default function AnalyticsPage() {
                                 Previous
                             </Button>
                             <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
@@ -382,7 +382,7 @@ export default function AnalyticsPage() {
                             </Button>
                         </>
                     )}
-                    <Button onClick={() => setDialogContent(null)} variant="outline">Close</Button>
+                    <Button onClick={() => setDialogContent(null)} variant="default">Close</Button>
                 </div>
             </DialogFooter>
         </DialogContent>
