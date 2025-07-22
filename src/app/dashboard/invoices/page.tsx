@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, PlusCircle, Search } from "lucide-react";
+import { Download, PlusCircle, Search, FileText, CheckCircle, Clock, XCircle, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { type Invoice, getInvoices } from "@/lib/invoicesData";
+import { type Invoice, getInvoiceById, getInvoices } from "@/lib/invoicesData";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -25,10 +28,24 @@ const getStatusBadgeVariant = (status: string) => {
     }
 }
 
+const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secondary' | 'destructive', icon: React.ReactNode } => {
+    switch (status) {
+        case 'Paid':
+            return { variant: 'default', icon: <CheckCircle className="mr-2 h-4 w-4" /> };
+        case 'Pending':
+            return { variant: 'secondary', icon: <Clock className="mr-2 h-4 w-4" /> };
+        case 'Overdue':
+            return { variant: 'destructive', icon: <XCircle className="mr-2 h-4 w-4" /> };
+        default:
+            return { variant: 'secondary', icon: <Clock className="mr-2 h-4 w-4" /> };
+    }
+};
+
+
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const router = useRouter();
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
     useEffect(() => {
         setInvoices(getInvoices());
@@ -48,11 +65,27 @@ export default function InvoicesPage() {
     }, [invoices, searchTerm]);
 
     const handleRowClick = (invoiceId: string) => {
-        // In a real app, you might have a different detail view for admin
-        // For now, we can just log it or disable it.
-        console.log(`Admin viewing invoice: ${invoiceId}`);
-        // router.push(`/dashboard/invoices/${invoiceId}`);
+        const invoice = getInvoiceById(invoiceId);
+        if (invoice) {
+            setSelectedInvoice(invoice);
+        }
     };
+    
+    const handleDownloadPdf = () => {
+        const input = document.getElementById('invoice-dialog-content');
+        if (input && selectedInvoice) {
+          html2canvas(input, { scale: 2 }).then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`invoice-${selectedInvoice.id}.pdf`);
+          });
+        }
+    };
+
+    const statusInfo = selectedInvoice ? getStatusInfo(selectedInvoice.status) : null;
 
 
   return (
@@ -68,7 +101,7 @@ export default function InvoicesPage() {
                 <div className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>All Invoices</CardTitle>
-                        <CardDescription>A list of all invoices across the platform.</CardDescription>
+                        <CardDescription>A list of all invoices across the platform. Click a row for details.</CardDescription>
                     </div>
                     <div className="flex gap-2 items-center">
                          <div className="relative">
@@ -121,6 +154,91 @@ export default function InvoicesPage() {
             </Table>
             </CardContent>
         </Card>
+        
+        <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
+            <DialogContent className="max-w-2xl">
+                 <div id="invoice-dialog-content" className="p-6 md:p-10 bg-background">
+                    {selectedInvoice && (
+                        <>
+                             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+                                <div>
+                                <div className="flex items-center gap-4">
+                                    <FileText className="h-10 w-10 text-muted-foreground" />
+                                    <div>
+                                    <h1 className="text-3xl font-bold">Invoice</h1>
+                                    <p className="font-mono text-muted-foreground">{selectedInvoice.id}</p>
+                                    </div>
+                                </div>
+                                </div>
+                                <div className="flex flex-col items-start md:items-end gap-2">
+                                    {statusInfo && (
+                                        <Badge variant={statusInfo.variant} className="text-base px-4 py-1 flex items-center">
+                                            {statusInfo.icon}
+                                            {selectedInvoice.status}
+                                        </Badge>
+                                    )}
+                                    <div className='text-right'>
+                                        <p className="text-sm text-muted-foreground">Issued: {selectedInvoice.issueDate}</p>
+                                        <p className="text-sm text-muted-foreground">Due: {selectedInvoice.dueDate}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <Separator className="my-8" />
+                            <div className="grid md:grid-cols-2 gap-8 mb-8">
+                                <div>
+                                    <h2 className="font-semibold mb-2">Billed To:</h2>
+                                    <p className="font-semibold text-lg">{selectedInvoice.customerName}</p>
+                                    <p className="text-sm text-muted-foreground">{selectedInvoice.customerEmail}</p>
+                                </div>
+                                <div className="text-left md:text-right">
+                                    <h2 className="font-semibold mb-2">From:</h2>
+                                    <p className="font-semibold text-lg">{selectedInvoice.merchantName}</p>
+                                </div>
+                            </div>
+                            <div className="rounded-lg border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead className="text-right">Amount</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {selectedInvoice.items.map((item, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell className="font-medium">{item.description}</TableCell>
+                                                <TableCell className="text-right">${item.amount.toFixed(2)}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            <div className="flex justify-end mt-6">
+                                <div className="w-full max-w-sm space-y-4">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Subtotal</span>
+                                        <span>${selectedInvoice.totalAmount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Tax (0%)</span>
+                                        <span>$0.00</span>
+                                    </div>
+                                    <Separator/>
+                                    <div className="flex justify-between font-bold text-lg">
+                                        <span >Total</span>
+                                        <span>${selectedInvoice.totalAmount.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                 </div>
+                 <div className="flex justify-end gap-2 p-6 pt-0">
+                    <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
+                    <Button onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> Download PDF</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
