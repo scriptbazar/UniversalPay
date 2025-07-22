@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -364,25 +364,6 @@ export default function SettingsPage() {
                                     <Input id="paypal-secret" type="password" placeholder="Enter PayPal Secret"/>
                                 </div>
                             )}
-                             <h6 className="font-semibold text-sm pt-4">Low-Cost Bank Transfers</h6>
-                             <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between rounded-lg border p-3">
-                                    <Label htmlFor="eur-sepa-switch" className="font-medium text-sm">SEPA (EUR)</Label>
-                                    <Switch id="eur-sepa-switch" checked={gateways.eur_sepa} onCheckedChange={() => handleGatewayToggle('eur_sepa')} />
-                                </div>
-                                 <div className="flex items-center justify-between rounded-lg border p-3">
-                                    <Label htmlFor="gbp-bacs-switch" className="font-medium text-sm">BACS (GBP)</Label>
-                                    <Switch id="gbp-bacs-switch" checked={gateways.gbp_bacs} onCheckedChange={() => handleGatewayToggle('gbp_bacs')} />
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border p-3">
-                                    <Label htmlFor="aud-becs-switch" className="font-medium text-sm">BECS (AUD)</Label>
-                                    <Switch id="aud-becs-switch" checked={gateways.aud_becs} onCheckedChange={() => handleGatewayToggle('aud_becs')} />
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border p-3">
-                                    <Label htmlFor="cad-eft-switch" className="font-medium text-sm">EFT (CAD)</Label>
-                                    <Switch id="cad-eft-switch" checked={gateways.cad_eft} onCheckedChange={() => handleGatewayToggle('cad_eft')} />
-                                </div>
-                             </div>
                         </div>
                     </div>
                 </div>
@@ -435,3 +416,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
