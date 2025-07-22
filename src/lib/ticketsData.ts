@@ -28,12 +28,12 @@ let tickets: Ticket[] = [
     status: 'Open',
     priority: 'High',
     createdAt: '2023-11-10T09:00:00Z',
-    updatedAt: '2023-11-10T11:00:00Z',
+    updatedAt: '2023-11-10T09:00:00Z',
     replies: [
       {
         author: 'Admin',
-        message: 'Hi John, we are looking into this. There seems to be some network congestion. We will update you shortly.',
-        createdAt: '2023-11-10T11:00:00Z',
+        message: 'Thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.',
+        createdAt: '2023-11-10T09:00:05Z',
       },
     ],
   },
@@ -48,7 +48,7 @@ let tickets: Ticket[] = [
     createdAt: '2023-11-09T14:30:00Z',
     updatedAt: '2023-11-09T15:00:00Z',
     replies: [
-       {
+      {
         author: 'Admin',
         message: 'Hello! You can enable SEPA transfers from your Settings -> Payment Methods page. Let us know if you face any issues.',
         createdAt: '2023-11-09T15:00:00Z',
@@ -92,16 +92,29 @@ export const getTicketById = (id: string): Ticket | undefined => {
 
 // Function to add a new ticket
 export const addTicket = (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'replies'>): void => {
-  const now = new Date().toISOString();
+  const now = new Date();
+  const createdAt = now.toISOString();
+  // Automatic reply is sent 5 seconds after ticket creation to simulate a real system
+  now.setSeconds(now.getSeconds() + 5); 
+  const autoReplyCreatedAt = now.toISOString();
+
   const newTicket: Ticket = {
     ...newTicketData,
     id: `TKT-${String(tickets.length + 1).padStart(3, '0')}`,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: createdAt,
+    updatedAt: createdAt,
     status: 'Open',
-    replies: [],
+    replies: [
+        {
+            author: 'Admin',
+            message: 'Thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.',
+            createdAt: autoReplyCreatedAt,
+        }
+    ],
   };
   tickets.unshift(newTicket);
+  // After adding the auto-reply, set the update time to the same as creation to keep it at the top
+  newTicket.updatedAt = createdAt;
 };
 
 // Function to add a reply to a ticket
