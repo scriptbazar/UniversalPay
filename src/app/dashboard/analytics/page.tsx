@@ -181,20 +181,7 @@ export default function AnalyticsPage() {
 
   const handlePieClick = (data: any) => {
      const methodName = data.name;
-     const transactions = mockTransactions.filter(t => t.method === methodName);
-     setCurrentPage(1);
-     setDialogContent({ 
-        title: `${methodName} Transactions`, 
-        description: `List of recent transactions made via ${methodName}. Click a row for details.`, 
-        data: <PaginatedTransactionTable 
-                    transactions={transactions} 
-                    onRowClick={(tx) => setSelectedTransaction(tx)}
-                    currentPage={currentPage}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={setCurrentPage}
-                />,
-        type: 'payment-method'
-    });
+     router.push(`/dashboard/analytics/transactions-by-method/${methodName.toLowerCase()}`);
   };
 
   const handleCountryClick = (country: any) => {
@@ -355,30 +342,7 @@ export default function AnalyticsPage() {
                  )}
             </div>
              <DialogFooter className="sm:justify-between">
-                <div></div>
-                <div className="flex items-center gap-2">
-                    {dialogContent?.type === 'payment-method' && mockTransactions.filter(t => t.method === dialogContent.title.split(' ')[0]).length > itemsPerPage && (
-                        <>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
-                            </Button>
-                        </>
-                    )}
-                    <Button onClick={() => setDialogContent(null)} variant="secondary">Close</Button>
-                </div>
+                <Button onClick={() => setDialogContent(null)} variant="secondary">Close</Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
