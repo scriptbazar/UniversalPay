@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, User, Calendar, MessageSquare, LifeBuoy, Copy } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MessageSquare, LifeBuoy, Copy, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { getTicketById, addReply, updateTicket, type Ticket, type TicketReply } from '@/lib/ticketsData';
@@ -14,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const getStatusVariant = (status: Ticket['status']) => {
   switch (status) {
@@ -38,6 +39,8 @@ const formatDate = (dateString: string) => {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     });
 };
 
@@ -59,7 +62,7 @@ export default function AdminTicketDetailPage() {
   }, [ticketId]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-full">Loading ticket...</div>;
   }
 
   if (!ticket) {
@@ -111,26 +114,52 @@ export default function AdminTicketDetailPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="border-b">
               <div className="flex justify-between items-start">
                   <div>
                     <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority} Priority</Badge>
                     <CardTitle className="mt-2 text-2xl">{ticket.subject}</CardTitle>
+                    <CardDescription>
+                        From <Link href={`/dashboard/users/${ticket.merchantId}`} className="font-medium text-primary hover:underline">{ticket.merchantName}</Link> on {formatDate(ticket.createdAt)}
+                    </CardDescription>
                   </div>
                   <Badge variant={getStatusVariant(ticket.status)} className="text-base">{ticket.status}</Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="space-y-6">
-                <div className="border-b pb-4">
-                  <p className="text-sm text-muted-foreground">{ticket.message}</p>
+                
+                {/* Initial Message */}
+                 <div className="flex items-start gap-4">
+                    <Avatar>
+                        <AvatarFallback><User /></AvatarFallback>
+                    </Avatar>
+                    <div className="w-full">
+                        <div className="bg-muted p-4 rounded-lg rounded-tl-none">
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="font-bold">{ticket.merchantName}</p>
+                                <p className="text-xs text-muted-foreground">{formatDate(ticket.createdAt)}</p>
+                            </div>
+                            <p className="text-sm">{ticket.message}</p>
+                        </div>
+                    </div>
                 </div>
+
                 {ticket.replies.map((reply, index) => (
-                  <div key={index} className={`flex gap-4 ${reply.author === 'Admin' ? 'justify-end' : ''}`}>
-                    <div className={`p-4 rounded-lg max-w-xl ${reply.author === 'Admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                      <p className="font-bold">{reply.author}</p>
-                      <p className="text-sm">{reply.message}</p>
-                      <p className="text-xs text-right mt-2 opacity-70">{new Date(reply.createdAt).toLocaleString()}</p>
+                  <div key={index} className={`flex items-start gap-4 ${reply.author === 'Admin' ? 'flex-row-reverse' : ''}`}>
+                     <Avatar>
+                        <AvatarFallback>
+                           {reply.author === 'Admin' ? <Shield/> : <User />}
+                        </AvatarFallback>
+                    </Avatar>
+                     <div className="w-full">
+                        <div className={`p-4 rounded-lg ${reply.author === 'Admin' ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-muted rounded-tl-none'}`}>
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="font-bold">{reply.author}</p>
+                                <p className={`text-xs opacity-80`}>{new Date(reply.createdAt).toLocaleString()}</p>
+                            </div>
+                            <p className="text-sm">{reply.message}</p>
+                        </div>
                     </div>
                   </div>
                 ))}
@@ -139,16 +168,20 @@ export default function AdminTicketDetailPage() {
               {ticket.status !== 'Closed' && (
                 <>
                   <Separator className="my-6" />
-                  <form onSubmit={handleReplySubmit}>
-                    <h3 className="text-lg font-semibold mb-2">Post a Reply</h3>
-                    <Textarea 
-                      placeholder="Type your response here..."
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
-                      rows={5}
-                    />
-                    <Button type="submit" className="mt-4">Send Reply</Button>
-                  </form>
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Post a Reply</h3>
+                     <form onSubmit={handleReplySubmit} className="grid gap-4">
+                        <Textarea 
+                          placeholder="Type your response here..."
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          rows={5}
+                        />
+                        <div className="flex justify-end">
+                            <Button type="submit">Send Reply</Button>
+                        </div>
+                    </form>
+                  </div>
                 </>
               )}
             </CardContent>
@@ -160,21 +193,19 @@ export default function AdminTicketDetailPage() {
                     <CardTitle>Ticket Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <LifeBuoy className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-mono">{ticket.id}</span>
-                         <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(ticket.id, 'Ticket ID')} />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Ticket ID</span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono">{ticket.id}</span>
+                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(ticket.id, 'Ticket ID')} />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <Link href={`/dashboard/users/${ticket.merchantId}`} className="hover:underline">{ticket.merchantName}</Link>
-                    </div>
-                     <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>Created: {formatDate(ticket.createdAt)}</span>
+                     <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Last Updated</span>
+                        <span className="font-semibold">{new Date(ticket.updatedAt).toLocaleDateString()}</span>
                     </div>
                      <Separator />
-                     <div>
+                     <div className="space-y-2">
                         <Label>Status</Label>
                         <Select value={ticket.status} onValueChange={handleStatusChange}>
                             <SelectTrigger>
@@ -187,7 +218,7 @@ export default function AdminTicketDetailPage() {
                             </SelectContent>
                         </Select>
                      </div>
-                      <div>
+                      <div className="space-y-2">
                         <Label>Priority</Label>
                         <Select value={ticket.priority} onValueChange={handlePriorityChange}>
                             <SelectTrigger>
