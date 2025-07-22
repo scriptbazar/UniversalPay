@@ -230,7 +230,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle>Platform Growth</CardTitle>
              <CardDescription>
-                Click on a bar to see monthly transaction details.
+                Click on a bar to see monthly details.
               </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
