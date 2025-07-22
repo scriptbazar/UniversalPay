@@ -32,6 +32,8 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { addCountryToUsers } from "@/lib/mockUserCountry";
+import { countries } from "@/lib/countries";
 
 
 interface User {
@@ -57,6 +59,7 @@ export default function UsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [countryFilter, setCountryFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -65,10 +68,12 @@ export default function UsersPage() {
             if (user) {
                 const usersCollectionRef = collection(db, "users");
                 const unsubscribeSnapshot = onSnapshot(usersCollectionRef, (querySnapshot) => {
-                    const userList: User[] = [];
+                    let userList: User[] = [];
                     querySnapshot.forEach((doc) => {
                         userList.push({ id: doc.id, ...doc.data() } as User);
                     });
+                    // Add mock country data for demonstration
+                    userList = addCountryToUsers(userList);
                     setUsers(userList);
                     setLoading(false);
                 }, (err: any) => {
@@ -104,10 +109,12 @@ export default function UsersPage() {
             const matchesRole = roleFilter === 'all' || (user.role || 'merchant').toLowerCase() === roleFilter;
             
             const matchesStatus = statusFilter === 'all' || (user.status || 'Active').toLowerCase() === statusFilter;
+            
+            const matchesCountry = countryFilter === 'all' || user.country === countryFilter;
 
-            return matchesSearch && matchesRole && matchesStatus;
+            return matchesSearch && matchesRole && matchesStatus && matchesCountry;
         });
-    }, [users, searchTerm, roleFilter, statusFilter]);
+    }, [users, searchTerm, roleFilter, statusFilter, countryFilter]);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const paginatedUsers = filteredUsers.slice(
@@ -117,7 +124,7 @@ export default function UsersPage() {
 
 
     const handleRowClick = (user: User) => {
-        setSelectedUser(user);
+        router.push(`/dashboard/users/${user.id}`);
     };
 
     const copyToClipboard = (text: string, label: string) => {
@@ -154,7 +161,7 @@ export default function UsersPage() {
                     </TableHeader>
                     <TableBody>
                         {paginatedUsers.map((user) => (
-                           <TableRow key={user.id} onClick={() => handleRowClick(user)} className="cursor-pointer hover:bg-muted/50">
+                           <TableRow key={user.id} onClick={() => router.push(`/dashboard/users/${user.id}`)} className="cursor-pointer hover:bg-muted/50">
                               <TableCell className="font-medium">
                                   <div className="flex items-center gap-3">
                                       <Image src={user.avatar || `https://placehold.co/40x40.png?text=${(user.fullName || 'U').charAt(0)}`} width={40} height={40} alt={user.fullName || 'User'} className="rounded-full" data-ai-hint="user avatar" />
@@ -193,17 +200,26 @@ export default function UsersPage() {
                                 Manage all users on the platform, including merchants and administrators. Click a user to see details.
                             </CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                              <div className="relative">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="search"
                                     placeholder="Search by name or email..."
-                                    className="pl-8 w-64"
+                                    className="pl-8 w-48"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+                            <Select value={countryFilter} onValueChange={setCountryFilter}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Filter by country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Countries</SelectItem>
+                                    {countries.map(c => <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
                                 <SelectTrigger className="w-[150px]">
                                     <SelectValue placeholder="Filter by role" />
@@ -290,6 +306,10 @@ export default function UsersPage() {
                                 <div className="space-y-1">
                                     <p className="text-muted-foreground">Plan</p>
                                     <p className="font-semibold">{selectedUser.plan || 'Free'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-muted-foreground">Country</p>
+                                    <p className="font-semibold">{selectedUser.country || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
