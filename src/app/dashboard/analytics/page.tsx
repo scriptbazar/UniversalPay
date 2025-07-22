@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
   };
 
   const handleCountryClick = (country: any) => {
-     router.push('/dashboard/users');
+     router.push(`/dashboard/users/country/${country.country}`);
   };
 
   const totalPages = dialogContent?.type === 'payment-method' ? Math.ceil(mockTransactions.filter(t => t.method === dialogContent.title.split(' ')[0]).length / itemsPerPage) : 0;
