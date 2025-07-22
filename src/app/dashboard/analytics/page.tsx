@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
                     {dialogContent?.type === 'payment-method' && dialogContent.transactions.length > itemsPerPage && (
                         <>
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
