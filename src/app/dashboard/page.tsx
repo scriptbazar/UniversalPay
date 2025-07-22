@@ -56,7 +56,6 @@ export default function AdminDashboard() {
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedSignup, setSelectedSignup] = useState<Signup | null>(null);
-  const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
 
   // State for mock data to avoid hydration errors
   const [chartData, setChartData] = useState<any[]>([]);
@@ -115,10 +114,7 @@ export default function AdminDashboard() {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
     const month = payload.name;
-    const monthIndex = payload.monthIndex;
-
-    const transactionsForMonth = allTransactions.filter(tx => tx.date.getMonth() === monthIndex);
-    setMonthlyTransactions({ month, transactions: transactionsForMonth });
+    router.push(`/dashboard/analytics/transactions/${month}`);
   };
   
   const successfulTransactions = allTransactions.filter(tx => tx.status === 'Success');
@@ -164,17 +160,19 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/transactions')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{allTransactions.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Total attempted transactions
-            </p>
-          </CardContent>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" asChild>
+          <Link href="/dashboard/transactions">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{allTransactions.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Total attempted transactions
+              </p>
+            </CardContent>
+          </Link>
         </Card>
         <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/fraud-detection')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -348,47 +346,6 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
       
-      <Dialog open={!!monthlyTransactions} onOpenChange={() => setMonthlyTransactions(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
-            <DialogDescription>
-                A list of all transactions that occurred in {monthlyTransactions?.month}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {monthlyTransactions?.transactions.map((tx) => (
-                        <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
-                            <TableCell className="font-medium">{tx.id}</TableCell>
-                            <TableCell>{tx.name}</TableCell>
-                            <TableCell>
-                                <Badge variant={tx.status === 'Success' ? 'default' : 'destructive'}>{tx.status}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">${tx.amount}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            {monthlyTransactions?.transactions.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No transactions found for {monthlyTransactions.month}.</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={!!selectedSignup} onOpenChange={() => setSelectedSignup(null)}>
         <DialogContent>
           <DialogHeader>

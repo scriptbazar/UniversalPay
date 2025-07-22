@@ -15,9 +15,9 @@ import { Separator } from "@/components/ui/separator";
 
 // Mock data generation function
 const generateMockTransactions = () => {
-    return Array.from({ length: 6 * 50 }, (_, i) => {
+    return Array.from({ length: 12 * 50 }, (_, i) => {
         const monthIndex = Math.floor(i / 50);
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const success = Math.random() > 0.1;
         return {
             id: `UVRLP${123456789 + i}`,
@@ -74,14 +74,14 @@ export default function MonthlyTransactionsPage() {
 
     return (
         <div className="space-y-6">
-            <Link href="/dashboard/analytics" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Analytics
+                Back to Dashboard
             </Link>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">Total Transactions for {month}</CardTitle>
+                    <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
                     <CardDescription>A list of all transactions for the selected month. Click a row for details.</CardDescription>
                 </CardHeader>
                 <CardContent>
