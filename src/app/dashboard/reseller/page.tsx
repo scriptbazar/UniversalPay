@@ -81,19 +81,27 @@ const subMerchants: SubMerchant[] = [
   },
 ];
 
-const allSubMerchantTransactions = [
-    { id: 'UVRLP911202311', merchantName: 'MyStore.com', amount: 50.00, date: '2023-11-10' },
-    { id: 'UVRLP911202312', merchantName: 'AnotherShop', amount: 75.00, date: '2023-11-10' },
-    { id: 'UVRLP911202313', merchantName: 'MyStore.com', amount: 120.00, date: '2023-11-09' },
-    { id: 'UVRLP911202314', merchantName: 'TechGadgets', amount: 200.00, date: '2023-11-09' },
-    { id: 'UVRLP911202315', merchantName: 'AnotherShop', amount: 30.00, date: '2023-11-08' },
-    { id: 'UVRLP911202316', merchantName: 'FashionHub', amount: 85.50, date: '2023-11-08' },
-    { id: 'UVRLP911202317', merchantName: 'MyStore.com', amount: 250.00, date: '2023-11-07' },
-    { id: 'UVRLP911202318', merchantName: 'BookwormDen', amount: 15.00, date: '2023-11-07' },
-    { id: 'UVRLP911202319', merchantName: 'TechGadgets', amount: 450.00, date: '2023-11-06' },
-    { id: 'UVRLP911202320', merchantName: 'FashionHub', amount: 125.00, date: '2023-11-06' },
-    { id: 'UVRLP911202321', merchantName: 'MyStore.com', amount: 99.99, date: '2023-11-05' },
-    { id: 'UVRLP911202322', merchantName: 'AnotherShop', amount: 40.00, date: '2023-11-05' },
+type Transaction = {
+    id: string;
+    merchantId: string;
+    merchantName: string;
+    amount: number;
+    date: string;
+};
+
+const allSubMerchantTransactions: Transaction[] = [
+    { id: 'UVRLP911202311', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 50.00, date: '2023-11-10' },
+    { id: 'UVRLP911202312', merchantId: 'sub_2', merchantName: 'AnotherShop', amount: 75.00, date: '2023-11-10' },
+    { id: 'UVRLP911202313', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 120.00, date: '2023-11-09' },
+    { id: 'UVRLP911202314', merchantId: 'sub_4', merchantName: 'TechGadgets', amount: 200.00, date: '2023-11-09' },
+    { id: 'UVRLP911202315', merchantId: 'sub_2', merchantName: 'AnotherShop', amount: 30.00, date: '2023-11-08' },
+    { id: 'UVRLP911202316', merchantId: 'sub_5', merchantName: 'FashionHub', amount: 85.50, date: '2023-11-08' },
+    { id: 'UVRLP911202317', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 250.00, date: '2023-11-07' },
+    { id: 'UVRLP911202318', merchantId: 'sub_6', merchantName: 'BookwormDen', amount: 15.00, date: '2023-11-07' },
+    { id: 'UVRLP911202319', merchantId: 'sub_4', merchantName: 'TechGadgets', amount: 450.00, date: '2023-11-06' },
+    { id: 'UVRLP911202320', merchantId: 'sub_5', merchantName: 'FashionHub', amount: 125.00, date: '2023-11-06' },
+    { id: 'UVRLP911202321', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 99.99, date: '2023-11-05' },
+    { id: 'UVRLP911202322', merchantId: 'sub_2', merchantName: 'AnotherShop', amount: 40.00, date: '2023-11-05' },
 ];
 
 type DialogType = 'subMerchants' | 'sales' | 'commission' | 'avg_commission' | null;
@@ -103,6 +111,7 @@ export default function ResellerPage() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   const [selectedMerchant, setSelectedMerchant] = useState<SubMerchant | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   
@@ -114,6 +123,10 @@ export default function ResellerPage() {
 
   const handleSubMerchantRowClick = (merchant: SubMerchant) => {
     setSelectedMerchant(merchant);
+  }
+
+  const handleTransactionRowClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
   }
 
   const openDialog = (type: DialogType) => {
@@ -297,7 +310,7 @@ export default function ResellerPage() {
                     </TableHeader>
                     <TableBody>
                         {paginatedTransactions.map(tx => (
-                            <TableRow key={tx.id}>
+                            <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="font-mono">{tx.id}</TableCell>
                                 <TableCell>{tx.merchantName}</TableCell>
                                 <TableCell>{tx.date}</TableCell>
@@ -400,6 +413,52 @@ export default function ResellerPage() {
                 {selectedMerchant && (
                     <Button asChild>
                         <Link href={`/dashboard/users/${selectedMerchant.id}`}>View Full Profile</Link>
+                    </Button>
+                )}
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+       {/* Dialog for Selected Transaction Details */}
+       <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Transaction Details</DialogTitle>
+                <DialogDescription>
+                    Details for transaction {selectedTransaction?.id}.
+                </DialogDescription>
+            </DialogHeader>
+            {selectedTransaction && (
+                <div className="py-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Transaction ID:</span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono">{selectedTransaction.id}</span>
+                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                        </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Merchant:</span>
+                        <span className="font-semibold">{selectedTransaction.merchantName}</span>
+                    </div>
+                    <Separator />
+                     <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-semibold">${selectedTransaction.amount.toFixed(2)}</span>
+                    </div>
+                     <Separator />
+                     <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Date:</span>
+                        <span className="font-semibold">{selectedTransaction.date}</span>
+                    </div>
+                </div>
+            )}
+            <DialogFooter className="sm:justify-between gap-2">
+                <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                {selectedTransaction && (
+                    <Button asChild>
+                        <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
                     </Button>
                 )}
             </DialogFooter>
