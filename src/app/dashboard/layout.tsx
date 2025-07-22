@@ -54,6 +54,7 @@ const navItems = [
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/wallet-loads", icon: PlusCircle, label: "Wallet Loads" },
   { href: "/dashboard/subscriptions", icon: Replace, label: "Subscriptions" },
+  { href: "/dashboard/invoices", icon: FileText, label: "All Invoices" },
   { href: "/dashboard/support", icon: LifeBuoy, label: "Support Tickets" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud & Risk" },
   { href: "/dashboard/audit-logs", icon: History, label: "Audit Logs" },
