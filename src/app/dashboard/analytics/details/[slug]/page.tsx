@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon, Mail, Landmark } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
@@ -14,7 +14,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 
-type Transaction = { id: string; merchant: string; amount: string; date: string; month: string; status: 'Successful' | 'Failed' };
+type Transaction = { 
+    id: string; 
+    merchant: string; 
+    merchantEmail: string; // Added for details
+    amount: string; 
+    date: string; 
+    month: string; 
+    status: 'Successful' | 'Failed';
+    method: string; // Added for details
+};
 type User = { id: string; name: string; email: string; avatar: string; joined: string; month: string };
 
 const generateMockData = () => {
@@ -35,6 +44,7 @@ const generateMockData = () => {
         });
     }
 
+    const methods = ["UPI", "Crypto", "Page", "Link"];
     for (let i = 0; i < 150; i++) {
          const monthIndex = i % 6;
          const month = months[monthIndex];
@@ -42,10 +52,12 @@ const generateMockData = () => {
          transactions.push({
             id: `txn_${i + 1}`,
             merchant: `Merchant ${i % 10 + 1}`,
+            merchantEmail: `merchant${i % 10 + 1}@example.com`,
             amount: (Math.random() * 200 + 10).toFixed(2),
             date: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
             month: month,
-            status: success ? 'Successful' : 'Failed'
+            status: success ? 'Successful' : 'Failed',
+            method: methods[i % 4],
          });
     }
 
@@ -107,6 +119,7 @@ export default function AnalyticsDetailPage() {
                 fetchedData = transactions.filter(t => month === 'all' || t.month === month);
                  tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
+                    { header: 'Merchant', accessor: 'merchant' },
                     { header: 'Date', accessor: 'date' },
                     { header: 'Status', accessor: 'status' },
                     { header: 'Amount', accessor: 'amount', isNumeric: true },
@@ -117,8 +130,8 @@ export default function AnalyticsDetailPage() {
                 fetchedData = transactions.filter(t => t.status === 'Successful' && (month === 'all' || t.month === month));
                 tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
-                    { header: 'Date', accessor: 'date' },
                     { header: 'Merchant', accessor: 'merchant' },
+                    { header: 'Date', accessor: 'date' },
                     { header: 'Amount', accessor: 'amount', isNumeric: true },
                 ];
                 break;
@@ -144,10 +157,10 @@ export default function AnalyticsDetailPage() {
     );
     
     const handleRowClick = (item: User | Transaction) => {
-        if ('email' in item) { // It's a User
+        if ('email' in item && 'joined' in item) { // It's a User
             setDialogContent({ type: 'user', data: item });
         } else { // It's a Transaction
-            setDialogContent({ type: 'transaction', data: item });
+            setDialogContent({ type: 'transaction', data: item as Transaction });
         }
     };
 
@@ -184,12 +197,12 @@ export default function AnalyticsDetailPage() {
                                 <TableRow key={item.id} onClick={() => handleRowClick(item)} className="cursor-pointer hover:bg-muted/50">
                                     {columns.map(col => (
                                         <TableCell key={col.accessor} className={col.isNumeric ? 'text-right' : ''}>
-                                            {col.accessor === 'name' ? (
+                                            {col.accessor === 'name' || col.accessor === 'merchant' ? (
                                                 <div className="flex items-center gap-2">
-                                                    <Image src={(item as User).avatar} alt={(item as User).name} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
+                                                    <Image src={'avatar' in item ? (item as User).avatar : `https://placehold.co/40x40.png?text=M`} alt={(item as any).name || (item as any).merchant} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
                                                     <div>
-                                                        <p className="font-medium">{(item as User).name}</p>
-                                                        <p className="text-xs text-muted-foreground">{(item as User).email}</p>
+                                                        <p className="font-medium">{(item as any).name || (item as any).merchant}</p>
+                                                        <p className="text-xs text-muted-foreground">{'email' in item ? (item as User).email : (item as Transaction).merchantEmail}</p>
                                                     </div>
                                                 </div>
                                             ) : col.accessor === 'status' ? (
@@ -242,6 +255,9 @@ export default function AnalyticsDetailPage() {
                         <DialogTitle>
                             {dialogContent?.type === 'user' ? 'Merchant Details' : 'Transaction Details'}
                         </DialogTitle>
+                         <DialogDescription>
+                            Full details for this record.
+                        </DialogDescription>
                     </DialogHeader>
                     {dialogContent?.type === 'user' && (
                         <div className="py-4 space-y-4">
@@ -264,11 +280,19 @@ export default function AnalyticsDetailPage() {
                     )}
                      {dialogContent?.type === 'transaction' && (
                         <div className="py-4 space-y-4">
-                             <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Transaction ID:</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{(dialogContent.data as Transaction).id}</span>
                                     <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as Transaction).id, 'Transaction ID')} />
+                                </div>
+                            </div>
+                            <Separator />
+                             <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Merchant:</span>
+                                <div className="text-right">
+                                    <p className="font-semibold">{(dialogContent.data as Transaction).merchant}</p>
+                                    <p className="text-sm text-muted-foreground">{(dialogContent.data as Transaction).merchantEmail}</p>
                                 </div>
                             </div>
                              <Separator />
@@ -277,9 +301,19 @@ export default function AnalyticsDetailPage() {
                                 <span className="font-semibold">${(dialogContent.data as Transaction).amount}</span>
                             </div>
                             <Separator />
+                             <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Method:</span>
+                                <span className="font-semibold">{(dialogContent.data as Transaction).method}</span>
+                            </div>
+                            <Separator />
                             <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Status:</span>
                                 <Badge variant={getStatusBadgeVariant((dialogContent.data as Transaction).status)}>{(dialogContent.data as Transaction).status}</Badge>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Date:</span>
+                                <span className="font-semibold">{(dialogContent.data as Transaction).date}</span>
                             </div>
                         </div>
                     )}

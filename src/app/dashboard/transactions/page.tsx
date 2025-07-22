@@ -304,6 +304,11 @@ export default function AllTransactionsPage() {
                         <span className="text-muted-foreground">Status:</span>
                         <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
                     </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Date:</span>
+                        <span className="font-semibold">{selectedTransaction.date}</span>
+                    </div>
                     </div>
                 )}
                 <DialogFooter>
