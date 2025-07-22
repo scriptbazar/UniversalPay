@@ -113,57 +113,55 @@ export default function TransactionsByMethodPage() {
             </Link>
 
             <Card>
-                <CardHeader>
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                            <CardTitle className="text-2xl">{pageTitle}</CardTitle>
-                            <CardDescription>A list of all transactions for this payment method. Click a row for details.</CardDescription>
+                <CardHeader className="flex flex-row items-center">
+                    <div className="grid gap-2">
+                        <CardTitle className="text-2xl">{pageTitle}</CardTitle>
+                        <CardDescription>A list of all transactions for this payment method. Click a row for details.</CardDescription>
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <div className="relative">
+                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                           <Input
+                             type="search"
+                             placeholder="Search ID, Merchant, Email..."
+                             className="pl-8 w-48"
+                             value={searchTerm}
+                             onChange={(e) => setSearchTerm(e.target.value)}
+                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative">
-                               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                               <Input
-                                 type="search"
-                                 placeholder="Search ID, Merchant, Email..."
-                                 className="pl-8 w-48"
-                                 value={searchTerm}
-                                 onChange={(e) => setSearchTerm(e.target.value)}
-                               />
-                            </div>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
-                                        <span>
-                                            {dateRange?.from ? (
-                                                dateRange.to ? (
-                                                    <>
-                                                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                                                    </>
-                                                ) : (
-                                                    format(dateRange.from, "LLL dd, y")
-                                                )
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
+                                    <span>
+                                        {dateRange?.from ? (
+                                            dateRange.to ? (
+                                                <>
+                                                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                                                </>
                                             ) : (
-                                                "Filter by date"
-                                            )}
-                                        </span>
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="end">
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={dateRange?.from}
-                                        selected={dateRange}
-                                        onSelect={setDateRange}
-                                        numberOfMonths={2}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                            <Button size="sm" variant="outline" className="h-9 gap-1">
-                                <File className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
-                            </Button>
-                        </div>
+                                                format(dateRange.from, "LLL dd, y")
+                                            )
+                                        ) : (
+                                            "Filter by date"
+                                        )}
+                                    </span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={setDateRange}
+                                    numberOfMonths={2}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <Button size="sm" variant="outline" className="h-9 gap-1">
+                            <File className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -284,3 +282,4 @@ export default function TransactionsByMethodPage() {
         </div>
     );
 }
+
