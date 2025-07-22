@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Users, DollarSign, Percent, Copy, User } from "lucide-react";
+import { PlusCircle, Users, DollarSign, Percent, Copy, User, CreditCard } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -85,26 +85,42 @@ type Transaction = {
     id: string;
     merchantId: string;
     merchantName: string;
+    merchantEmail: string;
     amount: number;
     date: string;
+    method: 'UPI' | 'Crypto' | 'Page' | 'Link';
+    status: 'Success' | 'Failed' | 'Pending';
 };
 
 const allSubMerchantTransactions: Transaction[] = [
-    { id: 'UVRLP911202311', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 50.00, date: '2023-11-10' },
-    { id: 'UVRLP911202312', merchantId: 'sub_2', merchantName: 'AnotherShop', amount: 75.00, date: '2023-11-10' },
-    { id: 'UVRLP911202313', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 120.00, date: '2023-11-09' },
-    { id: 'UVRLP911202314', merchantId: 'sub_4', merchantName: 'TechGadgets', amount: 200.00, date: '2023-11-09' },
-    { id: 'UVRLP911202315', merchantId: 'sub_2', merchantName: 'AnotherShop', amount: 30.00, date: '2023-11-08' },
-    { id: 'UVRLP911202316', merchantId: 'sub_5', merchantName: 'FashionHub', amount: 85.50, date: '2023-11-08' },
-    { id: 'UVRLP911202317', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 250.00, date: '2023-11-07' },
-    { id: 'UVRLP911202318', merchantId: 'sub_6', merchantName: 'BookwormDen', amount: 15.00, date: '2023-11-07' },
-    { id: 'UVRLP911202319', merchantId: 'sub_4', merchantName: 'TechGadgets', amount: 450.00, date: '2023-11-06' },
-    { id: 'UVRLP911202320', merchantId: 'sub_5', merchantName: 'FashionHub', amount: 125.00, date: '2023-11-06' },
-    { id: 'UVRLP911202321', merchantId: 'user_1', merchantName: 'MyStore.com', amount: 99.99, date: '2023-11-05' },
-    { id: 'UVRLP911202322', merchantId: 'sub_2', merchantName: 'AnotherShop', amount: 40.00, date: '2023-11-05' },
+    { id: 'UVRLP911202311', merchantId: 'user_1', merchantName: 'MyStore.com', merchantEmail: 'contact@mystore.com', amount: 50.00, date: '2023-11-10', method: 'Page', status: 'Success' },
+    { id: 'UVRLP911202312', merchantId: 'sub_2', merchantName: 'AnotherShop', merchantEmail: 'sales@anothershop.io', amount: 75.00, date: '2023-11-10', method: 'Link', status: 'Success' },
+    { id: 'UVRLP911202313', merchantId: 'user_1', merchantName: 'MyStore.com', merchantEmail: 'contact@mystore.com', amount: 120.00, date: '2023-11-09', method: 'UPI', status: 'Success' },
+    { id: 'UVRLP911202314', merchantId: 'sub_4', merchantName: 'TechGadgets', merchantEmail: 'info@techgadgets.com', amount: 200.00, date: '2023-11-09', method: 'Crypto', status: 'Pending' },
+    { id: 'UVRLP911202315', merchantId: 'sub_2', merchantName: 'AnotherShop', merchantEmail: 'sales@anothershop.io', amount: 30.00, date: '2023-11-08', method: 'Page', status: 'Failed' },
+    { id: 'UVRLP911202316', merchantId: 'sub_5', merchantName: 'FashionHub', merchantEmail: 'contact@fashionhub.com', amount: 85.50, date: '2023-11-08', method: 'UPI', status: 'Success' },
+    { id: 'UVRLP911202317', merchantId: 'user_1', merchantName: 'MyStore.com', merchantEmail: 'contact@mystore.com', amount: 250.00, date: '2023-11-07', method: 'Crypto', status: 'Success' },
+    { id: 'UVRLP911202318', merchantId: 'sub_6', merchantName: 'BookwormDen', merchantEmail: 'orders@bookwormden.com', amount: 15.00, date: '2023-11-07', method: 'Link', status: 'Success' },
+    { id: 'UVRLP911202319', merchantId: 'sub_4', merchantName: 'TechGadgets', merchantEmail: 'info@techgadgets.com', amount: 450.00, date: '2023-11-06', method: 'Page', status: 'Success' },
+    { id: 'UVRLP911202320', merchantId: 'sub_5', merchantName: 'FashionHub', merchantEmail: 'contact@fashionhub.com', amount: 125.00, date: '2023-11-06', method: 'UPI', status: 'Success' },
+    { id: 'UVRLP911202321', merchantId: 'user_1', merchantName: 'MyStore.com', merchantEmail: 'contact@mystore.com', amount: 99.99, date: '2023-11-05', method: 'Link', status: 'Success' },
+    { id: 'UVRLP911202322', merchantId: 'sub_2', merchantName: 'AnotherShop', merchantEmail: 'sales@anothershop.io', amount: 40.00, date: '2023-11-05', method: 'Crypto', status: 'Failed' },
 ];
 
 type DialogType = 'subMerchants' | 'sales' | 'commission' | 'avg_commission' | null;
+
+const getStatusBadgeVariant = (status: Transaction["status"]) => {
+    switch (status) {
+        case 'Success':
+            return 'default';
+        case 'Pending':
+            return 'secondary';
+        case 'Failed':
+            return 'destructive';
+        default:
+            return 'outline';
+    }
+};
 
 export default function ResellerPage() {
   const router = useRouter();
@@ -443,11 +459,29 @@ export default function ResellerPage() {
                         <span className="font-semibold">{selectedTransaction.merchantName}</span>
                     </div>
                     <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Customer Email:</span>
+                         <div className="flex items-center gap-2">
+                            <span className="font-semibold">{selectedTransaction.merchantEmail}</span>
+                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.merchantEmail, 'Customer Email')} />
+                        </div>
+                    </div>
+                     <Separator />
                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Amount:</span>
                         <span className="font-semibold">${selectedTransaction.amount.toFixed(2)}</span>
                     </div>
                      <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Method:</span>
+                        <span className="font-semibold">{selectedTransaction.method}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+                    </div>
+                    <Separator />
                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Date:</span>
                         <span className="font-semibold">{selectedTransaction.date}</span>
