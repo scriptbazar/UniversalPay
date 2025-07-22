@@ -32,7 +32,7 @@ let tickets: Ticket[] = [
     replies: [
       {
         author: 'Admin',
-        message: 'Thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.',
+        message: 'Hi John Doe, thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.',
         createdAt: '2023-11-10T09:00:05Z',
       },
     ],
@@ -107,7 +107,7 @@ export const addTicket = (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'upda
     replies: [
         {
             author: 'Admin',
-            message: 'Thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.',
+            message: `Hi ${newTicketData.merchantName}, thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.`,
             createdAt: autoReplyCreatedAt,
         }
     ],
