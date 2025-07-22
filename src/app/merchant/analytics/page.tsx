@@ -8,6 +8,14 @@ import { ResponsiveContainer, Bar, BarChart, XAxis, YAxis, Tooltip, Legend, PieC
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+type DialogContentData = {
+  title: string;
+  description: string;
+  data: React.ReactNode;
+} | null;
 
 const initialRevenueData = [
   { name: 'Jan', revenue: 4000 },
@@ -35,14 +43,32 @@ const initialTopCustomers = [
 const initialPaymentMethodData = [
     { name: 'UPI', value: 400, color: '#0088FE' },
     { name: 'Crypto', value: 300, color: '#00C49F' },
-    { name: 'Cards', value: 300, color: '#FFBB28' },
-    { name: 'Payment Links', value: 150, color: '#FF8042' },
+    { name: 'Page', value: 300, color: '#FFBB28' },
+    { name: 'Link', value: 150, color: '#FF8042' },
 ];
+
+const mockTransactions = [
+    { id: 'TXN201', method: 'UPI', amount: '15.00', date: '2023-11-10', status: 'Successful' },
+    { id: 'TXN202', method: 'Crypto', amount: '250.00', date: '2023-11-10', status: 'Successful' },
+    { id: 'TXN203', method: 'Page', amount: '75.00', date: '2023-11-09', status: 'Successful' },
+    { id: 'TXN204', method: 'UPI', amount: '20.00', date: '2023-11-09', status: 'Failed' },
+    { id: 'TXN205', method: 'Link', amount: '100.00', date: '2023-11-08', status: 'Successful' },
+    { id: 'TXN206', method: 'Crypto', amount: '85.00', date: '2023-11-08', status: 'Successful' },
+];
+
+const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+        case 'Successful': return 'default';
+        case 'Failed': return 'destructive';
+        default: return 'secondary';
+    }
+};
 
 export default function AnalyticsPage() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
+  const [dialogContent, setDialogContent] = useState<DialogContentData>(null);
 
   useEffect(() => {
     // Set data on client-side to avoid hydration errors
@@ -50,6 +76,37 @@ export default function AnalyticsPage() {
     setTopCustomers(initialTopCustomers);
     setPaymentMethodData(initialPaymentMethodData);
   }, []);
+
+  const handlePieClick = (data: any) => {
+     const methodName = data.name;
+     const transactions = mockTransactions.filter(t => t.method === methodName);
+     setDialogContent({ 
+        title: `${methodName} Transactions`, 
+        description: `List of recent transactions made via ${methodName}.`, 
+        data: (
+             <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {transactions.map(tx => (
+                        <TableRow key={tx.id}>
+                            <TableCell>{tx.id}</TableCell>
+                            <TableCell>${tx.amount}</TableCell>
+                            <TableCell>{tx.date}</TableCell>
+                            <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        )
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -122,7 +179,7 @@ export default function AnalyticsPage() {
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false} 
-                  tickFormatter={(value) => `$${value}`} 
+                  tickFormatter={(value) => `$${value / 1000}K`} 
                 />
                 <Tooltip
                   contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
@@ -137,12 +194,12 @@ export default function AnalyticsPage() {
          <Card>
             <CardHeader>
                 <CardTitle>Payment Methods Breakdown</CardTitle>
-                <CardDescription>Distribution of transactions by type.</CardDescription>
+                <CardDescription>Distribution of transactions by type. Click a slice for details.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
-                        <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} label>
+                        <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} label onClick={handlePieClick} className="cursor-pointer">
                             {paymentMethodData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
@@ -182,7 +239,21 @@ export default function AnalyticsPage() {
           </Table>
         </CardContent>
       </Card>
-
+      
+      <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
+        <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>{dialogContent?.title}</DialogTitle>
+                <DialogDescription>{dialogContent?.description}</DialogDescription>
+            </DialogHeader>
+            <div className="py-4 max-h-[60vh] overflow-y-auto">
+                {dialogContent?.data}
+            </div>
+            <DialogFooter>
+                <Button onClick={() => setDialogContent(null)}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

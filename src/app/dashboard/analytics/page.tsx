@@ -19,6 +19,23 @@ type DialogContentData = {
   data: React.ReactNode;
 } | null;
 
+const mockTransactions = [
+    { id: 'TXN101', method: 'UPI', amount: '150.00', date: '2023-11-10', status: 'Successful' },
+    { id: 'TXN102', method: 'Crypto', amount: '500.00', date: '2023-11-10', status: 'Successful' },
+    { id: 'TXN103', method: 'Page', amount: '75.50', date: '2023-11-09', status: 'Successful' },
+    { id: 'TXN104', method: 'UPI', amount: '200.00', date: '2023-11-09', status: 'Failed' },
+    { id: 'TXN105', method: 'Bank Transfer', amount: '1200.00', date: '2023-11-08', status: 'Successful' },
+    { id: 'TXN106', method: 'Crypto', amount: '850.00', date: '2023-11-08', status: 'Successful' },
+    { id: 'TXN107', method: 'Page', amount: '50.00', date: '2023-11-07', status: 'Successful' },
+];
+
+const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+        case 'Successful': return 'default';
+        case 'Failed': return 'destructive';
+        default: return 'secondary';
+    }
+};
 
 export default function AnalyticsPage() {
   const router = useRouter();
@@ -43,7 +60,7 @@ export default function AnalyticsPage() {
     setPaymentMethodData([
         { name: 'UPI', value: 400, color: '#0088FE' },
         { name: 'Crypto', value: 300, color: '#00C49F' },
-        { name: 'Cards', value: 300, color: '#FFBB28' },
+        { name: 'Page', value: 300, color: '#FFBB28' },
         { name: 'Bank Transfer', value: 200, color: '#FF8042' },
     ]);
 
@@ -103,11 +120,32 @@ export default function AnalyticsPage() {
     };
 
   const handlePieClick = (data: any) => {
+     const methodName = data.name;
+     const transactions = mockTransactions.filter(t => t.method === methodName);
      setDialogContent({ 
-        title: `${data.name} Transactions`, 
-        description: `List of recent transactions made via ${data.name}.`, 
+        title: `${methodName} Transactions`, 
+        description: `List of recent transactions made via ${methodName}.`, 
         data: (
-            <p>List of {data.name} transactions would be displayed here.</p>
+             <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {transactions.map(tx => (
+                        <TableRow key={tx.id}>
+                            <TableCell>{tx.id}</TableCell>
+                            <TableCell>${tx.amount}</TableCell>
+                            <TableCell>{tx.date}</TableCell>
+                            <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         )
     });
   };
@@ -177,9 +215,17 @@ export default function AnalyticsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={revenueData} onClick={handleBarClick}>
                 <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}K`} />
                 <YAxis yAxisId="right" orientation="right" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip />
+                <Tooltip
+                    contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: 'var(--radius)' 
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    cursor={{fill: 'hsl(var(--muted))'}}
+                />
                 <Legend />
                 <Bar yAxisId="left" dataKey="revenue" fill="hsl(var(--primary))" name="Revenue" radius={[4, 4, 0, 0]} className="cursor-pointer" />
                 <Bar yAxisId="right" dataKey="newUsers" fill="hsl(var(--accent))" name="New Users" radius={[4, 4, 0, 0]} className="cursor-pointer" />
