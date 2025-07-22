@@ -145,8 +145,13 @@ export default function AdminWalletLoadsPage() {
                 )}
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between">
             <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
+            {selectedRequest && (
+                <Button asChild>
+                    <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
+                </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
