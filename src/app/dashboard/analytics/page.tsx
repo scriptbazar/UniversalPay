@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Users, CreditCard, CheckCircle, Percent } from "lucide-react";
+import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 type Transaction = {
     id: string;
@@ -19,14 +21,18 @@ type Transaction = {
     amount: string;
     date: string;
     status: 'Successful' | 'Failed';
+    customerEmail: string;
+    merchantId: string;
 };
 
 const mockTransactions: Transaction[] = Array.from({ length: 50 }, (_, i) => ({
     id: `TXN10${i + 1}`,
-    method: ['UPI', 'Crypto', 'Page', 'Bank Transfer'][i % 4],
+    method: ['UPI', 'Crypto', 'Page', 'Link'][i % 4],
     amount: (Math.random() * 500).toFixed(2),
     date: `2023-11-${(i % 10) + 1}`,
-    status: Math.random() > 0.2 ? 'Successful' : 'Failed'
+    status: Math.random() > 0.2 ? 'Successful' : 'Failed',
+    customerEmail: `customer${i + 1}@example.com`,
+    merchantId: `user_${(i % 5) + 1}`,
 }));
 
 const getStatusBadgeVariant = (status: string) => {
@@ -37,7 +43,7 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction[] }) => {
+const PaginatedTransactionTable = ({ transactions, onRowClick }: { transactions: Transaction[], onRowClick: (tx: Transaction) => void }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const totalPages = Math.ceil(transactions.length / itemsPerPage);
@@ -60,7 +66,7 @@ const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction
                 </TableHeader>
                 <TableBody>
                     {paginatedData.map(tx => (
-                        <TableRow key={tx.id}>
+                        <TableRow key={tx.id} onClick={() => onRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                             <TableCell>{tx.id}</TableCell>
                             <TableCell>${tx.amount}</TableCell>
                             <TableCell>{tx.date}</TableCell>
@@ -77,7 +83,7 @@ const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.max(prev - 1, 1)); }}
                         disabled={currentPage === 1}
                     >
                         Previous
@@ -85,7 +91,7 @@ const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.min(prev + 1, totalPages)); }}
                         disabled={currentPage === totalPages}
                     >
                         Next
@@ -98,15 +104,15 @@ const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction
 
 export default function AnalyticsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; } | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-  // State for mock data to avoid hydration errors
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
   
   useEffect(() => {
-    // Generate mock data on the client side
     setRevenueData([
         { month: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380 },
         { month: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320 },
@@ -120,7 +126,7 @@ export default function AnalyticsPage() {
         { name: 'UPI', value: 400, color: '#0088FE' },
         { name: 'Crypto', value: 300, color: '#00C49F' },
         { name: 'Page', value: 300, color: '#FFBB28' },
-        { name: 'Bank Transfer', value: 200, color: '#FF8042' },
+        { name: 'Link', value: 200, color: '#FF8042' },
     ]);
 
     setGeoData([
@@ -132,6 +138,10 @@ export default function AnalyticsPage() {
     ]);
   }, []);
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: `${label} Copied!` });
+  };
   
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
@@ -183,8 +193,8 @@ export default function AnalyticsPage() {
      const transactions = mockTransactions.filter(t => t.method === methodName);
      setDialogContent({ 
         title: `${methodName} Transactions`, 
-        description: `List of recent transactions made via ${methodName}.`, 
-        data: <PaginatedTransactionTable transactions={transactions} />
+        description: `List of recent transactions made via ${methodName}. Click a row for details.`, 
+        data: <PaginatedTransactionTable transactions={transactions} onRowClick={(tx) => setSelectedTransaction(tx)} />
     });
   };
 
@@ -346,6 +356,60 @@ export default function AnalyticsPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Transaction Details</DialogTitle>
+                <DialogDescription>
+                Full details for transaction {selectedTransaction?.id}
+                </DialogDescription>
+            </DialogHeader>
+            {selectedTransaction && (
+                <div className="space-y-4 py-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Transaction ID:</span>
+                        <div className="flex items-center gap-2">
+                                <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                            </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Customer Email:</span>
+                        <div className="flex items-center gap-2">
+                                <span className="font-semibold">{selectedTransaction.customerEmail}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
+                            </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-semibold">${selectedTransaction.amount}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Method:</span>
+                        <span className="font-semibold">{selectedTransaction.method}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+                    </div>
+                </div>
+            )}
+            <DialogFooter className="sm:justify-between gap-2">
+                <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                {selectedTransaction && (
+                    <Button asChild>
+                        <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
+                    </Button>
+                )}
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
