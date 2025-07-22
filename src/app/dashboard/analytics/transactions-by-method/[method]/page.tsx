@@ -153,6 +153,11 @@ export default function TransactionsByMethodPage() {
                                 <span className="text-muted-foreground">Amount:</span>
                                 <span className="font-semibold">${selectedTransaction.amount}</span>
                             </div>
+                             <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Method:</span>
+                                <span className="font-semibold">{selectedTransaction.method}</span>
+                            </div>
                             <Separator />
                             <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Status:</span>
@@ -173,4 +178,3 @@ export default function TransactionsByMethodPage() {
         </div>
     );
 }
-
