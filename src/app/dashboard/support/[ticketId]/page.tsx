@@ -99,7 +99,6 @@ export default function AdminTicketDetailPage() {
     navigator.clipboard.writeText(text);
     toast({
         title: `${label} Copied!`,
-        description: `${text} has been copied to your clipboard.`,
     });
   };
 
