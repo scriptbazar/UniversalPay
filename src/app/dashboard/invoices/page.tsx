@@ -79,21 +79,22 @@ export default function InvoicesPage() {
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const canvasAspectRatio = canvas.width / canvas.height;
             
+            const canvasAspectRatio = canvas.width / canvas.height;
+            const pdfAspectRatio = pdf.internal.pageSize.getWidth() / pdf.internal.pageSize.getHeight();
+
             let finalWidth, finalHeight;
             
-            finalWidth = pdfWidth;
-            finalHeight = pdfWidth / canvasAspectRatio;
-
-            if (finalHeight > pdfHeight) {
-                finalHeight = pdfHeight;
-                finalWidth = pdfHeight * canvasAspectRatio;
+            if (canvasAspectRatio > pdfAspectRatio) {
+                finalWidth = pdfWidth;
+                finalHeight = pdfWidth / canvasAspectRatio;
+            } else {
+                finalHeight = pdf.internal.pageSize.getHeight();
+                finalWidth = finalHeight * canvasAspectRatio;
             }
 
             const x = (pdfWidth - finalWidth) / 2;
-            const y = (pdfHeight - finalHeight) / 2;
+            const y = 0; // Start from top
 
             pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
             pdf.save(`invoice-${selectedInvoice.id}.pdf`);
@@ -184,6 +185,16 @@ export default function InvoicesPage() {
                                     <div className="flex flex-col items-start md:items-end gap-2">
                                         <h1 className="text-4xl font-bold text-right">INVOICE</h1>
                                         <p className="font-mono text-muted-foreground">{selectedInvoice.id}</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            {statusInfo && (
+                                                <Badge variant={statusInfo.variant} className="text-base px-4 py-2 flex items-center w-fit">
+                                                    {statusInfo.icon}
+                                                    {selectedInvoice.status}
+                                                </Badge>
+                                            )}
+                                            <Button variant="outline" size="sm" onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> PDF</Button>
+                                            <Button variant="secondary" size="sm" onClick={() => setSelectedInvoice(null)}>Close</Button>
+                                        </div>
                                     </div>
                                 </div>
                                 <Separator className="my-8" />
@@ -243,25 +254,12 @@ export default function InvoicesPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="mt-8 pt-6 border-t">
-                                    {statusInfo && (
-                                        <Badge variant={statusInfo.variant} className="text-base px-4 py-2 flex items-center w-fit">
-                                            {statusInfo.icon}
-                                            {selectedInvoice.status}
-                                        </Badge>
-                                    )}
-                                </div>
                             </>
                         )}
                     </div>
                 </div>
-                <DialogFooter className="flex justify-end gap-2 p-4 bg-muted border-t sticky bottom-0">
-                    <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
-                    <Button onClick={handleDownloadPdf}><Download className="mr-2 h-4 w-4"/> Download PDF</Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     </div>
   );
-
     
