@@ -159,16 +159,29 @@ export default function FraudDetectionPage() {
           <DialogHeader>
             <DialogTitle>Transaction Details</DialogTitle>
             <DialogDescription>
-                Reviewing transaction 
-                <span className="font-mono mx-1">{selectedTx?.id}</span>
-                <Copy className="h-4 w-4 inline-block text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTx?.id || '', 'Transaction ID')} />
+                Reviewing suspicious transaction.
             </DialogDescription>
           </DialogHeader>
           {selectedTx && (
             <div className="space-y-4 py-4">
+               <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Transaction ID:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-semibold">{selectedTx.id}</span>
+                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTx.id, 'Transaction ID')} />
+                  </div>
+              </div>
+              <Separator />
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /> <span>User:</span> <span className="font-semibold">{selectedTx.user}</span></div>
-                <div className="flex items-center gap-2"><Server className="h-4 w-4 text-muted-foreground" /> <span>IP Address:</span> <span className="font-semibold">{selectedTx.ip}</span></div>
+                <div className="flex items-center gap-2">
+                  <Server className="h-4 w-4 text-muted-foreground" />
+                  <span>IP Address:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{selectedTx.ip}</span>
+                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTx.ip, 'IP Address')} />
+                  </div>
+                </div>
                 <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /> <span>Amount:</span> <span className="font-semibold">${selectedTx.amount}</span></div>
                 <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> <span>Timestamp:</span> <span className="font-semibold">{selectedTx.timestamp}</span></div>
               </div>
