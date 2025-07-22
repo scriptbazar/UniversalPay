@@ -61,6 +61,8 @@ export default function AdminDashboard() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentSignups, setRecentSignups] = useState<Signup[]>([]);
+  const [dialogContent, setDialogContent] = useState<{ title: string; data: React.ReactNode } | null>(null);
+
 
   useEffect(() => {
     // Generate mock data on the client side
@@ -93,12 +95,12 @@ export default function AdminDashboard() {
     ]);
 
     setChartData([
-      { name: 'Jan', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 0 },
-      { name: 'Feb', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 1 },
-      { name: 'Mar', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 2 },
-      { name: 'Apr', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 3 },
-      { name: 'May', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 4 },
-      { name: 'Jun', revenue: Math.floor(Math.random() * 5000) + 1000, newUsers: Math.floor(Math.random() * 30) + 10, monthIndex: 5 },
+      { name: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, monthIndex: 0 },
+      { name: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, monthIndex: 1 },
+      { name: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, monthIndex: 2 },
+      { name: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, monthIndex: 3 },
+      { name: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, monthIndex: 4 },
+      { name: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, monthIndex: 5 },
     ]);
 
   }, []);
@@ -113,8 +115,38 @@ export default function AdminDashboard() {
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const month = payload.name;
-    router.push(`/dashboard/analytics/transactions/${month}`);
+    const month = payload.name.toLowerCase();
+
+    const monthDetails = (
+        <div className="space-y-4">
+            <Button
+                variant="outline"
+                className="w-full justify-between h-auto py-3 text-base"
+                onClick={() => {
+                    router.push(`/dashboard/analytics/details/new-users_${month}`);
+                    setDialogContent(null);
+                }}
+            >
+                <span>Total Users</span>
+                <span className="font-bold">{payload.newUsers}</span>
+            </Button>
+            <Button
+                variant="outline"
+                className="w-full justify-between h-auto py-3 text-base"
+                onClick={() => {
+                    router.push(`/dashboard/analytics/details/total-transactions_${month}`);
+                    setDialogContent(null);
+                }}
+            >
+                <span>Total Transactions</span>
+                <span className="font-bold">{payload.totalTransactions}</span>
+            </Button>
+        </div>
+    );
+    setDialogContent({
+        title: `Summary for ${payload.name}`,
+        data: monthDetails,
+    });
   };
   
   const successfulTransactions = allTransactions.filter(tx => tx.status === 'Success');
@@ -130,8 +162,8 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground">Welcome back, {adminName}. Here's an overview of your Payment gateway.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" asChild>
-          <Link href="/dashboard/analytics">
+        <Card asChild>
+          <Link href="/dashboard/analytics" className="cursor-pointer hover:bg-muted/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Platform Revenue
@@ -146,7 +178,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Link>
         </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/users')}>
+        <Card asChild>
+          <Link href="/dashboard/users" className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Active Merchants
@@ -159,9 +192,10 @@ export default function AdminDashboard() {
               +4 in the last week
             </p>
           </CardContent>
+          </Link>
         </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" asChild>
-          <Link href="/dashboard/transactions">
+        <Card asChild>
+          <Link href="/dashboard/transactions" className="cursor-pointer hover:bg-muted/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -174,7 +208,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Link>
         </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => router.push('/dashboard/fraud-detection')}>
+        <Card asChild>
+          <Link href="/dashboard/fraud-detection" className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Fraud Alerts
@@ -187,6 +222,7 @@ export default function AdminDashboard() {
               Review required
             </p>
           </CardContent>
+          </Link>
         </Card>
       </div>
       <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
@@ -324,7 +360,7 @@ export default function AdminDashboard() {
                   <span className="font-semibold">${selectedTransaction.amount}</span>
               </div>
               <Separator />
-              <div className="flex justify-between items-center">
+               <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Method:</span>
                   <span className="font-semibold">{selectedTransaction.method}</span>
               </div>
@@ -385,6 +421,20 @@ export default function AdminDashboard() {
                 <Link href={`/dashboard/users/${selectedSignup?.id}`}>View Full Profile</Link>
              </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
+        <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>{dialogContent?.title}</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+                {dialogContent?.data}
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogContent(null)}>Close</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

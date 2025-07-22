@@ -3,7 +3,7 @@
 
 import { ArrowLeft, Copy } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,6 +22,7 @@ const generateMockTransactions = () => {
         return {
             id: `UVRLP${123456789 + i}`,
             merchant: `Merchant ${i % 4 + 1}`,
+            merchantId: `user_${(i%4)+1}`,
             customerName: `Customer ${i + 1}`,
             customerEmail: `customer${i + 1}@example.com`,
             amount: (Math.random() * 500 + 10).toFixed(2),
@@ -44,6 +45,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 export default function MonthlyTransactionsPage() {
     const params = useParams();
+    const router = useRouter();
     const { toast } = useToast();
     const month = params.month as string;
 
@@ -133,6 +135,11 @@ export default function MonthlyTransactionsPage() {
                             </div>
                             <Separator />
                             <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Merchant:</span>
+                                <span className="font-semibold">{selectedTransaction.merchant}</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Customer:</span>
                                 <div className="text-right">
                                     <p className="font-semibold">{selectedTransaction.customerName}</p>
@@ -157,8 +164,13 @@ export default function MonthlyTransactionsPage() {
                             </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                    <DialogFooter className="sm:justify-between gap-2">
+                        <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                        {selectedTransaction && (
+                        <Button asChild>
+                            <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
+                        </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
