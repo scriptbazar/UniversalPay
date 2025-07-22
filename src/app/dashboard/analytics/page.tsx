@@ -373,7 +373,7 @@ export default function AnalyticsPage() {
                                 Previous
                             </Button>
                             <Button
-                                variant="secondary"
+                                variant="default"
                                 size="sm"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
@@ -382,7 +382,7 @@ export default function AnalyticsPage() {
                             </Button>
                         </>
                     )}
-                    <Button onClick={() => setDialogContent(null)} variant="default">Close</Button>
+                    <Button onClick={() => setDialogContent(null)} variant="secondary">Close</Button>
                 </div>
             </DialogFooter>
         </DialogContent>
