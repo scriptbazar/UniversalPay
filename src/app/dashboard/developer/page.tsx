@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from "react";
@@ -66,7 +65,7 @@ export default function DeveloperPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Developer Tools</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Platform SDKs &amp; Developer Tools</h1>
         <p className="text-muted-foreground">Manage your API keys, webhooks, and access our SDKs.</p>
       </div>
       <Separator />
@@ -413,7 +412,7 @@ end
 # secret = 'YOUR_WEBHOOK_SECRET'
 # if verify_signature(payload_body, signature, secret)
 #   # Process webhook
-# else
+# else:
 #   # Invalid signature
 # end
                                     `} />
