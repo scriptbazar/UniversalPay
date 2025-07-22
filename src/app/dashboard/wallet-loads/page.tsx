@@ -130,18 +130,19 @@ export default function AdminWalletLoadsPage() {
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedRequest.status)}>{selectedRequest.status}</Badge></div>
             </div>
           )}
-          <DialogFooter className="flex-row justify-end items-center gap-2 w-full">
+          <DialogFooter className="sm:justify-start gap-2">
             {selectedRequest && (
                 <Button asChild variant="secondary">
                     <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
                 </Button>
             )}
+            <div className="flex-grow" />
             {selectedRequest?.status === 'Pending' && (
                 <>
                     <Button variant="destructive" onClick={(e) => handleAction(e, selectedRequest!.id, "Rejected")}>
                         <X className="h-4 w-4 mr-1" /> Reject
                     </Button>
-                    <Button variant="outline" className="text-green-600 border-green-600 hover:bg-green-100" onClick={(e) => handleAction(e, selectedRequest!.id, "Approved")}>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={(e) => handleAction(e, selectedRequest!.id, "Approved")}>
                         <Check className="h-4 w-4 mr-1" /> Approve
                     </Button>
                 </>
