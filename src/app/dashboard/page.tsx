@@ -44,8 +44,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import Image from "next/image";
 
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date };
+type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -53,13 +55,14 @@ export default function AdminDashboard() {
   const adminName = "Admin"; // Placeholder for the admin's name
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedSignup, setSelectedSignup] = useState<Signup | null>(null);
   const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
   const [isAllTransactionsOpen, setIsAllTransactionsOpen] = useState(false);
 
   // State for mock data to avoid hydration errors
   const [chartData, setChartData] = useState<any[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [recentSignups, setRecentSignups] = useState<any[]>([]);
+  const [recentSignups, setRecentSignups] = useState<Signup[]>([]);
 
   useEffect(() => {
     // Generate mock data on the client side
@@ -82,10 +85,10 @@ export default function AdminDashboard() {
     setAllTransactions(allTxns);
     
     setRecentSignups([
-      { id: "user_a", name: "Alice Johnson", email: "alice@example.com", plan: "Pro" },
-      { id: "user_b", name: "Bob Williams", email: "bob@example.com", plan: "Free" },
-      { id: "user_c", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium" },
-      { id: "user_d", name: "Diana Miller", email: "diana@example.com", plan: "Pro" },
+      { id: "user_a", name: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A" },
+      { id: "user_b", name: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B" },
+      { id: "user_c", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C" },
+      { id: "user_d", name: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D" },
     ]);
 
     setChartData([
@@ -98,10 +101,6 @@ export default function AdminDashboard() {
     ]);
 
   }, []);
-
-  const handleRowClick = (userId: string) => {
-    router.push(`/dashboard/users/${userId}`);
-  };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -121,6 +120,10 @@ export default function AdminDashboard() {
   };
   
   const successfulTransactions = allTransactions.filter(tx => tx.status === 'Success');
+  
+  const getStatusBadgeVariant = (status: string) => {
+    return status === 'Active' ? 'default' : 'destructive';
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -265,7 +268,7 @@ export default function AdminDashboard() {
                     </TableHeader>
                     <TableBody>
                         {recentSignups.length > 0 ? recentSignups.map((signup) => (
-                            <TableRow key={signup.email} onClick={() => handleRowClick(signup.id)} className="cursor-pointer hover:bg-muted/50">
+                            <TableRow key={signup.email} onClick={() => setSelectedSignup(signup)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="px-6 py-4">
                                     <div className="font-medium">{signup.name}</div>
                                     <div className="text-sm text-muted-foreground">
@@ -415,6 +418,47 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!selectedSignup} onOpenChange={() => setSelectedSignup(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Merchant Details</DialogTitle>
+            <DialogDescription>
+              Details for merchant {selectedSignup?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSignup && (
+             <div className="space-y-4 py-4">
+               <div className="flex items-center gap-4">
+                  <Image src={selectedSignup.avatar} alt={selectedSignup.name} width={64} height={64} className="rounded-full" data-ai-hint="user avatar" />
+                  <div>
+                    <h3 className="text-lg font-semibold">{selectedSignup.name}</h3>
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground">{selectedSignup.email}</p>
+                        <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedSignup.email, 'Email')} />
+                    </div>
+                  </div>
+               </div>
+               <Separator />
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-1">
+                   <p className="text-sm text-muted-foreground">Plan</p>
+                   <p className="font-semibold">{selectedSignup.plan}</p>
+                 </div>
+                 <div className="space-y-1">
+                   <p className="text-sm text-muted-foreground">Status</p>
+                   <Badge variant={getStatusBadgeVariant(selectedSignup.status)}>{selectedSignup.status}</Badge>
+                 </div>
+               </div>
+             </div>
+          )}
+          <DialogFooter>
+             <Button variant="ghost" asChild>
+                <Link href={`/dashboard/users/${selectedSignup?.id}`}>View Full Profile</Link>
+             </Button>
+            <Button variant="outline" onClick={() => setSelectedSignup(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
