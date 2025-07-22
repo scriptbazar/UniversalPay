@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Shield, DollarSign, User, Server, AlertCircle, Clock, CheckCircle, XCircle, Ban, FileWarning, Copy } from "lucide-react";
+import { MoreHorizontal, Shield, DollarSign, User, Server, AlertCircle, Clock, CheckCircle, XCircle, Ban, FileWarning, Copy, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -205,7 +205,7 @@ export default function FraudDetectionPage() {
                   <Button variant="outline" size="sm" onClick={() => handleAction('Approved Payment', selectedTx.id)}><CheckCircle className="mr-2 h-4 w-4"/> Approve Payment</Button>
                   <Button variant="outline" size="sm" onClick={() => handleAction('Held Payment', selectedTx.id)}><XCircle className="mr-2 h-4 w-4"/> Hold Payment</Button>
                   <Button variant="destructive" size="sm" onClick={() => handleAction('Blocked User', selectedTx.id)}><Ban className="mr-2 h-4 w-4"/> Block User</Button>
-                  <Button variant="secondary" size="sm" onClick={() => handleAction('Requested KYC', selectedTx.id)}>Request KYC</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleAction('Requested KYC', selectedTx.id)}><FileText className="mr-2 h-4 w-4"/> Request KYC</Button>
                 </div>
               </div>
 
