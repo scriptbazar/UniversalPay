@@ -43,9 +43,7 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-const PaginatedTransactionTable = ({ transactions, onRowClick }: { transactions: Transaction[], onRowClick: (tx: Transaction) => void }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+const PaginatedTransactionTable = ({ transactions, onRowClick, onPageChange, currentPage, itemsPerPage }: { transactions: Transaction[], onRowClick: (tx: Transaction) => void, onPageChange: (page: number) => void, currentPage: number, itemsPerPage: number }) => {
     const totalPages = Math.ceil(transactions.length / itemsPerPage);
 
     const paginatedData = transactions.slice(
@@ -75,28 +73,8 @@ const PaginatedTransactionTable = ({ transactions, onRowClick }: { transactions:
                     ))}
                 </TableBody>
             </Table>
-            <div className="flex justify-between items-center w-full pt-4">
-                <div className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.max(prev - 1, 1)); }}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); setCurrentPage(prev => Math.min(prev + 1, totalPages)); }}
-                        disabled={currentPage === totalPages}
-                    >
-                        Next
-                    </Button>
-                </div>
+             <div className="text-xs text-muted-foreground pt-4">
+                Page {currentPage} of {totalPages}
             </div>
         </div>
     );
@@ -105,8 +83,10 @@ const PaginatedTransactionTable = ({ transactions, onRowClick }: { transactions:
 export default function AnalyticsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; } | null>(null);
+  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; transactions: Transaction[], type: 'month' | 'payment-method' } | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
@@ -146,7 +126,7 @@ export default function AnalyticsPage() {
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
          case 'volume':
-             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', data: <p className="text-2xl font-bold">$2,86,300</p> });
+             setDialogContent({ title: 'Total Volume Details', description: 'This is the sum of all successful transactions across the platform.', transactions: [], type: 'month' });
              break;
          case 'payments':
              router.push(`/dashboard/analytics/details/successful-transactions_all`);
@@ -155,7 +135,7 @@ export default function AnalyticsPage() {
             router.push(`/dashboard/analytics/details/new-merchants_all`);
              break;
         case 'avg_transaction':
-            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-2xl font-bold">$125.50</p> });
+            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', transactions: [], type: 'month' });
             break;
      }
   };
@@ -164,43 +144,48 @@ export default function AnalyticsPage() {
         if (!data || !data.activePayload) return;
         const payload = data.activePayload[0].payload;
         const monthSlug = payload.month.toLowerCase();
-
+        
+        // This is a simple data object display, not a list of transactions, so it doesn't need pagination or list logic.
+        // If we wanted to show a list of transactions here, we'd use the same pattern as handlePieClick.
+        const monthDetails = (
+             <div className="space-y-2">
+                <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${payload.revenue.toLocaleString()}</span></div>
+                <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/new-users_${monthSlug}`)}>
+                    <span>New Users:</span> <span className="font-bold">{payload.newUsers}</span>
+                </Button>
+                <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${monthSlug}`)}>
+                    <span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span>
+                </Button>
+                <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${monthSlug}`)}>
+                    <span>Successful Transactions:</span> <span className="font-bold">{payload.successfulTransactions}</span>
+                </Button>
+            </div>
+        )
         setDialogContent({
             title: `Details for ${payload.month}`,
             description: `A snapshot of performance in ${payload.month}. Click a number to see details.`,
-            data: (
-                <div className="space-y-2">
-                    <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${payload.revenue.toLocaleString()}</span></div>
-                    
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/new-users_${monthSlug}`)}>
-                        <span>New Users:</span> <span className="font-bold">{payload.newUsers}</span>
-                    </Button>
-                    
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${monthSlug}`)}>
-                       <span>Total Transactions:</span> <span className="font-bold">{payload.totalTransactions}</span>
-                    </Button>
-
-                    <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${monthSlug}`)}>
-                        <span>Successful Transactions:</span> <span className="font-bold">{payload.successfulTransactions}</span>
-                    </Button>
-                </div>
-            )
+            transactions: [], // Not a list of tx
+            type: 'month'
         });
     };
 
   const handlePieClick = (data: any) => {
      const methodName = data.name;
      const transactions = mockTransactions.filter(t => t.method === methodName);
+     setCurrentPage(1);
      setDialogContent({ 
         title: `${methodName} Transactions`, 
         description: `List of recent transactions made via ${methodName}. Click a row for details.`, 
-        data: <PaginatedTransactionTable transactions={transactions} onRowClick={(tx) => setSelectedTransaction(tx)} />
+        transactions: transactions,
+        type: 'payment-method'
     });
   };
 
   const handleCountryClick = (country: any) => {
      router.push('/dashboard/users');
   };
+
+  const totalPages = dialogContent ? Math.ceil(dialogContent.transactions.length / itemsPerPage) : 0;
 
   return (
     <div className="space-y-6">
@@ -342,17 +327,63 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
       
-      <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
+       <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
         <DialogContent className="max-w-xl">
             <DialogHeader>
                 <DialogTitle>{dialogContent?.title}</DialogTitle>
                 <DialogDescription>{dialogContent?.description}</DialogDescription>
             </DialogHeader>
             <div className="py-4 max-h-[60vh] overflow-y-auto">
-                {dialogContent?.data}
+                 {dialogContent?.type === 'payment-method' && dialogContent.transactions.length > 0 ? (
+                    <PaginatedTransactionTable 
+                        transactions={dialogContent.transactions} 
+                        onRowClick={(tx) => setSelectedTransaction(tx)}
+                        currentPage={currentPage}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                    />
+                ) : dialogContent?.type === 'month' ? (
+                   <div className="space-y-2">
+                        <div className="flex justify-between"><span>Revenue:</span> <span className="font-bold">${revenueData.find(d => d.month === dialogContent.title.split(' ')[2])?.revenue.toLocaleString()}</span></div>
+                        <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/new-users_${dialogContent.title.split(' ')[2].toLowerCase()}`)}>
+                            <span>New Users:</span> <span className="font-bold">{revenueData.find(d => d.month === dialogContent.title.split(' ')[2])?.newUsers}</span>
+                        </Button>
+                        <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${dialogContent.title.split(' ')[2].toLowerCase()}`)}>
+                        <span>Total Transactions:</span> <span className="font-bold">{revenueData.find(d => d.month === dialogContent.title.split(' ')[2])?.totalTransactions}</span>
+                        </Button>
+                        <Button variant="link" className="p-0 h-auto justify-between w-full" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${dialogContent.title.split(' ')[2].toLowerCase()}`)}>
+                            <span>Successful Transactions:</span> <span className="font-bold">{revenueData.find(d => d.month === dialogContent.title.split(' ')[2])?.successfulTransactions}</span>
+                        </Button>
+                    </div>
+                ) : (
+                    <p className="text-center text-muted-foreground p-4">No data to display.</p>
+                )}
             </div>
-            <DialogFooter>
-                <Button onClick={() => setDialogContent(null)}>Close</Button>
+             <DialogFooter className="sm:justify-between">
+                <div></div>
+                <div className="flex items-center gap-2">
+                    {dialogContent?.type === 'payment-method' && dialogContent.transactions.length > itemsPerPage && (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </>
+                    )}
+                    <Button onClick={() => setDialogContent(null)} variant="outline">Close</Button>
+                </div>
             </DialogFooter>
         </DialogContent>
       </Dialog>
