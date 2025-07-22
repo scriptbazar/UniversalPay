@@ -2,7 +2,7 @@
 'use client';
 
 import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -85,12 +85,17 @@ export default function AnalyticsPage() {
   const { toast } = useToast();
   const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; type: 'month' | 'payment-method' } | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
+
+  // State for Geo Data pagination
+  const [geoCurrentPage, setGeoCurrentPage] = useState(1);
+  const geoItemsPerPage = 5;
   
   useEffect(() => {
     setRevenueData([
@@ -115,8 +120,20 @@ export default function AnalyticsPage() {
         { country: 'United Kingdom', flag: 'gb', volume: 45300, transactions: 512, merchants: 15 },
         { country: 'Germany', flag: 'de', volume: 32100, transactions: 450, merchants: 18 },
         { country: 'Australia', flag: 'au', volume: 28000, transactions: 300, merchants: 8 },
+        { country: 'Canada', flag: 'ca', volume: 25400, transactions: 280, merchants: 12 },
+        { country: 'Japan', flag: 'jp', volume: 21800, transactions: 250, merchants: 10 },
+        { country: 'Brazil', flag: 'br', volume: 18600, transactions: 210, merchants: 7 },
+        { country: 'Singapore', flag: 'sg', volume: 15300, transactions: 180, merchants: 9 },
+        { country: 'United Arab Emirates', flag: 'ae', volume: 13200, transactions: 150, merchants: 11 },
     ]);
   }, []);
+
+    const geoTotalPages = Math.ceil(geoData.length / geoItemsPerPage);
+    const paginatedGeoData = geoData.slice(
+      (geoCurrentPage - 1) * geoItemsPerPage,
+      geoCurrentPage * geoItemsPerPage
+    );
+
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -313,7 +330,7 @@ export default function AnalyticsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {geoData.length > 0 ? geoData.map(geo => (
+                    {paginatedGeoData.length > 0 ? paginatedGeoData.map(geo => (
                         <TableRow key={geo.country}>
                             <TableCell className="font-medium flex items-center gap-2">
                                 <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} />
@@ -334,6 +351,31 @@ export default function AnalyticsPage() {
                 </TableBody>
             </Table>
         </CardContent>
+        <CardFooter>
+            <div className="flex justify-between items-center w-full">
+                <div className="text-xs text-muted-foreground">
+                    Page {geoCurrentPage} of {geoTotalPages}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setGeoCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={geoCurrentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setGeoCurrentPage(prev => Math.min(prev + 1, geoTotalPages))}
+                        disabled={geoCurrentPage === geoTotalPages}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        </CardFooter>
       </Card>
       
        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
