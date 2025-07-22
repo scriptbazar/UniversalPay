@@ -282,7 +282,13 @@ export default function AnalyticsPage() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                    contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: 'none',
+                        borderRadius: 'var(--radius)' 
+                    }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
