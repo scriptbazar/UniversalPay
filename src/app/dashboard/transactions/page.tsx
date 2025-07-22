@@ -150,7 +150,7 @@ export default function AllTransactionsPage() {
                            <Input
                              type="search"
                              placeholder="Search ID, Merchant, Email..."
-                             className="pl-8 w-60"
+                             className="pl-8 w-48"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
