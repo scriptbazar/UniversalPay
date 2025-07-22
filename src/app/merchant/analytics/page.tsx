@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Users, CreditCard, BarChart as LucideBarChart, CheckCircle, Percent } from "lucide-react";
+import { DollarSign, Users, CreditCard, Percent, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, Bar, BarChart, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 type Transaction = {
     id: string;
@@ -42,7 +43,13 @@ const initialRevenueData = [
   { name: 'Dec', revenue: 8000 },
 ];
 
-const initialTopCustomers = [
+type TopCustomer = {
+    email: string;
+    name: string;
+    totalSpent: number;
+};
+
+const initialTopCustomers: TopCustomer[] = [
     { email: 'liam@example.com', name: 'Liam Johnson', totalSpent: 250.00 },
     { email: 'olivia@example.com', name: 'Olivia Smith', totalSpent: 150.00 },
     { email: 'noah@example.com', name: 'Noah Williams', totalSpent: 350.00 },
@@ -125,10 +132,12 @@ const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction
 };
 
 export default function AnalyticsPage() {
+  const { toast } = useToast();
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
   const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; } | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<TopCustomer | null>(null);
 
   useEffect(() => {
     // Set data on client-side to avoid hydration errors
@@ -144,6 +153,17 @@ export default function AnalyticsPage() {
         title: `${methodName} Transactions`, 
         description: `List of recent transactions made via ${methodName}.`, 
         data: <PaginatedTransactionTable transactions={transactions} />
+    });
+  };
+  
+  const handleCustomerClick = (customer: TopCustomer) => {
+    setSelectedCustomer(customer);
+  };
+  
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: `${label} Copied!`,
     });
   };
 
@@ -254,7 +274,7 @@ export default function AnalyticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Top Customers</CardTitle>
-          <CardDescription>Your most valuable customers by total amount spent.</CardDescription>
+          <CardDescription>Your most valuable customers by total amount spent. Click a row for details.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -266,7 +286,7 @@ export default function AnalyticsPage() {
               </TableHeader>
               <TableBody>
                   {topCustomers.map(customer => (
-                      <TableRow key={customer.email}>
+                      <TableRow key={customer.email} onClick={() => handleCustomerClick(customer)} className="cursor-pointer hover:bg-muted/50">
                           <TableCell>
                               <div className="font-medium">{customer.name}</div>
                               <div className="text-sm text-muted-foreground">{customer.email}</div>
@@ -293,6 +313,40 @@ export default function AnalyticsPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Customer Details</DialogTitle>
+                {selectedCustomer && <DialogDescription>Details for {selectedCustomer.name}</DialogDescription>}
+            </DialogHeader>
+            {selectedCustomer && (
+                <div className="space-y-4 py-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Customer Name:</span>
+                        <span className="font-semibold">{selectedCustomer.name}</span>
+                    </div>
+                     <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Email:</span>
+                         <div className="flex items-center gap-2">
+                           <span className="font-semibold">{selectedCustomer.email}</span>
+                           <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedCustomer.email, 'Email')} />
+                         </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Total Spent:</span>
+                        <span className="font-semibold">${selectedCustomer.totalSpent.toFixed(2)}</span>
+                    </div>
+                </div>
+            )}
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedCustomer(null)}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
