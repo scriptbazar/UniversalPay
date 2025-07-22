@@ -67,7 +67,7 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
 export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
   const { toast } = useToast();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; transactions: Transaction[] } | null>(null);
+  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode } | null>(null);
 
   const averagePayment = linkDetails.payments > 0 ? (parseFloat(linkDetails.volume) / linkDetails.payments).toFixed(2) : "0.00";
 
@@ -78,19 +78,57 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
     });
   };
 
-  const handleCardClick = (type: 'successful' | 'fraud') => {
-    if (type === 'successful') {
-        setDialogContent({
-            title: "Successful Payments",
-            description: "A list of all successful payments made via this link.",
-            transactions: successfulTransactions
-        });
-    } else {
-        setDialogContent({
-            title: "Fraud Alerts",
-            description: "A list of all payments flagged for suspicious activity.",
-            transactions: fraudulentTransactions
-        });
+  const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
+    switch (type) {
+        case 'successful':
+        case 'volume':
+            setDialogContent({
+                title: "Successful Payments",
+                description: "A list of all successful payments made via this link.",
+                data: (
+                     <Table>
+                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {successfulTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
+                                <TableCell>{tx.id}</TableCell>
+                                <TableCell>{tx.customer}</TableCell>
+                                <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>)}
+                        </TableBody>
+                    </Table>
+                )
+            });
+            break;
+        case 'avg':
+             setDialogContent({
+                title: "Average Payment Value",
+                description: "This is the average value of all successful payments.",
+                 data: (
+                    <div className="space-y-2 text-center p-4">
+                        <p className="text-4xl font-bold">${averagePayment}</p>
+                        <p className="text-sm text-muted-foreground">Calculated from {successfulTransactions.length} successful payments totalling ${parseFloat(linkDetails.volume).toFixed(2)}.</p>
+                    </div>
+                 )
+            });
+            break;
+        case 'fraud':
+            setDialogContent({
+                title: "Fraud Alerts",
+                description: "A list of all payments flagged for suspicious activity.",
+                data: (
+                     <Table>
+                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {fraudulentTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
+                                <TableCell>{tx.id}</TableCell>
+                                <TableCell>{tx.customer}</TableCell>
+                                <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>)}
+                        </TableBody>
+                    </Table>
+                )
+            });
+            break;
     }
   };
 
@@ -137,7 +175,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
         </Card>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card onClick={() => handleCardClick('volume')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -155,7 +193,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <div className="text-2xl font-bold">{linkDetails.payments}</div>
                 </CardContent>
             </Card>
-             <Card>
+             <Card onClick={() => handleCardClick('avg')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Avg. Payment Value</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -244,35 +282,18 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
-        {/* Dialog for lists of transactions (Successful / Fraud) */}
+        
+        {/* Dialog for Stat Cards */}
         <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-xl">
                 <DialogHeader>
                     <DialogTitle>{dialogContent?.title}</DialogTitle>
                     <DialogDescription>{dialogContent?.description}</DialogDescription>
                 </DialogHeader>
-                <div className="max-h-[60vh] overflow-y-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Transaction ID</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {dialogContent?.transactions.map(p => (
-                                <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
-                                    <TableCell className="font-medium">{p.id}</TableCell>
-                                    <TableCell>{p.customer}</TableCell>
-                                    <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                <div className="py-4 max-h-[60vh] overflow-y-auto">
+                    {dialogContent?.data}
                 </div>
-                <DialogFooter>
+                 <DialogFooter>
                     <Button onClick={() => setDialogContent(null)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
