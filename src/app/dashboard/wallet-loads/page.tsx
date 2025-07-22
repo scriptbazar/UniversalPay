@@ -128,30 +128,25 @@ export default function AdminWalletLoadsPage() {
                     </div>
                 </div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedRequest.status)}>{selectedRequest.status}</Badge></div>
-                {selectedRequest.status === 'Pending' && (
-                    <>
-                    <Separator className="my-4"/>
-                    <div className="flex gap-2 justify-end">
-                        <Button variant="outline" className="text-green-600 border-green-600 hover:bg-green-100" onClick={(e) => handleAction(e, selectedRequest!.id, "Approved")}>
-                            <Check className="h-4 w-4 mr-1" /> Approve
-                        </Button>
-                        <Button variant="destructive" onClick={(e) => handleAction(e, selectedRequest!.id, "Rejected")}>
-                            <X className="h-4 w-4 mr-1" /> Reject
-                        </Button>
-                    </div>
-                    </>
-                )}
             </div>
           )}
-          <DialogFooter>
-             <div className="flex w-full justify-between items-center">
-                <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
-                {selectedRequest && (
-                    <Button asChild>
-                        <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
+          <DialogFooter className="flex-row justify-end items-center gap-2 w-full">
+            {selectedRequest && (
+                <Button asChild variant="secondary">
+                    <Link href={`/dashboard/users/${selectedRequest.merchantId}`}>View Profile</Link>
+                </Button>
+            )}
+            {selectedRequest?.status === 'Pending' && (
+                <>
+                    <Button variant="destructive" onClick={(e) => handleAction(e, selectedRequest!.id, "Rejected")}>
+                        <X className="h-4 w-4 mr-1" /> Reject
                     </Button>
-                )}
-            </div>
+                    <Button variant="outline" className="text-green-600 border-green-600 hover:bg-green-100" onClick={(e) => handleAction(e, selectedRequest!.id, "Approved")}>
+                        <Check className="h-4 w-4 mr-1" /> Approve
+                    </Button>
+                </>
+            )}
+            <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
