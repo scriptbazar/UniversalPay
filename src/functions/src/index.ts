@@ -14,7 +14,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall impo
 admin.initializeApp();
 
 // This function now only assigns a default 'merchant' role upon creation.
-// This simplifies the logic and removes potential points of failure.
+// It also creates an audit log for the new user.
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   const role = "merchant"; // Default role for all new users
 
@@ -22,6 +22,15 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
     await admin.auth().setCustomUserClaims(user.uid, {
       role: role,
     });
+    
+    // Create an audit log for new user creation
+    await admin.firestore().collection('audit_logs').add({
+        type: 'USER_CREATED',
+        message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: 'merchant'.`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        level: 'INFO',
+    });
+
     console.log(`Custom claim '${role}' set for user: ${user.uid}`);
   } catch (error) {
     console.error(`Error setting custom claim for user: ${user.uid}`, error);
@@ -45,6 +54,7 @@ exports.setAdminRole = onCall(async (request) => {
         type: 'SECURITY_ALERT',
         message: `Non-admin user ${callingUserEmail} (${callingUserUid}) attempted to set an admin role.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        level: 'SECURITY_ALERT',
     });
     throw new HttpsError(
       'permission-denied',

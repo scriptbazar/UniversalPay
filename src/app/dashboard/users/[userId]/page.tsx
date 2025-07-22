@@ -24,8 +24,9 @@ import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { updateUserRole } from "./actions";
+import { onAuthStateChanged } from "firebase/auth";
 
 // MOCK DATA - This will be replaced by dynamic data where needed
 const stats = {
@@ -175,9 +176,9 @@ export default function UserDetailPage() {
   };
   
   const handleRoleChange = async () => {
-      if (!merchant) return;
+      if (!merchant || !auth.currentUser) return;
       const newRole = merchant.role === 'admin' ? 'merchant' : 'admin';
-      const result = await updateUserRole(merchant.id, newRole);
+      const result = await updateUserRole(merchant.id, newRole, auth.currentUser.uid);
       if(result.success) {
           toast({
               title: 'Role Updated!',
