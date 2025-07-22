@@ -17,6 +17,7 @@ import Image from "next/image";
 type Transaction = { 
     id: string; 
     merchant: string; 
+    merchantId: string;
     merchantEmail: string; // Added for details
     amount: string; 
     date: string; 
@@ -49,10 +50,12 @@ const generateMockData = () => {
          const monthIndex = i % 6;
          const month = months[monthIndex];
          const success = Math.random() > 0.2;
+         const merchantIndex = i % 10 + 1;
          transactions.push({
             id: `txn_${i + 1}`,
-            merchant: `Merchant ${i % 10 + 1}`,
-            merchantEmail: `merchant${i % 10 + 1}@example.com`,
+            merchant: `Merchant ${merchantIndex}`,
+            merchantId: `user_${merchantIndex}`,
+            merchantEmail: `merchant${merchantIndex}@example.com`,
             amount: (Math.random() * 200 + 10).toFixed(2),
             date: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
             month: month,
@@ -317,8 +320,13 @@ export default function AnalyticsDetailPage() {
                             </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDialogContent(null)}>Close</Button>
+                    <DialogFooter className="sm:justify-between gap-2">
+                         <Button variant="ghost" onClick={() => setDialogContent(null)}>Close</Button>
+                         {dialogContent?.type === 'transaction' && (
+                            <Button asChild>
+                                <Link href={`/dashboard/users/${(dialogContent.data as Transaction).merchantId}`}>View Merchant Profile</Link>
+                            </Button>
+                         )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

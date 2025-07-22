@@ -203,8 +203,11 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge></div>
                     </div>
                 )}
-                 <DialogFooter>
-                    <Button onClick={() => setSelectedTransaction(null)}>Close</Button>
+                 <DialogFooter className="sm:justify-between gap-2">
+                    <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                    <Button asChild>
+                        <Link href={`/dashboard/users/user_1`}>View Merchant Profile</Link>
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

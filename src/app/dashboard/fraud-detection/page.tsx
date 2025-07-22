@@ -17,6 +17,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 type Transaction = {
     id: string;
@@ -197,8 +198,13 @@ export default function FraudDetectionPage() {
 
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between gap-2">
             <Button variant="ghost" onClick={() => setSelectedTx(null)}>Close</Button>
+            {selectedTx && (
+                <Button asChild>
+                    <Link href={`/dashboard/users/${selectedTx.user}`}>View Merchant Profile</Link>
+                </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
