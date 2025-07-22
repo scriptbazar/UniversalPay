@@ -392,33 +392,37 @@ export default function SettingsPage() {
                  <div>
                     <h5 className="font-semibold mb-4 flex items-center gap-2"><KeyRound className="w-5 h-5"/> Admin Crypto Settlement Wallets</h5>
                      <p className="text-sm text-muted-foreground mb-4">Enter the wallet addresses where you want to receive funds from all payments.</p>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                                <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
-                                <p className="text-sm text-muted-foreground pl-6">Low-fee stablecoin settlement.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                             <div className="flex items-center justify-between rounded-lg border p-3 h-full">
+                                <div>
+                                    <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
+                                    <p className="text-sm text-muted-foreground pl-6">Low-fee stablecoin settlement.</p>
+                                </div>
+                                <Switch id="usdt-switch" checked={gateways.crypto_usdt} onCheckedChange={() => handleGatewayToggle('crypto_usdt')} />
                             </div>
-                            <Switch id="usdt-switch" checked={gateways.crypto_usdt} onCheckedChange={() => handleGatewayToggle('crypto_usdt')} />
+                            {gateways.crypto_usdt && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
+                                    <Input id="usdt-wallet" placeholder="T..."/>
+                                </div>
+                            )}
                         </div>
-                        {gateways.crypto_usdt && (
-                            <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
-                                <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
-                                <Input id="usdt-wallet" placeholder="T..."/>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between rounded-lg border p-3 h-full">
+                                <div>
+                                    <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
+                                    <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
+                                </div>
+                                <Switch id="btc-switch" checked={gateways.crypto_btc} onCheckedChange={() => handleGatewayToggle('crypto_btc')} />
                             </div>
-                        )}
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                                <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
-                                <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
-                            </div>
-                            <Switch id="btc-switch" checked={gateways.crypto_btc} onCheckedChange={() => handleGatewayToggle('crypto_btc')} />
+                            {gateways.crypto_btc && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
+                                    <Input id="btc-wallet" placeholder="bc1..."/>
+                                </div>
+                            )}
                         </div>
-                        {gateways.crypto_btc && (
-                            <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
-                                <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
-                                <Input id="btc-wallet" placeholder="bc1..."/>
-                            </div>
-                        )}
                     </div>
                 </div>
 
