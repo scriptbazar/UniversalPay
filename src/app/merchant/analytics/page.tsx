@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Users, CreditCard, Percent, Copy } from "lucide-react";
+import { DollarSign, Users, CreditCard, Percent, Copy, ExternalLink, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, Bar, BarChart, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -199,16 +199,40 @@ export default function AnalyticsPage() {
       case 'success':
         const successfulTxns = mockTransactions.filter(t => t.status === 'Successful').length;
         const totalTxns = mockTransactions.length;
+        
+        const openTxnList = (status: 'Successful' | 'Failed' | 'all') => {
+            let txnsToShow = mockTransactions;
+            let title = 'All Attempted Transactions';
+            if (status === 'Successful') {
+                txnsToShow = mockTransactions.filter(t => t.status === 'Successful');
+                title = 'Successful Transactions';
+            } else if (status === 'Failed') {
+                txnsToShow = mockTransactions.filter(t => t.status === 'Failed');
+                title = 'Failed Transactions';
+            }
+            setDialogContent({
+                title: title,
+                description: `A list of ${title.toLowerCase()}.`,
+                data: <PaginatedTransactionTable transactions={txnsToShow} />
+            });
+        };
+
         setDialogContent({
           title: "Success Rate Details",
-          description: "Breakdown of your transaction success rate.",
+          description: "Breakdown of your transaction success rate. Click a row for details.",
           data: (
             <div className="space-y-2">
-              <div className="flex justify-between"><span>Total Transactions:</span> <span className="font-bold">{totalTxns}</span></div>
-              <div className="flex justify-between"><span>Successful Transactions:</span> <span className="font-bold">{successfulTxns}</span></div>
-              <div className="flex justify-between"><span>Failed Transactions:</span> <span className="font-bold">{totalTxns - successfulTxns}</span></div>
+              <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('all')}>
+                  <span>Total Transactions:</span> <span className="font-bold">{totalTxns}</span>
+              </Button>
+              <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('Successful')}>
+                  <span>Successful Transactions:</span> <span className="font-bold">{successfulTxns}</span>
+              </Button>
+               <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('Failed')}>
+                  <span>Failed Transactions:</span> <span className="font-bold">{totalTxns - successfulTxns}</span>
+              </Button>
               <Separator className="my-2"/>
-              <div className="flex justify-between text-lg"><span>Success Rate:</span> <span className="font-bold">98.2%</span></div>
+              <div className="flex justify-between text-lg p-2"><span>Success Rate:</span> <span className="font-bold">98.2%</span></div>
             </div>
           )
         });
