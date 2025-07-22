@@ -95,12 +95,12 @@ export default function AdminDashboard() {
     ]);
 
     setChartData([
-      { name: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, monthIndex: 0 },
-      { name: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, monthIndex: 1 },
-      { name: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, monthIndex: 2 },
-      { name: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, monthIndex: 3 },
-      { name: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, monthIndex: 4 },
-      { name: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, monthIndex: 5 },
+      { name: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380, monthIndex: 0 },
+      { name: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320, monthIndex: 1 },
+      { name: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, successfulTransactions: 480, monthIndex: 2 },
+      { name: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, successfulTransactions: 450, monthIndex: 3 },
+      { name: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, successfulTransactions: 530, monthIndex: 4 },
+      { name: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, successfulTransactions: 510, monthIndex: 5 },
     ]);
 
   }, []);
@@ -115,36 +115,37 @@ export default function AdminDashboard() {
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const month = payload.name.toLowerCase();
+    const monthSlug = payload.name.toLowerCase();
 
     const monthDetails = (
-        <div className="space-y-4">
-            <Button
-                variant="outline"
-                className="w-full justify-between h-auto py-3 text-base"
-                onClick={() => {
-                    router.push(`/dashboard/analytics/details/new-users_${month}`);
-                    setDialogContent(null);
-                }}
-            >
-                <span>Total Users</span>
-                <span className="font-bold">{payload.newUsers}</span>
-            </Button>
-            <Button
-                variant="outline"
-                className="w-full justify-between h-auto py-3 text-base"
-                onClick={() => {
-                    router.push(`/dashboard/analytics/details/total-transactions_${month}`);
-                    setDialogContent(null);
-                }}
-            >
-                <span>Total Transactions</span>
-                <span className="font-bold">{payload.totalTransactions}</span>
-            </Button>
+        <div className="space-y-3 text-base">
+            <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Revenue:</span>
+                <span className="font-bold">${payload.revenue.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+                <Button variant="link" className="p-0 h-auto text-base" onClick={() => router.push(`/dashboard/analytics/details/new-users_${monthSlug}`)}>
+                    New Users:
+                </Button>
+                <span className="font-bold text-primary">{payload.newUsers}</span>
+            </div>
+             <div className="flex justify-between items-center">
+                 <Button variant="link" className="p-0 h-auto text-base" onClick={() => router.push(`/dashboard/analytics/details/total-transactions_${monthSlug}`)}>
+                    Total Transactions:
+                </Button>
+                <span className="font-bold text-primary">{payload.totalTransactions}</span>
+            </div>
+             <div className="flex justify-between items-center">
+                <Button variant="link" className="p-0 h-auto text-base" onClick={() => router.push(`/dashboard/analytics/details/successful-transactions_${monthSlug}`)}>
+                    Successful Transactions:
+                </Button>
+                <span className="font-bold text-primary">{payload.successfulTransactions}</span>
+            </div>
         </div>
     );
+
     setDialogContent({
-        title: `Summary for ${payload.name}`,
+        title: `Details for ${payload.name}`,
         data: monthDetails,
     });
   };
@@ -428,6 +429,7 @@ export default function AdminDashboard() {
         <DialogContent className="max-w-md">
             <DialogHeader>
                 <DialogTitle>{dialogContent?.title}</DialogTitle>
+                <DialogDescription>A snapshot of performance. Click a link to see details.</DialogDescription>
             </DialogHeader>
             <div className="py-4">
                 {dialogContent?.data}
