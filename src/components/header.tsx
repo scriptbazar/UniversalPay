@@ -1,7 +1,14 @@
+
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "./theme-toggle";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import * as React from 'react';
+import { Separator } from "./ui/separator";
 
 export function Header() {
   return (
@@ -19,14 +26,63 @@ export function Header() {
             Developers
           </Link>
         </nav>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="ghost" asChild>
-            <Link href="/login">Log In</Link>
-          </Button>
-          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link href="/signup">Sign Up</Link>
-          </Button>
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Log In</Link>
+            </Button>
+            <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="md:hidden"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <nav className="grid gap-6 text-lg font-medium p-6">
+                <Link href="#" className="flex items-center gap-2 text-lg font-semibold">
+                  <Logo />
+                </Link>
+                 <SheetClose asChild>
+                    <Link href="/#features" className="hover:text-foreground">
+                        Features
+                    </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                    <Link href="/#pricing" className="text-muted-foreground hover:text-foreground">
+                        Pricing
+                    </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                    <Link href="/dashboard/developer" className="text-muted-foreground hover:text-foreground">
+                        Developers
+                    </Link>
+                </SheetClose>
+                <Separator />
+                <div className="flex flex-col gap-4">
+                    <SheetClose asChild>
+                        <Button variant="ghost" asChild>
+                            <Link href="/login">Log In</Link>
+                        </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                        <Button asChild>
+                            <Link href="/signup">Sign Up</Link>
+                        </Button>
+                    </SheetClose>
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
