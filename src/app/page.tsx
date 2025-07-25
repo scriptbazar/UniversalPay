@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -7,6 +6,7 @@ import { Footer } from "@/components/footer";
 import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import RealWorldMap from "@/components/RealWorldMap";
 
 const features = [
   {
@@ -161,72 +161,6 @@ const tiers = [
   },
 ];
 
-const WorldMap = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    viewBox="0 0 1200 600"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <defs>
-      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-        <feMerge>
-          <feMergeNode in="coloredBlur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-      <style>
-        {`
-          @keyframes dash {
-            to {
-              stroke-dashoffset: 1000;
-            }
-          }
-          .map-path {
-            fill: hsl(var(--card));
-            stroke: hsl(var(--border));
-            stroke-width: 1;
-          }
-          .dark .map-path {
-             fill: hsl(var(--muted) / 0.5);
-          }
-          .map-point {
-            fill: hsl(var(--primary));
-            filter: url(#glow);
-          }
-          .map-line {
-            stroke: hsl(var(--primary) / 0.8);
-            stroke-width: 2;
-            stroke-dasharray: 8;
-            animation: dash 50s linear infinite;
-          }
-        `}
-      </style>
-    </defs>
-    {/* Replace with actual map path data for a more detailed map */}
-    <path className="map-path" d="M599.999 0.23L1199.77 299.885L599.999 599.77L0.229 299.885L599.999 0.23Z" fill="hsl(var(--muted)/0.3)" />
-    <path className="map-path" d="M495,195 L250,120 M720,130 L900,200 M200,300 L450,450 M800,400 L950,500 M300,200 C 400,100 700,100 800,200 M250,400 C 400,500 700,500 850,400 M150,250 C 50,350 50,450 150,550 M1050,250 C 1150,350 1150,450 1050,550" stroke="none" />
-    <circle cx="250" cy="120" r="5" className="map-point" />
-    <circle cx="495" cy="195" r="5" className="map-point" />
-    <circle cx="720" cy="130" r="5" className="map-point" />
-    <circle cx="900" cy="200" r="5" className="map-point" />
-    <circle cx="200" cy="300" r="5" className="map-point" />
-    <circle cx="450" cy="450" r="5" className="map-point" />
-    <circle cx="800" cy="400" r="5" className="map-point" />
-    <circle cx="950" cy="500" r="5" className="map-point" />
-    <circle cx="800" cy="200" r="5" className="map-point" />
-    <circle cx="300" cy="200" r="5" className="map-point" />
-    <circle cx="850" cy="400" r="5" className="map-point" />
-    <circle cx="250" cy="400" r="5" className="map-point" />
-    <path className="map-line" d="M250,120 Q 372.5,157.5 495,195" fill="none" />
-    <path className="map-line" d="M720,130 Q 810,165 900,200" fill="none" />
-    <path className="map-line" d="M200,300 Q 325,375 450,450" fill="none" />
-    <path className="map-line" d="M800,400 Q 875,450 950,500" fill="none" />
-    <path className="map-line" d="M300,200 C 400,100 700,100 800,200" fill="none" />
-    <path className="map-line" d="M250,400 C 400,500 700,500 850,400" fill="none" />
-  </svg>
-);
-
 
 export default function Home() {
   const halfLength = Math.ceil(faqItems.length / 2);
@@ -257,7 +191,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {features.map((feature, index) => (
-                <Card key={index} variant="interactive" className="bg-card border group">
+                <Card key={index} className="bg-card border group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="flex flex-col items-center text-center">
                     <div className="p-3 bg-primary/10 rounded-full mb-4 transition-transform duration-300 group-hover:scale-110">
                       <div className="transition-transform duration-300 group-hover:animate-bounce-subtle">
@@ -281,8 +215,8 @@ export default function Home() {
                  <p className="text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
                     From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale.
                  </p>
-                 <div className="rounded-lg shadow-2xl mx-auto overflow-hidden">
-                    <WorldMap className="w-full h-auto" />
+                 <div className="rounded-lg shadow-2xl mx-auto overflow-hidden bg-background">
+                    <RealWorldMap />
                  </div>
             </div>
         </section>
