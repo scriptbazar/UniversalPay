@@ -181,7 +181,7 @@ export default function Home() {
               <Link href="/signup">Get Started for Free</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/pricing">View Pricing</Link>
+              <Link href="/#pricing">View Pricing</Link>
             </Button>
           </div>
         </section>
