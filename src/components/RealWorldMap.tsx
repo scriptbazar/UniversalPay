@@ -29,24 +29,45 @@ const RealWorldMap = () => {
         }}
         style={{ width: "100%", height: "auto" }}
     >
+      <defs>
+        <radialGradient id="gradient1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" style={{ stopColor: "hsl(var(--primary))", stopOpacity: 0.8 }} />
+            <stop offset="100%" style={{ stopColor: "hsl(var(--primary))", stopOpacity: 0 }} />
+        </radialGradient>
+        <style>
+            {`
+                @keyframes pulse {
+                    0% { transform: scale(0.95); opacity: 1; }
+                    70% { transform: scale(1.5); opacity: 0.3; }
+                    100% { transform: scale(0.95); opacity: 1; }
+                }
+                .pulsing-marker {
+                    animation: pulse 2s infinite;
+                }
+            `}
+        </style>
+      </defs>
       <Geographies geography={geoUrl}>
         {({ geographies }) =>
           geographies.map((geo) => (
             <Geography
               key={geo.rsmKey}
               geography={geo}
-              className="fill-current text-muted-foreground/30 dark:text-muted-foreground/50 stroke-background"
+              className="fill-current text-muted-foreground/10 dark:text-muted-foreground/20 stroke-background"
             />
           ))
         }
       </Geographies>
       {markers.map(({ name, coordinates, markerOffset }) => (
         <Marker key={name} coordinates={coordinates as [number, number]}>
-          <circle r={4} fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" strokeWidth={1} />
+            <g className="pulsing-marker">
+                 <circle r={8} fill="url(#gradient1)" />
+                 <circle r={3} fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" strokeWidth={0.5} />
+            </g>
           <text
             textAnchor="middle"
             y={markerOffset}
-            className="fill-current text-foreground text-xs font-semibold"
+            className="fill-current text-foreground text-xs font-semibold pointer-events-none"
           >
             {name}
           </text>
