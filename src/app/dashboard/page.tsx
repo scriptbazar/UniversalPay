@@ -158,13 +158,13 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
+      <div className="mb-2">
         <h1 className="text-3xl font-bold tracking-tight">Welcome {adminName}!</h1>
-        <p className="text-muted-foreground">Welcome back, {adminName}. Here's an overview of your Payment gateway.</p>
+        <p className="text-muted-foreground">Here's an overview of your Payment Gateway.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card asChild>
-          <Link href="/dashboard/analytics" className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/analytics" className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Platform Revenue
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
           </Link>
         </Card>
         <Card asChild>
-          <Link href="/dashboard/users" className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/users" className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Active Merchants
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
           </Link>
         </Card>
         <Card asChild>
-          <Link href="/dashboard/transactions" className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/transactions" className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
           </Link>
         </Card>
         <Card asChild>
-          <Link href="/dashboard/fraud-detection" className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <Link href="/dashboard/fraud-detection" className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Fraud Alerts
@@ -293,7 +293,12 @@ export default function AdminDashboard() {
         </Card>
         <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <CardTitle className="text-2xl">Recent Merchant Signups</CardTitle>
+                <CardTitle className="text-xl">Recent Merchant Signups</CardTitle>
+                 <Button asChild variant="link" className="text-sm">
+                    <Link href="/dashboard/users">
+                        View all
+                    </Link>
+                 </Button>
             </CardHeader>
             <CardContent className="p-0">
                 <Table>

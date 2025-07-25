@@ -131,12 +131,12 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
 
   return (
     <div className="flex flex-col gap-4">
-        <div>
+        <div className="mb-2">
             <h1 className="text-3xl font-bold tracking-tight">Welcome back, {merchantName}!</h1>
             <p className="text-muted-foreground">Here's an overview of your account and recent activity.</p>
         </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <Card asChild className="cursor-pointer hover:bg-muted/50">
+        <Card asChild className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <Link href="/merchant/analytics">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -152,7 +152,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
             </CardContent>
           </Link>
         </Card>
-        <Card asChild className="cursor-pointer hover:bg-muted/50">
+        <Card asChild className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <Link href="/merchant/analytics">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -168,7 +168,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
             </CardContent>
           </Link>
         </Card>
-        <Card asChild className="cursor-pointer hover:bg-muted/50">
+        <Card asChild className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <Link href="/merchant/payments">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Transactions</CardTitle>
@@ -182,7 +182,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
             </CardContent>
           </Link>
         </Card>
-        <Card asChild className="cursor-pointer hover:bg-muted/50">
+        <Card asChild className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <Link href="/merchant/analytics">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -239,11 +239,10 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Recent Transactions</CardTitle>
+              <CardTitle className="text-xl">Recent Transactions</CardTitle>
               <Button asChild variant="link" className="text-sm">
                 <Link href="/merchant/payments">
                     View all
-                    <ArrowUpRight className="h-4 w-4 ml-1" />
                 </Link>
               </Button>
           </CardHeader>
@@ -367,5 +366,3 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
     </div>
   )
 }
-
-    
