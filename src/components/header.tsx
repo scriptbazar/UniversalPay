@@ -68,7 +68,7 @@ export function Header() {
                     </Link>
                 </SheetClose>
                 <Separator />
-                <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
                     <SheetClose asChild>
                         <Button variant="ghost" asChild>
                             <Link href="/login">Log In</Link>
