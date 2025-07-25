@@ -3,10 +3,23 @@
 import * as React from "react"
 import { useTheme } from "next-themes"
 import { Switch } from "@/components/ui/switch"
-import { Sun, Moon } from "lucide-react"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    // Render a placeholder or nothing on the server to avoid mismatch
+    return (
+        <div className="flex items-center gap-2">
+            <div className="h-6 w-11 rounded-full bg-input"></div>
+        </div>
+    );
+  }
 
   const isDark = theme === 'dark';
 
