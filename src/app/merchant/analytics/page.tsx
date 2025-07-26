@@ -144,8 +144,7 @@ export default function AnalyticsPage() {
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
   const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; } | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<TopCustomer | null>(null);
-
+  
   useEffect(() => {
     // Set data on client-side to avoid hydration errors
     setRevenueData(initialRevenueData);
@@ -179,7 +178,7 @@ export default function AnalyticsPage() {
   };
   
   const handleCustomerClick = (customer: TopCustomer) => {
-    setSelectedCustomer(customer);
+    router.push(`/merchant/customers/${customer.email.split('@')[0]}`);
   };
   
   const handleStatCardClick = (stat: 'revenue' | 'transactions' | 'success' | 'customers') => {
@@ -219,31 +218,7 @@ export default function AnalyticsPage() {
         });
         break;
       case 'customers':
-         setDialogContent({
-          title: "All Customers",
-          description: "This is a list of your top customers.",
-          data: (
-            <Table>
-              <TableHeader>
-                  <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead className="text-right">Total Spent</TableHead>
-                  </TableRow>
-              </TableHeader>
-              <TableBody>
-                  {topCustomers.map(customer => (
-                      <TableRow key={customer.email} onClick={() => handleCustomerClick(customer)} className="cursor-pointer hover:bg-muted/50">
-                          <TableCell>
-                              <div className="font-medium">{customer.name}</div>
-                              <div className="text-sm text-muted-foreground">{customer.email}</div>
-                          </TableCell>
-                          <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
-                      </TableRow>
-                  ))}
-              </TableBody>
-          </Table>
-          )
-        });
+         router.push('/merchant/customers');
         break;
     }
   };
@@ -405,43 +380,6 @@ export default function AnalyticsPage() {
         </DialogContent>
       </Dialog>
       
-      <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Customer Details</DialogTitle>
-                {selectedCustomer && <DialogDescription>Details for {selectedCustomer.name}</DialogDescription>}
-            </DialogHeader>
-            {selectedCustomer && (
-                <div className="space-y-4 py-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Customer Name:</span>
-                        <span className="font-semibold">{selectedCustomer.name}</span>
-                    </div>
-                     <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Email:</span>
-                         <div className="flex items-center gap-2">
-                           <span className="font-semibold">{selectedCustomer.email}</span>
-                           <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedCustomer.email, 'Email')} />
-                         </div>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Total Spent:</span>
-                        <span className="font-semibold">${selectedCustomer.totalSpent.toFixed(2)}</span>
-                    </div>
-                </div>
-            )}
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedCustomer(null)}>Close</Button>
-                 <Button asChild>
-                    <Link href={`/merchant/customers/${selectedCustomer?.email.split('@')[0] ?? ''}`}>View Profile</Link>
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
     </div>
   );
 }
-

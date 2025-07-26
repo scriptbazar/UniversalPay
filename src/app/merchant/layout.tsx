@@ -56,6 +56,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
   { href: "/merchant/analytics", icon: LineChart, label: "Analytics" },
+  { href: "/merchant/customers", icon: Users, label: "Customers" },
   { href: "/merchant/payments", icon: CreditCard, label: "All Transactions" },
   { href: "/merchant/payment-pages", icon: AppWindow, label: "Payment Pages" },
   { href: "/merchant/payment-links", icon: Link2, label: "Payment Links" },
