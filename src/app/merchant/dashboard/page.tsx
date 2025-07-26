@@ -105,6 +105,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
+  const [monthlyTransactions, setMonthlyTransactions] = useState<{month: string; transactions: Transaction[]} | null>(null);
 
   useEffect(() => {
     const generated = generateAllTransactions();
@@ -122,10 +123,20 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const monthName = payload.name; // e.g., "Jan"
-    const monthSlug = monthName.toLowerCase();
-    router.push(`/merchant/analytics/transactions/${monthSlug}`);
+    const monthName = payload.name;
+    const monthIndex = payload.monthIndex;
+
+    const transactionsForMonth = allTransactions.filter(
+        (tx) => tx.date.getMonth() === monthIndex
+    );
+    
+    setMonthlyTransactions({ month: monthName, transactions: transactionsForMonth });
   };
+  
+    const getStatusBadgeVariant = (status: string) => {
+        return status === 'Success' ? 'default' : 'destructive';
+    };
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -151,7 +162,7 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           </Link>
         </Card>
         <Card asChild className="cursor-pointer hover:bg-muted/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-          <Link href="/merchant/analytics">
+          <Link href="/merchant/subscriptions">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Subscriptions
@@ -317,6 +328,49 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={!!monthlyTransactions} onOpenChange={() => setMonthlyTransactions(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
+            <DialogDescription>
+              A list of all transactions for the selected month.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {monthlyTransactions?.transactions.map(tx => (
+                        <TableRow key={tx.id}>
+                            <TableCell>{tx.id}</TableCell>
+                            <TableCell>{tx.name}</TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">${tx.amount}</TableCell>
+                        </TableRow>
+                    ))}
+                    {monthlyTransactions?.transactions.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center h-24">No transactions found for this month.</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
