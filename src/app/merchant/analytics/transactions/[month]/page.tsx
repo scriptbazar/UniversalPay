@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 const generateMockTransactions = () => {
     return Array.from({ length: 12 * 50 }, (_, i) => {
         const monthIndex = Math.floor(i / 50);
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
         const success = Math.random() > 0.1;
         const methods = ["UPI", "Crypto", "Page", "Link"];
         return {
@@ -96,9 +96,9 @@ export default function MonthlyTransactionsPage() {
 
     return (
         <div className="space-y-6">
-            <Link href="/merchant/analytics/revenue" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/merchant/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Revenue Breakdown
+                Back to Dashboard
             </Link>
 
             <Card>

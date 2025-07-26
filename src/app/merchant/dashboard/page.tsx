@@ -51,6 +51,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const chartData = [
     { name: 'Jan', revenue: 4230, monthIndex: 0 },
@@ -99,8 +100,8 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ merchantName = "Merchant" }: DashboardProps) {
+  const router = useRouter();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string, transactions: Transaction[] } | null>(null);
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
@@ -121,12 +122,9 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const month = payload.name;
-    const monthIndex = payload.monthIndex;
-
-    const transactionsForMonth = allTransactions.filter(tx => tx.date.getMonth() === monthIndex);
-
-    setMonthlyTransactions({ month, transactions: transactionsForMonth });
+    const monthName = payload.name; // e.g., "Jan"
+    const monthSlug = monthName.toLowerCase();
+    router.push(`/merchant/analytics/transactions/${monthSlug}`);
   };
 
   return (
@@ -319,47 +317,6 @@ export default function Dashboard({ merchantName = "Merchant" }: DashboardProps)
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={!!monthlyTransactions} onOpenChange={() => setMonthlyTransactions(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
-            <DialogDescription>
-                A list of all transactions that occurred in {monthlyTransactions?.month}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {monthlyTransactions?.transactions.map((tx) => (
-                        <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
-                            <TableCell className="font-medium">{tx.id}</TableCell>
-                            <TableCell>{tx.name}</TableCell>
-                            <TableCell>
-                                <Badge variant={tx.status === 'Success' ? 'default' : 'destructive'}>{tx.status}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">${tx.amount}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            {monthlyTransactions?.transactions.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No transactions found for {monthlyTransactions.month}.</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
