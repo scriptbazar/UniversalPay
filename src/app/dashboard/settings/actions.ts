@@ -3,6 +3,18 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { db } from '@/lib/firebase';
+import admin from 'firebase-admin';
+
+// This is a simplified check. In a real app, you'd initialize admin only once.
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp();
+  } catch (e) {
+    console.error('Firebase admin initialization error', e);
+  }
+}
+
 
 async function readEnvFile(): Promise<Record<string, string>> {
   const envPath = path.resolve(process.cwd(), '.env');
@@ -89,7 +101,7 @@ export async function getSecuritySettings() {
 }
 
 
-export async function updateSecuritySettings(data: {
+export async function updateSecuritySettings(adminUid: string, data: {
     geminiApiKey?: string;
     reCaptchaSiteKey?: string;
     reCaptchaSecretKey?: string;
@@ -107,5 +119,21 @@ export async function updateSecuritySettings(data: {
     updates['NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA'] = String(data.isMerchantCaptchaRequired);
     updates['NEXT_PUBLIC_ENABLE_ADMIN_2FA'] = String(data.isAdmin2faEnabled);
 
-    return await updateEnvFile(updates);
+    const result = await updateEnvFile(updates);
+
+    if (result.success) {
+        try {
+            const adminUser = await admin.auth().getUser(adminUid);
+            await db.collection('audit_logs').add({
+                type: 'SECURITY_SETTINGS_UPDATED',
+                level: 'CRITICAL',
+                message: `Admin ${adminUser.email} (${adminUid}) updated global security settings.`,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                details: data
+            });
+        } catch(e) {
+            console.error("Failed to write audit log for security update.", e)
+        }
+    }
+    return result;
 }

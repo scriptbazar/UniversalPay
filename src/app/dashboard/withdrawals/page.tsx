@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
@@ -9,11 +10,13 @@ import { Separator } from "@/components/ui/separator";
 import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
+import { type Withdrawal, getWithdrawals } from "@/lib/withdrawalsData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { processWithdrawal } from "./actions";
+import { auth } from "@/lib/firebase";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -44,15 +47,25 @@ export default function AdminWithdrawalsPage() {
         setWithdrawals(getWithdrawals());
     }, []);
 
-    const handleAction = (e: React.MouseEvent, id: string, newStatus: "Completed" | "Failed") => {
+    const handleAction = async (e: React.MouseEvent, id: string, newStatus: "Completed" | "Failed") => {
         e.stopPropagation(); // Prevent row click event
-        updateWithdrawalStatus(id, newStatus);
-        setWithdrawals(getWithdrawals()); // Refresh data from source
-        setSelectedWithdrawal(null); // Close the dialog
-        toast({
-            title: `Withdrawal ${newStatus}`,
-            description: `The withdrawal request (ID: ${id}) has been updated.`,
-        });
+        if (!auth.currentUser) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to perform this action.' });
+            return;
+        }
+
+        const result = await processWithdrawal(auth.currentUser.uid, id, newStatus);
+        
+        if (result.success) {
+            setWithdrawals(getWithdrawals()); // Refresh data from source
+            setSelectedWithdrawal(null); // Close the dialog
+            toast({
+                title: `Withdrawal ${newStatus}`,
+                description: `The withdrawal request (ID: ${id}) has been updated.`,
+            });
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.error });
+        }
     };
     
     const handleRowClick = (withdrawal: Withdrawal) => {

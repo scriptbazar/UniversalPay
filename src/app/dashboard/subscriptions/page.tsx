@@ -31,6 +31,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
+import { logSubscriptionChange } from './actions';
 
 type Plan = {
     name: string;
@@ -56,9 +58,12 @@ function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Pl
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         onSave(formData);
+        if (auth.currentUser) {
+          await logSubscriptionChange(auth.currentUser.uid, 'updated', formData.name, formData);
+        }
         setOpen(false);
     };
 
@@ -75,7 +80,7 @@ function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Pl
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name" className="text-right">Name</Label>
-                            <Input id="name" value={formData.name} onChange={handleChange} className="col-span-3" />
+                            <Input id="name" value={formData.name} onChange={handleChange} className="col-span-3" readOnly />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="price" className="text-right">Price</Label>
@@ -109,7 +114,7 @@ export default function SubscriptionsPage() {
   const [plans, setPlans] = React.useState<Plan[]>(initialSubscriptionPlans);
   const { toast } = useToast();
 
-  const handleCreatePlan = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreatePlan = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const newPlan: Plan = {
@@ -120,6 +125,9 @@ export default function SubscriptionsPage() {
           api_quota: formData.get('plan-api-quota-create') as string,
       };
       setPlans(prev => [newPlan, ...prev]);
+      if (auth.currentUser) {
+          await logSubscriptionChange(auth.currentUser.uid, 'created', newPlan.name, newPlan);
+      }
       toast({ title: 'Plan Created!', description: `${newPlan.name} has been added.`});
       setIsCreateOpen(false);
   }
@@ -129,8 +137,11 @@ export default function SubscriptionsPage() {
       toast({ title: 'Plan Updated!', description: `${updatedPlan.name} has been saved.`});
   }
 
-  const handleDeletePlan = (planName: string) => {
+  const handleDeletePlan = async (planName: string) => {
     setPlans(prev => prev.filter(p => p.name !== planName));
+    if (auth.currentUser) {
+        await logSubscriptionChange(auth.currentUser.uid, 'deleted', planName);
+    }
     toast({ variant: 'destructive', title: 'Plan Deleted!', description: `${planName} has been removed.`});
   }
 

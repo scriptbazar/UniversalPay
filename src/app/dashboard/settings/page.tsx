@@ -15,6 +15,7 @@ import { updateSecuritySettings, getSecuritySettings } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { auth } from "@/lib/firebase";
 
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -101,8 +102,13 @@ export default function SettingsPage() {
   const handleSaveSecuritySettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    if (!auth.currentUser) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save settings.'});
+        setIsLoading(false);
+        return;
+    }
     try {
-      await updateSecuritySettings({ 
+      await updateSecuritySettings(auth.currentUser.uid, { 
           geminiApiKey, 
           reCaptchaSiteKey, 
           reCaptchaSecretKey,
@@ -416,5 +422,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

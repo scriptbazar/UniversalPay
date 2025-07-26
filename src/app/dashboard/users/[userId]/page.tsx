@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
-import { updateUserRole } from "./actions";
+import { updateUserRole, updateUserStatus, adjustWalletBalance } from "./actions";
 import { onAuthStateChanged } from "firebase/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -159,17 +159,16 @@ export default function UserDetailPage() {
 
 
   const handleToggleSuspend = async () => {
-    if (!merchant) return;
+    if (!merchant || !auth.currentUser) return;
     const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
-    const userDocRef = doc(db, "users", merchant.id);
-    try {
-        await setDoc(userDocRef, { status: newStatus }, { merge: true });
+    const result = await updateUserStatus(merchant.id, newStatus, auth.currentUser.uid);
+    if(result.success) {
         toast({
             title: `Merchant ${newStatus}`,
             description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
         });
-    } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "Failed to update user status." });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.error });
     }
   };
   
@@ -191,7 +190,7 @@ export default function UserDetailPage() {
       }
   };
 
-  const handleWalletAdjustment = (type: 'credit' | 'debit') => {
+  const handleWalletAdjustment = async (type: 'credit' | 'debit') => {
       const amount = parseFloat(adjustmentAmount);
       if (isNaN(amount) || amount <= 0) {
           toast({ variant: 'destructive', title: 'Invalid Amount' });
@@ -203,10 +202,23 @@ export default function UserDetailPage() {
           return;
       }
       
+      if (!auth.currentUser || !merchant) {
+          toast({ variant: 'destructive', title: 'Authentication Error' });
+          return;
+      }
+      
       const newBalance = type === 'credit' ? walletBalance + amount : walletBalance - amount;
-      setWalletBalance(newBalance);
-      toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
-      setAdjustmentAmount('');
+      
+      const result = await adjustWalletBalance(merchant.id, amount, type, auth.currentUser.uid);
+      
+      if (result.success) {
+          setWalletBalance(newBalance);
+          toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
+          setAdjustmentAmount('');
+      } else {
+           toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
+
   };
 
   const handleLoginAsUser = () => {
@@ -642,5 +654,3 @@ export default function UserDetailPage() {
     </div>
   )
 }
-
-    
