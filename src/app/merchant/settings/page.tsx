@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
-import { Logo } from "@/components/logo";
+import { Textarea } from "@/components/ui/textarea";
 
 
 type PaymentMethodsState = {
@@ -76,7 +76,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
                     <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                             {logo ? (
-                                <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" />
+                                <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
                                 <Globe className="w-10 h-10 text-muted-foreground" />
                             )}
@@ -106,14 +106,15 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
                         <div className="w-full">
                             <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
                              <div className="grid grid-cols-2 gap-2">
-                                {displayOptions.upi && <Button variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> UPI</Button>}
-                                {displayOptions.card && <Button variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Card</Button>}
-                                {displayOptions.crypto && <Button variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Crypto</Button>}
-                                {displayOptions.paypal && <Button variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> PayPal</Button>}
+                                {displayOptions.upi && <Button type="button" variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> UPI</Button>}
+                                {displayOptions.card && <Button type="button" variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Card</Button>}
+                                {displayOptions.crypto && <Button type="button" variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Crypto</Button>}
+                                {displayOptions.paypal && <Button type="button" variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> PayPal</Button>}
                             </div>
                         </div>
 
                         <Button 
+                            type="button"
                             className="w-full text-lg h-12" 
                             style={{ backgroundColor: brandColor, color: 'hsl(var(--primary-foreground))' }}
                         >
@@ -331,7 +332,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                         <div className="flex items-center gap-4">
                                             <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
                                             {logo ? (
-                                                    <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover"/>
+                                                    <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                                                 ) : (
                                                     <Upload className="w-8 h-8 text-muted-foreground" />
                                                 )}
