@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Code2, Info, ShoppingCart, Download, Server, Smartphone, Store } from "lucide-react";
+import { Copy, PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Code2, Info, ShoppingCart, Download, Server, Smartphone, Store, KeyRound, Webhook, SquareCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -73,10 +73,10 @@ export default function DeveloperPage() {
 
       <Tabs defaultValue="api-keys" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
-          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-          <TabsTrigger value="sdks">SDKs & Guides</TabsTrigger>
-          <TabsTrigger value="checkout">JS Widget</TabsTrigger>
+          <TabsTrigger value="api-keys" className="gap-2"><KeyRound className="w-4 h-4"/>API Keys</TabsTrigger>
+          <TabsTrigger value="webhooks" className="gap-2"><Webhook className="w-4 h-4"/>Webhooks</TabsTrigger>
+          <TabsTrigger value="sdks" className="gap-2"><Code2 className="w-4 h-4"/>SDKs & Guides</TabsTrigger>
+          <TabsTrigger value="checkout" className="gap-2"><SquareCode className="w-4 h-4"/>JS Widget</TabsTrigger>
         </TabsList>
         <TabsContent value="api-keys" className="pt-4">
           <Card>
