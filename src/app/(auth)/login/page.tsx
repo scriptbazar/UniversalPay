@@ -80,42 +80,44 @@ export default function LoginPage() {
     <div className="flex-grow flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md shadow-xl">
             <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
+            <Link href="/" className="flex justify-center mb-4">
                 <Logo />
-            </div>
+            </Link>
             <CardTitle className="text-2xl">Merchant Login</CardTitle>
             <CardDescription>Enter your credentials to access your merchant dashboard</CardDescription>
             </CardHeader>
             <form onSubmit={handleCredentialSubmit}>
             <CardContent className="space-y-4">
-                <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="m@example.com" 
-                    required 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                />
-                </div>
-                <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot password?
-                    </Link>
-                </div>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="m@example.com" 
+                        required 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
+                    />
+                    </div>
+                    <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                        <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                        Forgot?
+                        </Link>
+                    </div>
+                    <Input 
+                        id="password" 
+                        type="password" 
+                        required 
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                    />
+                    </div>
                 </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">

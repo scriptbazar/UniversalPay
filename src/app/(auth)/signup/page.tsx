@@ -93,9 +93,9 @@ export default function SignupPage() {
     <div className="flex-grow flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
+          <Link href="/" className="flex justify-center mb-4">
             <Logo />
-          </div>
+          </Link>
           <CardTitle className="text-2xl">Create a Merchant Account</CardTitle>
           <CardDescription>Join UniversalPay and start accepting payments today</CardDescription>
         </CardHeader>

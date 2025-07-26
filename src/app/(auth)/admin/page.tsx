@@ -69,9 +69,9 @@ export default function AdminLoginPage() {
       {!showOtp ? (
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
+            <Link href="/" className="flex justify-center mb-4">
               <Logo />
-            </div>
+            </Link>
             <CardTitle className="text-2xl">Admin Login</CardTitle>
             <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
           </CardHeader>
@@ -84,29 +84,31 @@ export default function AdminLoginPage() {
                   This login page is for authorized administrators only.
                 </AlertDescription>
               </Alert>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="admin@example.com" 
-                  required 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="admin@example.com" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    required 
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
@@ -125,9 +127,9 @@ export default function AdminLoginPage() {
       ) : (
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
+            <Link href="/" className="flex justify-center mb-4">
               <Logo />
-            </div>
+            </Link>
             <CardTitle className="text-2xl">Two-Step Verification</CardTitle>
             <CardDescription>This is a placeholder for a real 2FA implementation.</CardDescription>
           </CardHeader>
