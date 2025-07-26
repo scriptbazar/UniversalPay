@@ -48,25 +48,6 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const CodeSnippet = ({ code }: { code: string }) => {
-    const { toast } = useToast();
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(code.trim());
-        toast({ title: "Copied to clipboard!" });
-    };
-    return (
-        <div className="relative">
-            <pre className="p-4 rounded-md bg-muted text-sm overflow-x-auto">
-                <code>{code.trim()}</code>
-            </pre>
-            <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={copyToClipboard}>
-                <Copy className="h-4 w-4" />
-            </Button>
-        </div>
-    );
-};
-
-
 const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { brandColor: string, logo: string | null, businessName: string, displayOptions: CheckoutDisplayOptions }) => {
     return (
         <div className="sticky top-24">
@@ -212,16 +193,16 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
 
       <Tabs defaultValue="profile">
         <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full md:w-auto">
-          <TabsTrigger value="profile">Profile & Security</TabsTrigger>
+          <TabsTrigger value="profile">Profile &amp; Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="kyc"><ShieldCheck className="mr-2 h-4 w-4"/>KYC &amp; Limits</TabsTrigger>
         </TabsList>
         <TabsContent value="profile" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Profile & Security</CardTitle>
+              <CardTitle>Profile &amp; Security</CardTitle>
               <CardDescription>Update your personal, business, and security information.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -573,147 +554,60 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
             </CardContent>
           </Card>
         </TabsContent>
-         <TabsContent value="integrations" className="pt-4">
-            <Tabs defaultValue="sdks" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="sdks">SDKs & Guides</TabsTrigger>
-                    <TabsTrigger value="checkout">JS Widget</TabsTrigger>
-                </TabsList>
-                <TabsContent value="sdks" className="pt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>SDKs and Integration Guides</CardTitle>
-                            <CardDescription>
-                            Integrate UniversalPay into your application with our official libraries and guides.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <Alert>
-                                <Code2 className="h-4 w-4" />
-                                <AlertTitle>Server-Side Integration</AlertTitle>
-                                <AlertDescription>
-                                    All payment and withdrawal logic should be handled on your server using your Secret Key to ensure security. Never expose your secret key in client-side code.
-                                </AlertDescription>
-                            </Alert>
-
-                            <Tabs defaultValue="server-side" className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="server-side" className="gap-2"><Server/>Server-Side</TabsTrigger>
-                                    <TabsTrigger value="client-side" className="gap-2"><Smartphone/>Client-Side</TabsTrigger>
-                                    <TabsTrigger value="ecommerce" className="gap-2"><Store/>eCommerce</TabsTrigger>
-                                </TabsList>
-                                
-                                <TabsContent value="server-side" className="pt-6">
-                                    <Tabs defaultValue="nodejs" className="w-full">
-                                        <TabsList className="overflow-x-auto w-full justify-start">
-                                            <TabsTrigger value="nodejs">Node.js</TabsTrigger>
-                                            <TabsTrigger value="php">PHP</TabsTrigger>
-                                            <TabsTrigger value="python">Python</TabsTrigger>
-                                            <TabsTrigger value="ruby">Ruby</TabsTrigger>
-                                            <TabsTrigger value="go">Go</TabsTrigger>
-                                            <TabsTrigger value="java">Java</TabsTrigger>
-                                        </TabsList>
-                                        <TabsContent value="nodejs" className="pt-4">
-                                            <h3 className="font-semibold text-lg mb-2">Node.js Integration</h3>
-                                            <p className="text-sm text-muted-foreground mb-4">Install our Node.js library to get started.</p>
-                                            <CodeSnippet code="npm install universalpay-node" />
-                                            <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
-                                            <CodeSnippet code={`
-        const universalpay = require('universalpay-node')('YOUR_SECRET_KEY');
-
-        async function createPayment() {
-        try {
-            const payment = await universalpay.payments.create({
-            amount: 1000, // amount in smallest currency unit
-            currency: 'INR',
-            receipt: 'receipt_order_7432',
-            });
-            console.log('Payment created:', payment.id);
-            // Redirect customer to payment.checkout_url
-        } catch (error) {
-            console.error('Error:', error);
-        }
-        }
-        createPayment();
-                                            `} />
-                                        </TabsContent>
-                                        <TabsContent value="php" className="pt-4">
-                                             <h3 className="font-semibold text-lg mb-2">PHP Integration</h3>
-                                             <p className="text-sm text-muted-foreground mb-4">Use Composer to install our PHP library.</p>
-                                             <CodeSnippet code="composer require universalpay/universalpay-php" />
-                                             <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
-                                             <CodeSnippet code={`
-        require_once('vendor/autoload.php');
-        use UniversalPay\\Api;
-
-        $api = new Api('YOUR_SECRET_KEY');
-
-        $payment = $api->payment->create([
-            'amount' => 1000,
-            'currency' => 'INR',
-            'receipt' => 'receipt_order_7432'
-        ]);
-
-        $paymentId = $payment->id;
-        $checkoutUrl = $payment->checkout_url;
-        // Redirect customer to $checkoutUrl
-                                             `} />
-                                         </TabsContent>
-                                    </Tabs>
-                                </TabsContent>
-                                <TabsContent value="client-side" className="pt-6">
-                                    <p>Client side integrations coming soon.</p>
-                                </TabsContent>
-                                <TabsContent value="ecommerce" className="pt-6">
-                                     <p>eCommerce integrations coming soon.</p>
-                                </TabsContent>
-                            </Tabs>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="checkout" className="pt-4">
-                    <Card>
-                        <CardHeader>
-                        <CardTitle>Embedded Checkout Widget</CardTitle>
-                        <CardDescription>
-                            Easily embed a secure payment form on any website with a single HTML script tag.
-                        </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Alert variant="destructive">
-                                <Info className="h-4 w-4" />
-                                <AlertTitle>Important Security Note</AlertTitle>
-                                <AlertDescription>
-                                    The JS Widget should be used for collecting payment details only. You must always verify the payment status on your server using your Secret Key to confirm the payment was successful.
-                                </AlertDescription>
-                            </Alert>
-                        <div>
-                            <Label>Embed Script</Label>
-                            <CodeSnippet code={`
-        <script src="https://cdn.universalpay.com/checkout.js"></script>
-        <form>
-        <script
-            src="https://checkout.universalpay.com/v1/checkout.js"
-            data-key="YOUR_PUBLISHABLE_KEY"
-            data-amount="1000"
-            data-currency="INR"
-            data-name="Your Business Name"
-            data-description="Test Transaction"
-            data-image="https://your-logo.com/logo.png"
-            data-prefill.name="John Doe"
-            data-prefill.email="john.doe@example.com"
-        >
-        </script>
-        <input type="hidden" custom="Hidden Value" name="hidden">
-        </form>
-                            `} />
+         <TabsContent value="kyc" className="pt-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>KYC &amp; Account Limits</CardTitle>
+                    <CardDescription>
+                        View your current account limits and submit documents to increase them.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="p-4 border rounded-lg">
+                        <h3 className="text-lg font-medium mb-2">Current Verification Status</h3>
+                        <div className="flex items-center gap-4">
+                            <Badge variant="default" className="text-base px-3 py-1">Level 1: Verified</Badge>
+                            <p className="text-sm text-muted-foreground">Your account is verified for basic transactions.</p>
                         </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                        <Card className="mt-4 bg-muted/50">
+                            <CardHeader>
+                                <CardTitle className="text-xl">Upgrade to Level 2</CardTitle>
+                                <CardDescription>Increase your limits by providing business documentation.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm mb-4">To upgrade, please upload your business registration documents and proof of address.</p>
+                                <Button>
+                                    <Upload className="mr-2 h-4 w-4" /> Upload Documents
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                        <h3 className="text-lg font-medium mb-4">Account Transaction Limits</h3>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Per Transaction Limit</span>
+                                <span className="font-semibold text-lg">$5,000.00</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Daily Transaction Limit</span>
+                                <span className="font-semibold text-lg">$25,000.00</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Monthly Transaction Limit</span>
+                                <span className="font-semibold text-lg">$100,000.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+    
