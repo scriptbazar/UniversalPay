@@ -53,14 +53,15 @@ type TopCustomer = {
     email: string;
     name: string;
     totalSpent: number;
+    id: string;
 };
 
 const initialTopCustomers: TopCustomer[] = [
-    { email: 'liam@example.com', name: 'Liam Johnson', totalSpent: 250.00 },
-    { email: 'olivia@example.com', name: 'Olivia Smith', totalSpent: 150.00 },
-    { email: 'noah@example.com', name: 'Noah Williams', totalSpent: 350.00 },
-    { email: 'emma@example.com', name: 'Emma Brown', totalSpent: 450.00 },
-    { email: 'ava@example.com', name: 'Ava Jones', totalSpent: 200.00 },
+    { id: 'cust_1', email: 'liam@example.com', name: 'Liam Johnson', totalSpent: 250.00 },
+    { id: 'cust_2', email: 'olivia@example.com', name: 'Olivia Smith', totalSpent: 150.00 },
+    { id: 'cust_3', email: 'noah@example.com', name: 'Noah Williams', totalSpent: 350.00 },
+    { id: 'cust_4', email: 'emma@example.com', name: 'Emma Brown', totalSpent: 450.00 },
+    { id: 'cust_5', email: 'ava@example.com', name: 'Ava Jones', totalSpent: 200.00 },
 ];
 
 const initialPaymentMethodData = [
@@ -98,7 +99,7 @@ export default function AnalyticsPage() {
   };
   
   const handleCustomerClick = (customer: TopCustomer) => {
-    router.push(`/merchant/customers/${customer.email.split('@')[0]}`);
+    router.push(`/merchant/customers/${customer.id}`);
   };
   
   const handleStatCardClick = (stat: 'revenue' | 'transactions' | 'success' | 'customers') => {
@@ -145,7 +146,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => handleStatCardClick('transactions')} className="cursor-pointer hover:bg-muted/50 transition-colors">
+        <Card onClick={() => router.push('/merchant/payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Transactions</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -155,7 +156,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-muted-foreground">+19% from last month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => handleStatCardClick('success')} className="cursor-pointer hover:bg-muted/50 transition-colors">
+        <Card onClick={() => router.push('/merchant/payments?filter=success')} className="cursor-pointer hover:bg-muted/50 transition-colors">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
@@ -219,12 +220,18 @@ export default function AnalyticsPage() {
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
-                        <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} label onClick={handlePieClick} className="cursor-pointer">
+                        <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label onClick={handlePieClick} className="cursor-pointer" stroke="none">
                             {paymentMethodData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                            contentStyle={{ 
+                                backgroundColor: 'hsl(var(--background))', 
+                                border: 'none',
+                                borderRadius: 'var(--radius)' 
+                            }}
+                        />
                          <Legend />
                     </PieChart>
                 </ResponsiveContainer>
