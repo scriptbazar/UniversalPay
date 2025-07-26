@@ -61,18 +61,15 @@ export default function CustomersPage() {
 
     return (
         <div className="space-y-6">
-            <Link href="/merchant/analytics" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Analytics
-            </Link>
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Your Customers</h1>
+                <p className="text-muted-foreground">A list of all your customers and their spending habits.</p>
+            </div>
 
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
-                        <div>
-                            <CardTitle className="text-2xl">Your Customers</CardTitle>
-                            <CardDescription>A list of all your customers and their spending habits.</CardDescription>
-                        </div>
+                        <CardTitle className="text-2xl">All Customers</CardTitle>
                          <div className="flex items-center gap-2">
                             <div className="relative">
                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 
 type Customer = {
     id: string;
@@ -61,6 +63,7 @@ export default function CustomerDetailPage() {
     const { toast } = useToast();
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
@@ -132,7 +135,7 @@ export default function CustomerDetailPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Transaction History</CardTitle>
-                    <CardDescription>A complete list of all payments from this customer.</CardDescription>
+                    <CardDescription>A complete list of all payments from this customer. Click a row for details.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -147,7 +150,7 @@ export default function CustomerDetailPage() {
                         </TableHeader>
                         <TableBody>
                             {paginatedTransactions.map(tx => (
-                                <TableRow key={tx.id}>
+                                <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedTransaction(tx)}>
                                     <TableCell className="font-medium">{tx.id}</TableCell>
                                     <TableCell>{tx.date}</TableCell>
                                     <TableCell>{tx.method}</TableCell>
@@ -186,6 +189,46 @@ export default function CustomerDetailPage() {
                     </div>
                 </CardFooter>
             </Card>
+
+            <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Transaction Details</DialogTitle>
+                        <DialogDescription>
+                            Full details for transaction {selectedTransaction?.id}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedTransaction && (
+                        <div className="space-y-4 py-4">
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Transaction ID:</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono font-semibold">{selectedTransaction.id}</span>
+                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
+                                </div>
+                            </div>
+                            <Separator />
+                             <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Method:</span>
+                                <span className="font-semibold">{selectedTransaction.method}</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Amount:</span>
+                                <span className="font-semibold">${selectedTransaction.amount}</span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Status:</span>
+                                <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
