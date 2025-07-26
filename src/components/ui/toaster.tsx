@@ -21,11 +21,13 @@ export function Toaster() {
         return (
           <Toast key={id} {...props}>
              <div className="flex items-start gap-3">
-               {isDestructive ? (
-                 <AlertCircle className="h-6 w-6 text-destructive-foreground" />
-               ) : (
-                 <CheckCircle className="h-6 w-6 text-primary" />
-               )}
+               <div className="flex-shrink-0">
+                {isDestructive ? (
+                    <AlertCircle className="h-6 w-6 text-destructive" />
+                ) : (
+                    <CheckCircle className="h-6 w-6 text-primary" />
+                )}
+               </div>
               <div className="grid gap-1">
                 {title && <ToastTitle>{title}</ToastTitle>}
                 {description && (
