@@ -5,7 +5,7 @@ import { ArrowLeft, Copy } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const generateMockTransactions = () => {
         const monthIndex = Math.floor(i / 50);
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const success = Math.random() > 0.1;
+        const methods = ["UPI", "Crypto", "Page", "Link"];
         return {
             id: `UVRLP${123456789 + i}`,
             customerName: `Customer ${i + 1}`,
@@ -26,7 +27,8 @@ const generateMockTransactions = () => {
             amount: (Math.random() * 500 + 10).toFixed(2),
             date: new Date(2023, monthIndex, (i % 28) + 1).toISOString().split('T')[0],
             month: months[monthIndex],
-            status: success ? 'Success' : 'Failed'
+            status: success ? 'Success' : 'Failed',
+            method: methods[i % 4],
         }
     });
 };
@@ -49,6 +51,8 @@ export default function MonthlyTransactionsPage() {
 
     const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         // Generate data on the client side to avoid hydration issues
@@ -59,6 +63,13 @@ export default function MonthlyTransactionsPage() {
         if (!allMockTransactions.length) return [];
         return allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
     }, [month, allMockTransactions]);
+
+    const totalPages = Math.ceil(monthlyTransactions.length / itemsPerPage);
+    const paginatedTransactions = monthlyTransactions.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
 
     const handleRowClick = (transaction: Transaction) => {
         setSelectedTransaction(transaction);
@@ -90,16 +101,18 @@ export default function MonthlyTransactionsPage() {
                             <TableRow>
                                 <TableHead>Transaction ID</TableHead>
                                 <TableHead>Customer</TableHead>
+                                <TableHead>Method</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {monthlyTransactions.map(tx => (
+                            {paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.id}</TableCell>
                                     <TableCell>{tx.customerName}</TableCell>
+                                    <TableCell>{tx.method}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                     </TableCell>
@@ -109,7 +122,7 @@ export default function MonthlyTransactionsPage() {
                             ))}
                              {monthlyTransactions.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24">
+                                    <TableCell colSpan={6} className="text-center h-24">
                                         No transactions found for this month.
                                     </TableCell>
                                 </TableRow>
@@ -117,6 +130,31 @@ export default function MonthlyTransactionsPage() {
                         </TableBody>
                     </Table>
                 </CardContent>
+                 <CardFooter>
+                    <div className="flex justify-between items-center w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Page {currentPage} of {totalPages}. Total {monthlyTransactions.length} transactions.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
 
             <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
@@ -149,6 +187,11 @@ export default function MonthlyTransactionsPage() {
                                      <span className="font-semibold">{selectedTransaction.customerEmail}</span>
                                      <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
                                 </div>
+                            </div>
+                            <Separator />
+                             <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Method:</span>
+                                <span className="font-semibold">{selectedTransaction.method}</span>
                             </div>
                             <Separator />
                             <div className="flex justify-between items-center">
