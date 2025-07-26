@@ -47,18 +47,16 @@ export async function createUser(email: string, password: string, additionalData
     }
 }
 
-// **NEW AND IMPROVED LOGIN LOGIC**
+// **IMPROVED AND MORE SECURE LOGIN LOGIC**
 export async function signInUser(email: string, password: string, loginType: 'admin' | 'merchant') {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // **THE FIX: Directly fetch the user role from Firestore, ignoring the token initially.**
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-            // This case might happen if Firestore write failed after auth creation.
             await signOut(auth);
             return { success: false, error: "User data not found in database. Please contact support." };
         }
@@ -66,15 +64,16 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const userData = userDoc.data();
         const firestoreRole = userData.role || 'merchant';
         
-        // Security Check: Enforce login page types based on the reliable Firestore role
+        // Security Check: Enforce that only admins can log in via the admin page.
         if (loginType === 'admin' && firestoreRole !== 'admin') {
             await signOut(auth);
             return { success: false, error: "Access denied. Only administrators can log in here." };
         }
 
-        if (loginType === 'merchant' && firestoreRole === 'admin') {
-            // This can be allowed, but for strictness, we can redirect them.
-            // For now, let's allow it but a real app might redirect.
+        // Security Check: Enforce that only merchants can log in via the merchant page.
+        if (loginType === 'merchant' && firestoreRole !== 'merchant') {
+            await signOut(auth);
+            return { success: false, error: "Access denied. Please use the Admin Login page." };
         }
 
         return { success: true, user: { uid: user.uid, ...userData } };
