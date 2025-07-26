@@ -1,4 +1,3 @@
-
 'use client';
 
 import { DollarSign, Users, CreditCard, Percent, Copy, ExternalLink, ArrowRight } from "lucide-react";
@@ -12,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Transaction = {
     id: string;
@@ -138,6 +138,7 @@ const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction
 
 export default function AnalyticsPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
@@ -183,11 +184,7 @@ export default function AnalyticsPage() {
   const handleStatCardClick = (stat: 'revenue' | 'transactions' | 'success' | 'customers') => {
     switch (stat) {
       case 'revenue':
-        setDialogContent({
-          title: "Revenue Details",
-          description: "This is the total value of all your successful transactions.",
-          data: <PaginatedTransactionTable transactions={mockTransactions.filter(t => t.status === 'Successful')} />
-        });
+        router.push('/merchant/analytics/revenue');
         break;
       case 'transactions':
         setDialogContent({
@@ -463,5 +460,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-
-    
