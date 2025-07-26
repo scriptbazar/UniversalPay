@@ -33,7 +33,7 @@ type Transaction = {
 const suspiciousTransactions: Transaction[] = [
   {
     id: "UVRLP123456789",
-    user: "user_a",
+    user: "user_1",
     ip: "123.45.67.89",
     amount: "1500.00",
     riskScore: 95,
@@ -43,7 +43,7 @@ const suspiciousTransactions: Transaction[] = [
   },
   {
     id: "UVRLP987654321",
-    user: "user_b",
+    user: "user_2",
     ip: "98.76.54.32",
     amount: "50.00",
     riskScore: 80,
@@ -53,7 +53,7 @@ const suspiciousTransactions: Transaction[] = [
   },
   {
     id: "UVRLP112233445",
-    user: "user_c",
+    user: "user_3",
     ip: "111.222.111.222",
     amount: "200.00",
     riskScore: 70,
@@ -63,7 +63,7 @@ const suspiciousTransactions: Transaction[] = [
   },
   {
     id: "UVRLP556677889",
-    user: "user_d",
+    user: "user_4",
     ip: "123.45.67.89",
     amount: "3000.00",
     riskScore: 99,

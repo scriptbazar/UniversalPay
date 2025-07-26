@@ -1,37 +1,22 @@
+
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
-const cardVariants = cva(
-  "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300",
-  {
-    variants: {
-      variant: {
-        default: "",
-        interactive: "hover:shadow-lg hover:-translate-y-1"
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
-
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof cardVariants> & { asChild?: boolean }
->(({ className, variant, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "div"
-  return (
-    <Comp
-      ref={ref}
-      className={cn(cardVariants({ variant }), className)}
-      {...props}
-    />
-  )
-})
+  React.HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'interactive' }
+>(({ className, variant, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+        "rounded-lg border bg-card text-card-foreground shadow-sm",
+        variant === "interactive" && "transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+        className
+    )}
+    {...props}
+  />
+))
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
@@ -47,10 +32,10 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLHeadingElement,
+  HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h2
+  <h3
     ref={ref}
     className={cn(
       "text-2xl font-semibold leading-none tracking-tight",

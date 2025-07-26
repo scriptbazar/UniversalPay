@@ -218,8 +218,10 @@ export default function SettingsPage() {
                 </div>
                 <Switch />
               </div>
-               <Button>Save Changes</Button>
             </CardContent>
+             <CardFooter>
+                <Button>Save Changes</Button>
+            </CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="api-keys" className="pt-4">

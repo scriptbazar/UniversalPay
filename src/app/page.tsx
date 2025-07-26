@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -57,7 +58,7 @@ const features = [
    {
     icon: <Briefcase className="w-8 h-8 text-primary" />,
     title: "Reseller Program",
-    description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn commissions.",
+    description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn a commission.",
   },
   {
     icon: <LinkIcon className="w-8 h-8 text-primary" />,
@@ -191,7 +192,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {features.map((feature, index) => (
-                <Card key={index} className="bg-card border group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <Card key={index} className="bg-card border group" variant="interactive">
                   <CardHeader className="flex flex-col items-center text-center">
                     <div className="p-3 bg-primary/10 rounded-full mb-4 transition-transform duration-300 group-hover:scale-110">
                       <div className="transition-transform duration-300 group-hover:animate-bounce-subtle">
