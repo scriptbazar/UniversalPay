@@ -10,6 +10,7 @@ import {
     GithubAuthProvider,
     FacebookAuthProvider,
     signInWithPopup,
+    sendPasswordResetEmail,
     type User
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -152,5 +153,19 @@ export async function signOutUser() {
     } catch (error: any) {
         console.error("Error signing out:", error);
         return { success: false, error: error.message };
+    }
+}
+
+export async function sendPasswordReset(email: string) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error sending password reset email:", error);
+        let errorMessage = "An unexpected error occurred.";
+        if (error.code === 'auth/user-not-found') {
+            errorMessage = "No user found with this email address.";
+        }
+        return { success: false, error: errorMessage };
     }
 }
