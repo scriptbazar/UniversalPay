@@ -1,16 +1,13 @@
 
 'use client';
 
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
+import { useRouter } from "next/navigation";
 
 const monthlyRevenueData = [
   { month: 'January', revenue: '4,000.00', transactions: 50, successRate: '95%' },
@@ -30,19 +27,10 @@ const monthlyRevenueData = [
 type MonthRevenue = typeof monthlyRevenueData[0];
 
 export default function RevenueDetailsPage() {
-    const { toast } = useToast();
-    const [selectedMonth, setSelectedMonth] = useState<MonthRevenue | null>(null);
+    const router = useRouter();
 
     const handleRowClick = (monthData: MonthRevenue) => {
-        setSelectedMonth(monthData);
-    };
-    
-    const copyToClipboard = (text: string, label: string) => {
-        navigator.clipboard.writeText(text);
-        toast({
-            title: `${label} Copied!`,
-            description: `${text} has been copied to your clipboard.`,
-        });
+        router.push(`/merchant/analytics/transactions/${monthData.month.toLowerCase()}`);
     };
 
     return (
@@ -55,7 +43,7 @@ export default function RevenueDetailsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">Monthly Revenue Breakdown</CardTitle>
-                    <CardDescription>A list of your revenue per month. Click a row for more details.</CardDescription>
+                    <CardDescription>A list of your revenue per month. Click a row to view all transactions for that month.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -80,38 +68,6 @@ export default function RevenueDetailsPage() {
                     </Table>
                 </CardContent>
             </Card>
-
-            <Dialog open={!!selectedMonth} onOpenChange={() => setSelectedMonth(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Revenue Details for {selectedMonth?.month}</DialogTitle>
-                        <DialogDescription>
-                            Full details for revenue in {selectedMonth?.month}.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedMonth && (
-                        <div className="space-y-4 py-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Total Revenue:</span>
-                                <span className="font-semibold">${selectedMonth.revenue}</span>
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Total Transactions:</span>
-                                <span className="font-semibold">{selectedMonth.transactions}</span>
-                            </div>
-                            <Separator />
-                             <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Success Rate:</span>
-                                <Badge variant="secondary">{selectedMonth.successRate}</Badge>
-                            </div>
-                        </div>
-                    )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setSelectedMonth(null)}>Close</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }
