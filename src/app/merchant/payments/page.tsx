@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import {
   File,
   Search,
@@ -38,6 +38,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { useSearchParams } from 'next/navigation';
 
 const allTransactionsData = Array.from({ length: 25 }, (_, i) => {
     const statuses = ["Success", "Failed", "Pending"] as const;
@@ -56,15 +57,22 @@ const allTransactionsData = Array.from({ length: 25 }, (_, i) => {
 
 type Transaction = typeof allTransactionsData[0];
 
-export default function MerchantPaymentsPage() {
+function PaymentsComponent() {
+    const searchParams = useSearchParams();
+    const initialFilter = searchParams.get('filter') || 'all';
+
     const { toast } = useToast();
     const [transactions, setTransactions] = useState<Transaction[]>(allTransactionsData);
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState(initialFilter);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    useEffect(() => {
+        setFilter(initialFilter);
+    }, [initialFilter]);
 
     const filteredTransactions = useMemo(() => {
         let filtered = transactions;
@@ -306,4 +314,10 @@ export default function MerchantPaymentsPage() {
     );
 }
 
-    
+export default function MerchantPaymentsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PaymentsComponent />
+        </Suspense>
+    );
+}

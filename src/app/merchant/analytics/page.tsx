@@ -194,35 +194,22 @@ export default function AnalyticsPage() {
         const successfulTxns = mockTransactions.filter(t => t.status === 'Successful').length;
         const totalTxns = mockTransactions.length;
         
-        const openTxnList = (status: 'Successful' | 'Failed' | 'all') => {
-            let txnsToShow = mockTransactions;
-            let title = 'All Attempted Transactions';
-            if (status === 'Successful') {
-                txnsToShow = mockTransactions.filter(t => t.status === 'Successful');
-                title = 'Successful Transactions';
-            } else if (status === 'Failed') {
-                txnsToShow = mockTransactions.filter(t => t.status === 'Failed');
-                title = 'Failed Transactions';
-            }
-            setDialogContent({
-                title: title,
-                description: `A list of ${title.toLowerCase()}.`,
-                data: <PaginatedTransactionTable transactions={txnsToShow} />
-            });
+        const openTxnList = (filter: 'success' | 'failed' | 'all') => {
+            router.push(`/merchant/payments?filter=${filter}`);
         };
 
         setDialogContent({
           title: "Success Rate Details",
-          description: "Breakdown of your transaction success rate. Click a row for details.",
+          description: "Breakdown of your transaction success rate. Click a row to view details.",
           data: (
             <div className="space-y-2">
               <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('all')}>
                   <span>Total Transactions:</span> <span className="font-bold">{totalTxns}</span>
               </Button>
-              <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('Successful')}>
+              <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('success')}>
                   <span>Successful Transactions:</span> <span className="font-bold">{successfulTxns}</span>
               </Button>
-               <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('Failed')}>
+               <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('failed')}>
                   <span>Failed Transactions:</span> <span className="font-bold">{totalTxns - successfulTxns}</span>
               </Button>
               <Separator className="my-2"/>
