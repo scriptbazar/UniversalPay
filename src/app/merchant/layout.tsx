@@ -59,7 +59,6 @@ const navItems = [
   { href: "/merchant/customers", icon: Users, label: "Customers" },
   { href: "/merchant/payments", icon: CreditCard, label: "All Transactions" },
   { href: "/merchant/payment-pages", icon: AppWindow, label: "Payment Pages" },
-  { href: "/merchant/payment-links", icon: Link2, label: "Payment Links" },
   { href: "/merchant/wallet", icon: Wallet, label: "Wallet" },
   { href: "/merchant/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/merchant/invoices", icon: FileText, label: "Invoices" },
