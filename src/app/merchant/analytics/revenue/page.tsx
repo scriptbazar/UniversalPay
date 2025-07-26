@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ArrowLeft } from "lucide-react";
@@ -43,7 +42,9 @@ export default function RevenueDetailsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">Monthly Revenue Breakdown</CardTitle>
-                    <CardDescription>A list of your revenue per month. Click a row to view all transactions for that month.</CardDescription>
+                    <CardDescription>
+                        A detailed breakdown of your revenue, transactions, and success rate per month. Click a row to view all transactions for that month.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
