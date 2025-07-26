@@ -51,9 +51,9 @@ export default function ForgotPasswordPage() {
           {!isSent ? (
             <>
               <CardHeader className="space-y-1 text-center">
-                <div className="flex justify-center mb-4">
+                <Link href="/" className="flex justify-center mb-4">
                     <Logo />
-                </div>
+                </Link>
                 <CardTitle className="text-2xl">Reset Your Password</CardTitle>
                 <CardDescription>Enter your email and we'll send you a link to get back into your account.</CardDescription>
               </CardHeader>
@@ -72,12 +72,12 @@ export default function ForgotPasswordPage() {
                       />
                     </div>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                        {isLoading ? 'Sending...' : 'Send Reset Link'}
-                    </Button>
-                    <Button variant="link" asChild>
+                <CardFooter className="flex justify-between">
+                    <Button variant="outline" asChild>
                         <Link href="/login">Back to Login</Link>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Sending...' : 'Send Reset Link'}
                     </Button>
                 </CardFooter>
               </form>

@@ -102,12 +102,7 @@ export default function LoginPage() {
                     />
                     </div>
                     <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
-                        <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                        Forgot?
-                        </Link>
-                    </div>
+                    <Label htmlFor="password">Password</Label>
                     <Input 
                         id="password" 
                         type="password" 
@@ -118,6 +113,11 @@ export default function LoginPage() {
                         disabled={isLoading}
                     />
                     </div>
+                </div>
+                 <div className="text-right">
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                        Forgot Password?
+                    </Link>
                 </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
