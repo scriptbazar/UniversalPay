@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -84,6 +83,9 @@ export default function ForgotPasswordPage() {
             </>
           ) : (
              <CardContent className="p-8 text-center">
+                <Link href="/" className="flex justify-center mb-6">
+                    <Logo />
+                </Link>
                 <Mail className="mx-auto h-16 w-16 text-primary mb-4" />
                 <CardTitle className="text-2xl mb-2">Check your email</CardTitle>
                 <CardDescription className="mb-6">
