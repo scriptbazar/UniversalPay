@@ -155,16 +155,9 @@ export default function AnalyticsPage() {
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const month = payload.name;
-    const monthIndex = payload.monthIndex;
-
-    const transactionsForMonth = mockTransactions.filter(tx => new Date(tx.date).getMonth() === monthIndex);
-    
-    setDialogContent({
-        title: `Transactions for ${month}`,
-        description: `A list of all transactions that occurred in ${month}.`,
-        data: <PaginatedTransactionTable transactions={transactionsForMonth} />
-    });
+    const monthName = payload.name;
+    const monthSlug = monthName.toLowerCase();
+    router.push(`/merchant/analytics/transactions/${monthSlug}`);
   };
 
   const handlePieClick = (data: any) => {
@@ -383,3 +376,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
