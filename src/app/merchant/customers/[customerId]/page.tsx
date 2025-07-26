@@ -1,9 +1,9 @@
 
 'use client';
 
-import { ArrowLeft, Copy, Download, Mail, Phone, Calendar, DollarSign, CreditCard } from "lucide-react";
+import { ArrowLeft, Copy, Download, Mail, Phone, Calendar, DollarSign, CreditCard, Search, File } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 
 type Customer = {
@@ -65,6 +66,7 @@ export default function CustomerDetailPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
     const itemsPerPage = 5;
 
     useEffect(() => {
@@ -72,14 +74,25 @@ export default function CustomerDetailPage() {
         setCustomer(mockCustomer);
         setTransactions(mockTransactions);
     }, [customerId]);
+    
+    const filteredTransactions = useMemo(() => {
+        if (!searchTerm) {
+            return transactions;
+        }
+        return transactions.filter(tx =>
+            tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            tx.method.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            tx.status.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [transactions, searchTerm]);
 
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
         toast({ title: `${label} Copied!` });
     };
 
-    const totalPages = Math.ceil(transactions.length / itemsPerPage);
-    const paginatedTransactions = transactions.slice(
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const paginatedTransactions = filteredTransactions.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -133,9 +146,27 @@ export default function CustomerDetailPage() {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Transaction History</CardTitle>
-                    <CardDescription>A complete list of all payments from this customer. Click a row for details.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Transaction History</CardTitle>
+                        <CardDescription>A complete list of all payments from this customer.</CardDescription>
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <div className="relative">
+                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                           <Input
+                             type="search"
+                             placeholder="Search transactions..."
+                             className="pl-8 w-48"
+                             value={searchTerm}
+                             onChange={(e) => setSearchTerm(e.target.value)}
+                           />
+                        </div>
+                       <Button size="sm" variant="outline" className="h-9 gap-1">
+                          <Download className="h-3.5 w-3.5" />
+                          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                       </Button>
+                   </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -232,3 +263,4 @@ export default function CustomerDetailPage() {
         </div>
     );
 }
+
