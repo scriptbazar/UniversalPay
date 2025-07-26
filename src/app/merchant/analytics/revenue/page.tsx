@@ -3,7 +3,7 @@
 
 import { ArrowLeft, Copy } from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,7 @@ export default function RevenueDetailsPage() {
     const handleRowClick = (monthData: MonthRevenue) => {
         setSelectedMonth(monthData);
     };
-
+    
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
         toast({
