@@ -1,3 +1,4 @@
+
 'use client';
 
 import { DollarSign, Users, CreditCard, Percent, Copy, ExternalLink, ArrowRight } from "lucide-react";
@@ -187,11 +188,7 @@ export default function AnalyticsPage() {
         router.push('/merchant/analytics/revenue');
         break;
       case 'transactions':
-        setDialogContent({
-          title: "All Transactions",
-          description: "This is a list of all attempted transactions.",
-          data: <PaginatedTransactionTable transactions={mockTransactions} />
-        });
+        router.push('/merchant/payments');
         break;
       case 'success':
         const successfulTxns = mockTransactions.filter(t => t.status === 'Successful').length;
