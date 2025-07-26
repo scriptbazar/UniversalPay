@@ -564,25 +564,26 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="p-4 border rounded-lg">
-                        <h3 className="text-lg font-medium mb-2">Current Verification Status</h3>
-                        <div className="flex items-center gap-4">
-                            <Badge variant="default" className="text-base px-3 py-1">Level 1: Verified</Badge>
-                            <p className="text-sm text-muted-foreground">Your account is verified for basic transactions.</p>
-                        </div>
-                        <Card className="mt-4 bg-muted/50">
-                            <CardHeader>
-                                <CardTitle className="text-xl">Upgrade to Level 2</CardTitle>
-                                <CardDescription>Increase your limits by providing business documentation.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm mb-4">To upgrade, please upload your business registration documents and proof of address.</p>
+                    <Card>
+                       <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+                            <div className="flex-grow space-y-2">
+                                <h3 className="font-semibold text-lg">Current Verification Status</h3>
+                                <div className="flex items-center gap-4">
+                                    <Badge variant="default" className="text-base px-3 py-1">Level 1: Verified</Badge>
+                                    <p className="text-sm text-muted-foreground">Your account is verified for basic transactions.</p>
+                                </div>
+                            </div>
+                            <Separator orientation="vertical" className="h-auto hidden md:block" />
+                            <Separator className="md:hidden"/>
+                            <div className="flex-shrink-0 space-y-2">
+                                <h3 className="font-semibold text-lg">Upgrade to Level 2</h3>
+                                <p className="text-sm text-muted-foreground max-w-xs">Increase your limits by providing business documentation.</p>
                                 <Button>
                                     <Upload className="mr-2 h-4 w-4" /> Upload Documents
                                 </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
+                            </div>
+                       </CardContent>
+                    </Card>
 
                     <div className="p-4 border rounded-lg">
                         <h3 className="text-lg font-medium mb-4">Account Transaction Limits</h3>
@@ -611,4 +612,3 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
   );
 }
 
-    
