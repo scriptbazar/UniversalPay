@@ -70,80 +70,12 @@ const initialPaymentMethodData = [
     { name: 'Link', value: 150, color: '#FF8042' },
 ];
 
-const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-        case 'Successful': return 'default';
-        case 'Failed': return 'destructive';
-        default: return 'secondary';
-    }
-};
-
-const PaginatedTransactionTable = ({ transactions }: { transactions: Transaction[] }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
-    const totalPages = Math.ceil(transactions.length / itemsPerPage);
-
-    const paginatedData = transactions.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    return (
-        <div>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {paginatedData.map(tx => (
-                        <TableRow key={tx.id}>
-                            <TableCell>{tx.id}</TableCell>
-                            <TableCell>${tx.amount}</TableCell>
-                            <TableCell>{tx.date}</TableCell>
-                            <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            <div className="flex justify-between items-center w-full pt-4">
-                <div className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 export default function AnalyticsPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
-  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; } | null>(null);
   
   useEffect(() => {
     // Set data on client-side to avoid hydration errors
@@ -162,12 +94,7 @@ export default function AnalyticsPage() {
 
   const handlePieClick = (data: any) => {
      const methodName = data.name;
-     const transactions = mockTransactions.filter(t => t.method === methodName);
-     setDialogContent({ 
-        title: `${methodName} Transactions`, 
-        description: `List of recent transactions made via ${methodName}.`, 
-        data: <PaginatedTransactionTable transactions={transactions} />
-    });
+     router.push(`/merchant/analytics/transactions-by-method/${methodName.toLowerCase()}`);
   };
   
   const handleCustomerClick = (customer: TopCustomer) => {
@@ -183,32 +110,7 @@ export default function AnalyticsPage() {
         router.push('/merchant/payments');
         break;
       case 'success':
-        const successfulTxns = mockTransactions.filter(t => t.status === 'Successful').length;
-        const totalTxns = mockTransactions.length;
-        
-        const openTxnList = (filter: 'success' | 'failed' | 'all') => {
-            router.push(`/merchant/payments?filter=${filter}`);
-        };
-
-        setDialogContent({
-          title: "Success Rate Details",
-          description: "Breakdown of your transaction success rate. Click a row to view details.",
-          data: (
-            <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('all')}>
-                  <span>Total Transactions:</span> <span className="font-bold">{totalTxns}</span>
-              </Button>
-              <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('success')}>
-                  <span>Successful Transactions:</span> <span className="font-bold">{successfulTxns}</span>
-              </Button>
-               <Button variant="ghost" className="w-full justify-between h-auto py-2" onClick={() => openTxnList('failed')}>
-                  <span>Failed Transactions:</span> <span className="font-bold">{totalTxns - successfulTxns}</span>
-              </Button>
-              <Separator className="my-2"/>
-              <div className="flex justify-between text-lg p-2"><span>Success Rate:</span> <span className="font-bold">98.2%</span></div>
-            </div>
-          )
-        });
+        router.push('/merchant/payments?filter=success');
         break;
       case 'customers':
          router.push('/merchant/customers');
@@ -269,7 +171,7 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{topCustomers.length}</div>
+            <div className="text-2xl font-bold">5</div>
             <p className="text-xs text-muted-foreground">View your most frequent payers.</p>
           </CardContent>
         </Card>
@@ -332,8 +234,15 @@ export default function AnalyticsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Top Customers</CardTitle>
-          <CardDescription>Your most valuable customers by total amount spent. Click a row for details.</CardDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>Top Customers</CardTitle>
+                    <CardDescription>Your most valuable customers by total amount spent.</CardDescription>
+                </div>
+                <Button asChild variant="outline">
+                    <Link href="/merchant/customers">View All <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                </Button>
+            </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -357,23 +266,6 @@ export default function AnalyticsPage() {
           </Table>
         </CardContent>
       </Card>
-      
-      <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-        <DialogContent className="max-w-xl">
-            <DialogHeader>
-                <DialogTitle>{dialogContent?.title}</DialogTitle>
-                <DialogDescription>{dialogContent?.description}</DialogDescription>
-            </DialogHeader>
-            <div className="py-4 max-h-[60vh] overflow-y-auto">
-                {dialogContent?.data}
-            </div>
-            <DialogFooter>
-                <Button onClick={() => setDialogContent(null)}>Close</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
     </div>
   );
 }
-
