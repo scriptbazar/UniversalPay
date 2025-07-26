@@ -1,22 +1,26 @@
 
 import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'interactive' }
->(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
-        variant === "interactive" && "transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-        className
-    )}
-    {...props}
-  />
-))
+  React.HTMLAttributes<HTMLDivElement> & { variant?: 'default' | 'interactive', asChild?: boolean }
+>(({ className, variant, asChild = false, ...props }, ref) => {
+  const Comp = asChild ? Slot : "div"
+  return (
+    <Comp
+      ref={ref}
+      className={cn(
+          "rounded-lg border bg-card text-card-foreground shadow-sm",
+          variant === "interactive" && "transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+          className
+      )}
+      {...props}
+    />
+  )
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
