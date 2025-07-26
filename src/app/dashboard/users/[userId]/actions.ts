@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, writeBatch } from "firebase/firestore";
+import { doc, updateDoc, writeBatch, collection } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import admin from 'firebase-admin';
 
@@ -77,6 +77,10 @@ export async function updateUserStatus(uid: string, status: 'Active' | 'Suspende
 
         const userDocRef = doc(db, "users", uid);
         batch.update(userDocRef, { status });
+
+        // Disable user in Firebase Auth if suspended
+        await admin.auth().updateUser(uid, { disabled: status === 'Suspended' });
+
 
         const auditLogRef = doc(collection(db, 'audit_logs'));
         batch.set(auditLogRef, {

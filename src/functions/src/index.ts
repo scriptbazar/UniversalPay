@@ -10,8 +10,11 @@
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
+import { getFirestore } from "firebase-admin/firestore";
 
 admin.initializeApp();
+const db = getFirestore();
+
 
 // This function now only assigns a default 'merchant' role upon creation.
 // It also creates an audit log for the new user.
@@ -24,7 +27,7 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
     });
     
     // Create an audit log for new user creation
-    await admin.firestore().collection('audit_logs').add({
+    await db.collection('audit_logs').add({
         type: 'USER_CREATED',
         message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: 'merchant'.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -50,7 +53,7 @@ exports.setAdminRole = onCall(async (request) => {
 
   // SECURITY FIX: Enforce that only existing admins can call this function.
   if (request.auth.token.role !== 'admin') {
-    await admin.firestore().collection('audit_logs').add({
+     await db.collection('audit_logs').add({
         type: 'SECURITY_ALERT',
         message: `Non-admin user ${callingUserEmail} (${callingUserUid}) attempted to set an admin role.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -74,11 +77,11 @@ exports.setAdminRole = onCall(async (request) => {
     await admin.auth().setCustomUserClaims(targetUid, { role: 'admin' });
 
     // Also update the role in Firestore user document (optional, but good for consistency)
-    const userRef = admin.firestore().collection('users').doc(targetUid);
+    const userRef = db.collection('users').doc(targetUid);
     await userRef.update({ role: 'admin' });
     
     // Create an audit log entry
-    await admin.firestore().collection('audit_logs').add({
+    await db.collection('audit_logs').add({
         type: 'ROLE_CHANGE',
         message: `Admin ${callingUserEmail} (${callingUserUid}) promoted ${targetEmail} (${targetUid}) to admin.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -91,7 +94,7 @@ exports.setAdminRole = onCall(async (request) => {
   } catch (error) {
     console.error(`Error setting admin role for user ${targetUid}:`, error);
     // Log failure as well
-     await admin.firestore().collection('audit_logs').add({
+     await db.collection('audit_logs').add({
         type: 'ERROR',
         message: `Admin ${callingUserEmail} (${callingUserUid}) failed to promote ${targetEmail} (${targetUid}) to admin.`,
         error: (error as Error).message,
