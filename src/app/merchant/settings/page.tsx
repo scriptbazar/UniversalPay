@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -193,12 +193,12 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
       <Separator />
 
       <Tabs defaultValue="profile">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full md:w-auto">
-          <TabsTrigger value="profile">Profile &amp; Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
-          <TabsTrigger value="kyc"><ShieldCheck className="mr-2 h-4 w-4"/>KYC &amp; Limits</TabsTrigger>
+        <TabsList className="grid grid-cols-1 md:grid-cols-5 w-full md:w-auto">
+          <TabsTrigger value="profile" className="gap-2"><User className="w-4 h-4"/>Profile &amp; Security</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4"/>Notifications</TabsTrigger>
+          <TabsTrigger value="branding" className="gap-2"><Palette className="w-4 h-4"/>Branding</TabsTrigger>
+          <TabsTrigger value="payment-methods" className="gap-2"><Wallet className="w-4 h-4"/>Payment Methods</TabsTrigger>
+          <TabsTrigger value="kyc" className="gap-2"><ShieldCheck className="w-4 h-4"/>KYC &amp; Limits</TabsTrigger>
         </TabsList>
         <TabsContent value="profile" className="pt-4">
           <Card>
@@ -611,4 +611,3 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
     </div>
   );
 }
-
