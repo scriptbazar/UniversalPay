@@ -248,6 +248,12 @@ export default function UserDetailPage() {
     });
   };
 
+  const handlePieClick = (data: any) => {
+    const methodName = data.name;
+    router.push(`/dashboard/users/${userId}/transactions/${methodName.toLowerCase()}`);
+  };
+
+
   if (loading) {
     return <div className="flex-grow flex items-center justify-center">Loading user details...</div>;
   }
@@ -362,7 +368,7 @@ export default function UserDetailPage() {
                  <Card className="mt-6">
                     <CardHeader>
                         <CardTitle>Payment Method Mix</CardTitle>
-                        <CardDescription>Breakdown of transactions by type.</CardDescription>
+                        <CardDescription>Breakdown of transactions by type. Click a slice for details.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={250}>
@@ -375,6 +381,8 @@ export default function UserDetailPage() {
                                     cy="50%" 
                                     outerRadius={80} 
                                     label 
+                                    onClick={handlePieClick}
+                                    className="cursor-pointer"
                                 >
                                     {paymentMethodData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
