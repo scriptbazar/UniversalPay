@@ -4,7 +4,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, PlusCircle, Trash2 } from "lucide-react";
+import { Edit, PlusCircle, Trash2, Users } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { logSubscriptionChange } from './actions';
+import { useRouter } from 'next/navigation';
+
 
 type Plan = {
     name: string;
@@ -46,6 +48,22 @@ const initialSubscriptionPlans: Plan[] = [
     { name: "Free", price: "$0/mo", transactions: "100/mo", features: "Basic UPI", api_quota: "1000 calls/mo" },
     { name: "Pro", price: "$49/mo", transactions: "1000/mo", features: "UPI & Crypto", api_quota: "10,000 calls/mo" },
     { name: "Premium", price: "$99/mo", transactions: "Unlimited", features: "White-Label", api_quota: "Unlimited" },
+];
+
+type SubscribedMerchant = {
+  id: string;
+  name: string;
+  email: string;
+  plan: 'Free' | 'Pro' | 'Premium';
+  status: 'Active' | 'Cancelled';
+  subscribedOn: string;
+};
+
+const subscribedMerchants: SubscribedMerchant[] = [
+    { id: 'user_1', name: 'Alice Johnson', email: 'alice@example.com', plan: 'Pro', status: 'Active', subscribedOn: '2023-10-15' },
+    { id: 'user_2', name: 'Bob Williams', email: 'bob@example.com', plan: 'Free', status: 'Active', subscribedOn: '2023-11-01' },
+    { id: 'user_3', name: 'Charlie Brown', email: 'charlie@example.com', plan: 'Premium', status: 'Active', subscribedOn: '2023-09-20' },
+    { id: 'user_4', name: 'Diana Miller', email: 'diana@example.com', plan: 'Pro', status: 'Cancelled', subscribedOn: '2023-08-05' },
 ];
 
 
@@ -113,6 +131,8 @@ export default function SubscriptionsPage() {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [plans, setPlans] = React.useState<Plan[]>(initialSubscriptionPlans);
   const { toast } = useToast();
+  const router = useRouter();
+
 
   const handleCreatePlan = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -144,6 +164,11 @@ export default function SubscriptionsPage() {
     }
     toast({ variant: 'destructive', title: 'Plan Deleted!', description: `${planName} has been removed.`});
   }
+
+  const handleRowClick = (merchantId: string) => {
+    router.push(`/dashboard/users/${merchantId}`);
+  }
+
 
   return (
     <div className="space-y-6">
@@ -238,6 +263,50 @@ export default function SubscriptionsPage() {
                                   </AlertDialogContent>
                                 </AlertDialog>
                             </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </CardContent>
+    </Card>
+
+    <Card className="mt-6">
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                <Users /> Subscribed Merchants
+            </CardTitle>
+            <CardDescription>
+                A list of merchants and their current subscription plans.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Merchant</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Subscribed On</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {subscribedMerchants.map(merchant => (
+                        <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
+                            <TableCell>
+                                <div className="font-medium">{merchant.name}</div>
+                                <div className="text-sm text-muted-foreground">{merchant.email}</div>
+                            </TableCell>
+                            <TableCell>
+                                <Badge variant={merchant.plan === 'Pro' ? 'default' : merchant.plan === 'Premium' ? 'default' : 'secondary'}>
+                                    {merchant.plan}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>
+                                <Badge variant={merchant.status === 'Active' ? 'default' : 'outline'}>
+                                    {merchant.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell>{merchant.subscribedOn}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
