@@ -1,17 +1,18 @@
 
 'use client';
 
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Copy, Search, File } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
 // Mock data generation function
 const generateMockTransactions = () => {
@@ -51,6 +52,9 @@ export default function MonthlyTransactionsPage() {
 
     const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         // Generate data on the client side to avoid hydration issues
@@ -58,9 +62,25 @@ export default function MonthlyTransactionsPage() {
     }, []);
 
     const monthlyTransactions = useMemo(() => {
-        if (!allMockTransactions.length) return [];
-        return allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
-    }, [month, allMockTransactions]);
+        let filtered = allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
+
+        if (searchTerm) {
+            filtered = filtered.filter(tx =>
+                tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        return filtered;
+    }, [month, allMockTransactions, searchTerm]);
+
+    const totalPages = Math.ceil(monthlyTransactions.length / itemsPerPage);
+    const paginatedTransactions = monthlyTransactions.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
 
     const handleRowClick = (transaction: Transaction) => {
         setSelectedTransaction(transaction);
@@ -82,9 +102,27 @@ export default function MonthlyTransactionsPage() {
             </Link>
 
             <Card>
-                <CardHeader>
-                    <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
-                    <CardDescription>A list of all transactions for the selected month. Click a row for details.</CardDescription>
+                <CardHeader className="flex flex-row items-center">
+                    <div className="grid gap-2">
+                        <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
+                        <CardDescription>A list of all transactions for the selected month. Click a row for details.</CardDescription>
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <div className="relative">
+                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                           <Input
+                             type="search"
+                             placeholder="Search ID, Merchant, Customer..."
+                             className="pl-8 w-64"
+                             value={searchTerm}
+                             onChange={(e) => setSearchTerm(e.target.value)}
+                           />
+                        </div>
+                        <Button size="sm" variant="outline" className="h-9 gap-1">
+                            <File className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -99,7 +137,7 @@ export default function MonthlyTransactionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {monthlyTransactions.map(tx => (
+                            {paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.id}</TableCell>
                                     <TableCell>{tx.merchant}</TableCell>
@@ -113,7 +151,35 @@ export default function MonthlyTransactionsPage() {
                             ))}
                         </TableBody>
                     </Table>
+                    {paginatedTransactions.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No transactions found for the selected month.</p>
+                    )}
                 </CardContent>
+                <CardFooter>
+                    <div className="flex justify-between items-center w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Page {currentPage} of {totalPages}. Total {monthlyTransactions.length} transactions.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
             </Card>
 
             <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
@@ -177,3 +243,5 @@ export default function MonthlyTransactionsPage() {
         </div>
     );
 }
+
+    
