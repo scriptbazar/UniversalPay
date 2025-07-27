@@ -102,7 +102,7 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-type DialogType = 'transaction' | 'withdrawalDetail' | 'monthlyTransactions' | null;
+type DialogType = 'transaction' | 'withdrawalDetail' | null;
 
 interface UserProfile {
     id: string;
@@ -138,7 +138,6 @@ export default function UserDetailPage() {
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
-  const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string; transactions: Transaction[] } | null>(null);
 
   const [txCurrentPage, setTxCurrentPage] = useState(1);
   const [wdCurrentPage, setWdCurrentPage] = useState(1);
@@ -264,15 +263,8 @@ export default function UserDetailPage() {
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const monthName = payload.name;
-    const monthIndex = payload.monthIndex;
-
-    const transactionsForMonth = allTransactions.filter(
-        (tx) => tx.date.getMonth() === monthIndex
-    );
-    
-    setMonthlyTransactions({ month: monthName, transactions: transactionsForMonth });
-    setDialogOpen('monthlyTransactions');
+    const monthSlug = payload.name.toLowerCase();
+    router.push(`/dashboard/analytics/transactions/${monthSlug}`);
   };
 
 
@@ -695,42 +687,6 @@ export default function UserDetailPage() {
                  <DialogFooter>
                     <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        
-        {/* Monthly Transactions Dialog */}
-        <Dialog open={dialogOpen === 'monthlyTransactions'} onOpenChange={() => setDialogOpen(null)}>
-            <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
-                </DialogHeader>
-                <div className="max-h-[60vh] overflow-y-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>ID</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Method</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {monthlyTransactions?.transactions.map(tx => (
-                                <TableRow key={tx.id}>
-                                    <TableCell className="font-mono">{tx.id}</TableCell>
-                                    <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
-                                    <TableCell>{tx.method}</TableCell>
-                                    <TableCell className="text-right">${tx.amount}</TableCell>
-                                </TableRow>
-                            ))}
-                            {monthlyTransactions?.transactions.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24">No transactions found for this month.</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
             </DialogContent>
         </Dialog>
     </div>
