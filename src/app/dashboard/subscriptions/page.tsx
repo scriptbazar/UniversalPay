@@ -181,12 +181,12 @@ export default function SubscriptionsPage() {
 
       <Tabs defaultValue="plans" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="plans">
-                <FileText className="mr-2 h-4 w-4" />
+            <TabsTrigger value="plans" className="gap-2">
+                <FileText className="h-4 w-4" />
                 All Plans
             </TabsTrigger>
-            <TabsTrigger value="merchants">
-                <Users className="mr-2 h-4 w-4" />
+            <TabsTrigger value="merchants" className="gap-2">
+                <Users className="h-4 w-4" />
                 Subscribed Merchants
             </TabsTrigger>
         </TabsList>
@@ -301,11 +301,12 @@ export default function SubscriptionsPage() {
                                 <TableHead>Plan</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Subscribed On</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {subscribedMerchants.map(merchant => (
-                                <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
+                                <TableRow key={merchant.id}>
                                     <TableCell>
                                         <div className="font-medium">{merchant.name}</div>
                                         <div className="text-sm text-muted-foreground">{merchant.email}</div>
@@ -321,6 +322,9 @@ export default function SubscriptionsPage() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>{merchant.subscribedOn}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="outline" size="sm" onClick={() => handleRowClick(merchant.id)}>View Profile</Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
