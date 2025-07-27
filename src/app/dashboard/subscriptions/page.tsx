@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { logSubscriptionChange } from './actions';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 type Plan = {
@@ -178,141 +179,150 @@ export default function SubscriptionsPage() {
       </div>
       <Separator />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>All Plans</CardTitle>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button><PlusCircle className="mr-2 h-4 w-4" /> Create New Plan</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Subscription Plan</DialogTitle>
-                  <DialogDescription>
-                    Define the details for a new subscription tier.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleCreatePlan}>
-                    <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="plan-name-create" className="text-right">Name</Label>
-                        <Input id="plan-name-create" name="plan-name-create" placeholder="e.g., Enterprise" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="plan-price-create" className="text-right">Price</Label>
-                        <Input id="plan-price-create" name="plan-price-create" placeholder="$199/mo" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="plan-txns-create" className="text-right">Transactions</Label>
-                        <Input id="plan-txns-create" name="plan-txns-create" placeholder="10,000/mo" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="plan-features-create" className="text-right">Features</Label>
-                        <Input id="plan-features-create" name="plan-features-create" placeholder="Comma-separated features" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="plan-api-quota-create" className="text-right">API Quota</Label>
-                        <Input id="plan-api-quota-create" name="plan-api-quota-create" placeholder="e.g., 50,000 calls/mo" className="col-span-3" />
-                    </div>
-                    </div>
-                    <DialogFooter>
-                    <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                    <Button type="submit">Create Plan</Button>
-                    </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Plan Name</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Transaction Limit</TableHead>
-                        <TableHead>Features</TableHead>
-                        <TableHead>API Quota</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {plans.map(plan => (
-                        <TableRow key={plan.name}>
-                            <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' ? 'default' : plan.name === 'Premium' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
-                            <TableCell>{plan.price}</TableCell>
-                            <TableCell>{plan.transactions}</TableCell>
-                            <TableCell>{plan.features}</TableCell>
-                            <TableCell>{plan.api_quota}</TableCell>
-                            <TableCell className="text-right space-x-2">
-                                <EditPlanDialog plan={plan} onSave={handleSavePlan} />
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the <strong>{plan.name}</strong> plan and may affect users currently subscribed to it.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeletePlan(plan.name)}>Delete Plan</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-    </Card>
-
-    <Card className="mt-6">
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Users /> Subscribed Merchants
-            </CardTitle>
-            <CardDescription>
-                A list of merchants and their current subscription plans.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Merchant</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Subscribed On</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {subscribedMerchants.map(merchant => (
-                        <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
-                            <TableCell>
-                                <div className="font-medium">{merchant.name}</div>
-                                <div className="text-sm text-muted-foreground">{merchant.email}</div>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={merchant.plan === 'Pro' ? 'default' : merchant.plan === 'Premium' ? 'default' : 'secondary'}>
-                                    {merchant.plan}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={merchant.status === 'Active' ? 'default' : 'outline'}>
-                                    {merchant.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>{merchant.subscribedOn}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-    </Card>
+      <Tabs defaultValue="plans" className="w-full">
+        <TabsList>
+            <TabsTrigger value="plans">All Plans</TabsTrigger>
+            <TabsTrigger value="merchants">Subscribed Merchants</TabsTrigger>
+        </TabsList>
+        <TabsContent value="plans" className="pt-4">
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>All Plans</CardTitle>
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                      <DialogTrigger asChild>
+                        <Button><PlusCircle className="mr-2 h-4 w-4" /> Create New Plan</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Subscription Plan</DialogTitle>
+                          <DialogDescription>
+                            Define the details for a new subscription tier.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleCreatePlan}>
+                            <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="plan-name-create" className="text-right">Name</Label>
+                                <Input id="plan-name-create" name="plan-name-create" placeholder="e.g., Enterprise" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="plan-price-create" className="text-right">Price</Label>
+                                <Input id="plan-price-create" name="plan-price-create" placeholder="$199/mo" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="plan-txns-create" className="text-right">Transactions</Label>
+                                <Input id="plan-txns-create" name="plan-txns-create" placeholder="10,000/mo" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="plan-features-create" className="text-right">Features</Label>
+                                <Input id="plan-features-create" name="plan-features-create" placeholder="Comma-separated features" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="plan-api-quota-create" className="text-right">API Quota</Label>
+                                <Input id="plan-api-quota-create" name="plan-api-quota-create" placeholder="e.g., 50,000 calls/mo" className="col-span-3" />
+                            </div>
+                            </div>
+                            <DialogFooter>
+                            <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                            <Button type="submit">Create Plan</Button>
+                            </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Plan Name</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead>Transaction Limit</TableHead>
+                                <TableHead>Features</TableHead>
+                                <TableHead>API Quota</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {plans.map(plan => (
+                                <TableRow key={plan.name}>
+                                    <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' ? 'default' : plan.name === 'Premium' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
+                                    <TableCell>{plan.price}</TableCell>
+                                    <TableCell>{plan.transactions}</TableCell>
+                                    <TableCell>{plan.features}</TableCell>
+                                    <TableCell>{plan.api_quota}</TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        <EditPlanDialog plan={plan} onSave={handleSavePlan} />
+                                        <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the <strong>{plan.name}</strong> plan and may affect users currently subscribed to it.
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <AlertDialogAction onClick={() => handleDeletePlan(plan.name)}>Delete Plan</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="merchants" className="pt-4">
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Users /> Subscribed Merchants
+                    </CardTitle>
+                    <CardDescription>
+                        A list of merchants and their current subscription plans.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Merchant</TableHead>
+                                <TableHead>Plan</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Subscribed On</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {subscribedMerchants.map(merchant => (
+                                <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
+                                    <TableCell>
+                                        <div className="font-medium">{merchant.name}</div>
+                                        <div className="text-sm text-muted-foreground">{merchant.email}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={merchant.plan === 'Pro' ? 'default' : merchant.plan === 'Premium' ? 'default' : 'secondary'}>
+                                            {merchant.plan}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={merchant.status === 'Active' ? 'default' : 'outline'}>
+                                            {merchant.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{merchant.subscribedOn}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
