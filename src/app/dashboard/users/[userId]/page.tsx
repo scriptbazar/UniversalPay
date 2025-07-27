@@ -20,7 +20,7 @@ import {
 import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, notFound } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
@@ -106,8 +106,15 @@ interface UserProfile {
     status: "Active" | "Suspended";
     avatar?: string;
     role?: string;
-    createdAt?: { seconds: number, nanoseconds: number };
+    createdAt?: { seconds: number, nanoseconds: number } | string;
 }
+
+const mockUsers: { [key: string]: UserProfile } = {
+    "user_1": { id: "user_1", fullName: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A", role: "merchant", createdAt: "2023-01-15T10:00:00Z" },
+    "user_2": { id: "user_2", fullName: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B", role: "merchant", createdAt: "2023-02-20T11:00:00Z" },
+    "user_3": { id: "user_3", fullName: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C", role: "merchant", createdAt: "2023-03-10T12:00:00Z" },
+    "user_4": { id: "user_4", fullName: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D", role: "merchant", createdAt: "2023-04-05T13:00:00Z" },
+};
 
 
 export default function UserDetailPage() {
@@ -134,60 +141,46 @@ export default function UserDetailPage() {
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    const userDocRef = doc(db, "users", userId);
-    
-    const unsubscribe = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-            const userData = { id: doc.id, ...doc.data() } as UserProfile;
-            setMerchant(userData);
-            if (userData.createdAt) {
-                setJoinedDate(new Date(userData.createdAt.seconds * 1000).toLocaleDateString());
-            }
-        } else {
-            toast({ variant: "destructive", title: "Error", description: "User not found." });
-            setMerchant(null);
-        }
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching user:", error);
-        toast({ variant: "destructive", title: "Error", description: "Failed to fetch user data." });
-        setLoading(false);
-    });
+    // Use mock data instead of Firestore
+    const userData = mockUsers[userId];
 
-    return () => unsubscribe();
-  }, [userId, toast]);
+    if (userData) {
+      setMerchant(userData);
+      if (userData.createdAt) {
+          setJoinedDate(new Date(userData.createdAt).toLocaleDateString());
+      }
+    } else {
+      setMerchant(null);
+      notFound();
+    }
+    setLoading(false);
+  }, [userId]);
 
 
   const handleToggleSuspend = async () => {
-    if (!merchant || !auth.currentUser) return;
+    if (!merchant) return;
     const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
-    const result = await updateUserStatus(merchant.id, newStatus, auth.currentUser.uid);
-    if(result.success) {
-        toast({
-            title: `Merchant ${newStatus}`,
-            description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
-        });
-    } else {
-        toast({ variant: "destructive", title: "Error", description: result.error });
-    }
+    
+    // In a real app, you'd call an action here. For mock, just update state.
+    setMerchant(prev => prev ? { ...prev, status: newStatus } : null);
+
+    toast({
+        title: `Merchant ${newStatus}`,
+        description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
+    });
   };
   
   const handleRoleChange = async () => {
-      if (!merchant || !auth.currentUser) return;
+      if (!merchant) return;
       const newRole = merchant.role === 'admin' ? 'merchant' : 'admin';
-      const result = await updateUserRole(merchant.id, newRole, auth.currentUser.uid);
-      if(result.success) {
-          toast({
-              title: 'Role Updated!',
-              description: `${merchant.fullName} is now a ${newRole}.`
-          });
-      } else {
-          toast({
-              variant: 'destructive',
-              title: 'Error',
-              description: result.error
-          });
-      }
+      
+      // In a real app, you'd call an action here. For mock, just update state.
+      setMerchant(prev => prev ? { ...prev, role: newRole } : null);
+
+      toast({
+          title: 'Role Updated!',
+          description: `${merchant.fullName} is now a ${newRole}.`
+      });
   };
 
   const handleWalletAdjustment = async (type: 'credit' | 'debit') => {
@@ -202,23 +195,11 @@ export default function UserDetailPage() {
           return;
       }
       
-      if (!auth.currentUser || !merchant) {
-          toast({ variant: 'destructive', title: 'Authentication Error' });
-          return;
-      }
-      
       const newBalance = type === 'credit' ? walletBalance + amount : walletBalance - amount;
       
-      const result = await adjustWalletBalance(merchant.id, amount, type, auth.currentUser.uid);
-      
-      if (result.success) {
-          setWalletBalance(newBalance);
-          toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
-          setAdjustmentAmount('');
-      } else {
-           toast({ variant: 'destructive', title: 'Error', description: result.error });
-      }
-
+      setWalletBalance(newBalance);
+      toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
+      setAdjustmentAmount('');
   };
 
   const handleLoginAsUser = () => {
