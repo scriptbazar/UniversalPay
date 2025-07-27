@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Image from "next/image";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +23,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams, notFound } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
-import { updateUserRole, updateUserStatus, adjustWalletBalance } from "./actions";
-import { onAuthStateChanged } from "firebase/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
@@ -37,6 +33,16 @@ const stats = {
     availableToWithdraw: "5,200.00",
     successRate: "98.2%",
 };
+
+const revenueData = [
+    { name: 'Jan', revenue: 4230, monthIndex: 0 },
+    { name: 'Feb', revenue: 3120, monthIndex: 1 },
+    { name: 'Mar', revenue: 5890, monthIndex: 2 },
+    { name: 'Apr', revenue: 4500, monthIndex: 3 },
+    { name: 'May', revenue: 6200, monthIndex: 4 },
+    { name: 'Jun', revenue: 7100, monthIndex: 5 },
+];
+
 
 const paymentMethodData = [
   { name: 'UPI', value: 20050, color: '#0088FE' },
@@ -51,16 +57,18 @@ type Transaction = {
     currency: string;
     method: string;
     status: string;
-    date: string;
+    date: Date;
 };
 
 const allTransactions: Transaction[] = [
-    { id: "UVRLP111111111", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: "2023-11-01" },
-    { id: "UVRLP222222222", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: "2023-11-01" },
-    { id: "UVRLP333333333", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: "2023-11-02" },
-    { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Page", status: "Success", date: "2023-11-02" },
-    { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Link", status: "Success", date: "2023-11-03" },
+    { id: "UVRLP111111111", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: new Date(2023, 0, 15) },
+    { id: "UVRLP222222222", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: new Date(2023, 1, 10) },
+    { id: "UVRLP333333333", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: new Date(2023, 2, 5) },
+    { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Page", status: "Success", date: new Date(2023, 3, 20) },
+    { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Link", status: "Success", date: new Date(2023, 4, 1) },
+    { id: "UVRLP666666666", amount: "450.00", currency: "USD", method: "Page", status: "Success", date: new Date(2023, 5, 12) },
 ];
+
 
 type Withdrawal = {
   id: string;
@@ -94,7 +102,7 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-type DialogType = 'transaction' | 'withdrawalDetail' | null;
+type DialogType = 'transaction' | 'withdrawalDetail' | 'monthlyTransactions' | null;
 
 interface UserProfile {
     id: string;
@@ -130,6 +138,8 @@ export default function UserDetailPage() {
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+  const [monthlyTransactions, setMonthlyTransactions] = useState<{ month: string; transactions: Transaction[] } | null>(null);
+
   const [txCurrentPage, setTxCurrentPage] = useState(1);
   const [wdCurrentPage, setWdCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -221,16 +231,14 @@ export default function UserDetailPage() {
   };
 
   const paginatedTransactions = useMemo(() => {
-      const startIndex = (txCurrentPage - 1) * itemsPerPage;
-      return allTransactions.slice(startIndex, startIndex + itemsPerPage);
-  }, [txCurrentPage, itemsPerPage]);
+      return allTransactions.slice(0, itemsPerPage);
+  }, []);
 
   const txTotalPages = Math.ceil(allTransactions.length / itemsPerPage);
   
   const paginatedWithdrawals = useMemo(() => {
-      const startIndex = (wdCurrentPage - 1) * itemsPerPage;
-      return withdrawalHistory.slice(startIndex, startIndex + itemsPerPage);
-  }, [wdCurrentPage, itemsPerPage]);
+      return withdrawalHistory.slice(0, itemsPerPage);
+  }, []);
 
   const wdTotalPages = Math.ceil(withdrawalHistory.length / itemsPerPage);
 
@@ -251,6 +259,20 @@ export default function UserDetailPage() {
   const handlePieClick = (data: any) => {
     const methodName = data.name;
     router.push(`/dashboard/users/${userId}/transactions/${methodName.toLowerCase()}`);
+  };
+
+  const handleBarClick = (data: any) => {
+    if (!data || !data.activePayload) return;
+    const payload = data.activePayload[0].payload;
+    const monthName = payload.name;
+    const monthIndex = payload.monthIndex;
+
+    const transactionsForMonth = allTransactions.filter(
+        (tx) => tx.date.getMonth() === monthIndex
+    );
+    
+    setMonthlyTransactions({ month: monthName, transactions: transactionsForMonth });
+    setDialogOpen('monthlyTransactions');
   };
 
 
@@ -365,35 +387,70 @@ export default function UserDetailPage() {
                         </CardContent>
                     </Card>
                 </div>
-                 <Card className="mt-6">
-                    <CardHeader>
-                        <CardTitle>Payment Method Mix</CardTitle>
-                        <CardDescription>Breakdown of transactions by type. Click a slice for details.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <PieChart>
-                                <Pie 
-                                    data={paymentMethodData} 
-                                    dataKey="value" 
-                                    nameKey="name" 
-                                    cx="50%" 
-                                    cy="50%" 
-                                    outerRadius={80} 
-                                    label 
-                                    onClick={handlePieClick}
-                                    className="cursor-pointer"
-                                >
-                                    {paymentMethodData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={formatTooltipValue} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                <div className="grid lg:grid-cols-5 gap-6 mt-6">
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle>Revenue Over Time</CardTitle>
+                            <CardDescription>Click a bar to view transactions for that month.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={revenueData} onClick={handleBarClick}>
+                                    <XAxis
+                                    dataKey="name"
+                                    stroke="#888888"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    />
+                                    <YAxis
+                                    stroke="#888888"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={(value) => `$${value/1000}K`}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                                        cursor={{fill: 'hsl(var(--muted))'}}
+                                    />
+                                    <Legend iconType="circle" />
+                                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="cursor-pointer" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Payment Method Mix</CardTitle>
+                            <CardDescription>Click a slice for details.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie 
+                                        data={paymentMethodData} 
+                                        dataKey="value" 
+                                        nameKey="name" 
+                                        cx="50%" 
+                                        cy="50%" 
+                                        outerRadius={80} 
+                                        label 
+                                        onClick={handlePieClick}
+                                        className="cursor-pointer"
+                                    >
+                                        {paymentMethodData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={formatTooltipValue} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </div>
             </TabsContent>
              <TabsContent value="transactions" className="mt-4">
                  <Card>
@@ -420,7 +477,7 @@ export default function UserDetailPage() {
                                         <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
                                     </TableCell>
                                     <TableCell>{p.method}</TableCell>
-                                    <TableCell>{p.date}</TableCell>
+                                    <TableCell>{p.date.toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
                                     </TableRow>
                                 ))}
@@ -575,7 +632,7 @@ export default function UserDetailPage() {
                         <Separator/>
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Date:</span>
-                            <span className="font-semibold">{selectedTransaction.date}</span>
+                            <span className="font-semibold">{selectedTransaction.date.toLocaleDateString()}</span>
                         </div>
                         <Separator/>
                         <div className="flex justify-between items-center">
@@ -638,6 +695,42 @@ export default function UserDetailPage() {
                  <DialogFooter>
                     <Button variant="outline" onClick={() => setDialogOpen(null)}>Close</Button>
                 </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        
+        {/* Monthly Transactions Dialog */}
+        <Dialog open={dialogOpen === 'monthlyTransactions'} onOpenChange={() => setDialogOpen(null)}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>ID</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Method</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {monthlyTransactions?.transactions.map(tx => (
+                                <TableRow key={tx.id}>
+                                    <TableCell className="font-mono">{tx.id}</TableCell>
+                                    <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
+                                    <TableCell>{tx.method}</TableCell>
+                                    <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>
+                            ))}
+                            {monthlyTransactions?.transactions.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">No transactions found for this month.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </DialogContent>
         </Dialog>
     </div>
