@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRightLeft, Bot, Repeat } from 'lucide-react';
+import { ArrowRightLeft, Bot, Repeat, Banknote, Bitcoin } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencies } from '@/lib/currencies';
 import { getCurrencyInfo } from '@/ai/flows/currencyInfoFlow';
@@ -198,7 +198,9 @@ export default function CurrencyConverterPage() {
       <div className="grid lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>Fiat Currency Converter</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+                <Banknote /> Fiat Currency Converter
+            </CardTitle>
             <CardDescription>Convert between global government-issued currencies.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -245,7 +247,9 @@ export default function CurrencyConverterPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Crypto Converter</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+                <Bitcoin /> Crypto Converter
+            </CardTitle>
             <CardDescription>Convert between cryptocurrencies and major fiat.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
