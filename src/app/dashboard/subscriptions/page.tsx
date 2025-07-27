@@ -4,7 +4,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, PlusCircle, Trash2, Users } from "lucide-react";
+import { Edit, PlusCircle, Trash2, Users, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -180,9 +180,15 @@ export default function SubscriptionsPage() {
       <Separator />
 
       <Tabs defaultValue="plans" className="w-full">
-        <TabsList>
-            <TabsTrigger value="plans">All Plans</TabsTrigger>
-            <TabsTrigger value="merchants">Subscribed Merchants</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="plans">
+                <FileText className="mr-2 h-4 w-4" />
+                All Plans
+            </TabsTrigger>
+            <TabsTrigger value="merchants">
+                <Users className="mr-2 h-4 w-4" />
+                Subscribed Merchants
+            </TabsTrigger>
         </TabsList>
         <TabsContent value="plans" className="pt-4">
              <Card>
