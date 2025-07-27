@@ -3,11 +3,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { getTickets, addTicket, type Ticket } from '@/lib/ticketsData';
@@ -111,6 +111,9 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
 export default function MerchantSupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const router = useRouter();
 
   const fetchTickets = () => {
@@ -127,11 +130,25 @@ export default function MerchantSupportPage() {
   };
 
   const filteredTickets = useMemo(() => {
-    return tickets.filter(ticket => {
-        if (filter === 'all') return true;
-        return ticket.status.toLowerCase().replace(' ', '-') === filter;
-    });
-  }, [tickets, filter]);
+    let filtered = tickets;
+    if (filter !== 'all') {
+        filtered = filtered.filter(ticket => ticket.status.toLowerCase().replace(' ', '-') === filter);
+    }
+    if (searchTerm) {
+        filtered = filtered.filter(ticket => 
+            ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
+    return filtered;
+  }, [tickets, filter, searchTerm]);
+
+  const paginatedTickets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTickets.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTickets, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
 
   const ticketCounts = useMemo(() => {
     const counts = {
@@ -169,8 +186,22 @@ export default function MerchantSupportPage() {
         </div>
         <Card className="mt-4">
             <CardHeader>
-                <CardTitle>Your Tickets</CardTitle>
-                <CardDescription>A list of all your support tickets.</CardDescription>
+                <div className='flex justify-between items-center'>
+                    <div>
+                        <CardTitle>Your Tickets</CardTitle>
+                        <CardDescription>A list of all your support tickets.</CardDescription>
+                    </div>
+                    <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search by subject or ID..."
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
             <Table>
@@ -184,7 +215,7 @@ export default function MerchantSupportPage() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredTickets.map((ticket) => (
+                {paginatedTickets.map((ticket) => (
                     <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
                     <TableCell className="font-mono">{ticket.id}</TableCell>
                     <TableCell className="font-medium">{ticket.subject}</TableCell>
@@ -197,9 +228,41 @@ export default function MerchantSupportPage() {
                     <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
                     </TableRow>
                 ))}
+                 {paginatedTickets.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">
+                            No tickets found.
+                        </TableCell>
+                    </TableRow>
+                )}
                 </TableBody>
             </Table>
             </CardContent>
+            <CardFooter>
+                <div className="flex justify-between items-center w-full">
+                    <div className="text-xs text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
         </Card>
       </Tabs>
     </div>
