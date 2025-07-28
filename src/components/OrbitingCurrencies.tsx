@@ -60,10 +60,10 @@ const OrbitingCurrencies = () => {
 
              {/* Orbit 4 */}
             <div className="absolute h-[26rem] w-[26rem] rounded-full border-2 border-dashed border-muted animate-orbit-4">
-                 <div className="absolute top-1/4 left-0 -translate-x-1/2 -translate-y-1/4">
+                 <div className="absolute top-1/4 left-0 -translate-x-1/2 -translate-y-1/2">
                     <div className="animate-orbit-4-reverse"><CurrencyIcon>A$</CurrencyIcon></div> {/* AUD */}
                 </div>
-                 <div className="absolute bottom-1/4 right-0 translate-x-1/2 translate-y-1/4">
+                 <div className="absolute bottom-1/4 right-0 translate-x-1/2 translate-y-1/2">
                     <div className="animate-orbit-4-reverse"><CurrencyIcon>د.إ</CurrencyIcon></div> {/* AED */}
                 </div>
             </div>
