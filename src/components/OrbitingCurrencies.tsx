@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Logo } from "./logo";
@@ -9,9 +8,11 @@ import React from 'react';
 // The outer div handles positioning on the circle.
 // The inner div handles the appearance and counter-rotation to keep the icon upright.
 const CurrencyIcon = ({ children, positionClasses, animationClass }: { children: React.ReactNode, positionClasses: string, animationClass: string }) => (
-    <div className={`absolute ${positionClasses}`}>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-background border shadow-md text-primary ${animationClass}`}>
-            {children}
+    <div className={`absolute w-full h-full ${positionClasses}`}>
+        <div className={`absolute -m-5 ${animationClass}`}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background border shadow-md text-primary">
+                {children}
+            </div>
         </div>
     </div>
 );
@@ -26,29 +27,29 @@ const OrbitingCurrencies = () => {
 
             {/* Orbit 1 */}
             <div className="absolute h-40 w-40 rounded-full border-2 border-dashed border-muted animate-orbit-1">
-                <CurrencyIcon positionClasses="top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" animationClass="animate-orbit-1-reverse"><DollarSign className="w-5 h-5"/></CurrencyIcon>
-                <CurrencyIcon positionClasses="bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2" animationClass="animate-orbit-1-reverse"><Euro className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon positionClasses="top-1/2 left-0" animationClass="animate-orbit-1-reverse"><DollarSign className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon positionClasses="top-1/2 left-full" animationClass="animate-orbit-1-reverse"><Euro className="w-5 h-5"/></CurrencyIcon>
             </div>
             
              {/* Orbit 2 */}
             <div className="absolute h-60 w-60 rounded-full border-2 border-dashed border-muted animate-orbit-2">
-                <CurrencyIcon positionClasses="top-1/2 right-0 -translate-y-1/2 translate-x-1/2" animationClass="animate-orbit-2-reverse"><IndianRupee className="w-5 h-5"/></CurrencyIcon>
-                <CurrencyIcon positionClasses="top-1/2 left-0 -translate-y-1/2 -translate-x-1/2" animationClass="animate-orbit-2-reverse"><PoundSterling className="w-5 h-5"/></CurrencyIcon>
-                <CurrencyIcon positionClasses="top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" animationClass="animate-orbit-2-reverse"><Bitcoin className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon positionClasses="top-1/2 left-0" animationClass="animate-orbit-2-reverse"><IndianRupee className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon positionClasses="top-0 left-1/2" animationClass="animate-orbit-2-reverse"><PoundSterling className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon positionClasses="top-full left-1/2" animationClass="animate-orbit-2-reverse"><Bitcoin className="w-5 h-5"/></CurrencyIcon>
             </div>
             
             {/* Orbit 3 */}
             <div className="absolute h-80 w-80 rounded-full border-2 border-dashed border-muted animate-orbit-3">
-                <CurrencyIcon positionClasses="top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" animationClass="animate-orbit-3-reverse">¥</CurrencyIcon> {/* Yen */}
-                <CurrencyIcon positionClasses="bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2" animationClass="animate-orbit-3-reverse">Fr</CurrencyIcon> {/* Franc */}
-                <CurrencyIcon positionClasses="top-1/2 right-0 -translate-y-1/2 translate-x-1/2" animationClass="animate-orbit-3-reverse">₽</CurrencyIcon> {/* Ruble */}
-                <CurrencyIcon positionClasses="top-1/2 left-0 -translate-y-1/2 -translate-x-1/2" animationClass="animate-orbit-3-reverse">C$</CurrencyIcon> {/* CAD */}
+                <CurrencyIcon positionClasses="top-0 left-1/2" animationClass="animate-orbit-3-reverse">¥</CurrencyIcon> {/* Yen */}
+                <CurrencyIcon positionClasses="top-full left-1/2" animationClass="animate-orbit-3-reverse">Fr</CurrencyIcon> {/* Franc */}
+                <CurrencyIcon positionClasses="top-1/2 left-full" animationClass="animate-orbit-3-reverse">₽</CurrencyIcon> {/* Ruble */}
+                <CurrencyIcon positionClasses="top-1/2 left-0" animationClass="animate-orbit-3-reverse">C$</CurrencyIcon> {/* CAD */}
             </div>
 
              {/* Orbit 4 */}
             <div className="absolute h-[26rem] w-[26rem] rounded-full border-2 border-dashed border-muted animate-orbit-4">
-                 <CurrencyIcon positionClasses="top-1/4 left-0 -translate-x-1/2 -translate-y-1/2" animationClass="animate-orbit-4-reverse">A$</CurrencyIcon> {/* AUD */}
-                 <CurrencyIcon positionClasses="bottom-1/4 right-0 translate-x-1/2 translate-y-1/2" animationClass="animate-orbit-4-reverse">د.إ</CurrencyIcon> {/* AED */}
+                 <CurrencyIcon positionClasses="top-[15%] left-[15%]" animationClass="animate-orbit-4-reverse">A$</CurrencyIcon> {/* AUD */}
+                 <CurrencyIcon positionClasses="top-[85%] left-[85%]" animationClass="animate-orbit-4-reverse">د.إ</CurrencyIcon> {/* AED */}
             </div>
         </div>
     )
