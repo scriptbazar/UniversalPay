@@ -187,7 +187,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="features" className="py-20 px-4 md:px-8 bg-muted">
+        <section id="features" className="py-20 px-4 md:px-8 bg-slate-50 dark:bg-slate-900">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -248,7 +248,7 @@ export default function Home() {
             </div>
         </section>
 
-        <section id="pricing" className="py-20 px-4 md:px-8 bg-secondary">
+        <section id="pricing" className="py-20 px-4 md:px-8 bg-muted">
             <div className="container mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
