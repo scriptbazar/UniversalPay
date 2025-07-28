@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
@@ -21,11 +22,11 @@ export function Toaster() {
         return (
           <Toast key={id} {...props}>
              <div className="flex items-start gap-3">
-               <div className="flex-shrink-0">
+               <div className="flex-shrink-0 mt-1">
                 {isDestructive ? (
-                    <AlertCircle className="h-6 w-6 text-destructive" />
+                    <AlertCircle className="h-5 w-5 text-destructive-foreground" />
                 ) : (
-                    <CheckCircle className="h-6 w-6 text-primary" />
+                    <CheckCircle className="h-5 w-5 text-primary" />
                 )}
                </div>
               <div className="grid gap-1">
