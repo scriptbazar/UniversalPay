@@ -49,10 +49,13 @@ import { Logo } from "@/components/logo";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { signOutUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
@@ -71,6 +74,39 @@ const navItems = [
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
 
+function DashboardSkeleton() {
+    return (
+        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <div className="hidden border-r bg-card md:block">
+                <div className="flex h-full max-h-screen flex-col gap-2">
+                    <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+                        <Skeleton className="h-8 w-32" />
+                    </div>
+                    <div className="flex-1 overflow-auto py-2">
+                        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+                            {navItems.map((item) => (
+                                <Skeleton key={item.href} className="h-10 w-full mb-2" />
+                            ))}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+             <div className="flex flex-col">
+                 <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
+                    <div className="w-full flex-1" />
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                    <Skeleton className="h-9 w-9 rounded-full" />
+                 </header>
+                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                 </main>
+            </div>
+        </div>
+    );
+}
+
+
 export default function MerchantDashboardLayout({
   children,
 }: {
@@ -79,7 +115,26 @@ export default function MerchantDashboardLayout({
     const pathname = usePathname();
     const router = useRouter();
     const { toast } = useToast();
-    const [merchantName, setMerchantName] = useState("John Doe");
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const tokenResult = await user.getIdTokenResult();
+                if (tokenResult.claims.role === 'merchant') {
+                    setUser(user);
+                } else {
+                    await signOutUser();
+                    router.push('/admin'); // Redirect non-merchants to admin login
+                }
+            } else {
+                router.push('/login'); // If no user, redirect to merchant login
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [router]);
 
     const handleLogout = async () => {
         const { success, error } = await signOutUser();
@@ -90,13 +145,15 @@ export default function MerchantDashboardLayout({
             toast({ variant: 'destructive', title: "Logout Failed", description: error });
         }
     };
+    
+    if (loading) {
+        return <DashboardSkeleton />;
+    }
 
-    const childrenWithProps = React.Children.map(children, child => {
-      if (React.isValidElement(child)) {
-        return React.cloneElement(child, { merchantName, setMerchantName } as any);
-      }
-      return child;
-    });
+    if (!user) {
+        return null; // The useEffect hook will handle the redirect.
+    }
+
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -201,7 +258,7 @@ export default function MerchantDashboardLayout({
           </DropdownMenu>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-          {childrenWithProps}
+          {children}
         </main>
       </div>
     </div>
