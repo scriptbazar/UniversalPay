@@ -2,7 +2,7 @@
 'use client';
 
 import { Logo } from "./logo";
-import { DollarSign, Euro, IndianRupee, PoundSterling, Bitcoin, JapaneseYen, SwissFranc } from 'lucide-react';
+import { DollarSign, Euro, IndianRupee, PoundSterling, Bitcoin, JapaneseYen, SwissFranc, Globe } from 'lucide-react';
 import React from 'react';
 
 // A dedicated component for each icon on the orbit.
