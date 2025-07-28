@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { sendPasswordReset } from "@/lib/auth";
-import { Mail } from "lucide-react";
+import { Mail, KeyRound } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
@@ -53,7 +54,9 @@ export default function ForgotPasswordPage() {
                 <Link href="/" className="flex justify-center mb-4">
                     <Logo />
                 </Link>
-                <CardTitle className="text-2xl">Reset Your Password</CardTitle>
+                <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                    <KeyRound className="h-6 w-6" /> Reset Your Password
+                </CardTitle>
                 <CardDescription>Enter your email and we'll send you a link to get back into your account.</CardDescription>
               </CardHeader>
               <form onSubmit={handleSubmit}>

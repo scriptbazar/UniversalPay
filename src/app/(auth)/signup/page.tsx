@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { createUser, signInWithSocial } from "@/lib/auth";
 import { GoogleIcon, GitHubIcon, FacebookIcon } from "@/components/icons";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 
 
 export default function SignupPage() {
@@ -98,7 +98,9 @@ export default function SignupPage() {
           <Link href="/" className="flex justify-center mb-4">
             <Logo />
           </Link>
-          <CardTitle className="text-2xl">Create a Merchant Account</CardTitle>
+          <CardTitle className="text-2xl flex items-center justify-center gap-2">
+              <UserPlus className="h-6 w-6" /> Create a Merchant Account
+          </CardTitle>
           <CardDescription>Join UniversalPay and start accepting payments today</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>

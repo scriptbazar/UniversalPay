@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { signInUser, signInWithSocial } from "@/lib/auth";
 import { GoogleIcon, GitHubIcon, FacebookIcon } from "@/components/icons";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 
 
 export default function LoginPage() {
@@ -85,7 +85,9 @@ export default function LoginPage() {
               <Link href="/" className="flex justify-center mb-4">
                 <Logo />
               </Link>
-            <CardTitle className="text-2xl">Merchant Login</CardTitle>
+            <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                <LogIn className="h-6 w-6" /> Merchant Login
+            </CardTitle>
             <CardDescription>Enter your credentials to access your merchant dashboard</CardDescription>
             </CardHeader>
             <form onSubmit={handleCredentialSubmit}>

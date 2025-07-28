@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { signInUser } from "@/lib/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, Info, Eye, EyeOff } from "lucide-react";
+import { ShieldCheck, Info, Eye, EyeOff, Shield } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -62,7 +62,9 @@ export default function AdminLoginPage() {
           <Link href="/" className="flex justify-center mb-4">
             <Logo />
           </Link>
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
+          <CardTitle className="text-2xl flex items-center justify-center gap-2">
+              <Shield className="h-6 w-6" /> Admin Login
+          </CardTitle>
           <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
         </CardHeader>
         <form onSubmit={handleCredentialSubmit}>
