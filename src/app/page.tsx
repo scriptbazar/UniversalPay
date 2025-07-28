@@ -187,7 +187,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="features" className="py-20 px-4 md:px-8 bg-card/50">
+        <section id="features" className="py-20 px-4 md:px-8 bg-muted">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -210,7 +210,7 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="py-20 px-4 md:px-8">
+        <section className="py-20 px-4 md:px-8 bg-background">
             <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
                 <div className="space-y-6">
                     <h2 className="text-3xl md:text-4xl font-bold">One Platform, Global Reach</h2>
@@ -248,7 +248,7 @@ export default function Home() {
             </div>
         </section>
 
-        <section id="pricing" className="py-20 px-4 md:px-8 bg-card/50">
+        <section id="pricing" className="py-20 px-4 md:px-8 bg-secondary">
             <div className="container mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
@@ -288,7 +288,7 @@ export default function Home() {
             </div>
         </section>
 
-        <section id="faq" className="py-20 px-4 md:px-8">
+        <section id="faq" className="py-20 px-4 md:px-8 bg-background">
             <div className="container mx-auto max-w-5xl">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
