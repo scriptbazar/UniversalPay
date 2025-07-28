@@ -90,10 +90,12 @@ const getStatusBadgeVariant = (status: string) => {
         case 'completed':
         case 'success':
         case 'active':
+        case 'verified':
             return 'default';
         case 'pending':
             return 'secondary';
         case 'suspended':
+        case 'not started':
             return 'destructive';
         case 'failed':
             return 'destructive';
@@ -114,14 +116,15 @@ interface UserProfile {
     status: "Active" | "Suspended";
     avatar?: string;
     role?: string;
+    kycStatus?: "Verified" | "Pending" | "Not Started";
     createdAt?: { seconds: number, nanoseconds: number } | string;
 }
 
 const mockUsers: { [key: string]: UserProfile } = {
-    "user_1": { id: "user_1", fullName: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A", role: "merchant", createdAt: "2023-01-15T10:00:00Z" },
-    "user_2": { id: "user_2", fullName: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B", role: "merchant", createdAt: "2023-02-20T11:00:00Z" },
-    "user_3": { id: "user_3", fullName: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C", role: "merchant", createdAt: "2023-03-10T12:00:00Z" },
-    "user_4": { id: "user_4", fullName: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D", role: "merchant", createdAt: "2023-04-05T13:00:00Z" },
+    "user_1": { id: "user_1", fullName: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A", role: "merchant", kycStatus: "Verified", createdAt: "2023-01-15T10:00:00Z" },
+    "user_2": { id: "user_2", fullName: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B", role: "merchant", kycStatus: "Pending", createdAt: "2023-02-20T11:00:00Z" },
+    "user_3": { id: "user_3", fullName: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C", role: "merchant", kycStatus: "Not Started", createdAt: "2023-03-10T12:00:00Z" },
+    "user_4": { id: "user_4", fullName: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D", role: "merchant", kycStatus: "Verified", createdAt: "2023-04-05T13:00:00Z" },
 };
 
 
@@ -257,14 +260,14 @@ export default function UserDetailPage() {
 
   const handlePieClick = (data: any) => {
     const methodName = data.name;
-    router.push(`/dashboard/users/${userId}/transactions/${methodName.toLowerCase()}`);
+    router.push(`/dashboard/users/${userId}/transactions/by-method/${methodName.toLowerCase()}`);
   };
 
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
     const monthSlug = payload.name.toLowerCase();
-    router.push(`/dashboard/users/${userId}/transactions/${monthSlug}`);
+    router.push(`/dashboard/users/${userId}/transactions/by-month/${monthSlug}`);
   };
 
 
@@ -328,6 +331,7 @@ export default function UserDetailPage() {
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>{merchant.status}</Badge>
                     <Badge variant="secondary">Plan: {merchant.plan || 'Free'}</Badge>
                     <Badge variant={merchant.role === 'admin' ? 'destructive' : 'outline'}>Role: {merchant.role || 'merchant'}</Badge>
+                    <Badge variant={getStatusBadgeVariant(merchant.kycStatus || 'Not Started')}>KYC: {merchant.kycStatus || 'Not Started'}</Badge>
                     <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4"/> Joined: {joinedDate}</span>
                 </div>
             </div>

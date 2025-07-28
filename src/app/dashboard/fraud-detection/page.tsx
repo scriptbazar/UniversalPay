@@ -26,11 +26,11 @@ type Transaction = {
     amount: string;
     riskScore: number;
     reason: string;
-    status: "Flagged" | "Held" | "Blocked";
+    status: "Flagged" | "Held" | "Blocked" | "KYC Requested";
     timestamp: string;
 };
 
-const suspiciousTransactions: Transaction[] = [
+const suspiciousTransactionsData: Transaction[] = [
   {
     id: "UVRLP123456789",
     user: "user_1",
@@ -82,15 +82,20 @@ const getRiskBadgeVariant = (score: number) => {
 const getStatusBadgeVariant = (status: Transaction["status"]) => {
     if (status === "Blocked") return "destructive";
     if (status === "Held") return "secondary";
+    if (status === "KYC Requested") return "default";
     return "outline"
 }
 
 
 export default function FraudDetectionPage() {
   const { toast } = useToast();
+  const [transactions, setTransactions] = useState<Transaction[]>(suspiciousTransactionsData);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
   const handleAction = (action: string, txId: string) => {
+    if (action === "Requested KYC") {
+        setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: "KYC Requested" } : tx));
+    }
     toast({
       title: "Action Triggered",
       description: `${action} for transaction ${txId}.`,
@@ -134,7 +139,7 @@ export default function FraudDetectionPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {suspiciousTransactions.map((tx) => (
+              {transactions.map((tx) => (
                 <TableRow key={tx.id} onClick={() => setSelectedTx(tx)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{tx.id}</TableCell>
                   <TableCell>{tx.user} <br/> <span className="text-muted-foreground text-xs">{tx.ip}</span></TableCell>
