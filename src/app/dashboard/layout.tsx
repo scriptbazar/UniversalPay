@@ -45,8 +45,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { doc, getDoc } from "firebase/firestore";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
@@ -114,15 +115,18 @@ export default function AdminDashboardLayout({
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const tokenResult = await user.getIdTokenResult();
-                if (tokenResult.claims.role === 'admin') {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists() && userDoc.data().role === 'admin') {
                     setUser(user);
                 } else {
+                    // If not an admin, sign out and redirect to merchant login
                     await signOutUser();
-                    router.push('/login'); // Redirect non-admins to merchant login
+                    router.push('/login'); 
                 }
             } else {
-                router.push('/admin'); // If no user, redirect to admin login
+                // If no user is logged in, redirect to admin login
+                router.push('/admin'); 
             }
             setLoading(false);
         });
@@ -134,7 +138,7 @@ export default function AdminDashboardLayout({
         const { success, error } = await signOutUser();
         if (success) {
             toast({ title: "Logged Out", description: "You have been successfully logged out." });
-            router.push('/login');
+            router.push('/admin');
         } else {
             toast({ variant: 'destructive', title: "Logout Failed", description: error });
         }

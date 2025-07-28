@@ -54,8 +54,9 @@ import { signOutUser } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { doc, getDoc } from "firebase/firestore";
 
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
@@ -121,15 +122,18 @@ export default function MerchantDashboardLayout({
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const tokenResult = await user.getIdTokenResult();
-                if (tokenResult.claims.role === 'merchant') {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists() && userDoc.data().role === 'merchant') {
                     setUser(user);
                 } else {
+                    // If not a merchant, sign out and redirect to admin login
                     await signOutUser();
-                    router.push('/admin'); // Redirect non-merchants to admin login
+                    router.push('/admin'); 
                 }
             } else {
-                router.push('/login'); // If no user, redirect to merchant login
+                 // If no user, redirect to merchant login
+                router.push('/login');
             }
             setLoading(false);
         });
