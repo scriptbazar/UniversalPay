@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import RealWorldMap from "@/components/RealWorldMap";
@@ -211,13 +211,39 @@ export default function Home() {
         </section>
         
         <section className="py-20 px-4 md:px-8 bg-card/50">
-            <div className="container mx-auto text-center">
-                 <h2 className="text-3xl md:text-4xl font-bold mb-4">One Platform, Global Reach</h2>
-                 <p className="text-lg text-muted-foreground mb-12 max-w-3xl mx-auto">
-                    From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale.
-                 </p>
-                 <div className="rounded-lg shadow-2xl mx-auto overflow-hidden bg-background">
-                    <RealWorldMap />
+            <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
+                <div className="space-y-6">
+                    <h2 className="text-3xl md:text-4xl font-bold">One Platform, Global Reach</h2>
+                    <p className="text-lg text-muted-foreground">
+                        From local payments in India to cross-border crypto transactions, UniversalPay provides the infrastructure you need to scale. Accept payments from customers worldwide in their local currencies, and receive settlements in yours.
+                    </p>
+                    <ul className="space-y-3">
+                        <li className="flex items-start">
+                            <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                            <span>Unified dashboard for all your global and local transactions.</span>
+                        </li>
+                        <li className="flex items-start">
+                             <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                            <span>Automatic currency conversion at competitive rates.</span>
+                        </li>
+                         <li className="flex items-start">
+                             <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                            <span>Secure crypto settlements to your preferred wallet.</span>
+                        </li>
+                    </ul>
+                    <Button asChild size="lg" variant="outline">
+                        <Link href="/#features">Explore Global Payments <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                    </Button>
+                </div>
+                <div className="rounded-lg shadow-2xl overflow-hidden aspect-square">
+                    <Image
+                      src="https://placehold.co/600x600.png"
+                      alt="Global payment network"
+                      width={600}
+                      height={600}
+                      className="w-full h-full object-cover"
+                      data-ai-hint="digital globe network"
+                    />
                  </div>
             </div>
         </section>
