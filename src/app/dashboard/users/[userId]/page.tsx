@@ -264,7 +264,7 @@ export default function UserDetailPage() {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
     const monthSlug = payload.name.toLowerCase();
-    router.push(`/dashboard/analytics/transactions/${monthSlug}`);
+    router.push(`/dashboard/users/${userId}/transactions/${monthSlug}`);
   };
 
 
