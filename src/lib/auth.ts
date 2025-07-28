@@ -54,6 +54,21 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        const idTokenResult = await user.getIdTokenResult();
+        const userRole = idTokenResult.claims.role;
+
+        // Security Check: Enforce that only admins can log in via the admin page.
+        if (loginType === 'admin' && userRole !== 'admin') {
+            await signOut(auth);
+            return { success: false, error: "Access denied. Only administrators can log in here." };
+        }
+
+        // Security Check: Enforce that only merchants can log in via the merchant page.
+        if (loginType === 'merchant' && userRole !== 'merchant') {
+            await signOut(auth);
+            return { success: false, error: "Access denied. Please use the Admin Login page." };
+        }
+        
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -62,22 +77,7 @@ export async function signInUser(email: string, password: string, loginType: 'ad
             return { success: false, error: "User data not found in database. Please contact support." };
         }
 
-        const userData = userDoc.data();
-        const firestoreRole = userData.role || 'merchant';
-        
-        // Security Check: Enforce that only admins can log in via the admin page.
-        if (loginType === 'admin' && firestoreRole !== 'admin') {
-            await signOut(auth);
-            return { success: false, error: "Access denied. Only administrators can log in here." };
-        }
-
-        // Security Check: Enforce that only merchants can log in via the merchant page.
-        if (loginType === 'merchant' && firestoreRole !== 'merchant') {
-            await signOut(auth);
-            return { success: false, error: "Access denied. Please use the Admin Login page." };
-        }
-
-        return { success: true, user: { uid: user.uid, ...userData } };
+        return { success: true, user: { uid: user.uid, ...userDoc.data() } };
         
     } catch (error: any) {
         console.error("Error signing in:", error);
