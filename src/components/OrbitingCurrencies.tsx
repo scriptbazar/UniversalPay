@@ -21,51 +21,29 @@ const OrbitingCurrencies = () => {
 
             {/* Orbit 1 */}
             <div className="absolute h-40 w-40 rounded-full border-2 border-dashed border-muted animate-orbit-1">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="animate-orbit-1-reverse"><CurrencyIcon><DollarSign className="w-5 h-5"/></CurrencyIcon></div>
-                </div>
-                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                    <div className="animate-orbit-1-reverse"><CurrencyIcon><Euro className="w-5 h-5"/></CurrencyIcon></div>
-                </div>
+                <CurrencyIcon className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-orbit-1-reverse"><DollarSign className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon className="bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 animate-orbit-1-reverse"><Euro className="w-5 h-5"/></CurrencyIcon>
             </div>
             
              {/* Orbit 2 */}
             <div className="absolute h-60 w-60 rounded-full border-2 border-dashed border-muted animate-orbit-2">
-                 <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2">
-                     <div className="animate-orbit-2-reverse"><CurrencyIcon><IndianRupee className="w-5 h-5"/></CurrencyIcon></div>
-                </div>
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2">
-                    <div className="animate-orbit-2-reverse"><CurrencyIcon><PoundSterling className="w-5 h-5"/></CurrencyIcon></div>
-                </div>
-                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="animate-orbit-2-reverse"><CurrencyIcon><Bitcoin className="w-5 h-5"/></CurrencyIcon></div>
-                </div>
+                <CurrencyIcon className="top-1/2 right-0 -translate-y-1/2 translate-x-1/2 animate-orbit-2-reverse"><IndianRupee className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon className="top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 animate-orbit-2-reverse"><PoundSterling className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-orbit-2-reverse"><Bitcoin className="w-5 h-5"/></CurrencyIcon>
             </div>
             
             {/* Orbit 3 */}
             <div className="absolute h-80 w-80 rounded-full border-2 border-dashed border-muted animate-orbit-3">
-                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="animate-orbit-3-reverse"><CurrencyIcon>¥</CurrencyIcon></div> {/* Yen */}
-                </div>
-                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                    <div className="animate-orbit-3-reverse"><CurrencyIcon>Fr</CurrencyIcon></div> {/* Franc */}
-                </div>
-                <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2">
-                   <div className="animate-orbit-3-reverse"><CurrencyIcon>₽</CurrencyIcon></div> {/* Ruble */}
-                </div>
-                 <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2">
-                   <div className="animate-orbit-3-reverse"><CurrencyIcon>C$</CurrencyIcon></div> {/* CAD */}
-                </div>
+                <CurrencyIcon className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-orbit-3-reverse">¥</CurrencyIcon> {/* Yen */}
+                <CurrencyIcon className="bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 animate-orbit-3-reverse">Fr</CurrencyIcon> {/* Franc */}
+                <CurrencyIcon className="top-1/2 right-0 -translate-y-1/2 translate-x-1/2 animate-orbit-3-reverse">₽</CurrencyIcon> {/* Ruble */}
+                <CurrencyIcon className="top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 animate-orbit-3-reverse">C$</CurrencyIcon> {/* CAD */}
             </div>
 
              {/* Orbit 4 */}
             <div className="absolute h-[26rem] w-[26rem] rounded-full border-2 border-dashed border-muted animate-orbit-4">
-                 <div className="absolute top-1/4 left-0 -translate-x-1/2 -translate-y-1/2">
-                    <div className="animate-orbit-4-reverse"><CurrencyIcon>A$</CurrencyIcon></div> {/* AUD */}
-                </div>
-                 <div className="absolute bottom-1/4 right-0 translate-x-1/2 translate-y-1/2">
-                    <div className="animate-orbit-4-reverse"><CurrencyIcon>د.إ</CurrencyIcon></div> {/* AED */}
-                </div>
+                <CurrencyIcon className="top-1/4 left-0 -translate-x-1/2 -translate-y-1/2 animate-orbit-4-reverse">A$</CurrencyIcon> {/* AUD */}
+                <CurrencyIcon className="bottom-1/4 right-0 translate-x-1/2 translate-y-1/2 animate-orbit-4-reverse">د.إ</CurrencyIcon> {/* AED */}
             </div>
         </div>
     )
