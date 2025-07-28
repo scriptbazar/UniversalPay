@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon, Mail, Landmark, ShieldCheck, FileText } from "lucide-react";
@@ -122,7 +121,7 @@ export default function AnalyticsDetailPage() {
         let fetchedData: (User | Transaction)[] = [];
         let tableColumns: any[] = [];
         
-        const monthName = month ? month.charAt(0).toUpperCase() + month.slice(1) : 'All';
+        const monthName = month && month !== 'all' ? month.charAt(0).toUpperCase() + month.slice(1) : 'All Time';
         
         switch(type) {
             case 'new-users':
@@ -370,4 +369,3 @@ export default function AnalyticsDetailPage() {
         </div>
     );
 }
-
