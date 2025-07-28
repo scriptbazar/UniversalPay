@@ -189,7 +189,7 @@ export default function Home() {
         <section id="features" className="py-20 px-4 md:px-8 bg-slate-50 dark:bg-slate-900">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {features.map((feature, index) => (
                 <Card key={index} className="bg-card border group" variant="interactive">
                   <CardHeader className="flex flex-col items-center text-center">
@@ -210,7 +210,7 @@ export default function Home() {
         </section>
         
         <section className="py-20 px-4 md:px-8 bg-background">
-            <div className="container mx-auto grid md:grid-cols-2 gap-12 items-center">
+            <div className="container mx-auto flex flex-col md:grid md:grid-cols-2 gap-12 items-center">
                 <div className="space-y-6">
                     <h2 className="text-3xl md:text-4xl font-bold">One Platform, Global Reach</h2>
                     <p className="text-lg text-muted-foreground">
@@ -234,7 +234,7 @@ export default function Home() {
                         <Link href="/#features">Explore Global Payments <ArrowRight className="ml-2 h-4 w-4"/></Link>
                     </Button>
                 </div>
-                <div className="flex items-center justify-center min-h-[400px]">
+                <div className="flex items-center justify-center min-h-[300px] md:min-h-[400px]">
                     <OrbitingCurrencies />
                  </div>
             </div>
