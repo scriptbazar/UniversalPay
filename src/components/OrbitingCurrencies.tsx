@@ -2,7 +2,7 @@
 'use client';
 
 import { Logo } from "./logo";
-import { DollarSign, Euro, IndianRupee, PoundSterling, Bitcoin, JapaneseYen, SwissFranc, TurkishLira } from 'lucide-react';
+import { DollarSign, Euro, IndianRupee, PoundSterling, Bitcoin, JapaneseYen, SwissFranc } from 'lucide-react';
 import React from 'react';
 
 // A dedicated component for each icon on the orbit.
@@ -39,7 +39,7 @@ const OrbitingCurrencies = () => {
                 <CurrencyIcon positionClasses="top-0 left-1/2" animationClass="animate-orbit-2-reverse"><Bitcoin className="w-5 h-5"/></CurrencyIcon>
                 <CurrencyIcon positionClasses="top-1/2 left-full" animationClass="animate-orbit-2-reverse"><JapaneseYen className="w-5 h-5"/></CurrencyIcon>
                 <CurrencyIcon positionClasses="top-full left-1/2" animationClass="animate-orbit-2-reverse"><SwissFranc className="w-5 h-5"/></CurrencyIcon>
-                <CurrencyIcon positionClasses="top-1/2 left-0" animationClass="animate-orbit-2-reverse"><TurkishLira className="w-5 h-5"/></CurrencyIcon>
+                <CurrencyIcon positionClasses="top-1/2 left-0" animationClass="animate-orbit-2-reverse"><span className="text-xl font-bold">₺</span></CurrencyIcon>
             </div>
             
             {/* Orbit 3 */}
