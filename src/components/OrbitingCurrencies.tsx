@@ -23,7 +23,7 @@ const OrbitingCurrencies = () => {
         <div className="relative flex h-96 w-96 items-center justify-center scale-75 md:scale-100">
             {/* Central Logo */}
             <div className="absolute flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm border">
-                <Logo />
+                <Globe className="h-10 w-10 text-primary" />
             </div>
 
             {/* Orbit 1 */}

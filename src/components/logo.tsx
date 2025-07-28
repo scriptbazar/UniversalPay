@@ -3,8 +3,9 @@ import { cn } from '@/lib/utils';
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-center justify-center", className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <Globe className="h-8 w-8 text-primary" />
+      <span className="text-xl font-bold text-foreground">UniversalPay</span>
     </div>
   );
 }
