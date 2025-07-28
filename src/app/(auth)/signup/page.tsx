@@ -12,12 +12,14 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { createUser, signInWithSocial } from "@/lib/auth";
 import { GoogleIcon, GitHubIcon, FacebookIcon } from "@/components/icons";
+import { Eye, EyeOff } from "lucide-react";
 
 
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
       fullName: '',
       email: '',
@@ -118,7 +120,26 @@ export default function SignupPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" required value={formData.password} onChange={handleInputChange} disabled={isLoading} />
+                    <div className="relative">
+                        <Input 
+                            id="password" 
+                            type={showPassword ? 'text' : 'password'}
+                            required 
+                            value={formData.password} 
+                            onChange={handleInputChange} 
+                            disabled={isLoading}
+                            className="pr-10"
+                        />
+                         <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute inset-y-0 right-0 h-full px-3"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                        </Button>
+                    </div>
                 </div>
             </div>
           </CardContent>

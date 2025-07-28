@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { signInUser } from "@/lib/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, Info } from "lucide-react";
+import { ShieldCheck, Info, Eye, EyeOff } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // This feature was a security risk as it was a placeholder.
   // A real 2FA implementation is needed for this to be secure.
@@ -88,15 +89,27 @@ export default function AdminLoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
+                <div className="relative">
+                    <Input 
+                        id="password" 
+                        type={showPassword ? 'text' : 'password'} 
+                        required 
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                        className="pr-10"
+                    />
+                    <Button 
+                        type="button"
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute inset-y-0 right-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                </div>
               </div>
             </div>
           </CardContent>
