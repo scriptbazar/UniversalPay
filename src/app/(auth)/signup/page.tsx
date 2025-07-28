@@ -155,10 +155,16 @@ export default function SignupPage() {
                     <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
                 </div>
             </div>
-            <div className="flex flex-wrap justify-center gap-2 w-full">
-                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('google')} type="button" disabled={isLoading}><GoogleIcon className="mr-2 h-4 w-4" /> Google</Button>
-                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('github')} type="button" disabled={isLoading}><GitHubIcon className="mr-2 h-4 w-4" /> GitHub</Button>
-                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('facebook')} type="button" disabled={isLoading}><FacebookIcon className="mr-2 h-4 w-4" /> Facebook</Button>
+            <div className="flex justify-center gap-2 w-full">
+                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('google')} type="button" disabled={isLoading}>
+                    <GoogleIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">Google</span>
+                </Button>
+                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('github')} type="button" disabled={isLoading}>
+                    <GitHubIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">GitHub</span>
+                </Button>
+                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('facebook')} type="button" disabled={isLoading}>
+                    <FacebookIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">Facebook</span>
+                </Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
