@@ -5,9 +5,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight } from "lucide-react";
-import Image from "next/image";
+import OrbitingCurrencies from "@/components/OrbitingCurrencies";
 import Link from "next/link";
-import RealWorldMap from "@/components/RealWorldMap";
 
 const features = [
   {
@@ -235,15 +234,8 @@ export default function Home() {
                         <Link href="/#features">Explore Global Payments <ArrowRight className="ml-2 h-4 w-4"/></Link>
                     </Button>
                 </div>
-                <div className="rounded-lg shadow-2xl overflow-hidden aspect-square">
-                    <Image
-                      src="https://placehold.co/600x600.png"
-                      alt="Global payment network"
-                      width={600}
-                      height={600}
-                      className="w-full h-full object-cover"
-                      data-ai-hint="digital globe network"
-                    />
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <OrbitingCurrencies />
                  </div>
             </div>
         </section>

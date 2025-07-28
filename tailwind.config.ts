@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 const colors = require('tailwindcss/colors');
 
@@ -108,7 +109,11 @@ export default {
         'bounce-subtle': {
             '0%, 100%': { transform: 'translateY(-15%)', animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)' },
             '50%': { transform: 'translateY(0)', animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)' },
-        }
+        },
+        'orbit-1': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+        'orbit-2': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(-360deg)' } },
+        'orbit-3': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+        'orbit-4': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(-360deg)' } },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -118,6 +123,10 @@ export default {
         'content-show': 'content-show 0.2s ease-out',
         'content-hide': 'content-hide 0.2s ease-out',
         'bounce-subtle': 'bounce-subtle 1s infinite',
+        'orbit-1': 'orbit-1 20s linear infinite',
+        'orbit-2': 'orbit-2 30s linear infinite',
+        'orbit-3': 'orbit-3 40s linear infinite',
+        'orbit-4': 'orbit-4 50s linear infinite',
       },
     },
   },
