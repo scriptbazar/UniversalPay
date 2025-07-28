@@ -24,7 +24,8 @@ import { useRouter, useParams, notFound } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
+import { auth } from '@/lib/firebase';
 
 // MOCK DATA - This will be replaced by dynamic data where needed
 const stats = {
@@ -171,29 +172,34 @@ export default function UserDetailPage() {
 
 
   const handleToggleSuspend = async () => {
-    if (!merchant) return;
+    if (!merchant || !auth.currentUser) return;
     const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
-    
-    // In a real app, you'd call an action here. For mock, just update state.
-    setMerchant(prev => prev ? { ...prev, status: newStatus } : null);
+    const result = await updateUserStatus(merchant.id, newStatus, auth.currentUser.uid);
 
-    toast({
-        title: `Merchant ${newStatus}`,
-        description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
-    });
+    if (result.success) {
+        setMerchant(prev => prev ? { ...prev, status: newStatus } : null);
+        toast({
+            title: `Merchant ${newStatus}`,
+            description: `${merchant.fullName} has been ${newStatus.toLowerCase()}.`
+        });
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
   };
   
-  const handleRoleChange = async () => {
-      if (!merchant) return;
-      const newRole = merchant.role === 'admin' ? 'merchant' : 'admin';
+  const handleRoleChange = async (newRole: 'admin' | 'merchant') => {
+      if (!merchant || !auth.currentUser) return;
+      const result = await updateUserRole(merchant.id, newRole, auth.currentUser.uid);
       
-      // In a real app, you'd call an action here. For mock, just update state.
-      setMerchant(prev => prev ? { ...prev, role: newRole } : null);
-
-      toast({
-          title: 'Role Updated!',
-          description: `${merchant.fullName} is now a ${newRole}.`
-      });
+      if (result.success) {
+        setMerchant(prev => prev ? { ...prev, role: newRole } : null);
+        toast({
+            title: 'Role Updated!',
+            description: `${merchant.fullName} is now a ${newRole}.`
+        });
+      } else {
+         toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
   };
 
   const handleWalletAdjustment = async (type: 'credit' | 'debit') => {
@@ -207,12 +213,19 @@ export default function UserDetailPage() {
           toast({ variant: 'destructive', title: 'Insufficient Balance' });
           return;
       }
+
+      if (!auth.currentUser || !merchant) return;
       
-      const newBalance = type === 'credit' ? walletBalance + amount : walletBalance - amount;
-      
-      setWalletBalance(newBalance);
-      toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
-      setAdjustmentAmount('');
+      const result = await adjustWalletBalance(merchant.id, amount, type, auth.currentUser.uid);
+
+      if (result.success) {
+        const newBalance = type === 'credit' ? walletBalance + amount : walletBalance - amount;
+        setWalletBalance(newBalance);
+        toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
+        setAdjustmentAmount('');
+      } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
   };
 
   const handleLoginAsUser = () => {
@@ -306,7 +319,7 @@ export default function UserDetailPage() {
                                     <LogIn className="mr-2 h-4 w-4" />
                                     Login As User
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleRoleChange}>
+                                <DropdownMenuItem onClick={() => handleRoleChange(merchant.role === 'admin' ? 'merchant' : 'admin')}>
                                     <ShieldIcon className="mr-2 h-4 w-4" />
                                     {merchant.role === 'admin' ? 'Make Merchant' : 'Make Admin'}
                                 </DropdownMenuItem>
@@ -697,5 +710,3 @@ export default function UserDetailPage() {
     </div>
   )
 }
-
-    
