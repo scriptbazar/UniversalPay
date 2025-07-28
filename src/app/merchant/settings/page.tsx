@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -247,6 +247,8 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
       paypal: false,
   });
   
+  // This state simulates if an admin has requested KYC for this merchant.
+  const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
   const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
 
   const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
@@ -686,6 +688,15 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                    {isKycRequestedByAdmin && kycStatus !== 'Verified' && (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Action Required</AlertTitle>
+                            <AlertDescription>
+                                The admin has requested you to complete your KYC to review a recent transaction. Please complete the verification process below to avoid any service interruptions.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                     <Card>
                        <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
                             <div className="flex-grow space-y-2">
@@ -703,9 +714,12 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                 <h3 className="font-semibold text-lg">Complete Your KYC</h3>
                                 <p className="text-sm text-muted-foreground max-w-xs">Verify instantly using Aadhar & PAN OTP.</p>
                                 {kycStatus === 'Not Started' ? (
-                                    <KycVerificationDialog onKycSubmitted={() => setKycStatus('Pending')} />
+                                    <KycVerificationDialog onKycSubmitted={() => {
+                                        setKycStatus('Pending');
+                                        setIsKycRequestedByAdmin(false); // Hide the alert after submission
+                                    }} />
                                 ) : (
-                                     <Button disabled>KYC Submitted</Button>
+                                     <Button disabled>KYC Submitted for Review</Button>
                                 )}
                             </div>
                        </CardContent>
@@ -737,5 +751,3 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
     </div>
   );
 }
-
-    

@@ -100,7 +100,12 @@ export default function FraudDetectionPage() {
       title: "Action Triggered",
       description: `${action} for transaction ${txId}.`,
     });
-    setSelectedTx(null); // Close dialog after action
+    // This part is client-side only. In a real app, this would trigger a backend update.
+    const updatedTx = transactions.find(tx => tx.id === txId);
+    if(updatedTx) {
+        const updatedSelected = { ...updatedTx, status: action === "Requested KYC" ? "KYC Requested" : updatedTx.status };
+        setSelectedTx(updatedSelected);
+    }
   };
 
   const copyToClipboard = (text: string, label: string) => {
