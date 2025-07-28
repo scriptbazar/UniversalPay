@@ -93,6 +93,7 @@ const getStatusBadgeVariant = (status: string) => {
         case 'verified':
             return 'default';
         case 'pending':
+        case 'pending approval':
             return 'secondary';
         case 'suspended':
         case 'not started':
@@ -116,13 +117,13 @@ interface UserProfile {
     status: "Active" | "Suspended";
     avatar?: string;
     role?: string;
-    kycStatus?: "Verified" | "Pending" | "Not Started";
+    kycStatus?: "Verified" | "Pending Approval" | "Not Started";
     createdAt?: { seconds: number, nanoseconds: number } | string;
 }
 
 const mockUsers: { [key: string]: UserProfile } = {
     "user_1": { id: "user_1", fullName: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A", role: "merchant", kycStatus: "Verified", createdAt: "2023-01-15T10:00:00Z" },
-    "user_2": { id: "user_2", fullName: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B", role: "merchant", kycStatus: "Pending", createdAt: "2023-02-20T11:00:00Z" },
+    "user_2": { id: "user_2", fullName: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B", role: "merchant", kycStatus: "Pending Approval", createdAt: "2023-02-20T11:00:00Z" },
     "user_3": { id: "user_3", fullName: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C", role: "merchant", kycStatus: "Not Started", createdAt: "2023-03-10T12:00:00Z" },
     "user_4": { id: "user_4", fullName: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D", role: "merchant", kycStatus: "Verified", createdAt: "2023-04-05T13:00:00Z" },
 };
@@ -696,3 +697,5 @@ export default function UserDetailPage() {
     </div>
   )
 }
+
+    

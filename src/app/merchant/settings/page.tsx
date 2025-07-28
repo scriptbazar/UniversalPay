@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint } from "lucide-react";
 import React, { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
 
 
 type PaymentMethodsState = {
@@ -116,6 +118,115 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
     );
 };
 
+function KycVerificationDialog({ onKycSubmitted }: { onKycSubmitted: () => void }) {
+    const { toast } = useToast();
+    const [step, setStep] = useState(1); // 1: Form, 2: OTP, 3: Success
+    const { register, handleSubmit } = useForm();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const onFormSubmit = (data: any) => {
+        setIsLoading(true);
+        // Simulate API call to send OTP
+        setTimeout(() => {
+            setIsLoading(false);
+            setStep(2);
+        }, 1500);
+    };
+
+    const onOtpSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        // Simulate OTP verification
+        setTimeout(() => {
+            setIsLoading(false);
+            setStep(3);
+            onKycSubmitted();
+        }, 2000);
+    };
+
+    return (
+        <Dialog open={step !== 4} onOpenChange={(open) => !open && setStep(4)}>
+            <DialogTrigger asChild>
+                <Button>
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Start Aadhar/PAN KYC
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                {step === 1 && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>Aadhar/PAN KYC Verification</DialogTitle>
+                            <DialogDescription>
+                                Please enter your Aadhar and PAN details to verify your identity.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleSubmit(onFormSubmit)}>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="aadhar">Aadhar Number</Label>
+                                    <Input id="aadhar" placeholder="XXXX XXXX XXXX" {...register("aadhar", { required: true })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pan">PAN Number</Label>
+                                    <Input id="pan" placeholder="ABCDE1234F" {...register("pan", { required: true })} />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit" disabled={isLoading}>
+                                    {isLoading ? "Sending OTP..." : "Send OTP"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </>
+                )}
+                {step === 2 && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>Enter OTP</DialogTitle>
+                            <DialogDescription>
+                                An OTP has been sent to your Aadhar and PAN registered mobile numbers.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={onOtpSubmit}>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="aadhar-otp">Aadhar OTP</Label>
+                                    <Input id="aadhar-otp" placeholder="Enter 6-digit OTP" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pan-otp">PAN OTP</Label>
+                                    <Input id="pan-otp" placeholder="Enter 6-digit OTP" />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit" disabled={isLoading}>
+                                    {isLoading ? "Verifying..." : "Verify KYC"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </>
+                )}
+                {step === 3 && (
+                    <>
+                        <DialogHeader className="items-center text-center">
+                             <div className="p-3 bg-green-100 rounded-full dark:bg-green-900/50">
+                                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400"/>
+                            </div>
+                            <DialogTitle>KYC Submitted Successfully</DialogTitle>
+                            <DialogDescription>
+                                Your details have been submitted. Our team will review them and you will be notified upon approval.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="sm:justify-center">
+                            <Button onClick={() => setStep(4)}>Close</Button>
+                        </DialogFooter>
+                    </>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 interface SettingsPageProps {
     merchantName?: string;
     setMerchantName?: (name: string) => void;
@@ -135,6 +246,8 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
       crypto: true,
       paypal: false,
   });
+  
+  const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
 
   const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
     setCheckoutDisplayOptions(prev => ({ ...prev, [option]: !prev[option] }));
@@ -183,6 +296,15 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
         description: "Your checkout page has been updated."
     });
   };
+  
+   const getKycStatusVariant = (status: typeof kycStatus) => {
+        switch (status) {
+            case 'Verified': return 'default';
+            case 'Pending': return 'secondary';
+            case 'Not Started': return 'destructive';
+        }
+    };
+
 
   return (
     <div className="space-y-6">
@@ -569,18 +691,22 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                             <div className="flex-grow space-y-2">
                                 <h3 className="font-semibold text-lg">Current Verification Status</h3>
                                 <div className="flex items-center gap-4">
-                                    <Badge variant="default" className="text-base px-3 py-1">Level 1: Verified</Badge>
-                                    <p className="text-sm text-muted-foreground">Your account is verified for basic transactions.</p>
+                                     <Badge variant={getKycStatusVariant(kycStatus)} className="text-base px-3 py-1">{kycStatus}</Badge>
+                                    <p className="text-sm text-muted-foreground">
+                                        {kycStatus === 'Verified' ? 'Your account is fully verified.' : kycStatus === 'Pending' ? 'Your documents are under review.' : 'Complete KYC to unlock all features.'}
+                                    </p>
                                 </div>
                             </div>
                             <Separator orientation="vertical" className="h-auto hidden md:block" />
                             <Separator className="md:hidden"/>
                             <div className="flex-shrink-0 space-y-2">
-                                <h3 className="font-semibold text-lg">Upgrade to Level 2</h3>
-                                <p className="text-sm text-muted-foreground max-w-xs">Increase your limits by providing business documentation.</p>
-                                <Button>
-                                    <Upload className="mr-2 h-4 w-4" /> Upload Documents
-                                </Button>
+                                <h3 className="font-semibold text-lg">Complete Your KYC</h3>
+                                <p className="text-sm text-muted-foreground max-w-xs">Verify instantly using Aadhar & PAN OTP.</p>
+                                {kycStatus === 'Not Started' ? (
+                                    <KycVerificationDialog onKycSubmitted={() => setKycStatus('Pending')} />
+                                ) : (
+                                     <Button disabled>KYC Submitted</Button>
+                                )}
                             </div>
                        </CardContent>
                     </Card>
@@ -611,3 +737,5 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
     </div>
   );
 }
+
+    
