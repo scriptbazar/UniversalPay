@@ -53,9 +53,17 @@ export async function signInUser(email: string, password: string, loginType: 'ad
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        
+        // Always fetch the user role from Firestore for reliability.
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
 
-        const idTokenResult = await user.getIdTokenResult();
-        const userRole = idTokenResult.claims.role;
+        if (!userDoc.exists()) {
+            await signOut(auth);
+            return { success: false, error: "User data not found in database. Please contact support." };
+        }
+        
+        const userRole = userDoc.data()?.role;
 
         // Security Check: Enforce that only admins can log in via the admin page.
         if (loginType === 'admin' && userRole !== 'admin') {
@@ -67,14 +75,6 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         if (loginType === 'merchant' && userRole !== 'merchant') {
             await signOut(auth);
             return { success: false, error: "Access denied. Please use the Admin Login page." };
-        }
-        
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-            await signOut(auth);
-            return { success: false, error: "User data not found in database. Please contact support." };
         }
 
         return { success: true, user: { uid: user.uid, ...userDoc.data() } };
