@@ -115,24 +115,34 @@ export default function AdminDashboardLayout({
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
+                // To prevent flicker, we first assume the user is valid and show a loader.
+                // Then, we verify their role.
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
+
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
                     setUser(user);
                 } else {
-                    // If not an admin, sign out and redirect to merchant login
+                    // If the role is not admin, sign them out and redirect.
                     await signOutUser();
-                    router.push('/login'); 
+                    toast({
+                        variant: 'destructive',
+                        title: 'Access Denied',
+                        description: 'You do not have permission to access the admin dashboard.'
+                    });
+                    router.push('/admin'); 
                 }
             } else {
-                // If no user is logged in, redirect to admin login
+                // If no user is logged in, redirect to the admin login page.
                 router.push('/admin'); 
             }
+            // Only stop loading after all checks are complete.
             setLoading(false);
         });
 
+        // Cleanup the listener on component unmount
         return () => unsubscribe();
-    }, [router]);
+    }, [router, toast]);
     
     const handleLogout = async () => {
         const { success, error } = await signOutUser();
@@ -149,7 +159,8 @@ export default function AdminDashboardLayout({
     }
 
     if (!user) {
-        return null; // The useEffect hook will handle the redirect.
+        // This will be shown briefly while redirecting.
+        return <DashboardSkeleton />;
     }
 
   return (

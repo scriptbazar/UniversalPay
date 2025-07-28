@@ -122,23 +122,34 @@ export default function MerchantDashboardLayout({
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
+                // To prevent flicker, we first assume the user is valid and show a loader.
+                // Then, we verify their role.
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
+                
                 if (userDoc.exists() && userDoc.data().role === 'merchant') {
                     setUser(user);
                 } else {
-                    // If not a merchant, sign out and redirect to admin login
+                    // If the role is not merchant, sign them out and redirect.
                     await signOutUser();
-                    router.push('/admin'); 
+                     toast({
+                        variant: 'destructive',
+                        title: 'Access Denied',
+                        description: 'You do not have permission to access the merchant dashboard.'
+                    });
+                    router.push('/login'); 
                 }
             } else {
-                 // If no user, redirect to merchant login
+                 // If no user is logged in, redirect to the merchant login page.
                 router.push('/login');
             }
+            // Only stop loading after all checks are complete.
             setLoading(false);
         });
+        
+        // Cleanup the listener on component unmount
         return () => unsubscribe();
-    }, [router]);
+    }, [router, toast]);
 
     const handleLogout = async () => {
         const { success, error } = await signOutUser();
@@ -155,7 +166,8 @@ export default function MerchantDashboardLayout({
     }
 
     if (!user) {
-        return null; // The useEffect hook will handle the redirect.
+        // This will be shown briefly while redirecting.
+        return <DashboardSkeleton />;
     }
 
 
