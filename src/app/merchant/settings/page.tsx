@@ -232,13 +232,19 @@ interface SettingsPageProps {
     setMerchantName?: (name: string) => void;
 }
 
-export default function SettingsPage({ merchantName = "My Awesome Store", setMerchantName = () => {} }: SettingsPageProps) {
+export default function SettingsPage({ merchantName: initialMerchantName = "My Awesome Store", setMerchantName: setParentMerchantName = () => {} }: SettingsPageProps) {
   const { toast } = useToast();
   
+  // Profile states
+  const [merchantName, setMerchantName] = useState(initialMerchantName);
+  const [email, setEmail] = useState('merchant@example.com');
+  const [mobile, setMobile] = useState('+91 98765 43210');
+  const [profileLogo, setProfileLogo] = useState<string | null>(null);
+
   // Branding states
   const [businessName, setBusinessName] = useState('My Awesome Store');
   const [brandColor, setBrandColor] = useState('#29ABE2');
-  const [logo, setLogo] = useState<string | null>(null);
+  const [checkoutLogo, setCheckoutLogo] = useState<string | null>(null);
 
   const [checkoutDisplayOptions, setCheckoutDisplayOptions] = useState<CheckoutDisplayOptions>({
       upi: true,
@@ -247,7 +253,6 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
       paypal: false,
   });
   
-  // This state simulates if an admin has requested KYC for this merchant.
   const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
   const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
 
@@ -274,12 +279,23 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
     setPaymentMethods(prev => ({ ...prev, [method]: !prev[method] }));
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogo(reader.result as string);
+        setProfileLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+    const handleCheckoutLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCheckoutLogo(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -318,7 +334,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
 
       <Tabs defaultValue="profile">
         <TabsList className="grid grid-cols-1 md:grid-cols-5 w-full md:w-auto">
-          <TabsTrigger value="profile" className="gap-2"><User className="w-4 h-4"/>Profile &amp; Security</TabsTrigger>
+          <TabsTrigger value="profile" className="gap-2"><User className="w-4 h-4"/>Profile</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4"/>Notifications</TabsTrigger>
           <TabsTrigger value="branding" className="gap-2"><Palette className="w-4 h-4"/>Branding</TabsTrigger>
           <TabsTrigger value="payment-methods" className="gap-2"><Wallet className="w-4 h-4"/>Payment Methods</TabsTrigger>
@@ -327,13 +343,27 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
         <TabsContent value="profile" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Profile &amp; Security</CardTitle>
+              <CardTitle>Your Profile</CardTitle>
               <CardDescription>Update your personal, business, and security information.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-2">Profile Information</h3>
                 <div className="space-y-4 p-4 border rounded-md">
+                     <div className="space-y-2">
+                        <Label>Profile Picture</Label>
+                        <div className="flex items-center gap-4">
+                             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border overflow-hidden">
+                                {profileLogo ? (
+                                    <Image src={profileLogo} alt="Profile Logo" width={96} height={96} className="object-cover" data-ai-hint="user avatar" />
+                                ) : (
+                                    <User className="w-12 h-12 text-muted-foreground" />
+                                )}
+                            </div>
+                            <Input id="profile-logo-upload" type="file" className="hidden" onChange={handleProfileLogoUpload} accept="image/*" />
+                            <Button variant="outline" onClick={() => document.getElementById('profile-logo-upload')?.click()}>Change Picture</Button>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">Full Name</Label>
@@ -345,7 +375,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" defaultValue="merchant@example.com" />
+                            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -359,7 +389,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="mobile">Mobile Number</Label>
-                            <Input id="mobile" type="tel" defaultValue="+91 98765 43210" />
+                            <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
                         </div>
                     </div>
                 </div>
@@ -423,13 +453,13 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                                         <Label>Logo</Label>
                                         <div className="flex items-center gap-4">
                                             <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
-                                            {logo ? (
-                                                    <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
+                                            {checkoutLogo ? (
+                                                    <Image src={checkoutLogo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                                                 ) : (
                                                     <Upload className="w-8 h-8 text-muted-foreground" />
                                                 )}
                                             </div>
-                                            <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+                                            <Input id="logo-upload" type="file" className="hidden" onChange={handleCheckoutLogoUpload} accept="image/*" />
                                             <Button variant="outline" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
                                         </div>
                                         <p className="text-xs text-muted-foreground">Recommended: 256x256px.</p>
@@ -526,7 +556,7 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                     </Card>
                 </div>
                 <div className="lg:col-span-1">
-                    <CheckoutPreview brandColor={brandColor} logo={logo} businessName={businessName} displayOptions={checkoutDisplayOptions} />
+                    <CheckoutPreview brandColor={brandColor} logo={checkoutLogo} businessName={businessName} displayOptions={checkoutDisplayOptions} />
                 </div>
             </div>
         </TabsContent>

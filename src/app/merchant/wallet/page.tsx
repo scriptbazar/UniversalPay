@@ -89,7 +89,7 @@ export default function MerchantWalletPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Wallet</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Wallet</h1>
         <p className="text-muted-foreground">Manage your wallet balance and load funds.</p>
       </div>
       <Separator />
