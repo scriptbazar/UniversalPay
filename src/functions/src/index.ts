@@ -12,7 +12,10 @@ import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 import { getFirestore } from "firebase-admin/firestore";
 
-admin.initializeApp();
+// This check prevents the app from being initialized multiple times, which causes an error.
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 const db = getFirestore();
 
 
