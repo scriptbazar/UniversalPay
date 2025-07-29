@@ -145,6 +145,18 @@ export default function UserDetailPage() {
   const [adjustmentAmount, setAdjustmentAmount] = useState('');
   const [joinedDate, setJoinedDate] = useState('N/A');
 
+  const formattedUserId = useMemo(() => {
+    if (!userId) return '';
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    const shortId = Math.abs(hash).toString().substring(0, 8).padEnd(8, '0');
+    return `UVPAYM${shortId}`;
+  }, [userId]);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -305,7 +317,10 @@ export default function UserDetailPage() {
             </div>
             <div className="flex-grow">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
+                        <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">{formattedUserId}</div>
+                    </div>
                     <div className="flex gap-2">
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
