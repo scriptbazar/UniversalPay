@@ -1,6 +1,3 @@
-
-# UniversalPay - A Globally Functional Payment Gateway
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/firebase/firebase-studio/main/static/img/universalpay-logo.png" alt="UniversalPay Logo" width="120">
 </p>
@@ -11,6 +8,15 @@
   A secure, scalable, and globally functional payment gateway platform built with Next.js, Firebase, and Genkit.
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15.x-black?logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-18-blue?logo=react" alt="React">
+  <img src="https://img.shields.io/badge/Firebase-v10-orange?logo=firebase" alt="Firebase">
+  <img src="https://img.shields.io/badge/Genkit-v1.x-blueviolet?logo=google-gemini" alt="Genkit">
+  <img src="https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3.x-blueviolet?logo=tailwind-css" alt="Tailwind CSS">
+</p>
+
 ---
 
 ## 📜 Introduction
@@ -19,25 +25,27 @@ UniversalPay is a feature-rich, third-party payment gateway designed to bridge t
 
 This project serves as a comprehensive example of building a full-stack, production-ready application using a modern tech stack.
 
+---
+
 ## ✨ Key Features
 
 UniversalPay is packed with features designed for modern businesses, from individual merchants to resellers managing their own clients.
 
--   **Multi-Currency Support**: Accept payments via Indian UPI (Paytm, PhonePe) and major cryptocurrencies (USDT, BTC).
--   **Global Payment Methods**: Customers can pay using their local methods, and merchants receive settlements in their preferred cryptocurrency.
--   **AI-Powered Fraud Prevention**: A smart fraud detection system flags suspicious activities and maintains risk scores for users and transactions.
--   **Comprehensive Dashboards**: Separate, feature-rich dashboards for both **Admins** (to oversee the platform) and **Merchants** (to manage their business).
--   **Unified Crypto Settlements**: All payments, regardless of origin, are converted and settled directly into the merchant's chosen crypto wallet.
--   **Developer-Friendly Integration**:
+-   **💳 Multi-Currency Support**: Accept payments via Indian UPI (Paytm, PhonePe) and major cryptocurrencies (USDT, BTC).
+-   **🌍 Global Payment Methods**: Customers can pay using their local methods, and merchants receive settlements in their preferred cryptocurrency.
+-   **🤖 AI-Powered Fraud Prevention**: A smart fraud detection system flags suspicious activities and maintains risk scores for users and transactions.
+-   **📊 Comprehensive Dashboards**: Separate, feature-rich dashboards for both **Admins** (to oversee the platform) and **Merchants** (to manage their business).
+-   **₿ Unified Crypto Settlements**: All payments, regardless of origin, are converted and settled directly into the merchant's chosen crypto wallet.
+-   **</> Developer-Friendly Integration**:
     -   RESTful APIs and clear webhooks.
     -   SDKs for popular languages (Node.js, PHP, Python).
     -   Client-side libraries for frameworks like React and Vue.
     -   An easy-to-use embedded JS Widget for checkout on any website.
--   **White-Label & Reseller Mode**: Premium merchants can use their own branding, and resellers can manage their own portfolio of sub-merchants, earning commissions on their sales.
--   **Subscription & Invoicing**:
+-   **🎨 White-Label & Reseller Mode**: Premium merchants can use their own branding, and resellers can manage their own portfolio of sub-merchants, earning commissions on their sales.
+-   **🔄 Subscription & Invoicing**:
     -   Create and manage recurring billing plans.
     -   Generate and send professional online invoices with payment links.
--   **Dynamic Payment Tools**:
+-   **🔗 Dynamic Payment Tools**:
     -   **Payment Links**: Generate links for single or multiple uses with fixed or dynamic amounts.
     -   **Payment Pages**: Create customizable, permanent pages to accept payments.
 
@@ -122,11 +130,11 @@ npm install
     *   **Authentication**: Enable Email/Password and any social providers you wish to use (Google, GitHub, Facebook).
     *   **Firestore**: Create a Firestore database in your project.
 4.  **Configure Environment Variables**:
-    *   Rename the `.env.local.example` file to `.env.local`.
+    *   Rename `.env.local` to `.env`. This project uses a single `.env` file for simplicity.
     *   Paste your Firebase configuration values into this file.
 
     ```dotenv
-    # .env.local
+    # .env
     NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_API_KEY_HERE
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=YOUR_AUTH_DOMAIN_HERE
     NEXT_PUBLIC_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID_HERE
@@ -138,10 +146,10 @@ npm install
 ### 4. Genkit AI Setup
 
 1.  **Get a Gemini API Key**: Visit [Google AI Studio](https://aistudio.google.com/) to create an API key for the Gemini model.
-2.  **Add Key to Environment**: Add the API key to your `.env.local` file.
+2.  **Add Key to Environment**: Add the API key to your `.env` file.
 
     ```dotenv
-    # .env.local
+    # .env
     GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
     ```
 
