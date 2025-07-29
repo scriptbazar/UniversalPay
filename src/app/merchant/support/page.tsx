@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -17,6 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+
 
 const getStatusVariant = (status: Ticket['status']) => {
   switch (status) {
@@ -43,19 +46,29 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
   const [message, setMessage] = useState('');
   const [priority, setPriority] = useState<Ticket['priority']>('Medium');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject || !message) {
         toast({ variant: 'destructive', title: 'Please fill all fields.' });
         return;
     }
+
+    const user = auth.currentUser;
+    if (!user) {
+        toast({ variant: 'destructive', title: 'You must be logged in to create a ticket.'});
+        return;
+    }
     
-    addTicket({
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+    const merchantName = userDoc.exists() ? userDoc.data().fullName : 'Unknown Merchant';
+    
+    await addTicket({
       subject,
       message,
       priority,
-      merchantId: 'merch_123', // Placeholder for actual merchant ID
-      merchantName: 'John Doe', // Placeholder for actual merchant name
+      merchantId: user.uid,
+      merchantName: merchantName,
     });
 
     toast({ title: 'Ticket Created', description: 'Our team will get back to you shortly.' });
@@ -116,14 +129,24 @@ export default function MerchantSupportPage() {
   const itemsPerPage = 5;
   const router = useRouter();
 
-  const fetchTickets = () => {
-    // In a real app, you'd filter by the logged-in merchant's ID
-    setTickets(getTickets().filter(t => t.merchantId === 'merch_123'));
+  const fetchTickets = async () => {
+    const user = auth.currentUser;
+    if (user) {
+        const fetchedTickets = await getTickets(user.uid);
+        setTickets(fetchedTickets);
+    }
   };
 
   useEffect(() => {
-    fetchTickets();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            fetchTickets();
+        } else {
+            router.push('/login');
+        }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleRowClick = (ticketId: string) => {
     router.push(`/merchant/support/${ticketId}`);
@@ -217,7 +240,7 @@ export default function MerchantSupportPage() {
                 <TableBody>
                 {paginatedTickets.map((ticket) => (
                     <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-mono">{ticket.id}</TableCell>
+                    <TableCell className="font-mono">{ticket.id.substring(0, 10)}...</TableCell>
                     <TableCell className="font-medium">{ticket.subject}</TableCell>
                     <TableCell>
                         <Badge variant={getStatusVariant(ticket.status)}>{ticket.status}</Badge>

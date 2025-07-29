@@ -12,6 +12,9 @@ import { notFound, useParams } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { getDoc, doc } from 'firebase/firestore';
 
 
 const getStatusVariant = (status: Ticket['status']) => {
@@ -50,13 +53,29 @@ export default function MerchantTicketDetailPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [merchantName, setMerchantName] = useState('Your Name');
 
   useEffect(() => {
-    const fetchedTicket = getTicketById(ticketId);
-    if (fetchedTicket) {
-      setTicket(fetchedTicket);
-    }
-    setIsLoading(false);
+    const fetchTicket = async () => {
+        setIsLoading(true);
+        const fetchedTicket = await getTicketById(ticketId);
+        if (fetchedTicket) {
+            setTicket(fetchedTicket);
+        }
+        setIsLoading(false);
+    };
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if(user) {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if(userDoc.exists()) {
+                setMerchantName(userDoc.data().fullName);
+            }
+            fetchTicket();
+        }
+    });
+
+    return () => unsubscribe();
   }, [ticketId]);
 
   if (isLoading) {
@@ -67,16 +86,16 @@ export default function MerchantTicketDetailPage() {
     return notFound();
   }
 
-  const handleReplySubmit = (e: React.FormEvent) => {
+  const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyMessage.trim()) return;
 
-    addReply(ticket.id, {
-      author: ticket.merchantName, // Use merchant name for replies
+    await addReply(ticket.id, {
+      author: merchantName,
       message: replyMessage,
     });
 
-    const updatedTicket = getTicketById(ticket.id);
+    const updatedTicket = await getTicketById(ticket.id);
     setTicket(updatedTicket || null);
     setReplyMessage('');
     toast({ title: 'Reply Sent!' });
@@ -97,7 +116,7 @@ export default function MerchantTicketDetailPage() {
                     <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority} Priority</Badge>
                     <CardTitle className="mt-2 text-2xl">{ticket.subject}</CardTitle>
                     <CardDescription>
-                        Ticket ID: {ticket.id}
+                        Ticket ID: {ticket.id.substring(0, 10)}...
                     </CardDescription>
                   </div>
                   <Badge variant={getStatusVariant(ticket.status)} className="text-base">{ticket.status}</Badge>

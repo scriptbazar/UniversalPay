@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -10,6 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
 import { getTickets, type Ticket } from '@/lib/ticketsData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const getStatusVariant = (status: Ticket['status']) => {
   switch (status) {
@@ -33,9 +36,17 @@ export default function AdminSupportPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setTickets(getTickets());
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const fetchedTickets = await getTickets();
+            setTickets(fetchedTickets);
+        }
+        setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleRowClick = (ticketId: string) => {
@@ -98,20 +109,34 @@ export default function AdminSupportPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTickets.map((ticket) => (
-                  <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-mono">{ticket.id}</TableCell>
-                    <TableCell>{ticket.merchantName}</TableCell>
-                    <TableCell className="font-medium">{ticket.subject}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(ticket.status)}>{ticket.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority}</Badge>
-                    </TableCell>
-                    <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
+                {loading ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                            <Skeleton className="h-8 w-full" />
+                        </TableCell>
+                    </TableRow>
+                ) : filteredTickets.length > 0 ? (
+                    filteredTickets.map((ticket) => (
+                    <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell className="font-mono">{ticket.id.substring(0, 10)}...</TableCell>
+                        <TableCell>{ticket.merchantName}</TableCell>
+                        <TableCell className="font-medium">{ticket.subject}</TableCell>
+                        <TableCell>
+                        <Badge variant={getStatusVariant(ticket.status)}>{ticket.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                        <Badge variant={getPriorityVariant(ticket.priority)}>{ticket.priority}</Badge>
+                        </TableCell>
+                        <TableCell>{new Date(ticket.updatedAt).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                         <TableCell colSpan={6} className="h-24 text-center">
+                           No tickets found.
+                        </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>

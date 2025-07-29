@@ -54,11 +54,15 @@ export default function AdminTicketDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchedTicket = getTicketById(ticketId);
-    if (fetchedTicket) {
-      setTicket(fetchedTicket);
-    }
-    setIsLoading(false);
+    const fetchTicket = async () => {
+        setIsLoading(true);
+        const fetchedTicket = await getTicketById(ticketId);
+        if (fetchedTicket) {
+            setTicket(fetchedTicket);
+        }
+        setIsLoading(false);
+    };
+    fetchTicket();
   }, [ticketId]);
 
   if (isLoading) {
@@ -69,31 +73,31 @@ export default function AdminTicketDetailPage() {
     return notFound();
   }
 
-  const handleReplySubmit = (e: React.FormEvent) => {
+  const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyMessage.trim()) return;
 
-    addReply(ticket.id, {
+    await addReply(ticket.id, {
       author: 'Admin',
       message: replyMessage,
     });
 
-    const updatedTicket = getTicketById(ticket.id);
+    const updatedTicket = await getTicketById(ticket.id);
     setTicket(updatedTicket || null);
     setReplyMessage('');
     toast({ title: 'Reply Sent!' });
   };
   
-  const handleStatusChange = (newStatus: Ticket['status']) => {
-      updateTicket(ticket.id, { status: newStatus });
-      const updatedTicket = getTicketById(ticket.id);
+  const handleStatusChange = async (newStatus: Ticket['status']) => {
+      await updateTicket(ticket.id, { status: newStatus });
+      const updatedTicket = await getTicketById(ticket.id);
       setTicket(updatedTicket || null);
       toast({ title: "Status Updated" });
   };
 
-  const handlePriorityChange = (newPriority: Ticket['priority']) => {
-      updateTicket(ticket.id, { priority: newPriority });
-      const updatedTicket = getTicketById(ticket.id);
+  const handlePriorityChange = async (newPriority: Ticket['priority']) => {
+      await updateTicket(ticket.id, { priority: newPriority });
+      const updatedTicket = await getTicketById(ticket.id);
       setTicket(updatedTicket || null);
       toast({ title: "Priority Updated" });
   };
@@ -196,7 +200,7 @@ export default function AdminTicketDetailPage() {
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Ticket ID</span>
                         <div className="flex items-center gap-2">
-                            <span className="font-mono">{ticket.id}</span>
+                            <span className="font-mono">{ticket.id.substring(0, 10)}...</span>
                             <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(ticket.id, 'Ticket ID')} />
                         </div>
                     </div>

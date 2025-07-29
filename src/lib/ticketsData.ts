@@ -1,4 +1,19 @@
 
+import { db } from './firebase';
+import { 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    getDoc, 
+    updateDoc, 
+    query, 
+    where, 
+    orderBy,
+    serverTimestamp,
+    arrayUnion
+} from 'firebase/firestore';
+
 export type TicketReply = {
   author: 'Admin' | string; // Admin or merchant name
   message: string;
@@ -18,143 +33,74 @@ export type Ticket = {
   replies: TicketReply[];
 };
 
-const generateRandomId = (prefix: string) => {
-    const randomNum = Math.floor(100000 + Math.random() * 900000);
-    return `${prefix}${randomNum}`;
-};
-
-
-let tickets: Ticket[] = [
-  {
-    id: generateRandomId('UVPAYTKT-'),
-    merchantId: 'merch_123',
-    merchantName: 'John Doe',
-    subject: 'Issue with USDT Withdrawal',
-    message: "I tried to withdraw 500 USDT to my wallet but it's been pending for over 3 hours. Can you please check what's wrong? The destination address is correct.",
-    status: 'Open',
-    priority: 'High',
-    createdAt: '2023-11-10T09:00:00Z',
-    updatedAt: '2023-11-10T09:00:05Z',
-    replies: [
-      {
-        author: 'Admin',
-        message: 'Hi John Doe, thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.',
-        createdAt: '2023-11-10T09:00:05Z',
-      },
-    ],
-  },
-  {
-    id: generateRandomId('UVPAYTKT-'),
-    merchantId: 'merch_456',
-    merchantName: 'CreativeGoods',
-    subject: 'How to enable SEPA payments?',
-    message: 'I have customers from Europe who want to pay via SEPA bank transfer. How can I enable this option on my checkout?',
-    status: 'In Progress',
-    priority: 'Medium',
-    createdAt: '2023-11-09T14:30:00Z',
-    updatedAt: '2023-11-09T15:00:00Z',
-    replies: [
-      {
-        author: 'Admin',
-        message: 'Hello! You can enable SEPA transfers from your Settings -> Payment Methods page. Let us know if you face any issues.',
-        createdAt: '2023-11-09T15:00:00Z',
-      },
-    ],
-  },
-   {
-    id: generateRandomId('UVPAYTKT-'),
-    merchantId: 'merch_123',
-    merchantName: 'John Doe',
-    subject: 'API Key not working',
-    message: 'I have regenerated my API key, but the new one is giving an authentication error. The old one is not working either.',
-    status: 'Closed',
-    priority: 'High',
-    createdAt: '2023-11-08T10:00:00Z',
-    updatedAt: '2023-11-08T12:05:00Z',
-    replies: [
-      {
-        author: 'Admin',
-        message: 'Hi John, it seems there was a caching issue. It should be resolved now. Please try again.',
-        createdAt: '2023-11-08T11:00:00Z',
-      },
-      {
-        author: 'John Doe',
-        message: 'Yes, it is working now. Thank you!',
-        createdAt: '2023-11-08T12:05:00Z',
-      },
-    ],
-  },
-];
-
-// Function to get all tickets, sorted by most recently updated
-export const getTickets = (): Ticket[] => {
-  return [...tickets].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+// Function to get all tickets, or tickets for a specific merchant
+export const getTickets = async (merchantId?: string): Promise<Ticket[]> => {
+    const ticketsCol = collection(db, 'tickets');
+    let q;
+    if (merchantId) {
+        q = query(ticketsCol, where('merchantId', '==', merchantId), orderBy('updatedAt', 'desc'));
+    } else {
+        q = query(ticketsCol, orderBy('updatedAt', 'desc'));
+    }
+    const ticketSnapshot = await getDocs(q);
+    const ticketList = ticketSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
+    return ticketList;
 };
 
 // Function to get a single ticket by its ID
-export const getTicketById = (id: string): Ticket | undefined => {
-  return tickets.find(ticket => ticket.id === id);
+export const getTicketById = async (id: string): Promise<Ticket | null> => {
+    const ticketRef = doc(db, 'tickets', id);
+    const ticketSnap = await getDoc(ticketRef);
+    if (ticketSnap.exists()) {
+        return { id: ticketSnap.id, ...ticketSnap.data() } as Ticket;
+    } else {
+        return null;
+    }
 };
 
 // Function to add a new ticket
-export const addTicket = (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'replies'>): void => {
-  const now = new Date();
-  const createdAt = now.toISOString();
-  // Automatic reply is sent 5 seconds after ticket creation to simulate a real system
-  now.setSeconds(now.getSeconds() + 5); 
-  const autoReplyCreatedAt = now.toISOString();
+export const addTicket = async (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'replies'>): Promise<void> => {
+    const now = new Date();
+    const createdAt = now.toISOString();
+    now.setSeconds(now.getSeconds() + 5); 
+    const autoReplyCreatedAt = now.toISOString();
 
-  const newTicket: Ticket = {
-    ...newTicketData,
-    id: generateRandomId('UVPAYTKT-'),
-    createdAt: createdAt,
-    updatedAt: createdAt,
-    status: 'Open',
-    replies: [
-        {
-            author: 'Admin',
-            message: `Hi ${newTicketData.merchantName}, thank you for reaching out to us. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.`,
-            createdAt: autoReplyCreatedAt,
-        }
-    ],
-  };
-  tickets.unshift(newTicket);
-  // After adding the auto-reply, set the update time to the same as creation to keep it at the top
-  newTicket.updatedAt = createdAt;
+    const autoReply = {
+        author: 'Admin',
+        message: `Hi ${newTicketData.merchantName}, thank you for reaching out. We have received your ticket and our team is looking into it. We will get back to you as soon as possible.`,
+        createdAt: autoReplyCreatedAt,
+    };
+
+    await addDoc(collection(db, 'tickets'), {
+        ...newTicketData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: 'Open',
+        replies: [autoReply],
+    });
 };
 
 // Function to add a reply to a ticket
-export const addReply = (ticketId: string, replyData: Omit<TicketReply, 'createdAt'>): void => {
-  const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
-  if (ticketIndex !== -1) {
-    const now = new Date().toISOString();
+export const addReply = async (ticketId: string, replyData: Omit<TicketReply, 'createdAt'>): Promise<void> => {
+    const ticketRef = doc(db, 'tickets', ticketId);
+    
     const newReply: TicketReply = {
       ...replyData,
-      createdAt: now,
+      createdAt: new Date().toISOString(),
     };
     
-    // Create a new ticket object to avoid direct mutation
-    const updatedTicket = {
-        ...tickets[ticketIndex],
-        replies: [...tickets[ticketIndex].replies, newReply],
-        updatedAt: now,
-        status: replyData.author === 'Admin' ? 'In Progress' as const : 'Open' as const,
-    };
-    
-    // Replace the old ticket with the updated one
-    tickets[ticketIndex] = updatedTicket;
-  }
+    await updateDoc(ticketRef, {
+        replies: arrayUnion(newReply),
+        updatedAt: serverTimestamp(),
+        status: replyData.author === 'Admin' ? 'In Progress' : 'Open',
+    });
 };
 
 // Function to update a ticket's status or priority
-export const updateTicket = (ticketId: string, updates: Partial<Pick<Ticket, 'status' | 'priority'>>) => {
-  const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
-  if (ticketIndex !== -1) {
-    const updatedTicket = {
-      ...tickets[ticketIndex],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-    tickets[ticketIndex] = updatedTicket;
-  }
+export const updateTicket = async (ticketId: string, updates: Partial<Pick<Ticket, 'status' | 'priority'>>) => {
+    const ticketRef = doc(db, 'tickets', ticketId);
+    await updateDoc(ticketRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+    });
 };
