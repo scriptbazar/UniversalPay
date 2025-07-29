@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Plan = {
     name: string;
@@ -75,44 +76,63 @@ type CurrentPlanState = {
     transactionUsage: string;
 };
 
-const CurrentPlanDetails = ({ plan }: { plan: CurrentPlanState }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>Your Current Subscription</CardTitle>
-            <CardDescription>Details about your active plan.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                <div>
-                    <h3 className="text-xl font-bold">{plan.name} Plan</h3>
-                    <Badge variant={plan.status === 'Active' ? 'default' : 'destructive'} className="mt-1">{plan.status}</Badge>
-                </div>
-                <div className="text-right">
-                    <p className="text-2xl font-bold">{plan.price}<span className="text-base font-normal text-muted-foreground">{plan.freq}</span></p>
-                </div>
-            </div>
-            <div className="text-sm space-y-2">
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Plan purchased on:</span>
-                    <span className="font-medium">{plan.purchasedOn}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Next renewal on:</span>
-                    <span className="font-medium">{plan.renewsOn}</span>
-                </div>
-                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">Transactions this month:</span>
-                    <span className="font-medium">{plan.transactionUsage}</span>
-                </div>
-            </div>
-             <Separator />
-            <div className="flex gap-2">
-                 <Button variant="outline">Cancel Subscription</Button>
-            </div>
-        </CardContent>
-    </Card>
-);
+const CurrentPlanDetails = ({ plan, loading }: { plan: CurrentPlanState; loading: boolean }) => {
+    if (loading) {
+        return (
+             <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className="h-5 w-full" />
+                    <Separator />
+                    <Skeleton className="h-10 w-32" />
+                </CardContent>
+            </Card>
+        )
+    }
 
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Your Current Subscription</CardTitle>
+                <CardDescription>Details about your active plan.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+                    <div>
+                        <h3 className="text-xl font-bold">{plan.name} Plan</h3>
+                        <Badge variant={plan.status === 'Active' ? 'default' : 'destructive'} className="mt-1">{plan.status}</Badge>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-2xl font-bold">{plan.price}<span className="text-base font-normal text-muted-foreground">{plan.freq}</span></p>
+                    </div>
+                </div>
+                <div className="text-sm space-y-2">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Plan purchased on:</span>
+                        <span className="font-medium">{plan.purchasedOn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Next renewal on:</span>
+                        <span className="font-medium">{plan.renewsOn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Transactions this month:</span>
+                        <span className="font-medium">{plan.transactionUsage}</span>
+                    </div>
+                </div>
+                <Separator />
+                <div className="flex gap-2">
+                    <Button variant="outline">Cancel Subscription</Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function SubscriptionPage() {
     const { toast } = useToast();
@@ -153,18 +173,19 @@ export default function SubscriptionPage() {
             toast({ variant: 'destructive', title: 'Upgrade Failed', description: 'Could not update your subscription.' });
         }
     };
-
+    
+    // Find the full details of the current plan
     const currentPlanDetails = subscriptionPlans.find(p => p.name === currentPlanName) || subscriptionPlans[0];
     
-    // Placeholder data for the current plan details card
+    // Placeholder data for the current plan details card, now using the correct plan details
     const planDetailsCardData: CurrentPlanState = {
         name: currentPlanDetails.name,
         price: currentPlanDetails.price,
         freq: currentPlanDetails.freq,
         status: 'Active',
-        purchasedOn: 'October 15, 2023',
-        renewsOn: 'November 15, 2023',
-        transactionUsage: '542 / 1,000',
+        purchasedOn: 'October 15, 2023', // This can be fetched from user data in a real app
+        renewsOn: 'November 15, 2023', // This can be calculated in a real app
+        transactionUsage: '542 / 1,000', // This would come from usage stats
     };
 
     return (
@@ -177,7 +198,7 @@ export default function SubscriptionPage() {
             
             <div className="grid lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-1">
-                    {loading ? <Card><CardHeader><CardTitle>Loading...</CardTitle></CardHeader><CardContent><p>Loading your plan details...</p></CardContent></Card> : <CurrentPlanDetails plan={planDetailsCardData} />}
+                    <CurrentPlanDetails plan={planDetailsCardData} loading={loading} />
                 </div>
                 <div className="lg:col-span-2">
                     <Card>
@@ -208,7 +229,7 @@ export default function SubscriptionPage() {
                                             </ul>
                                         </CardContent>
                                         <div className="p-6 pt-0">
-                                            <Button className="w-full" onClick={() => handleUpgrade(plan.name)} disabled={isCurrent}>
+                                            <Button className="w-full" onClick={() => handleUpgrade(plan.name)} disabled={isCurrent || loading}>
                                                 {isCurrent ? 'Your Current Plan' : <><Star className="mr-2 h-4 w-4"/> {plan.cta}</>}
                                             </Button>
                                         </div>
