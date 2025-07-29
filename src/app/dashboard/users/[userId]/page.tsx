@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
-import { auth, db } from '@/lib/firebase';
+import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 
 type Transaction = {
@@ -200,20 +200,21 @@ export default function UserDetailPage() {
     setDialogOpen('withdrawalDetail');
   };
 
+  const userTransactions = useMemo(() => {
+      if (!userId) return [];
+      return allTransactions.filter(tx => tx.merchantId === userId);
+  }, [userId]);
+
   const paginatedTransactions = useMemo(() => {
-    if (!userId) return [];
-    const userTransactions = allTransactions.filter(tx => tx.merchantId === userId);
     return userTransactions.slice(
         (txCurrentPage - 1) * itemsPerPage,
         txCurrentPage * itemsPerPage
     );
-}, [userId, txCurrentPage]);
+}, [userTransactions, txCurrentPage]);
 
 const txTotalPages = useMemo(() => {
-    if (!userId) return 1;
-    const userTransactions = allTransactions.filter(tx => tx.merchantId === userId);
     return Math.ceil(userTransactions.length / itemsPerPage);
-}, [userId]);
+}, [userTransactions]);
   
   const paginatedWithdrawals = useMemo(() => {
       return withdrawalHistory.slice(0, itemsPerPage);
@@ -336,14 +337,14 @@ const txTotalPages = useMemo(() => {
             </div>
         </div>
         
-        <Tabs defaultValue="transactions">
+        <Tabs defaultValue="overview">
             <TabsList>
-                <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
                 <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
+                <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
                 <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
                 <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview" className="mt-4">
+            <TabsContent value="overview" className="mt-4 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card asChild>
                          <Link href={`/dashboard/users/${userId}/transactions/by-month/all`} className="cursor-pointer hover:bg-muted/50">
@@ -390,6 +391,52 @@ const txTotalPages = useMemo(() => {
                         </CardContent>
                     </Card>
                 </div>
+                 <Card>
+                    <CardHeader className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Recent Transactions</CardTitle>
+                            <CardDescription>This merchant's 5 most recent transactions.</CardDescription>
+                        </div>
+                        <Button asChild variant="outline">
+                            <Link href="#">
+                                View All <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Transaction ID</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {userTransactions.slice(0, 5).map(p => (
+                                    <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
+                                    <TableCell className="font-medium">{p.id}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>{p.method}</TableCell>
+                                    <TableCell>{p.date.toLocaleDateString()}</TableCell>
+                                    <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {userTransactions.length === 0 && (
+                                     <TableRow>
+                                        <TableCell colSpan={5} className="h-24 text-center">
+                                            No transactions found for this merchant.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
             </TabsContent>
              <TabsContent value="transactions" className="mt-4">
                  <Card>
