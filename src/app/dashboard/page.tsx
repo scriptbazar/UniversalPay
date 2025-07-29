@@ -12,7 +12,6 @@ import {
 import {
   Bar,
   BarChart,
-  CartesianGrid,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -45,6 +44,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import Image from "next/image";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
 type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; };
@@ -52,7 +54,7 @@ type Signup = { id: string; name: string; email: string; plan: string; status: s
 export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
-  const adminName = "Admin"; // Placeholder for the admin's name
+  const [adminName, setAdminName] = useState("Admin");
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedSignup, setSelectedSignup] = useState<Signup | null>(null);
@@ -62,6 +64,19 @@ export default function AdminDashboard() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentSignups, setRecentSignups] = useState<Signup[]>([]);
   const [dialogContent, setDialogContent] = useState<{ title: string; data: React.ReactNode } | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                setAdminName(userDoc.data().fullName || "Admin");
+            }
+        }
+    });
+    return () => unsubscribe();
+  }, []);
 
 
   useEffect(() => {

@@ -52,6 +52,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 
 const chartData = [
     { name: 'Jan', revenue: 4230, monthIndex: 0 },
@@ -95,17 +99,27 @@ type Transaction = {
     method: string;
 };
 
-interface DashboardProps {
-  merchantName?: string;
-}
-
-export default function Dashboard({ merchantName = "Merchant" }: DashboardProps) {
+export default function Dashboard() {
   const router = useRouter();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
   const [monthlyTransactions, setMonthlyTransactions] = useState<{month: string; transactions: Transaction[]} | null>(null);
+  const [merchantName, setMerchantName] = useState("Merchant");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                setMerchantName(userDoc.data().fullName || "Merchant");
+            }
+        }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const generated = generateAllTransactions();
