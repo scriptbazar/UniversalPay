@@ -133,8 +133,11 @@ exports.updateMerchantProfile = onCall(async (request) => {
     try {
         const userDocRef = db.collection('users').doc(uid);
 
-        // Update the user document in Firestore
-        await userDocRef.update(dataToUpdate);
+        // **FIX:** Use `setDoc` with `merge: true` instead of `updateDoc`.
+        // This will create the document if it doesn't exist, or update it if it does.
+        // It prevents the "No document to update" error which can cause an "internal" error.
+        await userDocRef.set(dataToUpdate, { merge: true });
+
 
         // Create an audit log for the profile update
         await db.collection('audit_logs').add({
@@ -143,7 +146,7 @@ exports.updateMerchantProfile = onCall(async (request) => {
             message: `Merchant ${userEmail} (${uid}) updated their profile.`,
             details: {
                 ...dataToUpdate,
-                targetUser: uid, // Add the targetUser field for notification queries
+                targetUser: uid,
             }, 
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
