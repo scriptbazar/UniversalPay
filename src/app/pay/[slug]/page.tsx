@@ -77,9 +77,23 @@ export default function PayPage() {
                             <Separator />
                             
                             <div className="w-full space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email Address</Label>
-                                    <Input id="email" type="email" placeholder="you@example.com" required />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email Address</Label>
+                                        <Input id="email" type="email" placeholder="you@example.com" required />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="amount">Amount (USD)</Label>
+                                        <Input 
+                                            id="amount" 
+                                            type="number" 
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            readOnly={link.type === 'Fixed'}
+                                            required 
+                                            placeholder="Enter amount"
+                                        />
+                                    </div>
                                 </div>
                                 {link.collectPhone && (
                                     <div className="space-y-2">
@@ -87,18 +101,6 @@ export default function PayPage() {
                                         <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" />
                                     </div>
                                 )}
-                                <div className="space-y-2">
-                                    <Label htmlFor="amount">Amount (USD)</Label>
-                                    <Input 
-                                        id="amount" 
-                                        type="number" 
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        readOnly={link.type === 'Fixed'}
-                                        required 
-                                        placeholder="Enter amount"
-                                    />
-                                </div>
                             </div>
                             
                             <div className="w-full space-y-2 text-sm border rounded-md p-3">
@@ -130,7 +132,7 @@ export default function PayPage() {
                             >
                                 Pay ${totalAmount.toFixed(2)}
                             </Button>
-                            <div className="text-center w-full">
+                            <div className="text-center w-full pt-2">
                                 <p className="text-xs text-muted-foreground">
                                     By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                                 </p>
