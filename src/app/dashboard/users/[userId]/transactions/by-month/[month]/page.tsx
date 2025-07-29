@@ -13,8 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 // Mock data generation function
 const generateMockTransactions = () => {
@@ -58,31 +56,13 @@ export default function MonthlyTransactionsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    const [userName, setUserName] = useState('');
+
+    const formattedUserId = `UVPAYM${userId.slice(0, 8)}...`;
 
     useEffect(() => {
         // Generate data on the client side to avoid hydration issues
         setAllMockTransactions(generateMockTransactions());
-
-        const fetchUserName = async () => {
-            if (userId) {
-                const userDocRef = doc(db, "users", userId);
-                try {
-                    const userDocSnap = await getDoc(userDocRef);
-                    if (userDocSnap.exists()) {
-                        setUserName(userDocSnap.data().fullName || userId);
-                    } else {
-                        setUserName(userId);
-                    }
-                } catch (error) {
-                    console.error("Error fetching user name:", error);
-                    setUserName(userId);
-                }
-            }
-        };
-
-        fetchUserName();
-    }, [userId]);
+    }, []);
 
     const monthlyTransactions = useMemo(() => {
         // In a real app, you would also filter by userId
@@ -128,7 +108,7 @@ export default function MonthlyTransactionsPage() {
                 <CardHeader className="flex flex-row items-center">
                     <div className="grid gap-2">
                         <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
-                        <CardDescription>A list of all transactions for {userName || userId} in the selected month. Click a row for details.</CardDescription>
+                        <CardDescription>A list of all transactions for {formattedUserId} in the selected month. Click a row for details.</CardDescription>
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <div className="relative">
