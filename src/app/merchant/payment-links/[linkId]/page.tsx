@@ -59,7 +59,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
     }
   }, [params.linkId]);
 
-  const copyToClipboard = (url: string) => {
+  const copyToClipboard = (text: string, label: string) => {
     const fullUrl = text.startsWith('/') ? `${window.location.origin}${text}` : text;
     navigator.clipboard.writeText(fullUrl);
     toast({
@@ -74,6 +74,10 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
   if (!linkDetails) {
     return <div>Loading...</div>; // Or a skeleton loader
   }
+  
+  const totalVolume = allPayments.filter(p=>p.status === 'Success').reduce((acc, p) => acc + parseFloat(p.amount), 0);
+  const successfulPayments = linkDetails.payments;
+  const averagePayment = successfulPayments > 0 ? (totalVolume / successfulPayments).toFixed(2) : "0.00";
 
 
   return (
@@ -123,7 +127,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${(allPayments.filter(p=>p.status === 'Success').reduce((acc, p) => acc + parseFloat(p.amount), 0)).toFixed(2)}</div>
+                    <div className="text-2xl font-bold">${totalVolume.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -132,7 +136,16 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{linkDetails.payments}</div>
+                    <div className="text-2xl font-bold">{successfulPayments}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">${averagePayment}</div>
                 </CardContent>
             </Card>
             <Card>
