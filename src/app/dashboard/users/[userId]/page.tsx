@@ -289,10 +289,6 @@ const txTotalPages = useMemo(() => {
                             <DropdownMenuContent align="end">
                                 {merchant.role === 'admin' ? (
                                     <>
-                                        <DropdownMenuItem onClick={() => handleRoleChange('merchant')}>
-                                            <ShieldIcon className="mr-2 h-4 w-4" />
-                                            Make Merchant
-                                        </DropdownMenuItem>
                                         <DropdownMenuItem>
                                             <KeyRound className="mr-2 h-4 w-4" />
                                             Reset Password
