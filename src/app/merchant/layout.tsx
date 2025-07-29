@@ -70,7 +70,6 @@ const navItems = [
   { href: "/merchant/invoices", icon: FileText, label: "Invoices" },
   { href: "/merchant/subscriptions", icon: Repeat, label: "My Subscription" },
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
-  { href: "/merchant/profile", icon: UserIcon, label: "Profile" },
   { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },

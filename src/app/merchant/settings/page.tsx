@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle } from "lucide-react";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,6 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 
 type PaymentMethodsState = {
@@ -227,22 +230,25 @@ function KycVerificationDialog({ onKycSubmitted }: { onKycSubmitted: () => void 
     );
 }
 
-interface SettingsPageProps {
-    merchantName?: string;
-    setMerchantName?: (name: string) => void;
+interface UserProfile {
+    id: string;
+    fullName: string;
+    email: string;
+    mobile?: string;
+    businessName?: string;
+    avatar?: string;
 }
 
-export default function SettingsPage({ merchantName: initialMerchantName = "My Awesome Store", setMerchantName: setParentMerchantName = () => {} }: SettingsPageProps) {
+export default function SettingsPage() {
   const { toast } = useToast();
   
   // Profile states
-  const [merchantName, setMerchantName] = useState(initialMerchantName);
-  const [email, setEmail] = useState('merchant@example.com');
-  const [mobile, setMobile] = useState('+91 98765 43210');
-  const [profileLogo, setProfileLogo] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<Partial<UserProfile>>({});
+  const [loading, setLoading] = useState(true);
+
 
   // Branding states
-  const [businessName, setBusinessName] = useState('My Awesome Store');
+  const [businessName, setBusinessName] = useState('');
   const [brandColor, setBrandColor] = useState('#29ABE2');
   const [checkoutLogo, setCheckoutLogo] = useState<string | null>(null);
 
@@ -255,6 +261,36 @@ export default function SettingsPage({ merchantName: initialMerchantName = "My A
   
   const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
   const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
+  
+  useEffect(() => {
+    const fetchUserData = async () => {
+        const user = auth.currentUser;
+        if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if(userDoc.exists()) {
+                const data = userDoc.data();
+                setProfileData({
+                    id: user.uid,
+                    fullName: data.fullName,
+                    email: data.email,
+                    mobile: data.mobile,
+                    businessName: data.businessName,
+                    avatar: data.avatar,
+                });
+                setBusinessName(data.businessName || data.fullName);
+            }
+        }
+        setLoading(false);
+    };
+    
+    fetchUserData();
+  }, []);
+
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { id, value } = e.target;
+      setProfileData(prev => ({...prev, [id]: value}));
+  };
 
   const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
     setCheckoutDisplayOptions(prev => ({ ...prev, [option]: !prev[option] }));
@@ -284,7 +320,9 @@ export default function SettingsPage({ merchantName: initialMerchantName = "My A
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileLogo(reader.result as string);
+        const result = reader.result as string;
+        setProfileData(prev => ({...prev, avatar: result}));
+        setCheckoutLogo(result);
       };
       reader.readAsDataURL(file);
     }
@@ -301,11 +339,30 @@ export default function SettingsPage({ merchantName: initialMerchantName = "My A
     }
   };
 
-  const handleSaveChanges = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your settings have been updated.",
-    });
+  const handleSaveChanges = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+        toast({variant: "destructive", title: "Error", description: "You are not logged in."});
+        return;
+    }
+    
+    try {
+        const userDocRef = doc(db, "users", user.uid);
+        await updateDoc(userDocRef, {
+            fullName: profileData.fullName,
+            email: profileData.email,
+            mobile: profileData.mobile,
+            businessName: profileData.businessName,
+            avatar: profileData.avatar,
+        });
+        toast({
+            title: "Settings Saved",
+            description: "Your profile settings have been updated.",
+        });
+    } catch(error) {
+        console.error("Error updating profile:", error);
+        toast({variant: "destructive", title: "Error", description: "Failed to update profile."});
+    }
   };
   
   const handleBrandingSaveChanges = () => {
@@ -354,8 +411,8 @@ export default function SettingsPage({ merchantName: initialMerchantName = "My A
                         <Label>Profile Picture</Label>
                         <div className="flex items-center gap-4">
                              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border overflow-hidden">
-                                {profileLogo ? (
-                                    <Image src={profileLogo} alt="Profile Logo" width={96} height={96} className="object-cover" data-ai-hint="user avatar" />
+                                {profileData.avatar ? (
+                                    <Image src={profileData.avatar} alt="Profile Logo" width={96} height={96} className="object-cover" data-ai-hint="user avatar" />
                                 ) : (
                                     <User className="w-12 h-12 text-muted-foreground" />
                                 )}
@@ -366,30 +423,30 @@ export default function SettingsPage({ merchantName: initialMerchantName = "My A
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Full Name</Label>
+                            <Label htmlFor="fullName">Full Name</Label>
                             <Input 
-                              id="name" 
-                              value={merchantName} 
-                              onChange={(e) => setMerchantName(e.target.value)}
+                              id="fullName" 
+                              value={profileData.fullName || ''} 
+                              onChange={handleProfileChange}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            <Input id="email" type="email" value={profileData.email || ''} onChange={handleProfileChange} />
                         </div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="business-name-profile">Business Name</Label>
+                            <Label htmlFor="businessName">Business Name</Label>
                             <Input 
-                                id="business-name-profile" 
-                                value={businessName} 
-                                onChange={(e) => setBusinessName(e.target.value)} 
+                                id="businessName" 
+                                value={profileData.businessName || ''} 
+                                onChange={handleProfileChange} 
                             />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="mobile">Mobile Number</Label>
-                            <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+                            <Input id="mobile" type="tel" value={profileData.mobile || ''} onChange={handleProfileChange} />
                         </div>
                     </div>
                 </div>

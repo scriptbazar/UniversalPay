@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings, ArrowRight, Edit } from "lucide-react";
@@ -10,7 +11,7 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
@@ -55,6 +56,18 @@ export default function MerchantProfilePage() {
   const [merchant, setMerchant] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [joinedDate, setJoinedDate] = useState('N/A');
+
+  const formattedUserId = useMemo(() => {
+    if (!merchant?.id) return '';
+    let hash = 0;
+    for (let i = 0; i < merchant.id.length; i++) {
+        const char = merchant.id.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    const shortId = Math.abs(hash).toString().substring(0, 8).padEnd(8, '0');
+    return `UVPAYM${shortId}`;
+  }, [merchant?.id]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -106,9 +119,10 @@ export default function MerchantProfilePage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                           <Briefcase className="h-4 w-4" />
-                           {merchant.businessName || 'Your Business'}
+                        <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">
+                           <Hash className="h-4 w-4" />
+                           {formattedUserId}
+                           <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(formattedUserId, 'Merchant ID')} />
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -120,6 +134,7 @@ export default function MerchantProfilePage() {
                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                     <span className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {merchant.email} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.email, 'Email')} /></span>
                     {merchant.mobile && <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.mobile!, 'Mobile Number')} /></span>}
+                    {merchant.businessName && <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>}
                 </div>
                  <div className="flex items-center gap-4 mt-2">
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>
