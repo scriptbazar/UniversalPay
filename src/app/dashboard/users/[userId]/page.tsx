@@ -278,6 +278,7 @@ export default function UserDetailPage() {
   };
 
   const copyToClipboard = (text: string, label: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     toast({
         title: `${label} Copied!`,
@@ -319,7 +320,11 @@ export default function UserDetailPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">{merchant.fullName}</h1>
-                        <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">{formattedUserId}</div>
+                        <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">
+                           <Hash className="h-4 w-4" />
+                           {formattedUserId}
+                           <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(formattedUserId, 'Merchant ID')} />
+                        </div>
                     </div>
                     <div className="flex gap-2">
                          <DropdownMenu>
@@ -353,7 +358,7 @@ export default function UserDetailPage() {
                 </div>
                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                     <span className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {merchant.email} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.email, 'Email')} /></span>
-                    {merchant.mobile && <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile}</span>}
+                    {merchant.mobile && <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.mobile!, 'Mobile Number')} /></span>}
                     {merchant.businessName && <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>}
                 </div>
                  <div className="flex items-center gap-4 mt-2">
@@ -433,7 +438,7 @@ export default function UserDetailPage() {
                                     fontSize={12}
                                     tickLine={false}
                                     axisLine={false}
-                                    tickFormatter={(value) => `$${'${value/1000}'}K`}
+                                    tickFormatter={(value) => `$${value/1000}K`}
                                     />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
@@ -466,7 +471,7 @@ export default function UserDetailPage() {
                                         className="cursor-pointer"
                                     >
                                         {paymentMethodData.map((entry, index) => (
-                                            <Cell key={`cell-${'${index}'}`} fill={entry.color} />
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
                                     <Tooltip formatter={formatTooltipValue} />
