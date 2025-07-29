@@ -154,47 +154,55 @@ export default function MerchantProfilePage() {
         <Separator />
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Lifetime Volume</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
-                    <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-                </CardContent>
+            <Card asChild className="cursor-pointer hover:bg-muted/50 transition-colors">
+                 <Link href="/merchant/payments">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Lifetime Volume</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">$45,231.89</div>
+                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                    </CardContent>
+                </Link>
             </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
-                    <p className="text-xs text-muted-foreground">+180.1% from last month</p>
-                </CardContent>
+            <Card asChild className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Link href="/merchant/payments">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">+2350</div>
+                        <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+                    </CardContent>
+                </Link>
             </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                    <Percent className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">98.5%</div>
-                    <p className="text-xs text-muted-foreground">+1.2% from last month</p>
-                </CardContent>
+            <Card asChild className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Link href="/merchant/analytics">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                        <Percent className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">98.5%</div>
+                        <p className="text-xs text-muted-foreground">+1.2% from last month</p>
+                    </CardContent>
+                </Link>
             </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{merchant.plan || 'Free'}</div>
-                    <p className="text-xs text-muted-foreground">
-                        <Link href="/merchant/subscriptions" className="hover:underline">Upgrade Plan</Link>
-                    </p>
-                </CardContent>
+            <Card asChild className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <Link href="/merchant/subscriptions">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{merchant.plan || 'Free'}</div>
+                        <p className="text-xs text-muted-foreground">
+                            <span className="hover:underline">Upgrade Plan</span>
+                        </p>
+                    </CardContent>
+                </Link>
             </Card>
         </div>
         
@@ -221,19 +229,19 @@ export default function MerchantProfilePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow>
+                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/merchant/withdrawals')}>
                             <TableCell>Withdrawal</TableCell>
                             <TableCell>Withdrawal to USDT Wallet</TableCell>
                             <TableCell><Badge variant="secondary">Pending</Badge></TableCell>
                             <TableCell className="text-right">{new Date().toLocaleDateString()}</TableCell>
                         </TableRow>
-                         <TableRow>
+                         <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/merchant/payments')}>
                             <TableCell>Payment Received</TableCell>
                             <TableCell>From customer@example.com</TableCell>
                             <TableCell><Badge variant="default">Success</Badge></TableCell>
                             <TableCell className="text-right">{new Date(Date.now() - 86400000).toLocaleDateString()}</TableCell>
                         </TableRow>
-                        <TableRow>
+                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/merchant/payment-links')}>
                             <TableCell>Payment Link Created</TableCell>
                             <TableCell>New T-Shirt Sale</TableCell>
                             <TableCell><Badge variant="outline">Active</Badge></TableCell>

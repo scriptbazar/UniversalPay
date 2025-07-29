@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
-import { doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp, updateDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 
@@ -348,13 +348,15 @@ export default function SettingsPage() {
     
     try {
         const userDocRef = doc(db, "users", user.uid);
-        await updateDoc(userDocRef, {
+        // Using setDoc with merge: true to create or update the document
+        await setDoc(userDocRef, {
             fullName: profileData.fullName,
             email: profileData.email,
             mobile: profileData.mobile,
             businessName: profileData.businessName,
             avatar: profileData.avatar,
-        });
+        }, { merge: true });
+        
         toast({
             title: "Settings Saved",
             description: "Your profile settings have been updated.",
