@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight, UserCircle } from "lucide-react";
 import OrbitingCurrencies from "@/components/OrbitingCurrencies";
 import Link from "next/link";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, CarouselDots } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import React from "react";
+import Image from "next/image";
 
 const features = [
   {
@@ -166,6 +167,45 @@ const tiers = [
   },
 ];
 
+const testimonials = [
+  {
+    quote: "UniversalPay has been a game-changer for our business. The ability to accept payments globally without the hassle of traditional banking has allowed us to scale faster than we ever thought possible.",
+    name: "Aarav Sharma",
+    title: "Founder, TechInnovate",
+    avatar: "https://placehold.co/100x100.png?text=AS"
+  },
+  {
+    quote: "The developer-friendly APIs and clear documentation made integration a breeze. We were up and running in a single afternoon. Highly recommended!",
+    name: "Priya Singh",
+    title: "Lead Developer, CreativeGoods",
+    avatar: "https://placehold.co/100x100.png?text=PS"
+  },
+  {
+    quote: "As a reseller, the white-label solution is exactly what I needed. I can manage my clients under my own brand, and the commission structure is fantastic.",
+    name: "Rohan Mehta",
+    title: "CEO, PayRight Solutions",
+    avatar: "https://placehold.co/100x100.png?text=RM"
+  }
+];
+
+const howItWorksSteps = [
+    {
+        icon: <UserCircle className="w-10 h-10 text-primary" />,
+        title: "Create Your Account",
+        description: "Sign up for a free account in minutes. No credit card required to get started."
+    },
+    {
+        icon: <Settings className="w-10 h-10 text-primary" />,
+        title: "Configure Your Wallet",
+        description: "Link your preferred cryptocurrency wallet (USDT, BTC, etc.) to receive settlements."
+    },
+    {
+        icon: <Zap className="w-10 h-10 text-primary" />,
+        title: "Start Accepting Payments",
+        description: "Use our SDKs, Payment Links, or Invoicing system to start receiving payments from anywhere in the world."
+    }
+]
+
 
 export default function Home() {
   const halfLength = Math.ceil(faqItems.length / 2);
@@ -194,8 +234,25 @@ export default function Home() {
             </Button>
           </div>
         </section>
+        
+        <section className="py-20 px-4 md:px-8 bg-muted">
+            <div className="container mx-auto">
+                <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Go Live in Minutes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    {howItWorksSteps.map((step, index) => (
+                        <div key={index} className="flex flex-col items-center text-center">
+                            <div className="p-4 bg-primary/10 rounded-full mb-4">
+                                {step.icon}
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+                            <p className="text-muted-foreground">{step.description}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
 
-        <section id="features" className="py-20 px-4 md:px-8 bg-slate-50 dark:bg-slate-900">
+        <section id="features" className="py-20 px-4 md:px-8 bg-background">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features for Modern Businesses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -218,7 +275,7 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="py-20 px-4 md:px-8 bg-background overflow-hidden">
+        <section className="py-20 px-4 md:px-8 bg-muted overflow-hidden">
             <div className="container mx-auto flex flex-col md:grid md:grid-cols-2 gap-12 items-center">
                 <div className="space-y-6">
                     <h2 className="text-3xl md:text-4xl font-bold">One Platform, Global Reach</h2>
@@ -247,6 +304,37 @@ export default function Home() {
                     <OrbitingCurrencies />
                  </div>
             </div>
+        </section>
+        
+         <section id="testimonials" className="py-20 px-4 md:px-8 bg-background">
+          <div className="container mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What Our Customers Say</h2>
+             <Carousel 
+                className="w-full max-w-4xl mx-auto"
+                plugins={[autoplayPlugin.current]}
+                onMouseEnter={autoplayPlugin.current.stop}
+                onMouseLeave={autoplayPlugin.current.reset}
+              >
+              <CarouselContent>
+                {testimonials.map((testimonial, index) => (
+                  <CarouselItem key={index}>
+                    <div className="p-1">
+                      <Card className="border-0 shadow-none">
+                        <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                          <Image src={testimonial.avatar} alt={testimonial.name} width={80} height={80} className="rounded-full mb-4" data-ai-hint="user avatar" />
+                          <p className="text-lg font-medium text-foreground mb-4">"{testimonial.quote}"</p>
+                          <div className="font-semibold">{testimonial.name}</div>
+                          <div className="text-sm text-muted-foreground">{testimonial.title}</div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          </div>
         </section>
 
         <section id="pricing" className="py-20 px-4 md:px-8 bg-muted">
@@ -331,11 +419,7 @@ export default function Home() {
                                 </CarouselItem>
                             ))}
                         </CarouselContent>
-                        <div className="flex justify-center gap-2 mt-4">
-                            {tiers.map((_, index) => (
-                                <div key={index} className="w-2 h-2 rounded-full bg-muted-foreground/50 data-[active=true]:bg-primary" />
-                            ))}
-                        </div>
+                        <CarouselDots />
                     </Carousel>
                 </div>
             </div>

@@ -271,20 +271,12 @@ const CarouselDots = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-    const { api, scrollTo } = useCarousel();
+    const { api, scrollTo, selectedIndex } = useCarousel();
     const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
-    const [selectedIndex, setSelectedIndex] = React.useState(0);
     
     React.useEffect(() => {
         if (!api) return;
         setScrollSnaps(api.scrollSnapList());
-        const onSelect = () => {
-             setSelectedIndex(api.selectedScrollSnap())
-        };
-        api.on("select", onSelect);
-        return () => {
-          api.off("select", onSelect);
-        }
     }, [api]);
 
     return (
@@ -294,15 +286,14 @@ const CarouselDots = React.forwardRef<
             {...props}
         >
             {scrollSnaps.map((_, index) => (
-                <Button
+                <button
                     key={index}
-                    variant="outline"
-                    size="icon"
                     className={cn(
-                        "h-2 w-2 rounded-full p-0",
+                        "h-2 w-2 rounded-full",
                         index === selectedIndex ? "bg-primary" : "bg-muted-foreground/50"
                     )}
                     onClick={() => scrollTo(index)}
+                    aria-label={`Go to slide ${index + 1}`}
                 />
             ))}
         </div>
