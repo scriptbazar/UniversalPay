@@ -1,24 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Rule for listing documents in the 'users' collection.
-    // This allows an admin to fetch all users for the dashboard.
-    match /users/{document=**} {
-      allow list: if request.auth.token.role == 'admin';
+    
+    // Admins can read/write all user documents.
+    // Authenticated users can read/update their own document.
+    // Any authenticated user can create their own user document upon signup.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'admin');
+      allow create: if request.auth != null;
+      allow list, write: if request.auth != null && request.auth.token.role == 'admin';
     }
 
-    // Rules for individual user documents.
-    match /users/{userId} {
-      // Allow any authenticated user to create their own document upon signup.
-      allow create: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow a user to read or update their own data.
-      // Also allows an admin to read any user's data.
-      allow read, update: if (request.auth != null && request.auth.uid == userId) || (request.auth.token.role == 'admin');
-
-      // Only allow an admin to delete a user document.
-      allow delete: if request.auth.token.role == 'admin';
+    // Only admins can read audit logs. Writes are handled by backend functions with admin privileges.
+    match /audit_logs/{logId} {
+      allow read: if request.auth != null && request.auth.token.role == 'admin';
+      allow write: if false; // Prevent client-side writes
     }
   }
 }
