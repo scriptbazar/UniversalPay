@@ -114,7 +114,7 @@ export default function PayPage() {
 
                             <div className="w-full">
                                 <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
-                                <div className="flex flex-col space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <Button type="button" variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
                                     <Button type="button" variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
                                     <Button type="button" variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
@@ -130,19 +130,20 @@ export default function PayPage() {
                             >
                                 Pay ${totalAmount.toFixed(2)}
                             </Button>
-                            <p className="text-xs text-muted-foreground text-center pt-2">
-                                By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
-                            </p>
+                            <div className="text-center w-full">
+                                <p className="text-xs text-muted-foreground">
+                                    By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
+                                </p>
+                                <div className="flex items-center justify-center pt-4 gap-2 text-sm text-muted-foreground">
+                                    <Globe className="h-4 w-4 text-primary"/>
+                                    <span>Powered by UniversalPay</span>
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                 </form>
             </Card>
-            <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                <Globe className="h-4 w-4 text-primary"/>
-                <span>Powered by UniversalPay</span>
-            </div>
         </div>
     </div>
   );
 }
-
