@@ -1,85 +1,91 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
 
-    // Users Collection
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection rules
     match /users/{userId} {
-      // Admins can read any user profile.
-      // Authenticated users can read their own profile.
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                  || request.auth.uid == userId;
-
-      // Only the user themselves or an admin can update their profile.
-      // Prevent users from changing their own role or status.
-      allow update: if (request.auth.uid == userId && !("role" in request.resource.data) && !("status" in request.resource.data))
-                    || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-
-      // Allow users to be created.
-      allow create: if request.auth.uid != null;
-    }
-
-    // Transactions Collection
-    match /transactions/{transactionId} {
-      // Admins can read any transaction.
-      // Merchants can read their own transactions.
-      allow get: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                 || resource.data.merchantId == request.auth.uid;
+      // Admins can get any user profile
+      // Authenticated users can get their own profile
+      allow get: if isAdmin() || isOwner(userId);
       
-      // Allow authenticated users to query the collection.
-      // Security is enforced by the queries in the application code.
-      allow list: if request.auth != null;
-
-      // Allow authenticated users to create transactions.
-      allow create: if request.auth != null;
-    }
-
-    // Tickets Collection
-    match /tickets/{ticketId} {
-      // Admins can read/update any ticket.
-      // Merchants can read/update their own tickets.
-      allow get, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                         || resource.data.merchantId == request.auth.uid;
-
-      // Allow authenticated users to query the collection.
-      allow list: if request.auth != null;
+      // Only Admins can list the users collection
+      allow list: if isAdmin();
       
-      // Allow authenticated users to create tickets for themselves.
-      allow create: if request.auth.uid == request.resource.data.merchantId;
+      // An authenticated user can update their own profile
+      // An admin can update any user profile
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // Users are created via Cloud Function, so no direct client creation.
+      // Admins can delete users.
+      allow create: if false;
+      allow delete: if isAdmin();
     }
 
-    // Withdrawals Collection
-    match /withdrawals/{withdrawalId} {
-       // Admins can read/update any withdrawal.
-      // Merchants can read their own withdrawals.
-       allow get, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                         || resource.data.merchantId == request.auth.uid;
-
-      // Allow authenticated users to query the collection.
-      allow list: if request.auth != null;
-
-      // Allow authenticated users to create withdrawal requests for themselves.
-      allow create: if request.auth.uid == request.resource.data.merchantId;
-    }
-
-    // Payment Links Collection
-    match /paymentLinks/{linkId} {
-      // Admins can read/update any link.
-      // Merchants can read/update their own links.
-      allow read, update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                         || resource.data.merchantId == request.auth.uid;
-
-      // Allow authenticated users to create links for themselves.
-      allow create: if request.auth.uid == request.resource.data.merchantId;
-    }
-
-    // Audit Logs Collection
+    // Audit Logs: Only admins can read/write.
     match /audit_logs/{logId} {
-      // Only admins can read audit logs.
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      
-      // No one can create/update/delete from the client. This is handled by Cloud Functions.
-      allow write: if false;
+      allow read, write: if isAdmin();
+    }
+    
+    // Transactions: Admins can see all, merchants can see their own.
+    match /transactions/{transactionId} {
+       allow get: if isAdmin() || isOwner(resource.data.merchantId);
+       allow list: if isAuthenticated(); // List allowed, but query must be secured client-side
+       allow create: if isAuthenticated(); // Any auth'd user can create (e.g., a customer paying)
+       allow update, delete: if isAdmin(); // Only admin can modify
+    }
+    
+    // Tickets: Admins can access all, merchants their own.
+    match /tickets/{ticketId} {
+       allow get: if isAdmin() || isOwner(resource.data.merchantId);
+       allow list: if isAuthenticated(); // List allowed, query secured client-side
+       allow create: if isAuthenticated(); // Merchant can create their own ticket
+       allow update: if isAdmin() || isOwner(resource.data.merchantId); // Merchant or admin can update (e.g., add reply)
+       allow delete: if isAdmin();
+    }
+    
+    // Withdrawals: Admins can access all, merchants their own.
+    match /withdrawals/{withdrawalId} {
+       allow get: if isAdmin() || isOwner(resource.data.merchantId);
+       allow list: if isAuthenticated(); // List allowed, query secured client-side
+       allow create: if isOwner(request.resource.data.merchantId); // Merchant can create their own request
+       allow update, delete: if isAdmin();
+    }
+
+    // Payment Links: Admins can access all, merchants their own.
+    match /paymentLinks/{linkId} {
+       allow get: if isAdmin() || isOwner(resource.data.merchantId);
+       allow list: if isAuthenticated(); // List allowed, query secured client-side
+       allow create: if isOwner(request.resource.data.merchantId); // Merchant creates their own
+       allow update: if isAdmin() || isOwner(resource.data.merchantId);
+       allow delete: if isAdmin() || isOwner(resource.data.merchantId);
+    }
+    
+    // Invoices: Admins can access all, merchants their own.
+    match /invoices/{invoiceId} {
+       allow get: if isAdmin() || isOwner(resource.data.merchantId);
+       allow list: if isAuthenticated(); // List allowed, query secured client-side
+       allow create: if isOwner(request.resource.data.merchantId);
+       allow update: if isAdmin() || isOwner(resource.data.merchantId);
+       allow delete: if isAdmin() || isOwner(resource.data.merchantId);
     }
   }
 }
+
+    
