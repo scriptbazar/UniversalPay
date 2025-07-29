@@ -59,6 +59,7 @@ export default function MonthlyTransactionsPage() {
     
     // Function to create a consistent 6-digit number from the userId
     const formatUserId = (uid: string) => {
+        if (!uid) return '';
         let hash = 0;
         for (let i = 0; i < uid.length; i++) {
             const char = uid.charCodeAt(i);
@@ -77,8 +78,11 @@ export default function MonthlyTransactionsPage() {
     }, []);
 
     const monthlyTransactions = useMemo(() => {
-        // In a real app, you would also filter by userId
-        let filtered = allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase() && tx.merchantId === userId);
+        let filtered = allMockTransactions.filter(tx => tx.merchantId === userId);
+        
+        if (month !== 'all') {
+            filtered = filtered.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
+        }
 
         if (searchTerm) {
             filtered = filtered.filter(tx =>
@@ -108,6 +112,8 @@ export default function MonthlyTransactionsPage() {
             description: `${text} has been copied to your clipboard.`,
         });
     };
+    
+    const pageTitle = month === 'all' ? `All Transactions` : `Transactions for ${month.charAt(0).toUpperCase() + month.slice(1)}`;
 
     return (
         <div className="space-y-6">
@@ -119,8 +125,8 @@ export default function MonthlyTransactionsPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center">
                     <div className="grid gap-2">
-                        <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
-                        <CardDescription>A list of all transactions for merchant {formattedUserId} in the selected month. Click a row for details.</CardDescription>
+                        <CardTitle className="text-2xl">{pageTitle}</CardTitle>
+                        <CardDescription>A list of all transactions for merchant {formattedUserId}{month !== 'all' && ` in ${month}`}. Click a row for details.</CardDescription>
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <div className="relative">

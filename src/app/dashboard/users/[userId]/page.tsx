@@ -34,16 +34,18 @@ type Transaction = {
     method: string;
     status: string;
     date: Date;
+    merchantId?: string; // Add merchantId for filtering
 };
 
-const allTransactions: Transaction[] = [
-    { id: "UVRLP111111111", amount: "250.00", currency: "USD", method: "Crypto", status: "Success", date: new Date(2023, 0, 15) },
-    { id: "UVRLP222222222", amount: "150.00", currency: "INR", method: "UPI", status: "Success", date: new Date(2023, 1, 10) },
-    { id: "UVRLP333333333", amount: "350.00", currency: "INR", method: "UPI", status: "Failed", date: new Date(2023, 2, 5) },
-    { id: "UVRLP444444444", amount: "800.00", currency: "USD", method: "Page", status: "Success", date: new Date(2023, 3, 20) },
-    { id: "UVRLP555555555", amount: "1200.00", currency: "USD", method: "Link", status: "Success", date: new Date(2023, 4, 1) },
-    { id: "UVRLP666666666", amount: "450.00", currency: "USD", method: "Page", status: "Success", date: new Date(2023, 5, 12) },
-];
+const allTransactions: Transaction[] = Array.from({ length: 50 }, (_, i) => ({
+    id: `UVRLP${111111111 + i}`,
+    amount: (Math.random() * 500).toFixed(2),
+    currency: i % 2 === 0 ? "USD" : "INR",
+    method: ["Crypto", "UPI", "Page", "Link"][i % 4],
+    status: ["Success", "Failed", "Pending"][i % 3],
+    date: new Date(2023, i % 12, (i % 28) + 1),
+    merchantId: `user_${(i % 5) + 1}`, // Assign to one of 5 mock users
+}));
 
 
 type Withdrawal = {
@@ -199,10 +201,19 @@ export default function UserDetailPage() {
   };
 
   const paginatedTransactions = useMemo(() => {
-      return allTransactions.slice(0, itemsPerPage);
-  }, []);
+    if (!userId) return [];
+    const userTransactions = allTransactions.filter(tx => tx.merchantId === userId);
+    return userTransactions.slice(
+        (txCurrentPage - 1) * itemsPerPage,
+        txCurrentPage * itemsPerPage
+    );
+}, [userId, txCurrentPage]);
 
-  const txTotalPages = Math.ceil(allTransactions.length / itemsPerPage);
+const txTotalPages = useMemo(() => {
+    if (!userId) return 1;
+    const userTransactions = allTransactions.filter(tx => tx.merchantId === userId);
+    return Math.ceil(userTransactions.length / itemsPerPage);
+}, [userId]);
   
   const paginatedWithdrawals = useMemo(() => {
       return withdrawalHistory.slice(0, itemsPerPage);
@@ -334,25 +345,29 @@ export default function UserDetailPage() {
             </TabsList>
             <TabsContent value="overview" className="mt-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">$4,523.89</div>
-                            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-                        </CardContent>
+                    <Card asChild>
+                         <Link href={`/dashboard/users/${userId}/transactions/by-month/all`} className="cursor-pointer hover:bg-muted/50">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+                                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">$4,523.89</div>
+                                <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                            </CardContent>
+                        </Link>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">+235</div>
-                            <p className="text-xs text-muted-foreground">+18.1% from last month</p>
-                        </CardContent>
+                    <Card asChild>
+                       <Link href={`/dashboard/users/${userId}/transactions/by-month/all`} className="cursor-pointer hover:bg-muted/50">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
+                                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">+235</div>
+                                <p className="text-xs text-muted-foreground">+18.1% from last month</p>
+                            </CardContent>
+                        </Link>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -375,7 +390,6 @@ export default function UserDetailPage() {
                         </CardContent>
                     </Card>
                 </div>
-                 {/* Here you could add charts for user-specific data */}
             </TabsContent>
              <TabsContent value="transactions" className="mt-4">
                  <Card>
@@ -406,6 +420,13 @@ export default function UserDetailPage() {
                                     <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
                                     </TableRow>
                                 ))}
+                                {paginatedTransactions.length === 0 && (
+                                     <TableRow>
+                                        <TableCell colSpan={5} className="h-24 text-center">
+                                            No transactions found for this merchant.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
