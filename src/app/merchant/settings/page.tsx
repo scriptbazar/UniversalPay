@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, Timestamp, updateDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
+import Link from "next/link";
 
 
 type PaymentMethodsState = {
@@ -60,6 +61,7 @@ interface UserProfile {
     supportUrl?: string;
     displayOptions?: CheckoutDisplayOptions;
     hideIdentity?: boolean;
+    paymentMethods?: PaymentMethodsState;
 }
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -73,7 +75,7 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideIdentity }: { brandColor: string, logo: string | null, businessName: string, displayOptions: CheckoutDisplayOptions, hideIdentity?: boolean }) => {
-    const displayName = businessName || 'Your Business Name';
+    const displayName = hideIdentity ? 'UniversalPay' : (businessName || 'Your Business Name');
     return (
         <div className="sticky top-24">
             <h3 className="text-lg font-semibold mb-4 text-center">Checkout Preview</h3>
@@ -82,7 +84,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                     <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                             {hideIdentity ? (
-                                <Globe className="w-10 h-10 text-primary" />
+                                <Logo />
                             ) : logo ? (
                                 <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
@@ -91,11 +93,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Paying</p>
-                            {hideIdentity ? (
-                                <h4 className="font-semibold text-lg">UniversalPay</h4>
-                            ) : (
-                                <h4 className="font-semibold text-lg">{displayName}</h4>
-                            )}
+                            <h4 className="font-semibold text-lg">{displayName}</h4>
                         </div>
 
                         <Separator />
@@ -273,35 +271,28 @@ export default function SettingsPage() {
         supportUrl: '',
         displayOptions: { upi: true, card: true, crypto: true, paypal: false },
         hideIdentity: false,
+        paymentMethods: {
+            paytm: true, phonepe: true, gpay: false, btc_wallet: true, usdt_wallet: true,
+            usd_card: true, eur_sepa: false, gbp_bacs: false, aud_becs: false,
+            cad_eft: false, paypal: true,
+        },
     });
   const [loading, setLoading] = useState(true);
-
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
-    paytm: true,
-    phonepe: true,
-    gpay: false,
-    btc_wallet: true,
-    usdt_wallet: true,
-    usd_card: true,
-    eur_sepa: false,
-    gbp_bacs: false,
-    aud_becs: false,
-    cad_eft: false,
-    paypal: true,
-  });
   
   const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
   const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
   
   useEffect(() => {
     const fetchUserData = async () => {
+        setLoading(true);
         const user = auth.currentUser;
         if (user) {
             const userDocRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userDocRef);
             if(userDoc.exists()) {
                 const data = userDoc.data();
-                setProfileData({
+                setProfileData(prev => ({
+                    ...prev,
                     id: user.uid,
                     fullName: data.fullName || '',
                     email: data.email || '',
@@ -315,7 +306,8 @@ export default function SettingsPage() {
                     supportUrl: data.supportUrl || '',
                     displayOptions: data.displayOptions || { upi: true, card: true, crypto: true, paypal: false },
                     hideIdentity: data.hideIdentity || false,
-                });
+                    paymentMethods: data.paymentMethods || prev.paymentMethods,
+                }));
             }
         }
         setLoading(false);
@@ -345,7 +337,13 @@ export default function SettingsPage() {
 
 
   const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
-    setPaymentMethods(prev => ({ ...prev, [method]: !prev[method] }));
+    setProfileData(prev => ({
+        ...prev,
+        paymentMethods: {
+            ...prev.paymentMethods!,
+            [method]: !prev.paymentMethods![method],
+        }
+    }));
   };
 
   const handleProfileLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -708,9 +706,9 @@ export default function SettingsPage() {
                                     <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
                                     <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in Tether.</p>
                                 </div>
-                                <Switch id="usdt-switch" checked={paymentMethods.usdt_wallet} onCheckedChange={() => handlePaymentMethodToggle('usdt_wallet')} />
+                                <Switch id="usdt-switch" checked={profileData.paymentMethods?.usdt_wallet} onCheckedChange={() => handlePaymentMethodToggle('usdt_wallet')} />
                             </div>
-                            {paymentMethods.usdt_wallet && (
+                            {profileData.paymentMethods?.usdt_wallet && (
                                 <div className="space-y-2 pt-2">
                                     <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
                                     <Input id="usdt-wallet" placeholder="T..."/>
@@ -723,9 +721,9 @@ export default function SettingsPage() {
                                     <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
                                     <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
                                 </div>
-                                <Switch id="btc-switch" checked={paymentMethods.btc_wallet} onCheckedChange={() => handlePaymentMethodToggle('btc_wallet')} />
+                                <Switch id="btc-switch" checked={profileData.paymentMethods?.btc_wallet} onCheckedChange={() => handlePaymentMethodToggle('btc_wallet')} />
                             </div>
-                            {paymentMethods.btc_wallet && (
+                            {profileData.paymentMethods?.btc_wallet && (
                                 <div className="space-y-2 pt-2">
                                     <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
                                     <Input id="btc-wallet" placeholder="bc1..."/>
@@ -745,15 +743,15 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div><Label htmlFor="paytm-switch" className="font-medium">Paytm</Label></div>
-                            <Switch id="paytm-switch" checked={paymentMethods.paytm} onCheckedChange={() => handlePaymentMethodToggle('paytm')} />
+                            <Switch id="paytm-switch" checked={profileData.paymentMethods?.paytm} onCheckedChange={() => handlePaymentMethodToggle('paytm')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div><Label htmlFor="phonepe-switch" className="font-medium">PhonePe</Label></div>
-                            <Switch id="phonepe-switch" checked={paymentMethods.phonepe} onCheckedChange={() => handlePaymentMethodToggle('phonepe')} />
+                            <Switch id="phonepe-switch" checked={profileData.paymentMethods?.phonepe} onCheckedChange={() => handlePaymentMethodToggle('phonepe')} />
                         </div>
                          <div className="flex items-center justify-between rounded-lg border p-3">
                             <div><Label htmlFor="gpay-switch" className="font-medium">Google Pay</Label></div>
-                            <Switch id="gpay-switch" checked={paymentMethods.gpay} onCheckedChange={() => handlePaymentMethodToggle('gpay')} />
+                            <Switch id="gpay-switch" checked={profileData.paymentMethods?.gpay} onCheckedChange={() => handlePaymentMethodToggle('gpay')} />
                         </div>
                     </div>
                 
@@ -765,41 +763,41 @@ export default function SettingsPage() {
                                     <PayPalIcon className="w-4 h-4" /> PayPal
                                 </Label>
                             </div>
-                            <Switch id="paypal-switch" checked={paymentMethods.paypal} onCheckedChange={() => handlePaymentMethodToggle('paypal')} />
+                            <Switch id="paypal-switch" checked={profileData.paymentMethods?.paypal} onCheckedChange={() => handlePaymentMethodToggle('paypal')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
                             </div>
-                            <Switch id="usd-card-switch" checked={paymentMethods.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
+                            <Switch id="usd-card-switch" checked={profileData.paymentMethods?.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Transfer (EUR)</Label>
                             </div>
-                            <Switch id="eur-sepa-switch" checked={paymentMethods.eur_sepa} onCheckedChange={() => handlePaymentMethodToggle('eur_sepa')} />
+                            <Switch id="eur-sepa-switch" checked={profileData.paymentMethods?.eur_sepa} onCheckedChange={() => handlePaymentMethodToggle('eur_sepa')} />
                         </div>
                          <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="gbp-bacs-switch" className="font-medium">BACS Debit (GBP)</Label>
                             </div>
-                            <Switch id="gbp-bacs-switch" checked={paymentMethods.gbp_bacs} onCheckedChange={() => handlePaymentMethodToggle('gbp_bacs')} />
+                            <Switch id="gbp-bacs-switch" checked={profileData.paymentMethods?.gbp_bacs} onCheckedChange={() => handlePaymentMethodToggle('gbp_bacs')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="aud-becs-switch" className="font-medium">BECS Debit (AUD)</Label>
                             </div>
-                            <Switch id="aud-becs-switch" checked={paymentMethods.aud_becs} onCheckedChange={() => handlePaymentMethodToggle('aud_becs')} />
+                            <Switch id="aud-becs-switch" checked={profileData.paymentMethods?.aud_becs} onCheckedChange={() => handlePaymentMethodToggle('aud_becs')} />
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="cad-eft-switch" className="font-medium">EFT Debit (CAD)</Label>
                             </div>
-                            <Switch id="cad-eft-switch" checked={paymentMethods.cad_eft} onCheckedChange={() => handlePaymentMethodToggle('cad_eft')} />
+                            <Switch id="cad-eft-switch" checked={profileData.paymentMethods?.cad_eft} onCheckedChange={() => handlePaymentMethodToggle('cad_eft')} />
                         </div>
                     </div>
                 </div>
-                 <Button onClick={() => saveUserData({})}>Save Changes</Button>
+                 <Button onClick={() => saveUserData({ paymentMethods: profileData.paymentMethods })}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
