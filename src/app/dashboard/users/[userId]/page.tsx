@@ -110,6 +110,8 @@ export default function UserDetailPage() {
   
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+  const [walletAdjustment, setWalletAdjustment] = useState({ amount: '', type: 'credit' });
+
 
   const [txCurrentPage, setTxCurrentPage] = useState(1);
   const [wdCurrentPage, setWdCurrentPage] = useState(1);
@@ -215,6 +217,25 @@ export default function UserDetailPage() {
         title: `${label} Copied!`,
     });
   };
+  
+  const handleWalletAdjustment = async () => {
+      if (!merchant || !auth.currentUser || !walletAdjustment.amount) return;
+      const amount = parseFloat(walletAdjustment.amount);
+      if (isNaN(amount) || amount <= 0) {
+          toast({ variant: 'destructive', title: 'Invalid Amount' });
+          return;
+      }
+
+      const result = await adjustWalletBalance(merchant.id, amount, walletAdjustment.type as 'credit' | 'debit', auth.currentUser.uid);
+      if (result.success) {
+          toast({ title: 'Wallet Adjusted', description: `Successfully performed a ${walletAdjustment.type} of $${amount}.` });
+          setWalletAdjustment({ amount: '', type: 'credit' });
+          // Note: In a real app, you would also refetch the wallet balance here.
+      } else {
+          toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
+  }
+
 
   if (loading) {
     return <div className="flex-grow flex items-center justify-center">Loading user details...</div>;
@@ -304,11 +325,58 @@ export default function UserDetailPage() {
             </div>
         </div>
         
-        <Tabs defaultValue="transactions">
+        <Tabs defaultValue="overview">
             <TabsList>
+                <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
                 <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
                 <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
+                <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
             </TabsList>
+            <TabsContent value="overview" className="mt-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">$4,523.89</div>
+                            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">+235</div>
+                            <p className="text-xs text-muted-foreground">+18.1% from last month</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                            <Percent className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">98.5%</div>
+                            <p className="text-xs text-muted-foreground">+1.2% from last month</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Last Transaction</CardTitle>
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">2d ago</div>
+                            <p className="text-xs text-muted-foreground">on {new Date(new Date().setDate(new Date().getDate()-2)).toLocaleDateString()}</p>
+                        </CardContent>
+                    </Card>
+                </div>
+                 {/* Here you could add charts for user-specific data */}
+            </TabsContent>
              <TabsContent value="transactions" className="mt-4">
                  <Card>
                     <CardHeader>
@@ -425,6 +493,60 @@ export default function UserDetailPage() {
                     </CardFooter>
                 </Card>
              </TabsContent>
+              <TabsContent value="wallet" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Wallet Management</CardTitle>
+                        <CardDescription>Manually adjust the wallet balance for this merchant. These actions are logged.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <Card>
+                            <CardContent className="p-6 flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">Current Wallet Balance</p>
+                                    {/* This is a placeholder value. A real app would fetch this from the database. */}
+                                    <p className="text-3xl font-bold">$1,234.56</p>
+                                </div>
+                                 <Wallet className="h-12 w-12 text-muted-foreground" />
+                            </CardContent>
+                        </Card>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <Label htmlFor="adjustment-amount">Adjustment Amount (USD)</Label>
+                                <Input 
+                                    id="adjustment-amount" 
+                                    type="number" 
+                                    placeholder="e.g., 50.00" 
+                                    value={walletAdjustment.amount}
+                                    onChange={(e) => setWalletAdjustment({...walletAdjustment, amount: e.target.value})}
+                                />
+                            </div>
+                            <div className="space-y-4">
+                                <Label>Action Type</Label>
+                                <div className="flex gap-2">
+                                     <Button 
+                                        variant={walletAdjustment.type === 'credit' ? 'default' : 'outline'} 
+                                        className="w-full"
+                                        onClick={() => setWalletAdjustment({...walletAdjustment, type: 'credit'})}
+                                    >
+                                        <PlusCircle className="mr-2 h-4 w-4"/> Credit (Add)
+                                    </Button>
+                                     <Button 
+                                        variant={walletAdjustment.type === 'debit' ? 'destructive' : 'outline'} 
+                                        className="w-full"
+                                        onClick={() => setWalletAdjustment({...walletAdjustment, type: 'debit'})}
+                                    >
+                                         <MinusCircle className="mr-2 h-4 w-4"/> Debit (Subtract)
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button onClick={handleWalletAdjustment} disabled={!walletAdjustment.amount}>Apply Adjustment</Button>
+                    </CardFooter>
+                </Card>
+              </TabsContent>
         </Tabs>
         
         {/* Transaction Detail Dialog */}
