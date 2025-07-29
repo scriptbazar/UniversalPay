@@ -152,3 +152,54 @@ exports.updateMerchantProfile = onCall(async (request) => {
         throw new HttpsError('internal', 'An internal error occurred while updating the profile.');
     }
 });
+
+// Callable function for a merchant to upgrade their subscription plan
+exports.upgradeSubscriptionPlan = onCall(async (request) => {
+    // 1. Authentication Check
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in to upgrade your plan.');
+    }
+
+    const uid = request.auth.uid;
+    const userEmail = request.auth.token.email || 'Unknown';
+    const { planName } = request.data;
+
+    // 2. Data Validation
+    if (!planName || !['Free', 'Pro', 'Premium'].includes(planName)) {
+        throw new HttpsError('invalid-argument', 'A valid plan name is required.');
+    }
+
+    try {
+        const userDocRef = db.collection('users').doc(uid);
+        const userDoc = await userDocRef.get();
+        const currentPlan = userDoc.data()?.plan || 'Free';
+        
+        if (currentPlan === planName) {
+             throw new HttpsError('failed-precondition', 'You are already on this plan.');
+        }
+
+        // Update the user's plan in Firestore
+        await userDocRef.update({ plan: planName });
+
+        // Create an audit log for the subscription change
+        await db.collection('audit_logs').add({
+            type: 'SUBSCRIPTION_CHANGE',
+            level: 'MAJOR',
+            message: `Merchant ${userEmail} (${uid}) upgraded their plan from ${currentPlan} to ${planName}.`,
+            details: {
+                from: currentPlan,
+                to: planName,
+            },
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return { success: true, message: 'Plan upgraded successfully.' };
+
+    } catch (error: any) {
+        console.error(`Error upgrading plan for user ${uid}:`, error);
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+        throw new HttpsError('internal', 'An internal error occurred while upgrading the plan.');
+    }
+});

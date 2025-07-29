@@ -8,10 +8,11 @@ import { Check, Repeat, Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db, app } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from '@/components/ui/skeleton';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 type Plan = {
     name: string;
@@ -160,17 +161,26 @@ export default function SubscriptionPage() {
             return;
         }
 
+        setLoading(true);
         try {
-            const userDocRef = doc(db, 'users', user.uid);
-            await setDoc(userDocRef, { plan: planName }, { merge: true });
-            setCurrentPlanName(planName);
-            toast({
-                title: "Upgrade Successful!",
-                description: `You have successfully upgraded to the ${planName} plan.`,
-            });
-        } catch (error) {
+            const functions = getFunctions(app);
+            const upgradeSubscriptionPlan = httpsCallable(functions, 'upgradeSubscriptionPlan');
+            const result = await upgradeSubscriptionPlan({ planName });
+
+            if ((result.data as any).success) {
+                 setCurrentPlanName(planName);
+                 toast({
+                    title: "Upgrade Successful!",
+                    description: `You have successfully upgraded to the ${planName} plan.`,
+                });
+            } else {
+                 throw new Error((result.data as any).error || 'An unknown error occurred.');
+            }
+        } catch (error: any) {
             console.error("Error upgrading plan: ", error);
-            toast({ variant: 'destructive', title: 'Upgrade Failed', description: 'Could not update your subscription.' });
+            toast({ variant: 'destructive', title: 'Upgrade Failed', description: error.message || 'Could not update your subscription.' });
+        } finally {
+            setLoading(false);
         }
     };
     
@@ -230,7 +240,7 @@ export default function SubscriptionPage() {
                                         </CardContent>
                                         <div className="p-6 pt-0">
                                             <Button className="w-full" onClick={() => handleUpgrade(plan.name)} disabled={isCurrent || loading}>
-                                                {isCurrent ? 'Your Current Plan' : <><Star className="mr-2 h-4 w-4"/> {plan.cta}</>}
+                                                {loading && !isCurrent ? 'Processing...' : isCurrent ? 'Your Current Plan' : <><Star className="mr-2 h-4 w-4"/> {plan.cta}</>}
                                             </Button>
                                         </div>
                                     </Card>
