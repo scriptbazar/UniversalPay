@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPaymentLinkBySlug, type PaymentLink } from "@/lib/paymentLinksData";
-import { notFound, useRouter } from "next/navigation";
+import { notFound, useRouter, useParams } from "next/navigation";
 
 type Transaction = {
     id: string;
@@ -49,20 +49,22 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
     }
 };
 
-export default function PaymentPageDetailPage({ params }: { params: { pageId: string } }) {
+export default function PaymentPageDetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const pageId = params.pageId as string;
   const { toast } = useToast();
   const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
-    const link = getPaymentLinkBySlug(params.pageId);
+    const link = getPaymentLinkBySlug(pageId);
     if (link) {
       setLinkDetails(link);
     } else {
         notFound();
     }
-  }, [params.pageId]);
+  }, [pageId]);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -88,7 +90,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
     switch (type) {
         case 'volume':
         case 'payments':
-             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
+             router.push(`/merchant/analytics/revenue`);
             break;
         case 'avg':
              toast({ title: 'Average Payment Value', description: `$${averagePayment.toFixed(2)}` });
@@ -251,3 +253,4 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
     </div>
   )
 }
+
