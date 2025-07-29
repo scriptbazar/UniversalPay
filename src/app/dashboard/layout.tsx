@@ -48,6 +48,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc } from "firebase/firestore";
+import { getNotifications, type Notification } from "@/lib/notificationsData";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
@@ -110,6 +111,16 @@ export default function AdminDashboardLayout({
     const [user, setUser] = useState<User | null>(null);
     const [userProfile, setUserProfile] = useState<{ fullName?: string; email?: string, avatar?: string } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [hasUnread, setHasUnread] = useState(true);
+    
+    useEffect(() => {
+        setNotifications(getNotifications('admin'));
+    }, []);
+
+    const handleReadNotifications = () => {
+        setHasUnread(false);
+    }
     
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -222,10 +233,34 @@ export default function AdminDashboardLayout({
             {/* Can add a search bar here if needed */}
           </div>
            <ThemeToggle />
-           <Button variant="outline" size="icon" className="h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
+           <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8 relative" onClick={handleReadNotifications}>
+                        <Bell className="h-4 w-4" />
+                        {hasUnread && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span></span>}
+                        <span className="sr-only">Toggle notifications</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {notifications.length > 0 ? (
+                        notifications.map(notif => (
+                            <DropdownMenuItem key={notif.id} className="flex items-start gap-2">
+                                <div className="flex-shrink-0 mt-1">
+                                    <notif.icon className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">{notif.title}</p>
+                                    <p className="text-xs text-muted-foreground">{notif.description}</p>
+                                </div>
+                            </DropdownMenuItem>
+                        ))
+                    ) : (
+                        <DropdownMenuItem>No new notifications</DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
