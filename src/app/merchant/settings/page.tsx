@@ -46,6 +46,13 @@ type CheckoutDisplayOptions = {
     paypal: boolean;
 };
 
+type NotificationSettings = {
+    email: boolean;
+    sms: boolean;
+    whatsapp: boolean;
+    telegram: boolean;
+};
+
 interface UserProfile {
     id?: string;
     fullName?: string;
@@ -62,10 +69,15 @@ interface UserProfile {
     displayOptions?: CheckoutDisplayOptions;
     hideIdentity?: boolean;
     paymentMethods?: PaymentMethodsState;
+    notifications?: NotificationSettings;
 }
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg aria-hidden="true" fill="currentColor" viewBox="0 0 448 512" {...props}><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.8 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"></path></svg>
+);
+
+const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 496 512" {...props}><path d="M248,8C111.033,8,0,119.033,0,256S111.033,504,248,504,496,392.967,496,256,384.967,8,248,8ZM362.952,176.66c-3.732,39.215-19.881,134.378-28.1,178.3-3.476,18.584-10.322,24.816-16.948,25.425-14.4,1.32-25.322-9.549-39.287-18.661-21.575-14.061-34.4-23.219-56.652-37.177-24.485-15.355-8.829-23.238,2.7-33.736,16.582-15.663,74.6-71.137,74.6-71.137s6.895-4.408-1.558-4.408-25.683,16.173-35.8,23.534c-10.54,7.63-17.46,11.92-26.87,11.92-13.207,0-25.4-4.6-39.4-13.549-16.349-10.223-28.875-24.465-28.875-24.465s-4.5-6.126-5.01-6.614c-.856-.806-3.174-2.64-3.174-4.5,0-1.442,2.023-2.926,4.56-4.432,2.537-1.506,24.4-15.312,24.4-15.312s8.571-5.332,23.362-5.332c12.331,0,22.369,3.617,26.92,16.03s18.106,120.21,18.106,120.21,3.2,18.25,18.7,0c10.732-12.723,24.768-45.792,24.768-45.792s5.022-13.415,10.1-13.415c3.2,0,5.7,1.5,5.7,1.5Z"/></svg>
 );
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -88,7 +100,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                             ) : logo ? (
                                 <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
-                                <Globe className="w-10 h-10 text-muted-foreground" />
+                                <Globe className="w-10 h-10 text-primary" />
                             )}
                         </div>
                         <div className="text-center">
@@ -276,6 +288,12 @@ export default function SettingsPage() {
             usd_card: true, eur_sepa: false, gbp_bacs: false, aud_becs: false,
             cad_eft: false, paypal: true,
         },
+        notifications: {
+            email: true,
+            sms: false,
+            whatsapp: true,
+            telegram: false,
+        },
     });
   const [loading, setLoading] = useState(true);
   
@@ -307,6 +325,7 @@ export default function SettingsPage() {
                     displayOptions: data.displayOptions || { upi: true, card: true, crypto: true, paypal: false },
                     hideIdentity: data.hideIdentity || false,
                     paymentMethods: data.paymentMethods || prev.paymentMethods,
+                    notifications: data.notifications || prev.notifications,
                 }));
             }
         }
@@ -321,8 +340,19 @@ export default function SettingsPage() {
       setProfileData(prev => ({...prev, [id]: value}));
   };
 
-  const handleSwitchChange = (id: keyof UserProfile, checked: boolean) => {
-    setProfileData(prev => ({ ...prev, [id]: checked }));
+  const handleSwitchChange = (id: keyof UserProfile | `notifications.${keyof NotificationSettings}`, checked: boolean) => {
+    if (id.startsWith('notifications.')) {
+        const key = id.split('.')[1] as keyof NotificationSettings;
+        setProfileData(prev => ({
+            ...prev,
+            notifications: {
+                ...prev.notifications!,
+                [key]: checked,
+            },
+        }));
+    } else {
+        setProfileData(prev => ({ ...prev, [id as keyof UserProfile]: checked }));
+    }
   };
 
   const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
@@ -378,13 +408,17 @@ export default function SettingsPage() {
       
       try {
           const userDocRef = doc(db, "users", user.uid);
-          // Create a clean object with only the properties to update
           const finalData: { [key: string]: any } = {};
           
           Object.keys(dataToSave).forEach(keyStr => {
               const key = keyStr as keyof UserProfile;
-              if (dataToSave[key] !== undefined) {
-                  finalData[key] = dataToSave[key];
+              const value = dataToSave[key];
+              if (value !== undefined) {
+                   if (key === 'avatar' && (value === '' || value === null)) {
+                      // Don't save empty avatar
+                  } else {
+                     finalData[key] = value;
+                  }
               }
           });
           
@@ -394,9 +428,9 @@ export default function SettingsPage() {
               title: "Settings Saved",
               description: "Your settings have been updated.",
           });
-      } catch(error) {
+      } catch(error: any) {
           console.error("Error updating profile:", error);
-          toast({variant: "destructive", title: "Error", description: "Failed to update settings."});
+           toast({variant: "destructive", title: "Error", description: "Failed to update settings. " + error.message});
       }
   };
    
@@ -511,20 +545,34 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
-                        <h4 className="font-medium">Email Notifications</h4>
+                        <h4 className="font-medium flex items-center gap-2"><User className="w-4 h-4" /> Email Notifications</h4>
                         <p className="text-sm text-muted-foreground">Receive alerts for payments, withdrawals, and updates.</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch checked={profileData.notifications?.email} onCheckedChange={(checked) => handleSwitchChange('notifications.email', checked)} />
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
-                        <h4 className="font-medium">SMS Notifications</h4>
+                        <h4 className="font-medium flex items-center gap-2"><Smartphone className="w-4 h-4" /> SMS Notifications</h4>
                         <p className="text-sm text-muted-foreground">Get critical alerts on your mobile phone.</p>
                         </div>
-                        <Switch />
+                        <Switch checked={profileData.notifications?.sms} onCheckedChange={(checked) => handleSwitchChange('notifications.sms', checked)} />
+                    </div>
+                     <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium flex items-center gap-2"><WhatsAppIcon className="w-4 h-4" /> WhatsApp Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Receive updates directly on WhatsApp.</p>
+                        </div>
+                        <Switch checked={profileData.notifications?.whatsapp} onCheckedChange={(checked) => handleSwitchChange('notifications.whatsapp', checked)} />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                        <h4 className="font-medium flex items-center gap-2"><TelegramIcon className="w-4 h-4" /> Telegram Notifications</h4>
+                        <p className="text-sm text-muted-foreground">Get instant alerts via the Telegram bot.</p>
+                        </div>
+                        <Switch checked={profileData.notifications?.telegram} onCheckedChange={(checked) => handleSwitchChange('notifications.telegram', checked)} />
                     </div>
                 </div>
-               <Button className="mt-4" onClick={() => saveUserData({})}>Save Changes</Button>
+               <Button className="mt-4" onClick={() => saveUserData({ notifications: profileData.notifications })}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
