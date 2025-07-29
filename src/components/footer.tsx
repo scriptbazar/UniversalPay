@@ -13,9 +13,9 @@ export function Footer() {
               Secure, scalable, and global payment solutions.
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></Link>
+              <Link href="https://x.com" target="_blank" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></Link>
+              <Link href="https://facebook.com" target="_blank" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></Link>
+              <Link href="https://linkedin.com" target="_blank" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></Link>
             </div>
           </div>
           <div>
@@ -23,7 +23,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/#features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
               <li><Link href="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link></li>
-              <li><Link href="/dashboard/developer" className="text-muted-foreground hover:text-foreground">Developers</Link></li>
+              <li><Link href="/merchant/developer" className="text-muted-foreground hover:text-foreground">Developers</Link></li>
               <li><Link href="/#faq" className="text-muted-foreground hover:text-foreground">FAQ</Link></li>
             </ul>
           </div>

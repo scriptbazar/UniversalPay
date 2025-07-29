@@ -91,23 +91,6 @@ export default function PaymentPagesPage() {
     toast({ title: 'Copied to clipboard!', description: fullUrl });
   };
 
-  const simulatePayment = (linkId: string) => {
-    const link = links.find(l => l.id === linkId);
-    if (link) {
-      toast({
-        title: "Payment Successful",
-        description: `Payment received for page "${link.title}".`
-      });
-       const updatedLinks = links.map(l => 
-        l.id === linkId ? { ...l, payments: l.payments + 1 } : l
-      );
-      // In a real app, this update would come from a backend.
-      // For now, we simulate by just updating local state for the demo.
-      setLinks(updatedLinks);
-    }
-  };
-
-
   return (
     <div className="space-y-6">
       <div>
@@ -250,7 +233,6 @@ export default function PaymentPagesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                          <div className="flex justify-end items-center gap-2">
-                            <Button size="sm" variant="secondary" onClick={() => simulatePayment(link.id)}>Simulate Payment</Button>
                             <Button asChild size="sm" variant="outline">
                                 <Link href={link.url} target="_blank"><Eye className="mr-2 h-4 w-4"/> View</Link>
                             </Button>

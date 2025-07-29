@@ -39,6 +39,7 @@ export async function createUser(email: string, password: string, additionalData
             status: 'Active',
             plan: 'Free',
             createdAt: serverTimestamp(),
+            avatar: user.photoURL || `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`
         });
 
         return { success: true, userId: user.uid };

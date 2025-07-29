@@ -402,20 +402,6 @@ export default function SettingsPage({ merchantName = "My Awesome Store", setMer
                         </div>
                         <Switch />
                     </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                        <h4 className="font-medium">Telegram Notifications</h4>
-                        <p className="text-sm text-muted-foreground">Connect your Telegram for real-time updates.</p>
-                        </div>
-                        <Switch />
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                        <h4 className="font-medium flex items-center gap-2"><WhatsAppIcon className="w-4 h-4" /> WhatsApp Notifications</h4>
-                        <p className="text-sm text-muted-foreground">Get important updates directly on WhatsApp.</p>
-                        </div>
-                        <Switch />
-                    </div>
                 </div>
                <Button className="mt-4" onClick={handleSaveChanges}>Save Changes</Button>
             </CardContent>
