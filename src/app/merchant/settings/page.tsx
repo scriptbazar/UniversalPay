@@ -348,14 +348,20 @@ export default function SettingsPage() {
     
     try {
         const userDocRef = doc(db, "users", user.uid);
-        // Using setDoc with merge: true to create or update the document
-        await setDoc(userDocRef, {
+
+        const dataToSave: {[key: string]: any} = {
             fullName: profileData.fullName,
             email: profileData.email,
             mobile: profileData.mobile,
             businessName: profileData.businessName,
-            avatar: profileData.avatar,
-        }, { merge: true });
+        };
+
+        if (profileData.avatar) {
+            dataToSave.avatar = profileData.avatar;
+        }
+
+        // Using setDoc with merge: true to create or update the document
+        await setDoc(userDocRef, dataToSave, { merge: true });
         
         toast({
             title: "Settings Saved",
