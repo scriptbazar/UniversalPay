@@ -136,10 +136,14 @@ export default function MerchantProfilePage() {
                     {merchant.mobile && <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.mobile!, 'Mobile Number')} /></span>}
                     {merchant.businessName && <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>}
                 </div>
-                 <div className="flex items-center gap-4 mt-2">
+                 <div className="flex items-center gap-4 mt-2 flex-wrap">
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>
                         {merchant.status === 'Active' ? <UserCheck className="mr-1 h-3 w-3" /> : <UserX className="mr-1 h-3 w-3" />}
                         {merchant.status}
+                    </Badge>
+                    <Badge variant="outline">
+                        <Shield className="mr-1 h-3 w-3" />
+                        Role: {merchant.role || 'merchant'}
                     </Badge>
                     <Badge variant="secondary"><Briefcase className="mr-1 h-3 w-3" /> Plan: {merchant.plan || 'Free'}</Badge>
                     <Badge variant={getStatusBadgeVariant(merchant.kycStatus || 'Not Started')}>
