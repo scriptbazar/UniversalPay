@@ -71,7 +71,8 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { brandColor: string, logo: string | null, businessName: string, displayOptions: CheckoutDisplayOptions }) => {
+const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideIdentity }: { brandColor: string, logo: string | null, businessName: string, displayOptions: CheckoutDisplayOptions, hideIdentity?: boolean }) => {
+    const displayName = hideIdentity ? 'UniversalPay' : businessName || 'Your Business Name';
     return (
         <div className="sticky top-24">
             <h3 className="text-lg font-semibold mb-4 text-center">Checkout Preview</h3>
@@ -87,7 +88,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions }: { b
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Paying</p>
-                            <h4 className="font-semibold text-lg">{businessName || 'Your Business Name'}</h4>
+                            <h4 className="font-semibold text-lg">{displayName}</h4>
                         </div>
 
                         <Separator />
@@ -357,9 +358,16 @@ export default function SettingsPage() {
       
       try {
           const userDocRef = doc(db, "users", user.uid);
-          const finalData = { ...dataToSave };
-          // Remove undefined fields before saving
-          Object.keys(finalData).forEach(key => finalData[key as keyof typeof finalData] === undefined && delete finalData[key as keyof typeof finalData]);
+          const finalData: Partial<UserProfile> = { ...dataToSave };
+          
+          if (finalData.avatar === undefined) {
+              delete finalData.avatar;
+          }
+           if (finalData.checkoutLogo === undefined) {
+              delete finalData.checkoutLogo;
+          }
+          
+          Object.keys(finalData).forEach(key => (finalData as any)[key] === undefined && delete (finalData as any)[key]);
           
           await setDoc(userDocRef, finalData, { merge: true });
           
@@ -634,6 +642,7 @@ export default function SettingsPage() {
                         logo={profileData.checkoutLogo || null} 
                         businessName={profileData.businessName || 'Your Business Name'} 
                         displayOptions={profileData.displayOptions || { upi: true, card: true, crypto: true, paypal: false }} 
+                        hideIdentity={profileData.hideIdentity}
                     />
                 </div>
             </div>
