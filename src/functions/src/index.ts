@@ -141,7 +141,10 @@ exports.updateMerchantProfile = onCall(async (request) => {
             type: 'MERCHANT_PROFILE_UPDATE',
             level: 'INFO',
             message: `Merchant ${userEmail} (${uid}) updated their profile.`,
-            details: dataToUpdate, // Log the changes made
+            details: {
+                ...dataToUpdate,
+                targetUser: uid, // Add the targetUser field for notification queries
+            }, 
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -189,6 +192,7 @@ exports.upgradeSubscriptionPlan = onCall(async (request) => {
             details: {
                 from: currentPlan,
                 to: planName,
+                targetUser: uid, // Add the targetUser field
             },
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });

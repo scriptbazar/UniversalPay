@@ -29,12 +29,13 @@ export const getNotifications = async (userType: 'admin' | 'merchant', userId?: 
         let q;
 
         if (userType === 'admin') {
-            // Admin sees everything
+            // Admin sees everything of high importance
             q = query(logsCol, orderBy('timestamp', 'desc'), limit(10));
         } else if (userId) {
             // Merchant sees their own relevant logs
             q = query(logsCol, where('details.targetUser', '==', userId), orderBy('timestamp', 'desc'), limit(10));
         } else {
+            // If it's a merchant but no userId is provided, return empty.
             return [];
         }
 
