@@ -19,17 +19,30 @@ if (!admin.apps.length) {
 const db = getFirestore();
 
 
-// This function now only assigns a default 'merchant' role upon creation.
-// It also creates an audit log for the new user.
+// This function now not only assigns a default role but also creates the user document in Firestore.
+// This is the CRITICAL FIX to prevent permission errors when listing users.
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   const role = "merchant"; // Default role for all new users
 
   try {
-    await admin.auth().setCustomUserClaims(user.uid, {
-      role: role,
-    });
+    // 1. Set the custom claim for role-based access
+    await admin.auth().setCustomUserClaims(user.uid, { role });
     
-    // Create an audit log for new user creation
+    // 2. CRITICAL FIX: Create the user document in the 'users' collection
+    const userDocRef = db.collection('users').doc(user.uid);
+    await userDocRef.set({
+        uid: user.uid,
+        email: user.email,
+        fullName: user.displayName || 'New User',
+        avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
+        role: role,
+        status: 'Active',
+        plan: 'Free',
+        kycStatus: "Not Started",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 3. Create an audit log for the new user creation
     await db.collection('audit_logs').add({
         type: 'USER_CREATED',
         message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: 'merchant'.`,
@@ -37,11 +50,12 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         level: 'INFO',
     });
 
-    console.log(`Custom claim '${role}' set for user: ${user.uid}`);
+    console.log(`Custom claim '${role}' and Firestore document created for user: ${user.uid}`);
   } catch (error) {
-    console.error(`Error setting custom claim for user: ${user.uid}`, error);
+    console.error(`Error processing new user: ${user.uid}`, error);
   }
 });
+
 
 // New callable function to set a user's role to admin
 exports.setAdminRole = onCall(async (request) => {
