@@ -3,8 +3,8 @@
 
 import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon, Mail, Landmark, ShieldCheck, FileText } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -97,11 +97,13 @@ const getStatusBadgeVariant = (status: string) => {
     }
 };
 
-export default function AnalyticsDetailPage() {
+function AnalyticsDetailPageContent() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const slug = params.slug as string;
+    const source = searchParams.get('source');
     
     const [title, setTitle] = useState('');
     const [data, setData] = useState<(User | Transaction)[]>([]);
@@ -194,11 +196,15 @@ export default function AnalyticsDetailPage() {
         toast({ title: `${label} Copied!` });
     };
 
+    const backLink = source === 'payment-links' ? '/dashboard/payment-links' : '/dashboard/analytics';
+    const backLinkText = source === 'payment-links' ? 'Back to All Payment Links' : 'Back to Analytics';
+
+
     return (
         <div className="space-y-6">
-            <Link href="/dashboard/analytics" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link href={backLink} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Analytics
+                {backLinkText}
             </Link>
 
             <Card>
@@ -369,4 +375,12 @@ export default function AnalyticsDetailPage() {
             </Dialog>
         </div>
     );
+}
+
+export default function AnalyticsDetailPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <AnalyticsDetailPageContent />
+        </Suspense>
+    )
 }

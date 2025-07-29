@@ -80,10 +80,11 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
   };
 
   const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
+     const sourceQuery = '?source=payment-links';
      switch (type) {
          case 'successful':
          case 'volume':
-             router.push(`/dashboard/analytics/details/successful-transactions_all`);
+             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
              break;
          case 'fraud':
              router.push(`/dashboard/fraud-detection`); // Redirect to main fraud page for now
