@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight, UserCircle } from "lucide-react";
+import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight, UserCircle, Quote } from "lucide-react";
 import OrbitingCurrencies from "@/components/OrbitingCurrencies";
 import Link from "next/link";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, CarouselDots } from "@/components/ui/carousel";
@@ -317,22 +317,31 @@ export default function Home() {
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What Our Customers Say</h2>
              <Carousel 
-                className="w-full max-w-4xl mx-auto"
+                className="w-full max-w-5xl mx-auto"
                 plugins={[autoplayPlugin.current]}
                 onMouseEnter={autoplayPlugin.current.stop}
                 onMouseLeave={autoplayPlugin.current.reset}
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
               >
-              <CarouselContent>
+              <CarouselContent className="-ml-4">
                 {testimonials.map((testimonial, index) => (
-                  <CarouselItem key={index}>
-                    <div className="p-1">
-                      <Card className="border-0 shadow-none">
-                        <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                          <Image src={testimonial.avatar} alt={testimonial.name} width={80} height={80} className="rounded-full mb-4" data-ai-hint="user avatar" />
-                          <p className="text-lg font-medium text-foreground mb-4">"{testimonial.quote}"</p>
-                          <div className="font-semibold">{testimonial.name}</div>
-                          <div className="text-sm text-muted-foreground">{testimonial.title}</div>
+                  <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 pl-4">
+                    <div className="p-1 h-full">
+                      <Card className="flex flex-col h-full shadow-lg">
+                        <CardContent className="flex-grow p-6 space-y-4">
+                            <Quote className="w-8 h-8 text-primary/30" />
+                            <p className="text-base text-muted-foreground flex-grow">"{testimonial.quote}"</p>
                         </CardContent>
+                        <CardHeader className="flex flex-row items-center gap-4 pt-0">
+                            <Image src={testimonial.avatar} alt={testimonial.name} width={48} height={48} className="rounded-full" data-ai-hint="user avatar" />
+                            <div>
+                                <CardTitle className="text-base font-bold">{testimonial.name}</CardTitle>
+                                <CardDescription>{testimonial.title}</CardDescription>
+                            </div>
+                        </CardHeader>
                       </Card>
                     </div>
                   </CarouselItem>
