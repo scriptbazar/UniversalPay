@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -45,17 +46,21 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [priority, setPriority] = useState<Ticket['priority']>('Medium');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     if (!subject || !message) {
         toast({ variant: 'destructive', title: 'Please fill all fields.' });
+        setIsLoading(false);
         return;
     }
 
     const user = auth.currentUser;
     if (!user) {
         toast({ variant: 'destructive', title: 'You must be logged in to create a ticket.'});
+        setIsLoading(false);
         return;
     }
     
@@ -77,6 +82,7 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
     setSubject('');
     setMessage('');
     setPriority('Medium');
+    setIsLoading(false);
   };
 
   return (
@@ -113,7 +119,7 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
           </div>
           <DialogFooter>
             <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit">Submit Ticket</Button>
+            <Button type="submit" disabled={isLoading}>{isLoading ? "Submitting..." : "Submit Ticket"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
