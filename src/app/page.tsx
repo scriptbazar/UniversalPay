@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -7,7 +9,9 @@ import { Footer } from "@/components/footer";
 import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight } from "lucide-react";
 import OrbitingCurrencies from "@/components/OrbitingCurrencies";
 import Link from "next/link";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import React from "react";
 
 const features = [
   {
@@ -167,6 +171,10 @@ export default function Home() {
   const halfLength = Math.ceil(faqItems.length / 2);
   const firstHalfFaqs = faqItems.slice(0, halfLength);
   const secondHalfFaqs = faqItems.slice(halfLength);
+  
+  const autoplayPlugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -244,7 +252,6 @@ export default function Home() {
         <section id="pricing" className="py-20 px-4 md:px-8 bg-muted">
             <div className="container mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
-                {/* Desktop View */}
                 <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
                   {tiers.map((tier) => (
                     <Card key={tier.name} className={`flex flex-col rounded-xl shadow-lg ${tier.popular ? 'border-2 border-primary' : ''}`}>
@@ -279,9 +286,13 @@ export default function Home() {
                     </Card>
                   ))}
                 </div>
-                {/* Mobile View */}
                  <div className="md:hidden">
-                    <Carousel className="w-full max-w-xs mx-auto">
+                    <Carousel 
+                        className="w-full max-w-xs mx-auto"
+                        plugins={[autoplayPlugin.current]}
+                        onMouseEnter={autoplayPlugin.current.stop}
+                        onMouseLeave={autoplayPlugin.current.reset}
+                    >
                         <CarouselContent>
                             {tiers.map((tier) => (
                                 <CarouselItem key={tier.name}>
@@ -320,8 +331,11 @@ export default function Home() {
                                 </CarouselItem>
                             ))}
                         </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
+                        <div className="flex justify-center gap-2 mt-4">
+                            {tiers.map((_, index) => (
+                                <div key={index} className="w-2 h-2 rounded-full bg-muted-foreground/50 data-[active=true]:bg-primary" />
+                            ))}
+                        </div>
                     </Carousel>
                 </div>
             </div>
