@@ -392,7 +392,7 @@ const txTotalPages = useMemo(() => {
                     </Card>
                 </div>
                  <Card>
-                    <CardHeader className="flex items-center justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Recent Transactions</CardTitle>
                             <CardDescription>This merchant's 5 most recent transactions.</CardDescription>
