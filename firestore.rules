@@ -1,30 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Rules for the 'users' collection
+    
     match /users/{userId} {
-      // Allow any authenticated user to read their own data
-      allow get: if request.auth != null && request.auth.uid == userId;
-      // Allow any authenticated user to update their own data (but not their role)
-      allow update: if request.auth != null && request.auth.uid == userId && !('role' in request.resource.data);
-      // Allow only admins to list all users
-      allow list: if request.auth != null && request.auth.token.role == 'admin';
-      // Allow only admins to create or delete users
-      allow create, delete: if request.auth != null && request.auth.token.role == 'admin';
+      // Admins can read any user document. Users can only read their own.
+      allow get: if request.auth.token.role == 'admin' || request.auth.uid == userId;
+      
+      // Admins can list all users.
+      allow list: if request.auth.token.role == 'admin';
+      
+      // Users can update their own profile. Admins can update any profile.
+      allow write: if request.auth.token.role == 'admin' || request.auth.uid == userId;
     }
 
-    // Rules for the 'audit_logs' collection
+    // Admins can read audit logs.
     match /audit_logs/{logId} {
-        // Only admins can read logs
-        allow read: if request.auth != null && request.auth.token.role == 'admin';
-        // Logs can only be created by backend/server-side code (no client creation)
-        allow write: if false;
-    }
-
-    // Default deny all other reads/writes
-    match /{document=**} {
-      allow read, write: if false;
+        allow read: if request.auth.token.role == 'admin';
+        // Only backend can create/update/delete logs.
+        allow write: if false; 
     }
   }
 }
