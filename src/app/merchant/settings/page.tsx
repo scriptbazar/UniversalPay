@@ -21,6 +21,7 @@ import { useForm } from "react-hook-form";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, Timestamp, updateDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { Logo } from "@/components/logo";
 
 
 type PaymentMethodsState = {
@@ -72,7 +73,7 @@ const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideIdentity }: { brandColor: string, logo: string | null, businessName: string, displayOptions: CheckoutDisplayOptions, hideIdentity?: boolean }) => {
-    const displayName = hideIdentity ? 'UniversalPay' : businessName || 'Your Business Name';
+    const displayName = businessName || 'Your Business Name';
     return (
         <div className="sticky top-24">
             <h3 className="text-lg font-semibold mb-4 text-center">Checkout Preview</h3>
@@ -88,7 +89,11 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Paying</p>
-                            <h4 className="font-semibold text-lg">{displayName}</h4>
+                            {hideIdentity ? (
+                                <Logo className="justify-center" />
+                            ) : (
+                                <h4 className="font-semibold text-lg">{displayName}</h4>
+                            )}
                         </div>
 
                         <Separator />
@@ -128,10 +133,12 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                            <Globe className="h-4 w-4 text-primary"/>
-                            <span>Powered by UniversalPay</span>
-                         </div>
+                         {!hideIdentity && (
+                             <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
+                                <Globe className="h-4 w-4 text-primary"/>
+                                <span>Powered by UniversalPay</span>
+                             </div>
+                         )}
                     </div>
                 </CardContent>
             </Card>
@@ -251,7 +258,20 @@ function KycVerificationDialog({ onKycSubmitted }: { onKycSubmitted: () => void 
 export default function SettingsPage() {
   const { toast } = useToast();
   
-  const [profileData, setProfileData] = useState<UserProfile>({});
+  const [profileData, setProfileData] = useState<UserProfile>({
+        fullName: '',
+        email: '',
+        mobile: '',
+        businessName: '',
+        avatar: undefined,
+        brandColor: '#29ABE2',
+        checkoutLogo: undefined,
+        termsUrl: '',
+        privacyUrl: '',
+        supportUrl: '',
+        displayOptions: { upi: true, card: true, crypto: true, paypal: false },
+        hideIdentity: false,
+    });
   const [loading, setLoading] = useState(true);
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
@@ -285,9 +305,9 @@ export default function SettingsPage() {
                     email: data.email || '',
                     mobile: data.mobile || '',
                     businessName: data.businessName || '',
-                    avatar: data.avatar || null,
+                    avatar: data.avatar || undefined,
                     brandColor: data.brandColor || '#29ABE2',
-                    checkoutLogo: data.checkoutLogo || data.avatar || null,
+                    checkoutLogo: data.checkoutLogo || data.avatar || undefined,
                     termsUrl: data.termsUrl || '',
                     privacyUrl: data.privacyUrl || '',
                     supportUrl: data.supportUrl || '',
@@ -358,16 +378,15 @@ export default function SettingsPage() {
       
       try {
           const userDocRef = doc(db, "users", user.uid);
-          const finalData: Partial<UserProfile> = { ...dataToSave };
+          // Create a clean object with only the properties to update
+          const finalData: Partial<UserProfile> = {};
           
-          if (finalData.avatar === undefined) {
-              delete finalData.avatar;
-          }
-           if (finalData.checkoutLogo === undefined) {
-              delete finalData.checkoutLogo;
-          }
-          
-          Object.keys(finalData).forEach(key => (finalData as any)[key] === undefined && delete (finalData as any)[key]);
+          Object.keys(dataToSave).forEach(keyStr => {
+              const key = keyStr as keyof UserProfile;
+              if (dataToSave[key] !== undefined) {
+                  (finalData as any)[key] = dataToSave[key];
+              }
+          });
           
           await setDoc(userDocRef, finalData, { merge: true });
           
