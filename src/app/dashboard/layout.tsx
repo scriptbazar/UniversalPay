@@ -249,9 +249,6 @@ export default function AdminDashboardLayout({
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">Settings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a href="mailto:support@transactwave.com">Support</a>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
