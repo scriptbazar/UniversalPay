@@ -336,10 +336,10 @@ const txTotalPages = useMemo(() => {
             </div>
         </div>
         
-        <Tabs defaultValue="overview">
+        <Tabs defaultValue="transactions">
             <TabsList>
-                <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
                 <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
+                <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
                 <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
                 <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
             </TabsList>
