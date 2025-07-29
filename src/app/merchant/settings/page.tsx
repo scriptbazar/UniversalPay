@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -81,7 +81,9 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                 <CardContent className="p-6">
                     <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
-                            {logo ? (
+                            {hideIdentity ? (
+                                <Globe className="w-10 h-10 text-muted-foreground" />
+                            ) : logo ? (
                                 <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
                                 <Globe className="w-10 h-10 text-muted-foreground" />
@@ -133,12 +135,10 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         {!hideIdentity && (
-                             <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                                <Globe className="h-4 w-4 text-primary"/>
-                                <span>Powered by UniversalPay</span>
-                             </div>
-                         )}
+                         <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
+                            <Globe className="h-4 w-4 text-primary"/>
+                            <span>Powered by UniversalPay</span>
+                         </div>
                     </div>
                 </CardContent>
             </Card>
