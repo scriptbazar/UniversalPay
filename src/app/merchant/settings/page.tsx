@@ -82,7 +82,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                     <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                             {hideIdentity ? (
-                                <Globe className="w-10 h-10 text-muted-foreground" />
+                                <Globe className="w-10 h-10 text-primary" />
                             ) : logo ? (
                                 <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
@@ -92,7 +92,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Paying</p>
                             {hideIdentity ? (
-                                <Logo className="justify-center" />
+                                <h4 className="font-semibold text-lg">UniversalPay</h4>
                             ) : (
                                 <h4 className="font-semibold text-lg">{displayName}</h4>
                             )}
@@ -135,10 +135,12 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                            <Globe className="h-4 w-4 text-primary"/>
-                            <span>Powered by UniversalPay</span>
-                         </div>
+                         {!hideIdentity && (
+                             <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
+                                <Globe className="h-4 w-4 text-primary"/>
+                                <span>Powered by UniversalPay</span>
+                             </div>
+                         )}
                     </div>
                 </CardContent>
             </Card>
@@ -379,12 +381,12 @@ export default function SettingsPage() {
       try {
           const userDocRef = doc(db, "users", user.uid);
           // Create a clean object with only the properties to update
-          const finalData: Partial<UserProfile> = {};
+          const finalData: { [key: string]: any } = {};
           
           Object.keys(dataToSave).forEach(keyStr => {
               const key = keyStr as keyof UserProfile;
               if (dataToSave[key] !== undefined) {
-                  (finalData as any)[key] = dataToSave[key];
+                  finalData[key] = dataToSave[key];
               }
           });
           
