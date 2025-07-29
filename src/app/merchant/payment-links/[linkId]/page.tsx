@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, Eye, PowerOff } from "lucide-react";
@@ -58,7 +59,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
     }
   }, [params.linkId]);
 
-  const copyToClipboard = (text: string, label: string) => {
+  const copyToClipboard = (url: string) => {
     const fullUrl = text.startsWith('/') ? `${window.location.origin}${text}` : text;
     navigator.clipboard.writeText(fullUrl);
     toast({

@@ -21,9 +21,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
 import { addPaymentLink, getPaymentLinks, type PaymentLink } from '@/lib/paymentLinksData';
+import { useRouter } from 'next/navigation';
 
 export default function PaymentPagesPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [links, setLinks] = useState<PaymentLink[]>([]);
   
   // Form state
@@ -89,6 +91,10 @@ export default function PaymentPagesPage() {
     const fullUrl = `${window.location.origin}${url}`;
     navigator.clipboard.writeText(fullUrl);
     toast({ title: 'Copied to clipboard!', description: fullUrl });
+  };
+
+  const handleRowClick = (pageId: string) => {
+    router.push(`/merchant/payment-pages/${pageId}`);
   };
 
   return (
@@ -215,12 +221,12 @@ export default function PaymentPagesPage() {
                 </TableHeader>
                 <TableBody>
                   {links.map((link) => (
-                    <TableRow key={link.id}>
+                    <TableRow key={link.id} onClick={() => handleRowClick(link.slug)} className="cursor-pointer">
                       <TableCell>
                         <div className="font-medium">{link.title}</div>
                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                             {link.url}
-                            <Copy className="h-3 w-3 cursor-pointer" onClick={() => copyToClipboard(link.url)} />
+                            <Copy className="h-3 w-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); copyToClipboard(link.url); }} />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -233,26 +239,26 @@ export default function PaymentPagesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                          <div className="flex justify-end items-center gap-2">
-                            <Button asChild size="sm" variant="outline">
+                            <Button asChild size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
                                 <Link href={link.url} target="_blank"><Eye className="mr-2 h-4 w-4"/> View</Link>
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button size="icon" variant="ghost">
+                                <Button size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => copyToClipboard(link.url)}>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(link.url); }}>
                                   <Copy className="mr-2 h-4 w-4" /> Copy Link
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
                                   <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
                                     // In a real app, this would be an API call
                                     setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
                                   }}/> {link.isActive ? 'Deactivate' : 'Activate'}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">
+                                <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
                                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>

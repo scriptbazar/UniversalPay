@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, AppWindow, BadgeEuro, Eye, PowerOff } from "lucide-react";
