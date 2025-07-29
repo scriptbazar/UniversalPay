@@ -33,41 +33,29 @@ export const getNotifications = async (userType: 'admin' | 'merchant', userId?: 
             q = query(logsCol, orderBy('timestamp', 'desc'), limit(10));
         } else if (userId) {
             // Merchant sees their own relevant logs
-            // This is a simplified query. A real app might have a dedicated 'notifications' collection for users.
-            // For now, we'll fetch logs that might be relevant to a user.
             q = query(logsCol, where('details.targetUser', '==', userId), orderBy('timestamp', 'desc'), limit(10));
         } else {
             return [];
         }
 
         const logSnapshot = await getDocs(q);
-        if (logSnapshot.empty && userType === 'merchant') {
-             // Fallback for merchants to see their own direct actions if no targeted logs found
-            q = query(logsCol, where('message', 'startsswith', `Merchant ${userId}`), orderBy('timestamp', 'desc'), limit(10));
-            const selfActionSnapshot = await getDocs(q);
-            const notifications = selfActionSnapshot.docs.map(docToNotification);
-            if (notifications.length > 0) return notifications;
-            
-            // If still no logs, return a default notification
-            return [{
-                id: 'default_merchant_notif',
-                title: 'Welcome!',
-                description: 'No new notifications right now.',
-                icon: Users,
-                createdAt: new Date().toISOString(),
-            }];
-        }
-        
         const notifications = logSnapshot.docs.map(docToNotification);
         
         if (notifications.length === 0) {
-             return [{
+             const defaultMessage = userType === 'admin' ? {
                 id: 'default_admin_notif',
                 title: 'System Ready',
                 description: 'No new platform events to show.',
                 icon: ShieldCheck,
                 createdAt: new Date().toISOString(),
-            }];
+             } : {
+                id: 'default_merchant_notif',
+                title: 'Welcome!',
+                description: 'No new notifications right now.',
+                icon: Users,
+                createdAt: new Date().toISOString(),
+            };
+            return [defaultMessage];
         }
 
         return notifications;
