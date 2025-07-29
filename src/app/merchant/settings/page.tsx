@@ -27,17 +27,17 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 
 
 type PaymentMethodsState = {
-  paytm: boolean;
-  phonepe: boolean;
-  gpay: boolean;
-  btc_wallet: boolean;
-  usdt_wallet: boolean;
-  usd_card: boolean;
-  eur_sepa: boolean;
-  gbp_bacs: boolean;
-  aud_becs: boolean;
-  cad_eft: boolean;
-  paypal: boolean;
+    paytm: boolean;
+    phonepe: boolean;
+    gpay: boolean;
+    btc_wallet: boolean;
+    usdt_wallet: boolean;
+    usd_card: boolean;
+    eur_sepa: boolean;
+    gbp_bacs: boolean;
+    aud_becs: boolean;
+    cad_eft: boolean;
+    paypal: boolean;
 };
 
 type CheckoutDisplayOptions = {
@@ -146,10 +146,12 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                            <Globe className="h-4 w-4 text-primary"/>
-                            <span>Powered by UniversalPay</span>
-                         </div>
+                         {!hideIdentity && (
+                             <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
+                                <Globe className="h-4 w-4 text-primary"/>
+                                <span>Powered by UniversalPay</span>
+                             </div>
+                         )}
                     </div>
                 </CardContent>
             </Card>
@@ -331,7 +333,13 @@ export default function SettingsPage() {
         setLoading(false);
     };
     
-    fetchUserData();
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            fetchUserData();
+        } else {
+            setLoading(false);
+        }
+    });
   }, []);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -558,7 +566,7 @@ export default function SettingsPage() {
                         <Switch checked={profileData.notifications?.telegram} onCheckedChange={(checked) => handleSwitchChange('notifications.telegram', checked)} />
                     </div>
                 </div>
-               <Button className="mt-4" onClick={() => saveUserData({ notifications: profileData.notifications })}>Save Changes</Button>
+               <Button className="mt-4" onClick={() => saveUserData({ notifications: profileData.notifications })}>Save Notification Settings</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -831,7 +839,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-                 <Button onClick={() => saveUserData({ paymentMethods: profileData.paymentMethods })}>Save Changes</Button>
+                 <Button onClick={() => saveUserData({ paymentMethods: profileData.paymentMethods })}>Save Payment Method Settings</Button>
             </CardContent>
           </Card>
         </TabsContent>
