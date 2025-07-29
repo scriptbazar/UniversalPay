@@ -28,6 +28,8 @@ export default function PayPage() {
   const [link, setLink] = useState<PaymentLink | null>(null);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState<number | string>('');
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+
 
   useEffect(() => {
     const data = getPaymentLinkBySlug(slug);
@@ -117,10 +119,10 @@ export default function PayPage() {
                             <div className="w-full">
                                 <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button type="button" variant="outline" className="w-full justify-start"><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
-                                    <Button type="button" variant="outline" className="w-full justify-start"><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
-                                    <Button type="button" variant="outline" className="w-full justify-start"><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
-                                    <Button type="button" variant="outline" className="w-full justify-start"><PayPalIcon className="mr-2 h-4 w-4"/> Pay with PayPal</Button>
+                                    <Button type="button" variant={selectedMethod === 'upi' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('upi')}><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
+                                    <Button type="button" variant={selectedMethod === 'card' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('card')}><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
+                                    <Button type="button" variant={selectedMethod === 'crypto' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('crypto')}><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
+                                    <Button type="button" variant={selectedMethod === 'paypal' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('paypal')}><PayPalIcon className="mr-2 h-4 w-4"/> Pay with PayPal</Button>
                                 </div>
                             </div>
 
@@ -128,7 +130,7 @@ export default function PayPage() {
                                 type="submit"
                                 className="w-full text-lg h-12" 
                                 style={{ backgroundColor: link.brandColor, color: 'hsl(var(--primary-foreground))' }}
-                                disabled={!amount || Number(amount) <= 0}
+                                disabled={!amount || Number(amount) <= 0 || !selectedMethod}
                             >
                                 Pay ${totalAmount.toFixed(2)}
                             </Button>
@@ -149,3 +151,4 @@ export default function PayPage() {
     </div>
   );
 }
+
