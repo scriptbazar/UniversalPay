@@ -19,7 +19,7 @@ const CurrencyIcon = ({ children, rotation, animationClass }: { children: React.
 
 const OrbitingCurrencies = () => {
     return (
-        <div className="relative flex h-full w-full items-center justify-center scale-[0.6] md:scale-75">
+        <div className="relative flex h-full w-full items-center justify-center scale-[0.6] md:scale-75 lg:scale-100">
             {/* Central Logo */}
             <div className="absolute flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 backdrop-blur-sm border border-primary/20">
                 <Globe className="h-10 w-10 text-primary" />
