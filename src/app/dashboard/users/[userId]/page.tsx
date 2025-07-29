@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -330,6 +330,7 @@ export default function UserDetailPage() {
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button size="default" variant="outline">
+                                    <Settings className="mr-2 h-4 w-4" />
                                     Actions
                                 <MoreVertical className="h-4 w-4 ml-2" />
                                 </Button>
@@ -348,10 +349,19 @@ export default function UserDetailPage() {
                                    {merchant.status === 'Active' ? 'Suspend Merchant' : 'Unsuspend Merchant'}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>Change Plan</DropdownMenuItem>
-                                <DropdownMenuItem>Reset Password</DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Briefcase className="mr-2 h-4 w-4" />
+                                    Change Plan
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Reset Password
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">Delete Merchant</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Merchant
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -362,10 +372,19 @@ export default function UserDetailPage() {
                     {merchant.businessName && <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>}
                 </div>
                  <div className="flex items-center gap-4 mt-2">
-                    <Badge variant={getStatusBadgeVariant(merchant.status)}>{merchant.status}</Badge>
-                    <Badge variant="secondary">Plan: {merchant.plan || 'Free'}</Badge>
-                    <Badge variant={merchant.role === 'admin' ? 'destructive' : 'outline'}>Role: {merchant.role || 'merchant'}</Badge>
-                    <Badge variant={getStatusBadgeVariant(merchant.kycStatus || 'Not Started')}>KYC: {merchant.kycStatus || 'Not Started'}</Badge>
+                    <Badge variant={getStatusBadgeVariant(merchant.status)}>
+                        {merchant.status === 'Active' ? <UserCheck className="mr-1 h-3 w-3" /> : <UserX className="mr-1 h-3 w-3" />}
+                        {merchant.status}
+                    </Badge>
+                    <Badge variant="secondary"><Briefcase className="mr-1 h-3 w-3" /> Plan: {merchant.plan || 'Free'}</Badge>
+                    <Badge variant={merchant.role === 'admin' ? 'destructive' : 'outline'}>
+                        <Shield className="mr-1 h-3 w-3" />
+                        Role: {merchant.role || 'merchant'}
+                    </Badge>
+                    <Badge variant={getStatusBadgeVariant(merchant.kycStatus || 'Not Started')}>
+                        <ShieldIcon className="mr-1 h-3 w-3" />
+                        KYC: {merchant.kycStatus || 'Not Started'}
+                    </Badge>
                     <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4"/> Joined: {joinedDate}</span>
                 </div>
             </div>
@@ -373,10 +392,10 @@ export default function UserDetailPage() {
         
         <Tabs defaultValue="overview">
             <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-                <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
+                <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
+                <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
+                <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
+                <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="mt-4">
                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
