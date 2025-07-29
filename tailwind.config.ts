@@ -108,6 +108,10 @@ export default {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-100%)' },
         },
+        'marquee-reverse': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -122,7 +126,7 @@ export default {
         'orbit-3': 'orbit-3 50s linear infinite',
         'orbit-4': 'orbit-4 60s linear infinite',
         'marquee': 'marquee 60s linear infinite',
-        'marquee-reverse': 'marquee 60s linear infinite reverse',
+        'marquee-reverse': 'marquee-reverse 60s linear infinite',
       },
     },
   },
