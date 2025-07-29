@@ -44,6 +44,23 @@ type CheckoutDisplayOptions = {
     paypal: boolean;
 };
 
+interface UserProfile {
+    id?: string;
+    fullName?: string;
+    email?: string;
+    mobile?: string;
+    businessName?: string;
+    avatar?: string;
+    // Branding settings
+    brandColor?: string;
+    checkoutLogo?: string;
+    termsUrl?: string;
+    privacyUrl?: string;
+    supportUrl?: string;
+    displayOptions?: CheckoutDisplayOptions;
+    hideIdentity?: boolean;
+}
+
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg aria-hidden="true" fill="currentColor" viewBox="0 0 448 512" {...props}><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.8 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"></path></svg>
 );
@@ -230,33 +247,24 @@ function KycVerificationDialog({ onKycSubmitted }: { onKycSubmitted: () => void 
     );
 }
 
-interface UserProfile {
-    id: string;
-    fullName: string;
-    email: string;
-    mobile?: string;
-    businessName?: string;
-    avatar?: string;
-}
-
 export default function SettingsPage() {
   const { toast } = useToast();
   
-  // Profile states
-  const [profileData, setProfileData] = useState<Partial<UserProfile>>({});
+  const [profileData, setProfileData] = useState<UserProfile>({});
   const [loading, setLoading] = useState(true);
 
-
-  // Branding states
-  const [businessName, setBusinessName] = useState('');
-  const [brandColor, setBrandColor] = useState('#29ABE2');
-  const [checkoutLogo, setCheckoutLogo] = useState<string | null>(null);
-
-  const [checkoutDisplayOptions, setCheckoutDisplayOptions] = useState<CheckoutDisplayOptions>({
-      upi: true,
-      card: true,
-      crypto: true,
-      paypal: false,
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
+    paytm: true,
+    phonepe: true,
+    gpay: false,
+    btc_wallet: true,
+    usdt_wallet: true,
+    usd_card: true,
+    eur_sepa: false,
+    gbp_bacs: false,
+    aud_becs: false,
+    cad_eft: false,
+    paypal: true,
   });
   
   const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
@@ -272,13 +280,19 @@ export default function SettingsPage() {
                 const data = userDoc.data();
                 setProfileData({
                     id: user.uid,
-                    fullName: data.fullName,
-                    email: data.email,
-                    mobile: data.mobile,
-                    businessName: data.businessName,
-                    avatar: data.avatar,
+                    fullName: data.fullName || '',
+                    email: data.email || '',
+                    mobile: data.mobile || '',
+                    businessName: data.businessName || '',
+                    avatar: data.avatar || null,
+                    brandColor: data.brandColor || '#29ABE2',
+                    checkoutLogo: data.checkoutLogo || data.avatar || null,
+                    termsUrl: data.termsUrl || '',
+                    privacyUrl: data.privacyUrl || '',
+                    supportUrl: data.supportUrl || '',
+                    displayOptions: data.displayOptions || { upi: true, card: true, crypto: true, paypal: false },
+                    hideIdentity: data.hideIdentity || false,
                 });
-                setBusinessName(data.businessName || data.fullName);
             }
         }
         setLoading(false);
@@ -287,29 +301,25 @@ export default function SettingsPage() {
     fetchUserData();
   }, []);
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { id, value } = e.target;
       setProfileData(prev => ({...prev, [id]: value}));
   };
 
-  const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
-    setCheckoutDisplayOptions(prev => ({ ...prev, [option]: !prev[option] }));
+  const handleSwitchChange = (id: keyof UserProfile, checked: boolean) => {
+    setProfileData(prev => ({ ...prev, [id]: checked }));
   };
 
+  const handleDisplayOptionToggle = (option: keyof CheckoutDisplayOptions) => {
+    setProfileData(prev => ({
+        ...prev,
+        displayOptions: {
+            ...prev.displayOptions!,
+            [option]: !prev.displayOptions![option],
+        }
+    }));
+  };
 
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsState>({
-    paytm: true,
-    phonepe: true,
-    gpay: false,
-    btc_wallet: true,
-    usdt_wallet: true,
-    usd_card: true,
-    eur_sepa: false,
-    gbp_bacs: false,
-    aud_becs: false,
-    cad_eft: false,
-    paypal: true,
-  });
 
   const handlePaymentMethodToggle = (method: keyof PaymentMethodsState) => {
     setPaymentMethods(prev => ({ ...prev, [method]: !prev[method] }));
@@ -321,65 +331,48 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        setProfileData(prev => ({...prev, avatar: result}));
-        setCheckoutLogo(result);
+        setProfileData(prev => ({...prev, avatar: result, checkoutLogo: result }));
       };
       reader.readAsDataURL(file);
     }
   };
   
-    const handleCheckoutLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckoutLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCheckoutLogo(reader.result as string);
+        setProfileData(prev => ({ ...prev, checkoutLogo: reader.result as string}));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSaveChanges = async () => {
-    const user = auth.currentUser;
-    if (!user) {
-        toast({variant: "destructive", title: "Error", description: "You are not logged in."});
-        return;
-    }
-    
-    try {
-        const userDocRef = doc(db, "users", user.uid);
-
-        const dataToSave: {[key: string]: any} = {
-            fullName: profileData.fullName,
-            email: profileData.email,
-            mobile: profileData.mobile,
-            businessName: profileData.businessName,
-        };
-
-        if (profileData.avatar) {
-            dataToSave.avatar = profileData.avatar;
-        }
-
-        // Using setDoc with merge: true to create or update the document
-        await setDoc(userDocRef, dataToSave, { merge: true });
-        
-        toast({
-            title: "Settings Saved",
-            description: "Your profile settings have been updated.",
-        });
-    } catch(error) {
-        console.error("Error updating profile:", error);
-        toast({variant: "destructive", title: "Error", description: "Failed to update profile."});
-    }
+  const saveUserData = async (dataToSave: Partial<UserProfile>) => {
+      const user = auth.currentUser;
+      if (!user) {
+          toast({variant: "destructive", title: "Error", description: "You are not logged in."});
+          return;
+      }
+      
+      try {
+          const userDocRef = doc(db, "users", user.uid);
+          const finalData = { ...dataToSave };
+          // Remove undefined fields before saving
+          Object.keys(finalData).forEach(key => finalData[key as keyof typeof finalData] === undefined && delete finalData[key as keyof typeof finalData]);
+          
+          await setDoc(userDocRef, finalData, { merge: true });
+          
+          toast({
+              title: "Settings Saved",
+              description: "Your settings have been updated.",
+          });
+      } catch(error) {
+          console.error("Error updating profile:", error);
+          toast({variant: "destructive", title: "Error", description: "Failed to update settings."});
+      }
   };
-  
-  const handleBrandingSaveChanges = () => {
-    toast({
-        title: "Branding settings saved!",
-        description: "Your checkout page has been updated."
-    });
-  };
-  
+   
    const getKycStatusVariant = (status: typeof kycStatus) => {
         switch (status) {
             case 'Verified': return 'default';
@@ -471,7 +464,13 @@ export default function SettingsPage() {
                     </div>
                 </div>
               </div>
-               <Button onClick={handleSaveChanges}>Save Changes</Button>
+               <Button onClick={() => saveUserData({
+                   fullName: profileData.fullName,
+                   email: profileData.email,
+                   mobile: profileData.mobile,
+                   businessName: profileData.businessName,
+                   avatar: profileData.avatar,
+               })}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -498,7 +497,7 @@ export default function SettingsPage() {
                         <Switch />
                     </div>
                 </div>
-               <Button className="mt-4" onClick={handleSaveChanges}>Save Changes</Button>
+               <Button className="mt-4" onClick={() => saveUserData({})}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -518,8 +517,8 @@ export default function SettingsPage() {
                                         <Label>Logo</Label>
                                         <div className="flex items-center gap-4">
                                             <div className="w-20 h-20 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
-                                            {checkoutLogo ? (
-                                                    <Image src={checkoutLogo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
+                                            {profileData.checkoutLogo ? (
+                                                    <Image src={profileData.checkoutLogo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                                                 ) : (
                                                     <Upload className="w-8 h-8 text-muted-foreground" />
                                                 )}
@@ -533,17 +532,17 @@ export default function SettingsPage() {
                                         <Label htmlFor="brand-color">Brand Color</Label>
                                         <div className="flex items-center gap-2">
                                             <Input 
-                                                id="brand-color-hex" 
-                                                value={brandColor}
-                                                onChange={(e) => setBrandColor(e.target.value)}
+                                                id="brandColor" 
+                                                value={profileData.brandColor || '#29ABE2'}
+                                                onChange={handleProfileChange}
                                                 className="w-32"
                                             />
                                             <div className="relative">
                                                 <input 
-                                                    id="brand-color" 
+                                                    id="brand-color-picker" 
                                                     type="color" 
-                                                    value={brandColor}
-                                                    onChange={(e) => setBrandColor(e.target.value)}
+                                                    value={profileData.brandColor || '#29ABE2'}
+                                                    onChange={(e) => setProfileData(prev => ({...prev, brandColor: e.target.value}))}
                                                     className="h-10 w-10 p-1 appearance-none bg-background border rounded-md cursor-pointer"
                                                 />
                                             </div>
@@ -557,26 +556,26 @@ export default function SettingsPage() {
                                 <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5"/> Legal &amp; Links</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="business-name-checkout">Business Name on Checkout</Label>
+                                        <Label htmlFor="businessName">Business Name on Checkout</Label>
                                         <Input 
-                                            id="business-name-checkout" 
-                                            value={businessName} 
-                                            onChange={(e) => setBusinessName(e.target.value)}
+                                            id="businessName" 
+                                            value={profileData.businessName || ''} 
+                                            onChange={handleProfileChange}
                                          />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="terms-url">Terms of Service URL</Label>
-                                        <Input id="terms-url" placeholder="https://your-website.com/terms" />
+                                        <Label htmlFor="termsUrl">Terms of Service URL</Label>
+                                        <Input id="termsUrl" placeholder="https://your-website.com/terms" value={profileData.termsUrl || ''} onChange={handleProfileChange} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="privacy-url">Privacy Policy URL</Label>
-                                        <Input id="privacy-url" placeholder="https://your-website.com/privacy" />
+                                        <Label htmlFor="privacyUrl">Privacy Policy URL</Label>
+                                        <Input id="privacyUrl" placeholder="https://your-website.com/privacy" value={profileData.privacyUrl || ''} onChange={handleProfileChange} />
                                     </div>
                                      <div className="space-y-2">
-                                        <Label htmlFor="support-url">Support URL</Label>
-                                        <Input id="support-url" placeholder="https://your-website.com/support" />
+                                        <Label htmlFor="supportUrl">Support URL</Label>
+                                        <Input id="supportUrl" placeholder="https://your-website.com/support" value={profileData.supportUrl || ''} onChange={handleProfileChange} />
                                     </div>
                                 </div>
                             </div>
@@ -587,26 +586,26 @@ export default function SettingsPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="flex items-center justify-between rounded-lg border p-3">
                                         <Label htmlFor="display-upi" className="font-medium flex items-center gap-2"><IndianRupee className="w-4 h-4"/> Show UPI</Label>
-                                        <Switch id="display-upi" checked={checkoutDisplayOptions.upi} onCheckedChange={() => handleDisplayOptionToggle('upi')} />
+                                        <Switch id="display-upi" checked={profileData.displayOptions?.upi} onCheckedChange={() => handleDisplayOptionToggle('upi')} />
                                     </div>
                                     <div className="flex items-center justify-between rounded-lg border p-3">
                                         <Label htmlFor="display-card" className="font-medium flex items-center gap-2"><CreditCard className="w-4 h-4"/> Show Card</Label>
-                                        <Switch id="display-card" checked={checkoutDisplayOptions.card} onCheckedChange={() => handleDisplayOptionToggle('card')} />
+                                        <Switch id="display-card" checked={profileData.displayOptions?.card} onCheckedChange={() => handleDisplayOptionToggle('card')} />
                                     </div>
                                     <div className="flex items-center justify-between rounded-lg border p-3">
                                         <Label htmlFor="display-crypto" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/> Show Crypto</Label>
-                                        <Switch id="display-crypto" checked={checkoutDisplayOptions.crypto} onCheckedChange={() => handleDisplayOptionToggle('crypto')} />
+                                        <Switch id="display-crypto" checked={profileData.displayOptions?.crypto} onCheckedChange={() => handleDisplayOptionToggle('crypto')} />
                                     </div>
                                     <div className="flex items-center justify-between rounded-lg border p-3">
                                         <Label htmlFor="display-paypal" className="font-medium flex items-center gap-2"><PayPalIcon className="w-4 h-4"/> Show PayPal</Label>
-                                        <Switch id="display-paypal" checked={checkoutDisplayOptions.paypal} onCheckedChange={() => handleDisplayOptionToggle('paypal')} />
+                                        <Switch id="display-paypal" checked={profileData.displayOptions?.paypal} onCheckedChange={() => handleDisplayOptionToggle('paypal')} />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex items-start justify-between rounded-lg border p-4">
                                 <div className="space-y-1">
-                                <Label htmlFor="branding-switch" className="text-base font-semibold flex items-center gap-2">
+                                <Label htmlFor="hideIdentity" className="text-base font-semibold flex items-center gap-2">
                                     <ShieldQuestion className="w-5 h-5" />
                                     Hide My Identity &amp; Show 'UniversalPay' Branding
                                 </Label>
@@ -614,14 +613,28 @@ export default function SettingsPage() {
                                     Turn ON to always show "UniversalPay" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
                                 </p>
                                 </div>
-                                <Switch id="branding-switch" defaultChecked />
+                                <Switch id="hideIdentity" checked={profileData.hideIdentity} onCheckedChange={(checked) => handleSwitchChange('hideIdentity', checked)} />
                             </div>
-                            <Button onClick={handleBrandingSaveChanges}>Save Branding Changes</Button>
+                            <Button onClick={() => saveUserData({
+                                businessName: profileData.businessName,
+                                brandColor: profileData.brandColor,
+                                checkoutLogo: profileData.checkoutLogo,
+                                termsUrl: profileData.termsUrl,
+                                privacyUrl: profileData.privacyUrl,
+                                supportUrl: profileData.supportUrl,
+                                displayOptions: profileData.displayOptions,
+                                hideIdentity: profileData.hideIdentity,
+                            })}>Save Branding Changes</Button>
                         </CardContent>
                     </Card>
                 </div>
                 <div className="lg:col-span-1">
-                    <CheckoutPreview brandColor={brandColor} logo={checkoutLogo} businessName={businessName} displayOptions={checkoutDisplayOptions} />
+                    <CheckoutPreview 
+                        brandColor={profileData.brandColor || '#29ABE2'} 
+                        logo={profileData.checkoutLogo || null} 
+                        businessName={profileData.businessName || 'Your Business Name'} 
+                        displayOptions={profileData.displayOptions || { upi: true, card: true, crypto: true, paypal: false }} 
+                    />
                 </div>
             </div>
         </TabsContent>
@@ -756,7 +769,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-                 <Button onClick={handleSaveChanges}>Save Changes</Button>
+                 <Button onClick={() => saveUserData({})}>Save Changes</Button>
             </CardContent>
           </Card>
         </TabsContent>
