@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Link2, MoreVertical, Trash2 } from 'lucide-react';
+import { Copy, Link2, MoreVertical, Trash2, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -163,6 +163,11 @@ export default function PaymentLinksPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
+                            <DropdownMenuItem asChild>
+                                <Link href={link.url} target="_blank" className="flex items-center">
+                                    <Eye className="mr-2 h-4 w-4" /> View Link
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => copyToClipboard(link.url)}>
                               <Copy className="mr-2 h-4 w-4" /> Copy Link
                             </DropdownMenuItem>
