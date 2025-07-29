@@ -255,6 +255,9 @@ export default function MerchantDashboardLayout({
               <DropdownMenuLabel>{userProfile?.fullName || 'Merchant'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
+                <Link href="/merchant/settings">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/merchant/settings">Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
