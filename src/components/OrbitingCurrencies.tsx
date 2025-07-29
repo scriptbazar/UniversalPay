@@ -39,26 +39,26 @@ const OrbitingCurrencies = () => {
                 <CurrencyIcon rotation="0deg" animationClass="animate-orbit-2"><JapaneseYen className="w-5 h-5"/></CurrencyIcon>
                 <CurrencyIcon rotation="72deg" animationClass="animate-orbit-2"><SwissFranc className="w-5 h-5"/></CurrencyIcon>
                 <CurrencyIcon rotation="144deg" animationClass="animate-orbit-2"><span className="text-xl font-bold">₺</span></CurrencyIcon>
-                <CurrencyIcon rotation="216deg" animationClass="animate-orbit-2">C$</CurrencyIcon> {/* CAD */}
-                <CurrencyIcon rotation="288deg" animationClass="animate-orbit-2">A$</CurrencyIcon> {/* AUD */}
+                <CurrencyIcon rotation="216deg" animationClass="animate-orbit-2"><span className="font-semibold">C$</span></CurrencyIcon> {/* CAD */}
+                <CurrencyIcon rotation="288deg" animationClass="animate-orbit-2"><span className="font-semibold">A$</span></CurrencyIcon> {/* AUD */}
             </div>
             
             {/* Orbit 3 - 5 currencies */}
             <div className="absolute h-80 w-80 rounded-full border border-primary/20 animate-orbit-3">
-                 <CurrencyIcon rotation="0deg" animationClass="animate-orbit-3">₽</CurrencyIcon> {/* Ruble */}
-                 <CurrencyIcon rotation="72deg" animationClass="animate-orbit-3">Fr</CurrencyIcon> {/* Franc */}
-                 <CurrencyIcon rotation="144deg" animationClass="animate-orbit-3">د.إ</CurrencyIcon> {/* AED */}
-                 <CurrencyIcon rotation="216deg" animationClass="animate-orbit-3">R</CurrencyIcon> {/* ZAR */}
-                 <CurrencyIcon rotation="288deg" animationClass="animate-orbit-3">S$</CurrencyIcon> {/* SGD */}
+                 <CurrencyIcon rotation="0deg" animationClass="animate-orbit-3"><span className="font-semibold">₽</span></CurrencyIcon> {/* Ruble */}
+                 <CurrencyIcon rotation="72deg" animationClass="animate-orbit-3"><span className="font-semibold">Fr</span></CurrencyIcon> {/* Franc */}
+                 <CurrencyIcon rotation="144deg" animationClass="animate-orbit-3"><span className="font-semibold">د.إ</span></CurrencyIcon> {/* AED */}
+                 <CurrencyIcon rotation="216deg" animationClass="animate-orbit-3"><span className="font-semibold">R</span></CurrencyIcon> {/* ZAR */}
+                 <CurrencyIcon rotation="288deg" animationClass="animate-orbit-3"><span className="font-semibold">S$</span></CurrencyIcon> {/* SGD */}
             </div>
 
              {/* Orbit 4 - 5 currencies */}
             <div className="absolute h-[26rem] w-[26rem] rounded-full border border-primary/20 animate-orbit-4">
-                 <CurrencyIcon rotation="0deg" animationClass="animate-orbit-4">CN¥</CurrencyIcon> {/* CNH/CNY */}
-                 <CurrencyIcon rotation="72deg" animationClass="animate-orbit-4">₩</CurrencyIcon> {/* KRW */}
-                 <CurrencyIcon rotation="144deg" animationClass="animate-orbit-4">฿</CurrencyIcon> {/* THB */}
-                 <CurrencyIcon rotation="216deg" animationClass="animate-orbit-4">RM</CurrencyIcon> {/* MYR */}
-                 <CurrencyIcon rotation="288deg" animationClass="animate-orbit-4">₱</CurrencyIcon> {/* PHP */}
+                 <CurrencyIcon rotation="0deg" animationClass="animate-orbit-4"><span className="font-semibold">CN¥</span></CurrencyIcon> {/* CNH/CNY */}
+                 <CurrencyIcon rotation="72deg" animationClass="animate-orbit-4"><span className="font-semibold">₩</span></CurrencyIcon> {/* KRW */}
+                 <CurrencyIcon rotation="144deg" animationClass="animate-orbit-4"><span className="font-semibold">฿</span></CurrencyIcon> {/* THB */}
+                 <CurrencyIcon rotation="216deg" animationClass="animate-orbit-4"><span className="font-semibold">RM</span></CurrencyIcon> {/* MYR */}
+                 <CurrencyIcon rotation="288deg" animationClass="animate-orbit-4"><span className="font-semibold">₱</span></CurrencyIcon> {/* PHP */}
             </div>
         </div>
     )
