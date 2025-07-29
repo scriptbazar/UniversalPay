@@ -114,6 +114,14 @@ export default {
         'orbit-2': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(-360deg)' } },
         'orbit-3': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
         'orbit-4': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(-360deg)' } },
+        'marquee-left': {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
+        'marquee-right': {
+          from: { transform: 'translateX(-50%)' },
+          to: { transform: 'translateX(0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -127,6 +135,8 @@ export default {
         'orbit-2': 'orbit-2 40s linear infinite',
         'orbit-3': 'orbit-3 50s linear infinite',
         'orbit-4': 'orbit-4 60s linear infinite',
+        'marquee-left': 'marquee-left 60s linear infinite',
+        'marquee-right': 'marquee-right 60s linear infinite',
       },
     },
   },

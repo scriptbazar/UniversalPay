@@ -9,8 +9,6 @@ import { Footer } from "@/components/footer";
 import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight, UserCircle, Quote } from "lucide-react";
 import OrbitingCurrencies from "@/components/OrbitingCurrencies";
 import Link from "next/link";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, CarouselDots } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import React from "react";
 import Image from "next/image";
 
@@ -169,24 +167,127 @@ const tiers = [
 
 const testimonials = [
   {
-    quote: "UniversalPay has been a game-changer for our business. The ability to accept payments globally without the hassle of traditional banking has allowed us to scale faster than we ever thought possible.",
+    quote: "UniversalPay has been a game-changer for our business. The ability to accept payments globally has allowed us to scale faster than ever.",
     name: "Aarav Sharma",
     title: "Founder, TechInnovate",
     avatar: "https://placehold.co/100x100.png?text=AS"
   },
   {
-    quote: "The developer-friendly APIs and clear documentation made integration a breeze. We were up and running in a single afternoon. Highly recommended!",
+    quote: "The developer-friendly APIs and clear documentation made integration a breeze. We were up and running in a single afternoon.",
     name: "Priya Singh",
     title: "Lead Developer, CreativeGoods",
     avatar: "https://placehold.co/100x100.png?text=PS"
   },
   {
-    quote: "As a reseller, the white-label solution is exactly what I needed. I can manage my clients under my own brand, and the commission structure is fantastic.",
+    quote: "As a reseller, the white-label solution is exactly what I needed. I can manage my clients under my own brand.",
     name: "Rohan Mehta",
     title: "CEO, PayRight Solutions",
     avatar: "https://placehold.co/100x100.png?text=RM"
+  },
+  {
+    quote: "The fraud detection system saved us from a major headache. It's incredibly smart and gives us peace of mind.",
+    name: "Sneha Gupta",
+    title: "E-commerce Manager, DesiCrafts",
+    avatar: "https://placehold.co/100x100.png?text=SG"
+  },
+  {
+    quote: "Receiving all our international payments in crypto has simplified our accounting tremendously. Highly recommended!",
+    name: "Vikram Reddy",
+    title: "CFO, Global Exports",
+    avatar: "https://placehold.co/100x100.png?text=VR"
+  },
+  {
+    quote: "Their support team is top-notch. Quick, responsive, and always helpful whenever we have a question.",
+    name: "Anjali Desai",
+    title: "Operations Head, EventMasters",
+    avatar: "https://placehold.co/100x100.png?text=AD"
+  },
+  {
+    quote: "Payment links are so easy to create and share. It's perfect for our social media sales.",
+    name: "Karan Kapoor",
+    title: "Owner, The Style Hub",
+    avatar: "https://placehold.co/100x100.png?text=KK"
+  },
+  {
+    quote: "We switched from a traditional gateway and our transaction success rate went up by 15%. Incredible!",
+    name: "Nidhi Jain",
+    title: "Product Manager, LearnWell",
+    avatar: "https://placehold.co/100x100.png?text=NJ"
+  },
+  {
+    quote: "The invoicing feature is a lifesaver for our B2B clients. Professional, simple, and effective.",
+    name: "Amit Patel",
+    title: "Director, Visionary Solutions",
+    avatar: "https://placehold.co/100x100.png?text=AP"
+  },
+  {
+    quote: "Finally, a payment gateway that truly understands the Indian market and global aspirations.",
+    name: "Deepika Verma",
+    title: "Startup Advisor",
+    avatar: "https://placehold.co/100x100.png?text=DV"
+  },
+  {
+    quote: "The analytics dashboard gives us clear insights into our revenue streams. Data-driven decisions are now easier.",
+    name: "Manish Kumar",
+    title: "Analyst, DataWise",
+    avatar: "https://placehold.co/100x100.png?text=MK"
+  },
+  {
+    quote: "The white-label solution has allowed us to offer a branded payment experience without the development overhead.",
+    name: "Sunita Rao",
+    title: "Agency Owner, BrandUp",
+    avatar: "https://placehold.co/100x100.png?text=SR"
+  },
+  {
+    quote: "Accepting crypto payments has opened up a whole new international customer base for us.",
+    name: "Rajesh Singh",
+    title: "Digital Artist",
+    avatar: "https://placehold.co/100x100.png?text=RS"
+  },
+  {
+    quote: "The reliability is what impresses me the most. We've had zero downtime since we switched to UniversalPay.",
+    name: "Pooja Hegde",
+    title: "CTO, Reliable Hosting",
+    avatar: "https://placehold.co/100x100.png?text=PH"
+  },
+  {
+    quote: "Their currency conversion rates are very competitive, which saves us a lot of money on fees.",
+    name: "Arjun Verma",
+    title: "Importer/Exporter",
+    avatar: "https://placehold.co/100x100.png?text=AV"
+  },
+  {
+    quote: "The subscription feature is robust and easy to set up. It's perfect for our SaaS business model.",
+    name: "Isha Malhotra",
+    title: "Founder, AppSuite",
+    avatar: "https://placehold.co/100x100.png?text=IM"
+  },
+  {
+    quote: "Simple, powerful, and effective. UniversalPay just works, and it works beautifully.",
+    name: "Harish Gupta",
+    title: "Consultant",
+    avatar: "https://placehold.co/100x100.png?text=HG"
+  },
+  {
+    quote: "The ability to customize the checkout page with our own branding is a huge plus.",
+    name: "Meera Krishnan",
+    title: "Designer, Artful Things",
+    avatar: "https://placehold.co/100x100.png?text=MK"
+  },
+  {
+    quote: "UniversalPay's platform is incredibly intuitive. I didn't even need to read the docs to get started.",
+    name: "Sanjay Reddy",
+    title: "Indie Hacker",
+    avatar: "https://placehold.co/100x100.png?text=SR"
+  },
+  {
+    quote: "This is the payment solution we've been waiting for. It bridges the gap between traditional and digital finance.",
+    name: "Anita Bose",
+    title: "Fintech Blogger",
+    avatar: "https://placehold.co/100x100.png?text=AB"
   }
 ];
+
 
 const howItWorksSteps = [
     {
@@ -204,7 +305,7 @@ const howItWorksSteps = [
         title: "Start Accepting Payments",
         description: "Use our SDKs, Payment Links, or Invoicing system to start receiving payments from anywhere in the world."
     },
-    {
+     {
         icon: <LayoutGrid className="w-10 h-10 text-primary" />,
         title: "Track & Analyze",
         description: "Monitor your sales, track transactions, and gain insights with our comprehensive dashboard."
@@ -217,9 +318,8 @@ export default function Home() {
   const firstHalfFaqs = faqItems.slice(0, halfLength);
   const secondHalfFaqs = faqItems.slice(halfLength);
   
-  const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
-  );
+  const testimonialsRow1 = testimonials.slice(0, 10);
+  const testimonialsRow2 = testimonials.slice(10, 20);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -313,50 +413,56 @@ export default function Home() {
             </div>
         </section>
         
-         <section id="testimonials" className="py-20 px-4 md:px-8 bg-background">
+        <section id="testimonials" className="py-20 px-4 md:px-8 bg-background overflow-hidden">
           <div className="container mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What Our Customers Say</h2>
-             <Carousel 
-                className="w-full max-w-5xl mx-auto"
-                plugins={[autoplayPlugin.current]}
-                onMouseEnter={autoplayPlugin.current.stop}
-                onMouseLeave={autoplayPlugin.current.reset}
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-              >
-              <CarouselContent className="-ml-4">
-                {testimonials.map((testimonial, index) => (
-                  <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 pl-4">
-                    <div className="p-1 h-full">
-                      <Card className="flex flex-col h-full shadow-lg">
-                        <CardContent className="flex-grow p-6 space-y-4">
-                            <Quote className="w-8 h-8 text-primary/30" />
-                            <p className="text-base text-muted-foreground flex-grow">"{testimonial.quote}"</p>
-                        </CardContent>
-                        <CardHeader className="flex flex-row items-center gap-4 pt-0">
-                            <Image src={testimonial.avatar} alt={testimonial.name} width={48} height={48} className="rounded-full" data-ai-hint="user avatar" />
-                            <div>
-                                <CardTitle className="text-base font-bold">{testimonial.name}</CardTitle>
-                                <CardDescription>{testimonial.title}</CardDescription>
-                            </div>
-                        </CardHeader>
-                      </Card>
+             <div className="relative space-y-4">
+                <div className="overflow-hidden">
+                    <div className="flex animate-marquee-right space-x-4">
+                        {[...testimonialsRow1, ...testimonialsRow1].map((testimonial, index) => (
+                          <Card key={`r1-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
+                            <CardContent className="p-6 space-y-4">
+                                <Quote className="w-8 h-8 text-primary/30" />
+                                <p className="text-sm text-muted-foreground">"{testimonial.quote}"</p>
+                            </CardContent>
+                            <CardHeader className="flex flex-row items-center gap-4 pt-0">
+                                <Image src={testimonial.avatar} alt={testimonial.name} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
+                                <div>
+                                    <CardTitle className="text-sm font-bold">{testimonial.name}</CardTitle>
+                                    <CardDescription>{testimonial.title}</CardDescription>
+                                </div>
+                            </CardHeader>
+                          </Card>
+                        ))}
                     </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
-            </Carousel>
+                </div>
+                 <div className="overflow-hidden">
+                    <div className="flex animate-marquee-left space-x-4">
+                        {[...testimonialsRow2, ...testimonialsRow2].map((testimonial, index) => (
+                           <Card key={`r2-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
+                             <CardContent className="p-6 space-y-4">
+                                <Quote className="w-8 h-8 text-primary/30" />
+                                <p className="text-sm text-muted-foreground">"{testimonial.quote}"</p>
+                            </CardContent>
+                            <CardHeader className="flex flex-row items-center gap-4 pt-0">
+                                <Image src={testimonial.avatar} alt={testimonial.name} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
+                                <div>
+                                    <CardTitle className="text-sm font-bold">{testimonial.name}</CardTitle>
+                                    <CardDescription>{testimonial.title}</CardDescription>
+                                </div>
+                            </CardHeader>
+                          </Card>
+                        ))}
+                    </div>
+                </div>
+            </div>
           </div>
         </section>
 
         <section id="pricing" className="py-20 px-4 md:px-8 bg-muted">
             <div className="container mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
-                <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
                   {tiers.map((tier) => (
                     <Card key={tier.name} className={`flex flex-col rounded-xl shadow-lg ${tier.popular ? 'border-2 border-primary' : ''}`}>
                       {tier.popular && (
@@ -389,54 +495,6 @@ export default function Home() {
                       </div>
                     </Card>
                   ))}
-                </div>
-                 <div className="md:hidden">
-                    <Carousel 
-                        className="w-full max-w-xs mx-auto"
-                        plugins={[autoplayPlugin.current]}
-                        onMouseEnter={autoplayPlugin.current.stop}
-                        onMouseLeave={autoplayPlugin.current.reset}
-                    >
-                        <CarouselContent>
-                            {tiers.map((tier) => (
-                                <CarouselItem key={tier.name}>
-                                    <div className="p-1">
-                                        <Card className={`flex flex-col rounded-xl shadow-lg ${tier.popular ? 'border-2 border-primary' : ''}`}>
-                                        {tier.popular && (
-                                            <div className="bg-primary text-primary-foreground text-center py-1.5 text-sm font-semibold rounded-t-lg">
-                                            Most Popular
-                                            </div>
-                                        )}
-                                        <CardHeader className="text-center">
-                                            <CardTitle className="text-2xl font-bold">{tier.name}</CardTitle>
-                                            <CardDescription>{tier.description}</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="flex-grow flex flex-col">
-                                            <div className="text-center mb-6">
-                                            <span className="text-5xl font-bold">{tier.price}</span>
-                                            <span className="text-muted-foreground">{tier.freq}</span>
-                                            </div>
-                                            <ul className="space-y-4 flex-grow">
-                                            {tier.features.map((feature) => (
-                                                <li key={feature} className="flex items-start">
-                                                <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
-                                                <span className="text-muted-foreground">{feature}</span>
-                                                </li>
-                                            ))}
-                                            </ul>
-                                        </CardContent>
-                                        <div className="p-6">
-                                            <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
-                                            {tier.cta}
-                                            </Button>
-                                        </div>
-                                        </Card>
-                                    </div>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselDots />
-                    </Carousel>
                 </div>
             </div>
         </section>
