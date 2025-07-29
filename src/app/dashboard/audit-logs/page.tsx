@@ -14,7 +14,7 @@ type AuditLog = {
     id: string;
     type: string;
     message: string;
-    level: 'INFO' | 'CRITICAL' | 'ERROR' | 'SECURITY_ALERT';
+    level: 'INFO' | 'CRITICAL' | 'ERROR' | 'SECURITY_ALERT' | 'MAJOR';
     timestamp: Timestamp;
 };
 
@@ -25,6 +25,8 @@ const getLevelVariant = (level: AuditLog['level']) => {
             return 'destructive';
         case 'ERROR':
             return 'destructive';
+        case 'MAJOR':
+            return 'secondary';
         default:
             return 'secondary';
     }
@@ -42,47 +44,14 @@ const getLevelIcon = (level: AuditLog['level']) => {
     }
 }
 
-// Mock data for demonstration purposes
-const mockAuditLogs: AuditLog[] = [
-    {
-        id: 'log_1',
-        type: 'ROLE_CHANGE',
-        message: 'Admin admin@example.com (uid_admin1) promoted new_admin@example.com (uid_user5) to admin.',
-        level: 'CRITICAL',
-        timestamp: Timestamp.fromDate(new Date('2023-11-21T10:00:00Z')),
-    },
-    {
-        id: 'log_2',
-        type: 'SECURITY_ALERT',
-        message: 'Non-admin user merchant@example.com (uid_user2) attempted to access a protected admin route.',
-        level: 'SECURITY_ALERT',
-        timestamp: Timestamp.fromDate(new Date('2023-11-21T09:30:00Z')),
-    },
-    {
-        id: 'log_3',
-        type: 'ERROR',
-        message: 'Failed to process withdrawal request WDRL-5678 for merchant another@shop.com (uid_user3).',
-        level: 'ERROR',
-        timestamp: Timestamp.fromDate(new Date('2023-11-20T18:00:00Z')),
-    },
-    {
-        id: 'log_4',
-        type: 'LOGIN_SUCCESS',
-        message: 'User admin@example.com (uid_admin1) logged in successfully from IP 192.168.1.1.',
-        level: 'INFO',
-        timestamp: Timestamp.fromDate(new Date('2023-11-20T17:55:00Z')),
-    },
-];
-
-
 export default function AuditLogsPage() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!db || !db.app) {
-            // Firebase might not be configured, use mock data.
-            setLogs(mockAuditLogs);
+            setError("Firebase is not configured. Cannot fetch audit logs.");
             setLoading(false);
             return;
         }
@@ -95,13 +64,12 @@ export default function AuditLogsPage() {
             querySnapshot.forEach((doc) => {
                 logsData.push({ id: doc.id, ...doc.data() } as AuditLog);
             });
-            // If no real logs, show mock data. Otherwise, show real data.
-            setLogs(logsData.length > 0 ? logsData : mockAuditLogs);
+            setLogs(logsData);
             setLoading(false);
+            setError(null);
         }, (error) => {
             console.error("Error fetching audit logs: ", error);
-            // If there's an error (e.g., permissions), fall back to mock data
-            setLogs(mockAuditLogs);
+            setError("Could not fetch audit logs. Check console and Firebase rules.");
             setLoading(false);
         });
 
@@ -137,6 +105,10 @@ export default function AuditLogsPage() {
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">Loading logs...</TableCell>
                                 </TableRow>
+                            ) : error ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center text-destructive">{error}</TableCell>
+                                </TableRow>
                             ) : logs.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">No audit logs found.</TableCell>
@@ -144,7 +116,7 @@ export default function AuditLogsPage() {
                             ) : (
                                 logs.map((log) => (
                                     <TableRow key={log.id}>
-                                        <TableCell>{log.timestamp?.toDate().toLocaleString()}</TableCell>
+                                        <TableCell>{log.timestamp?.toDate().toLocaleString() ?? 'No date'}</TableCell>
                                         <TableCell>
                                             <Badge variant={getLevelVariant(log.level)} className="flex items-center gap-1 w-fit">
                                                 {getLevelIcon(log.level)}

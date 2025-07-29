@@ -122,9 +122,12 @@ exports.updateMerchantProfile = onCall(async (request) => {
         throw new HttpsError('invalid-argument', 'No update data provided.');
     }
     
-    // 3. Security Check: Prevent users from changing their own role
+    // 3. Security Check: Prevent users from changing their own role or status
     if (dataToUpdate.role) {
         delete dataToUpdate.role;
+    }
+     if (dataToUpdate.status) {
+        delete dataToUpdate.status;
     }
 
     try {
