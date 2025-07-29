@@ -58,6 +58,22 @@ export default function UserTransactionsByMethodPage() {
     const itemsPerPage = 10;
 
     const pageTitle = method ? `${method.charAt(0).toUpperCase() + method.slice(1)} Transactions` : 'Transactions';
+    
+    // Function to create a consistent 8-digit number from the userId
+    const formatUserId = (uid: string) => {
+        if (!uid) return '';
+        let hash = 0;
+        for (let i = 0; i < uid.length; i++) {
+            const char = uid.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0; // Convert to 32bit integer
+        }
+        const shortId = Math.abs(hash).toString().substring(0, 8).padEnd(8, '0');
+        return `UVPAYM${shortId}`;
+    };
+
+    const formattedUserId = useMemo(() => formatUserId(userId), [userId]);
+
 
     const filteredTransactions = useMemo(() => {
         let filtered = allMockTransactions.filter(tx => tx.method.toLowerCase() === method.toLowerCase());
@@ -101,7 +117,7 @@ export default function UserTransactionsByMethodPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center">
                    <div className="grid gap-2">
-                        <CardTitle className="text-2xl">{pageTitle} for {userId}</CardTitle>
+                        <CardTitle className="text-2xl">{pageTitle} for {formattedUserId}</CardTitle>
                         <CardDescription>A list of all transactions for this user and payment method.</CardDescription>
                    </div>
                    <div className="ml-auto flex items-center gap-2">
@@ -232,5 +248,3 @@ export default function UserTransactionsByMethodPage() {
         </div>
     );
 }
-
-    
