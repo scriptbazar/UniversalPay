@@ -418,7 +418,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What Our Customers Say</h2>
              <div className="relative space-y-4">
                 <div className="overflow-hidden">
-                    <div className="flex animate-marquee-right space-x-4">
+                    <div className="flex animate-marquee-right space-x-4 w-max">
                         {[...testimonialsRow1, ...testimonialsRow1].map((testimonial, index) => (
                           <Card key={`r1-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
                             <CardContent className="p-6 space-y-4">
@@ -437,7 +437,7 @@ export default function Home() {
                     </div>
                 </div>
                  <div className="overflow-hidden">
-                    <div className="flex animate-marquee-left space-x-4">
+                    <div className="flex animate-marquee-left space-x-4 w-max">
                         {[...testimonialsRow2, ...testimonialsRow2].map((testimonial, index) => (
                            <Card key={`r2-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
                              <CardContent className="p-6 space-y-4">
