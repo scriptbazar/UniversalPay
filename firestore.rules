@@ -1,23 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
     match /users/{userId} {
-      // Admins can read any user document. Users can only read their own.
-      allow get: if request.auth.token.role == 'admin' || request.auth.uid == userId;
-      
-      // Admins can list all users.
+      // Admins can list all users. This is crucial for the user management page.
       allow list: if request.auth.token.role == 'admin';
       
-      // Users can update their own profile. Admins can update any profile.
-      allow write: if request.auth.token.role == 'admin' || request.auth.uid == userId;
+      // An admin can get any single user's document.
+      // A non-admin user can only get their own document.
+      allow get: if request.auth.token.role == 'admin' || request.auth.uid == userId;
+
+      // A user can update their own document. Admins can update any.
+      allow update: if request.auth.token.role == 'admin' || request.auth.uid == userId;
+      
+      // Allow creation of a user document if the user is authenticated.
+      // The role is set by a cloud function, not the client.
+      allow create: if request.auth.uid != null;
+      
+      // Deleting users should be a privileged server-side action.
+      allow delete: if false;
     }
 
-    // Admins can read audit logs.
     match /audit_logs/{logId} {
-        allow read: if request.auth.token.role == 'admin';
-        // Only backend can create/update/delete logs.
-        allow write: if false; 
+      // Only admins can read audit logs.
+      allow read: if request.auth.token.role == 'admin';
+      // Audit logs should only be created from the backend/server.
+      allow write: if false;
     }
   }
 }
