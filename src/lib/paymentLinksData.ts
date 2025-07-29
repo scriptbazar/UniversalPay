@@ -1,86 +1,74 @@
 
+'use client';
+
+import { db } from './firebase';
+import { 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    getDoc, 
+    updateDoc, 
+    query, 
+    where, 
+    orderBy
+} from 'firebase/firestore';
+
 export type PaymentLink = {
   id: string;
   slug: string;
+  merchantId: string;
   title: string;
   description: string;
   url: string;
   type: 'Fixed' | 'Dynamic';
   amount: number | null;
   isActive: boolean;
-  createdAt: string;
+  createdAt: any; // Can be a Date or Firestore Timestamp
   payments: number;
   brandColor: string;
   collectPhone: boolean;
 };
 
-const generateRandomId = (prefix: string) => {
-    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
-    return `${prefix}${randomNum}`;
+// Function to get all links (for admin) or links for a specific merchant
+export const getPaymentLinks = async (merchantId?: string): Promise<PaymentLink[]> => {
+    const linksCol = collection(db, 'paymentLinks');
+    const q = merchantId 
+        ? query(linksCol, where('merchantId', '==', merchantId), orderBy('createdAt', 'desc'))
+        : query(linksCol, orderBy('createdAt', 'desc'));
+    
+    const linkSnapshot = await getDocs(q);
+    const linkList = linkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentLink));
+    return linkList;
 };
 
-let links: PaymentLink[] = [
-  {
-    id: generateRandomId('UVPAYLINK'),
-    slug: 't-shirt-sale',
-    title: 'T-Shirt Sale',
-    description: 'High-quality cotton t-shirts available in all sizes. Grab yours now!',
-    url: '/pay/t-shirt-sale',
-    type: 'Fixed',
-    amount: 25.00,
-    isActive: true,
-    createdAt: '2023-10-26T10:00:00Z',
-    payments: 120,
-    brandColor: '#29ABE2',
-    collectPhone: false,
-  },
-  {
-    id: generateRandomId('UVPAYLINK'),
-    slug: 'donation',
-    title: 'General Donation',
-    description: 'Support our cause by making a donation. Every bit helps!',
-    url: '/pay/donation',
-    type: 'Dynamic',
-    amount: null,
-    isActive: true,
-    createdAt: '2023-10-25T11:00:00Z',
-    payments: 50,
-    brandColor: '#34D399',
-    collectPhone: true,
-  },
-  {
-    id: generateRandomId('UVPAYLINK'),
-    slug: 'workshop',
-    title: 'Workshop Registration',
-    description: 'Join our exclusive workshop on modern web development.',
-    url: '/pay/workshop',
-    type: 'Fixed',
-    amount: 100.00,
-    isActive: false,
-    createdAt: '2023-10-22T12:00:00Z',
-    payments: 75,
-    brandColor: '#F59E0B',
-    collectPhone: true,
-  },
-];
-
-export const getPaymentLinks = (): PaymentLink[] => {
-  return [...links].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+export const getPaymentLinkBySlug = async (slug: string): Promise<PaymentLink | null> => {
+    const q = query(collection(db, 'paymentLinks'), where('slug', '==', slug));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as PaymentLink;
+    }
+    return null;
 };
 
-export const getPaymentLinkBySlug = (slug: string): PaymentLink | undefined => {
-  return links.find(link => link.slug === slug);
+export const getPaymentLinkById = async (id: string): Promise<PaymentLink | null> => {
+    const docRef = doc(db, 'paymentLinks', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as PaymentLink;
+    }
+    return null;
 };
 
-export const getPaymentLinkById = (id: string): PaymentLink | undefined => {
-  return links.find(link => link.id === id);
-};
-
-
-export const addPaymentLink = (newLinkData: Omit<PaymentLink, 'id'>): void => {
-  const newLink: PaymentLink = {
+export const addPaymentLink = async (newLinkData: Omit<PaymentLink, 'id' | 'createdAt'>): Promise<void> => {
+  await addDoc(collection(db, 'paymentLinks'), {
     ...newLinkData,
-    id: generateRandomId('UVPAYLINK'),
-  };
-  links.unshift(newLink);
+    createdAt: new Date().toISOString(),
+  });
+};
+
+export const updatePaymentLink = async (id: string, updates: Partial<PaymentLink>): Promise<void> => {
+    const docRef = doc(db, 'paymentLinks', id);
+    await updateDoc(docRef, updates);
 };

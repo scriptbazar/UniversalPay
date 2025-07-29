@@ -20,13 +20,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-import { addPaymentLink, getPaymentLinks, type PaymentLink } from '@/lib/paymentLinksData';
+import { addPaymentLink, getPaymentLinks, updatePaymentLink, type PaymentLink } from '@/lib/paymentLinksData';
 import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function PaymentPagesPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [links, setLinks] = useState<PaymentLink[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Form state
   const [title, setTitle] = useState('');
@@ -36,16 +39,32 @@ export default function PaymentPagesPage() {
   const [brandColor, setBrandColor] = useState('#29ABE2');
   const [collectPhone, setCollectPhone] = useState(false);
 
-  const fetchLinks = () => {
-    setLinks(getPaymentLinks());
+  const fetchLinks = async (uid: string) => {
+    setLoading(true);
+    const merchantLinks = await getPaymentLinks(uid);
+    setLinks(merchantLinks);
+    setLoading(false);
   }
 
   useEffect(() => {
-    fetchLinks();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
+        fetchLinks(user.uid);
+      } else {
+        router.push('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
-  const handleCreateLink = (e: React.FormEvent) => {
+  const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+      return;
+    }
+
     if (!title || (!isDynamic && !amount)) {
       toast({
         variant: 'destructive',
@@ -57,7 +76,8 @@ export default function PaymentPagesPage() {
 
     const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-    const newLink = {
+    await addPaymentLink({
+      merchantId: user.uid,
       title,
       description,
       slug,
@@ -68,11 +88,9 @@ export default function PaymentPagesPage() {
       brandColor,
       collectPhone,
       payments: 0,
-      createdAt: new Date().toISOString(),
-    };
+    });
     
-    addPaymentLink(newLink as PaymentLink);
-    fetchLinks(); // Re-fetch links to include the new one
+    await fetchLinks(user.uid);
 
     setTitle('');
     setDescription('');
@@ -96,6 +114,14 @@ export default function PaymentPagesPage() {
   const handleRowClick = (pageId: string) => {
     router.push(`/merchant/payment-pages/${pageId}`);
   };
+
+  const handleToggleActive = async (link: PaymentLink) => {
+    await updatePaymentLink(link.id, { isActive: !link.isActive });
+    await fetchLinks(auth.currentUser!.uid);
+    toast({
+      title: `Page ${!link.isActive ? 'activated' : 'deactivated'}`,
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -220,7 +246,9 @@ export default function PaymentPagesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {links.map((link) => (
+                  {loading ? (
+                    <TableRow><TableCell colSpan={4} className="h-24 text-center">Loading pages...</TableCell></TableRow>
+                  ) : links.map((link) => (
                     <TableRow key={link.id} onClick={() => handleRowClick(link.slug)} className="cursor-pointer">
                       <TableCell>
                         <div className="font-medium">{link.title}</div>
@@ -252,11 +280,8 @@ export default function PaymentPagesPage() {
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(link.url); }}>
                                   <Copy className="mr-2 h-4 w-4" /> Copy Link
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                                  <Switch className="mr-2 h-4 w-4" checked={link.isActive} onCheckedChange={() => {
-                                    // In a real app, this would be an API call
-                                    setLinks(links.map(l => l.id === link.id ? {...l, isActive: !l.isActive} : l));
-                                  }}/> {link.isActive ? 'Deactivate' : 'Activate'}
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(link) }}>
+                                  <Switch className="mr-2 h-4 w-4" checked={link.isActive} readOnly/> {link.isActive ? 'Deactivate' : 'Activate'}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
                                   <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -267,6 +292,13 @@ export default function PaymentPagesPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {!loading && links.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center h-24">
+                                You haven't created any payment pages yet.
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
               </Table>
             </CardContent>

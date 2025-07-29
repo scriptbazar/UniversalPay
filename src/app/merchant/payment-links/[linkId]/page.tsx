@@ -9,57 +9,48 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPaymentLinkById, type PaymentLink } from "@/lib/paymentLinksData";
+import { getTransactionsBySource, type Transaction } from "@/lib/transactionsData";
 import { notFound, useParams, useRouter } from "next/navigation";
 
 
-type Payment = {
-    id: string;
-    customer: string;
-    amount: string;
-    currency: string;
-    status: "Success" | "Flagged" | "Failed";
-    date: string;
-};
-
-const allPayments: Payment[] = [
-    { id: "pay_1", customer: "customer_a@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-10-26" },
-    { id: "pay_2", customer: "customer_b@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-10-26" },
-    { id: "pay_3", customer: "customer_c@mail.com", amount: "50.00", currency: "USD", status: "Flagged", date: "2023-10-27" },
-    { id: "pay_4", customer: "customer_d@mail.com", amount: "25.00", currency: "USD", status: "Success", date: "2023-10-27" },
-];
-
-const getStatusBadgeVariant = (status: Payment["status"]) => {
+const getStatusBadgeVariant = (status: Transaction["status"]) => {
     switch (status) {
         case 'Success':
             return 'default';
-        case 'Flagged':
-            return 'destructive';
         case 'Failed':
-            return 'secondary';
+            return 'destructive';
         default:
-            return 'outline';
+            return 'secondary';
     }
 };
-
 
 export default function PaymentLinkDetailPage() {
   const params = useParams();
   const router = useRouter();
   const linkId = params.linkId as string;
   const { toast } = useToast();
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Transaction | null>(null);
   const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const link = getPaymentLinkById(linkId);
-    if (link) {
-      setLinkDetails(link);
-    } else {
+    async function fetchData() {
+      setLoading(true);
+      const link = await getPaymentLinkById(linkId);
+      if (link) {
+        setLinkDetails(link);
+        const linkTransactions = await getTransactionsBySource(link.id);
+        setTransactions(linkTransactions);
+      } else {
         notFound();
+      }
+      setLoading(false);
     }
+    fetchData();
   }, [linkId]);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -70,35 +61,25 @@ export default function PaymentLinkDetailPage() {
     });
   };
 
-  const handlePaymentRowClick = (payment: Payment) => {
+  const handlePaymentRowClick = (payment: Transaction) => {
     setSelectedPayment(payment);
   }
 
-  if (!linkDetails) {
+  const analytics = useMemo(() => {
+    const successfulTxns = transactions.filter(t => t.status === 'Success');
+    const totalVolume = successfulTxns.reduce((acc, p) => acc + parseFloat(p.amount), 0);
+    const averagePayment = successfulTxns.length > 0 ? (totalVolume / successfulTxns.length).toFixed(2) : "0.00";
+    return {
+      totalVolume,
+      successfulPayments: successfulTxns.length,
+      averagePayment
+    };
+  }, [transactions]);
+
+
+  if (loading || !linkDetails) {
     return <div>Loading...</div>; // Or a skeleton loader
   }
-  
-  const totalVolume = allPayments.filter(p=>p.status === 'Success').reduce((acc, p) => acc + parseFloat(p.amount), 0);
-  const successfulPayments = linkDetails.payments;
-  const averagePayment = successfulPayments > 0 ? (totalVolume / successfulPayments).toFixed(2) : "0.00";
-  
-  const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
-     const sourceQuery = `?source=payment-links&title=${encodeURIComponent(linkDetails.title)}`;
-     switch (type) {
-         case 'successful':
-         case 'volume':
-             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
-             break;
-         case 'fraud':
-             router.push(`/merchant/settings#kyc`); // Or a dedicated fraud page for merchant
-             break;
-         case 'avg':
-              // Avg value doesn't need a list, can show a dialog or be static
-             toast({ title: 'Average Payment Value', description: `$${averagePayment}` });
-             break;
-     }
-  };
-
 
   return (
     <div className="space-y-6">
@@ -140,41 +121,32 @@ export default function PaymentLinkDetailPage() {
             </CardHeader>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card onClick={() => handleCardClick('volume')} className="cursor-pointer hover:bg-muted/50 transition-colors">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${totalVolume.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">${analytics.totalVolume.toFixed(2)}</div>
                 </CardContent>
             </Card>
-            <Card onClick={() => handleCardClick('successful')} className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Successful Payments</CardTitle>
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{successfulPayments}</div>
+                    <div className="text-2xl font-bold">{analytics.successfulPayments}</div>
                 </CardContent>
             </Card>
-             <Card onClick={() => handleCardClick('avg')} className="cursor-pointer hover:bg-muted/50 transition-colors">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${averagePayment}</div>
-                </CardContent>
-            </Card>
-            <Card onClick={() => handleCardClick('fraud')} className="cursor-pointer hover:bg-muted/50 transition-colors">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Fraud Alerts</CardTitle>
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{allPayments.filter(p=>p.status === 'Flagged').length}</div>
+                    <div className="text-2xl font-bold">${analytics.averagePayment}</div>
                 </CardContent>
             </Card>
         </div>
@@ -188,7 +160,7 @@ export default function PaymentLinkDetailPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Payment ID</TableHead>
+                            <TableHead>Transaction ID</TableHead>
                             <TableHead>Customer</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
@@ -196,17 +168,24 @@ export default function PaymentLinkDetailPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {allPayments.map(p => (
+                        {transactions.map(p => (
                             <TableRow key={p.id} onClick={() => handlePaymentRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                 <TableCell className="font-medium">{p.id}</TableCell>
-                                <TableCell>{p.customer}</TableCell>
+                                <TableCell>{p.customerEmail}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusBadgeVariant(p.status)}>{p.status}</Badge>
                                 </TableCell>
-                                <TableCell>{p.date}</TableCell>
-                                <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
+                                <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
+                                <TableCell className="text-right">${p.amount}</TableCell>
                             </TableRow>
                         ))}
+                         {transactions.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center h-24">
+                                    No transactions found for this link yet.
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>
@@ -216,7 +195,7 @@ export default function PaymentLinkDetailPage() {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Payment Details</DialogTitle>
-                     {selectedPayment && <DialogDescription>Details for payment {selectedPayment.id}</DialogDescription>}
+                     {selectedPayment && <DialogDescription>Details for transaction {selectedPayment.id}</DialogDescription>}
                 </DialogHeader>
                 {selectedPayment && (
                     <div className="space-y-4 py-4">
@@ -230,12 +209,12 @@ export default function PaymentLinkDetailPage() {
                        <div className="flex justify-between items-center">
                            <span className="text-muted-foreground">Customer:</span>
                            <div className="flex items-center gap-2">
-                               <span>{selectedPayment.customer}</span>
-                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedPayment.customer, 'Customer Email')} />
+                               <span>{selectedPayment.customerEmail}</span>
+                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedPayment.customerEmail, 'Customer Email')} />
                             </div>
                         </div>
-                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedPayment.amount} {selectedPayment.currency}</span></div>
-                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span>{selectedPayment.date}</span></div>
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedPayment.amount}</span></div>
+                       <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span>{new Date(selectedPayment.date).toLocaleString()}</span></div>
                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Status:</span> <Badge variant={getStatusBadgeVariant(selectedPayment.status)}>{selectedPayment.status}</Badge></div>
                     </div>
                 )}

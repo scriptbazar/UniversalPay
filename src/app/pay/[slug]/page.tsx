@@ -4,14 +4,17 @@
 import { useState, useEffect } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import { getPaymentLinkBySlug, type PaymentLink } from '@/lib/paymentLinksData';
+import { addTransaction } from '@/lib/transactionsData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { DollarSign, IndianRupee, CreditCard, Bitcoin, Globe } from 'lucide-react';
+import { DollarSign, IndianRupee, CreditCard, Bitcoin, Globe, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -28,29 +31,57 @@ export default function PayPage() {
   const [link, setLink] = useState<PaymentLink | null>(null);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState<number | string>('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
 
 
   useEffect(() => {
-    const data = getPaymentLinkBySlug(slug);
-    if (data) {
-      setLink(data);
-      if(data.type === 'Fixed' && data.amount) {
-        setAmount(data.amount);
-      }
+    async function fetchLink() {
+        const data = await getPaymentLinkBySlug(slug);
+        if (data) {
+          setLink(data);
+          if(data.type === 'Fixed' && data.amount) {
+            setAmount(data.amount);
+          }
+        }
+        setLoading(false);
     }
-    setLoading(false);
+    fetchLink();
   }, [slug]);
 
   const convenienceFee = 1.00;
   const totalAmount = (Number(amount) || 0) + convenienceFee;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-        title: "Payment Successful!",
-        description: `Thank you for your payment of $${totalAmount.toFixed(2)}.`,
-    })
+    if (!link || !selectedMethod) return;
+
+    setIsProcessing(true);
+
+    const newTransaction = {
+      merchantId: link.merchantId,
+      customerEmail: email,
+      amount: totalAmount.toFixed(2),
+      status: "Success" as const,
+      method: selectedMethod.toUpperCase() as "UPI" | "Crypto" | "Link" | "Page",
+      date: new Date().toISOString(),
+      sourceId: link.id,
+    };
+    
+    // Simulate payment processing and save to database
+    await addTransaction(newTransaction);
+    
+    setTimeout(() => {
+        setIsProcessing(false);
+        setIsPaid(true);
+        toast({
+            title: "Payment Successful!",
+            description: `Thank you for your payment of $${totalAmount.toFixed(2)}.`,
+        });
+    }, 1500);
   }
 
   if (loading) {
@@ -59,6 +90,27 @@ export default function PayPage() {
 
   if (!link || !link.isActive) {
     return notFound();
+  }
+
+  if(isPaid) {
+    return (
+        <div className="min-h-screen bg-muted/40 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md shadow-2xl text-center">
+                <CardContent className="p-8">
+                    <div className="flex flex-col items-center space-y-4">
+                        <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center border-4 border-green-200">
+                             <CheckCircle className="w-12 h-12 text-green-600" />
+                        </div>
+                        <CardTitle className="text-2xl">Payment Successful!</CardTitle>
+                        <CardDescription>Your payment of ${totalAmount.toFixed(2)} to {link.title} has been completed.</CardDescription>
+                         <Button asChild className="mt-4">
+                           <a href="/">Go to Homepage</a>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    )
   }
 
   return (
@@ -82,7 +134,7 @@ export default function PayPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email Address</Label>
-                                        <Input id="email" type="email" placeholder="you@example.com" required />
+                                        <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="amount">Amount (USD)</Label>
@@ -100,7 +152,7 @@ export default function PayPage() {
                                 {link.collectPhone && (
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">Phone Number</Label>
-                                        <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" />
+                                        <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" value={phone} onChange={e => setPhone(e.target.value)} />
                                     </div>
                                 )}
                             </div>
@@ -130,9 +182,9 @@ export default function PayPage() {
                                 type="submit"
                                 className="w-full text-lg h-12" 
                                 style={{ backgroundColor: link.brandColor, color: 'hsl(var(--primary-foreground))' }}
-                                disabled={!amount || Number(amount) <= 0 || !selectedMethod}
+                                disabled={!amount || Number(amount) <= 0 || !selectedMethod || !email || isProcessing}
                             >
-                                Pay ${totalAmount.toFixed(2)}
+                                {isProcessing ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
                             </Button>
                             <div className="text-center w-full pt-2">
                                 <p className="text-xs text-muted-foreground">
@@ -151,4 +203,3 @@ export default function PayPage() {
     </div>
   );
 }
-
