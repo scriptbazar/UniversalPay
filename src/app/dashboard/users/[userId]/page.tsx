@@ -240,14 +240,6 @@ export default function UserDetailPage() {
       }
   };
 
-  const handleLoginAsUser = () => {
-    toast({
-        title: "Redirecting...",
-        description: `Logging you in as ${merchant?.fullName}.`
-    });
-    router.push('/merchant/dashboard');
-  };
-
   const handleTransactionRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setDialogOpen('transaction');
@@ -336,10 +328,6 @@ export default function UserDetailPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleLoginAsUser}>
-                                    <LogIn className="mr-2 h-4 w-4" />
-                                    Login As User
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleRoleChange(merchant.role === 'admin' ? 'merchant' : 'admin')}>
                                     <ShieldIcon className="mr-2 h-4 w-4" />
                                     {merchant.role === 'admin' ? 'Make Merchant' : 'Make Admin'}

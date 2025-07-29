@@ -110,20 +110,19 @@ export default function AdminDashboardLayout({
     const router = useRouter();
     const { toast } = useToast();
     const [user, setUser] = useState<User | null>(null);
+    const [userProfile, setUserProfile] = useState<{ fullName?: string; email?: string, avatar?: string } | null>(null);
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // To prevent flicker, we first assume the user is valid and show a loader.
-                // Then, we verify their role.
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
 
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
                     setUser(user);
+                    setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string });
                 } else {
-                    // If the role is not admin, sign them out and redirect.
                     await signOutUser();
                     toast({
                         variant: 'destructive',
@@ -133,14 +132,10 @@ export default function AdminDashboardLayout({
                     router.push('/admin'); 
                 }
             } else {
-                // If no user is logged in, redirect to the admin login page.
                 router.push('/admin'); 
             }
-            // Only stop loading after all checks are complete.
             setLoading(false);
         });
-
-        // Cleanup the listener on component unmount
         return () => unsubscribe();
     }, [router, toast]);
     
@@ -159,7 +154,6 @@ export default function AdminDashboardLayout({
     }
 
     if (!user) {
-        // This will be shown briefly while redirecting.
         return <DashboardSkeleton />;
     }
 
@@ -238,7 +232,7 @@ export default function AdminDashboardLayout({
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Image
-                  src="https://placehold.co/36x36.png"
+                  src={userProfile?.avatar || "https://placehold.co/36x36.png"}
                   width={36}
                   height={36}
                   alt="Avatar"
@@ -249,7 +243,7 @@ export default function AdminDashboardLayout({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{userProfile?.fullName || 'Admin'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/users">Profile</Link>

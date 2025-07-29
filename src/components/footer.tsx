@@ -13,9 +13,9 @@ export function Footer() {
               Secure, scalable, and global payment solutions.
             </p>
             <div className="flex space-x-4">
-              <Link href="https://x.com" target="_blank" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></Link>
-              <Link href="https://facebook.com" target="_blank" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></Link>
-              <Link href="https://linkedin.com" target="_blank" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></Link>
+              <Link href="https://x.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></Link>
+              <Link href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></Link>
+              <Link href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></Link>
             </div>
           </div>
           <div>

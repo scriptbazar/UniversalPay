@@ -117,20 +117,19 @@ export default function MerchantDashboardLayout({
     const router = useRouter();
     const { toast } = useToast();
     const [user, setUser] = useState<User | null>(null);
+    const [userProfile, setUserProfile] = useState<{ fullName?: string; email?: string, avatar?: string } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // To prevent flicker, we first assume the user is valid and show a loader.
-                // Then, we verify their role.
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
                 
                 if (userDoc.exists() && userDoc.data().role === 'merchant') {
                     setUser(user);
+                    setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string });
                 } else {
-                    // If the role is not merchant, sign them out and redirect.
                     await signOutUser();
                      toast({
                         variant: 'destructive',
@@ -140,14 +139,11 @@ export default function MerchantDashboardLayout({
                     router.push('/login'); 
                 }
             } else {
-                 // If no user is logged in, redirect to the merchant login page.
                 router.push('/login');
             }
-            // Only stop loading after all checks are complete.
             setLoading(false);
         });
         
-        // Cleanup the listener on component unmount
         return () => unsubscribe();
     }, [router, toast]);
 
@@ -166,7 +162,6 @@ export default function MerchantDashboardLayout({
     }
 
     if (!user) {
-        // This will be shown briefly while redirecting.
         return <DashboardSkeleton />;
     }
 
@@ -246,7 +241,7 @@ export default function MerchantDashboardLayout({
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Image
-                  src="https://placehold.co/36x36.png"
+                  src={userProfile?.avatar || "https://placehold.co/36x36.png"}
                   width={36}
                   height={36}
                   alt="Avatar"
@@ -257,7 +252,7 @@ export default function MerchantDashboardLayout({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{userProfile?.fullName || 'Merchant'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/merchant/settings">Settings</Link>
