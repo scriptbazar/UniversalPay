@@ -119,7 +119,7 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
                 uid: user.uid,
                 email: user.email,
                 fullName: user.displayName || 'Social User',
-                avatar: user.photoURL,
+                avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
                 role: 'merchant',
                 status: 'Active',
                 plan: 'Free',
