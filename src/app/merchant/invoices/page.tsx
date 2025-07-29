@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -15,6 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 
 const getStatusBadgeVariant = (status: string) => {
@@ -37,8 +41,16 @@ function CreateInvoiceForm({ setOpen, onInvoiceCreated }: { setOpen: (open: bool
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        return;
+    }
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const merchantName = userDoc.exists() ? userDoc.data().fullName : 'Your Business';
+    
     const newInvoice = {
       customerName,
       customerEmail,
@@ -46,10 +58,10 @@ function CreateInvoiceForm({ setOpen, onInvoiceCreated }: { setOpen: (open: bool
       status: "Pending" as "Pending" | "Paid" | "Overdue",
       issueDate: new Date().toISOString().split("T")[0],
       dueDate,
-      merchantId: "merch_123", // Placeholder
-      merchantName: "MyStore.com" // Placeholder
+      merchantId: user.uid,
+      merchantName: merchantName
     };
-    addInvoice(newInvoice);
+    await addInvoice(newInvoice);
     toast({
       title: "Invoice Created",
       description: `Invoice for ${customerName} has been created successfully.`,
@@ -130,16 +142,29 @@ function CreateInvoiceDialog({ onInvoiceCreated }: { onInvoiceCreated: () => voi
 
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const fetchInvoices = () => {
-        // Only get invoices for the current merchant (placeholder)
-        setInvoices(getInvoices().filter(inv => inv.merchantId === "merch_123"));
+    const fetchInvoices = async () => {
+        setLoading(true);
+        const user = auth.currentUser;
+        if (user) {
+            const merchantInvoices = await getInvoices(user.uid);
+            setInvoices(merchantInvoices);
+        }
+        setLoading(false);
     }
 
     useEffect(() => {
-        fetchInvoices();
-    }, []);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                fetchInvoices();
+            } else {
+                router.push('/login');
+            }
+        });
+        return () => unsubscribe();
+    }, [router]);
 
     const handleRowClick = (invoiceId: string) => {
         router.push(`/merchant/invoices/${invoiceId}`);
@@ -176,17 +201,23 @@ export default function InvoicesPage() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {invoices.map((invoice) => (
-                    <TableRow key={invoice.id} onClick={() => handleRowClick(invoice.id)} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell className="font-medium">{invoice.id}</TableCell>
-                        <TableCell>{invoice.customerName}</TableCell>
-                        <TableCell>{invoice.issueDate}</TableCell>
-                        <TableCell>
-                            <Badge variant={getStatusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">${invoice.totalAmount.toFixed(2)}</TableCell>
-                    </TableRow>
-                ))}
+                {loading ? (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading invoices...</TableCell></TableRow>
+                ) : invoices.length > 0 ? (
+                    invoices.map((invoice) => (
+                        <TableRow key={invoice.id} onClick={() => handleRowClick(invoice.id)} className="cursor-pointer hover:bg-muted/50">
+                            <TableCell className="font-medium">{invoice.id.substring(0, 10)}...</TableCell>
+                            <TableCell>{invoice.customerName}</TableCell>
+                            <TableCell>{invoice.issueDate}</TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">${invoice.totalAmount.toFixed(2)}</TableCell>
+                        </TableRow>
+                    ))
+                ) : (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center">No invoices found.</TableCell></TableRow>
+                )}
                 </TableBody>
             </Table>
             </CardContent>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowLeft, Download, Mail, CheckCircle, Clock, XCircle, FileText, ExternalLink } from 'lucide-react';
@@ -11,6 +12,7 @@ import { getInvoiceById, type Invoice } from '@/lib/invoicesData';
 import { notFound, useParams } from 'next/navigation';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useEffect, useState } from 'react';
 
 const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secondary' | 'destructive', icon: React.ReactNode } => {
     switch (status) {
@@ -28,10 +30,30 @@ const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secon
 export default function InvoiceDetailPage() {
   const params = useParams();
   const invoiceId = params.invoiceId as string;
-  const invoice = getInvoiceById(invoiceId);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+      async function fetchInvoice() {
+          setLoading(true);
+          const data = await getInvoiceById(invoiceId);
+          if (data) {
+              setInvoice(data);
+          } else {
+              notFound();
+          }
+          setLoading(false);
+      }
+      fetchInvoice();
+  }, [invoiceId]);
+
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!invoice) {
-    notFound();
+    return notFound();
   }
   
   const statusInfo = getStatusInfo(invoice.status);
@@ -46,7 +68,7 @@ export default function InvoiceDetailPage() {
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
         
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`invoice-${invoice.id}.pdf`);
+        pdf.save(`invoice-${invoice!.id}.pdf`);
       });
     }
   };

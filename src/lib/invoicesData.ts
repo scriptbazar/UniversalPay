@@ -1,4 +1,20 @@
 
+'use client';
+
+import { db } from './firebase';
+import { 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    getDoc, 
+    updateDoc, 
+    query, 
+    where, 
+    orderBy,
+    serverTimestamp
+} from 'firebase/firestore';
+
 export type InvoiceItem = {
   description: string;
   amount: number;
@@ -15,111 +31,64 @@ export type Invoice = {
   items: InvoiceItem[];
   totalAmount: number;
   status: "Pending" | "Paid" | "Overdue";
+  createdAt: any;
 };
 
-const generateRandomId = (prefix: string) => {
-    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
-    return `${prefix}${randomNum}`;
-};
-
-let invoices: Invoice[] = [
-  {
-    id: generateRandomId("UVPAYINV"),
-    merchantId: "merch_123",
-    merchantName: "MyStore.com",
-    customerName: "Liam Johnson",
-    customerEmail: "liam@example.com",
-    issueDate: "2023-10-25",
-    dueDate: "2023-11-24",
-    items: [{ description: "Pro Subscription", amount: 250.00 }],
-    totalAmount: 250.00,
-    status: "Paid",
-  },
-  {
-    id: generateRandomId("UVPAYINV"),
-    merchantId: "merch_123",
-    merchantName: "MyStore.com",
-    customerName: "Olivia Smith",
-    customerEmail: "olivia@example.com",
-    issueDate: "2023-10-24",
-    dueDate: "2023-11-23",
-    items: [{ description: "Web Design Service", amount: 150.00 }],
-    totalAmount: 150.00,
-    status: "Pending",
-  },
-  {
-    id: generateRandomId("UVPAYINV"),
-    merchantId: "merch_123",
-    merchantName: "MyStore.com",
-    customerName: "Noah Williams",
-    customerEmail: "noah@example.com",
-    issueDate: "2023-10-23",
-    dueDate: "2023-11-22",
-    items: [{ description: "Premium Hosting", amount: 350.00 }],
-    totalAmount: 350.00,
-    status: "Paid",
-  },
-  {
-    id: generateRandomId("UVPAYINV"),
-    merchantId: "merch_123",
-    merchantName: "MyStore.com",
-    customerName: "Emma Brown",
-    customerEmail: "emma@example.com",
-    issueDate: "2023-10-22",
-    dueDate: "2023-10-29", // This one is overdue
-    items: [{ description: "SEO Consultation", amount: 450.00 }],
-    totalAmount: 450.00,
-    status: "Overdue",
-  },
-  {
-    id: generateRandomId("UVPAYINV"),
-    merchantId: "merch_789",
-    merchantName: "AnotherShop",
-    customerName: "James White",
-    customerEmail: "james@example.com",
-    issueDate: "2023-10-28",
-    dueDate: "2023-11-27",
-    items: [{ description: "Graphic Design Pack", amount: 500.00 }],
-    totalAmount: 500.00,
-    status: "Pending",
-  },
-];
-
-// Helper to check for overdue invoices
-const checkOverdueInvoices = () => {
-    // This function is now static and won't cause hydration issues.
-    // For real-world apps, this logic would be server-side.
-    const today = new Date("2023-11-15T00:00:00Z"); // Use a fixed date for consistent behavior
-    invoices.forEach(invoice => {
+// Helper function to check for overdue invoices.
+// This should ideally run on a server-side cron job in a real app.
+const checkOverdueInvoices = (invoices: Invoice[]): Invoice[] => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to the start of the day
+    return invoices.map(invoice => {
         if (invoice.status === 'Pending' && new Date(invoice.dueDate) < today) {
-            invoice.status = 'Overdue';
+            // This would ideally be an update call to Firestore
+            // For now, we'll just modify the state for display
+            return { ...invoice, status: 'Overdue' };
         }
+        return invoice;
     });
 };
 
-export const getInvoices = (): Invoice[] => {
-  checkOverdueInvoices();
-  return [...invoices].sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
+// Function to get all invoices (for admin) or invoices for a specific merchant
+export const getInvoices = async (merchantId?: string): Promise<Invoice[]> => {
+    const invoicesCol = collection(db, 'invoices');
+    const q = merchantId 
+        ? query(invoicesCol, where('merchantId', '==', merchantId), orderBy('createdAt', 'desc'))
+        : query(invoicesCol, orderBy('createdAt', 'desc'));
+    
+    const invoiceSnapshot = await getDocs(q);
+    const invoiceList = invoiceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
+    
+    // Client-side check for overdue status for display purposes
+    const processedInvoices = checkOverdueInvoices(invoiceList);
+    return processedInvoices;
 };
 
-export const getInvoiceById = (id: string): Invoice | undefined => {
-  checkOverdueInvoices();
-  return invoices.find(invoice => invoice.id === id);
+// Function to get a single invoice by its ID
+export const getInvoiceById = async (id: string): Promise<Invoice | null> => {
+    const invoiceRef = doc(db, 'invoices', id);
+    const invoiceSnap = await getDoc(invoiceRef);
+    if (invoiceSnap.exists()) {
+        const invoice = { id: invoiceSnap.id, ...invoiceSnap.data() } as Invoice;
+        const [processedInvoice] = checkOverdueInvoices([invoice]);
+        return processedInvoice;
+    } else {
+        return null;
+    }
 };
 
-export const addInvoice = (newInvoiceData: Omit<Invoice, 'id' | 'totalAmount'>): void => {
+// Function to add a new invoice
+export const addInvoice = async (newInvoiceData: Omit<Invoice, 'id' | 'createdAt' | 'totalAmount'>): Promise<void> => {
   const totalAmount = newInvoiceData.items.reduce((sum, item) => sum + item.amount, 0);
-  const newInvoice: Invoice = {
+  await addDoc(collection(db, 'invoices'), {
     ...newInvoiceData,
-    id: generateRandomId("UVPAYINV"),
     totalAmount,
-  };
-  invoices.unshift(newInvoice); // Add to the beginning of the array
+    createdAt: serverTimestamp(),
+  });
 };
 
-export const updateInvoiceStatus = (id: string, status: "Paid" | "Pending" | "Overdue"): void => {
-  const index = invoices.findIndex(invoice => invoice.id === id);
-  if (index !== -1) {
-    invoices[index].status = status;
-  }
+// Function to update the status of an invoice
+export const updateInvoiceStatus = async (id: string, status: "Paid" | "Pending" | "Overdue"): Promise<void> => {
+  const invoiceRef = doc(db, 'invoices', id);
+  await updateDoc(invoiceRef, { status });
 };

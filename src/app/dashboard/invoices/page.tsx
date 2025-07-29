@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
@@ -14,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Logo } from "@/components/logo";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -44,11 +47,20 @@ const getStatusInfo = (status: Invoice['status']): { variant: 'default' | 'secon
 
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
     useEffect(() => {
-        setInvoices(getInvoices());
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Admin gets all invoices
+                const allInvoices = await getInvoices();
+                setInvoices(allInvoices);
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
     }, []);
     
     const filteredInvoices = useMemo(() => {
@@ -64,8 +76,8 @@ export default function InvoicesPage() {
         );
     }, [invoices, searchTerm]);
 
-    const handleRowClick = (invoiceId: string) => {
-        const invoice = getInvoiceById(invoiceId);
+    const handleRowClick = async (invoiceId: string) => {
+        const invoice = await getInvoiceById(invoiceId);
         if (invoice) {
             setSelectedInvoice(invoice);
         }
@@ -132,19 +144,22 @@ export default function InvoicesPage() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredInvoices.map((invoice) => (
-                    <TableRow key={invoice.id} onClick={() => handleRowClick(invoice.id)} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell className="font-medium">{invoice.id}</TableCell>
-                        <TableCell>{invoice.merchantName}</TableCell>
-                        <TableCell>{invoice.customerName}</TableCell>
-                        <TableCell>{invoice.issueDate}</TableCell>
-                        <TableCell>
-                            <Badge variant={getStatusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">${invoice.totalAmount.toFixed(2)}</TableCell>
-                    </TableRow>
-                ))}
-                {filteredInvoices.length === 0 && (
+                {loading ? (
+                    <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading invoices...</TableCell></TableRow>
+                ) : filteredInvoices.length > 0 ? (
+                    filteredInvoices.map((invoice) => (
+                        <TableRow key={invoice.id} onClick={() => handleRowClick(invoice.id)} className="cursor-pointer hover:bg-muted/50">
+                            <TableCell className="font-medium">{invoice.id.substring(0, 10)}...</TableCell>
+                            <TableCell>{invoice.merchantName}</TableCell>
+                            <TableCell>{invoice.customerName}</TableCell>
+                            <TableCell>{invoice.issueDate}</TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">${invoice.totalAmount.toFixed(2)}</TableCell>
+                        </TableRow>
+                    ))
+                ) : (
                      <TableRow>
                         <TableCell colSpan={6} className="text-center h-24">
                             No invoices found.
@@ -251,4 +266,3 @@ export default function InvoicesPage() {
     </div>
   );
     
-
