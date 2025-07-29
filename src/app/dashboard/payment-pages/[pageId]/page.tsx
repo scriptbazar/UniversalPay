@@ -1,7 +1,6 @@
-
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, AppWindow, BadgeEuro } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, AppWindow, BadgeEuro, Eye, PowerOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,7 +129,14 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                            </Link>
                         </div>
                     </div>
-                    <Button variant="outline">Deactivate Page</Button>
+                     <div className="flex items-center gap-2">
+                        <Button asChild variant="secondary">
+                            <Link href={linkDetails.url} target="_blank">
+                                <Eye className="mr-2 h-4 w-4"/> View Page
+                            </Link>
+                        </Button>
+                        <Button variant="outline"><PowerOff className="mr-2 h-4 w-4"/> Deactivate Page</Button>
+                    </div>
                 </div>
             </CardHeader>
         </Card>
