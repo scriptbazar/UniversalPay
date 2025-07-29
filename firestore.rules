@@ -2,60 +2,70 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users can only read their own profile, but admins can read any.
-    // Any authenticated user can create their own user document.
-    // Users can only update their own document (through a cloud function).
+
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users collection rules
     match /users/{userId} {
-      allow read: if request.auth.uid == userId 
-                  || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow create: if request.auth.uid == userId;
-      // Updates are handled by a secure cloud function.
-      allow update: if false; 
+      // Admins can read any user profile
+      allow read: if request.auth.token.role == 'admin';
+      // An authenticated user can read their own profile
+      allow read: if request.auth.uid == userId;
+
+      // An authenticated user can update their own profile,
+      // but they cannot change their role or status.
+      allow update: if request.auth.uid == userId
+                    && !('role' in request.resource.data)
+                    && !('status' in request.resource.data);
     }
 
-    // Only admins can read all audit logs.
-    // Creation is handled by backend functions only.
-    match /audit_logs/{logId} {
-      allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow write: if false;
-    }
-    
-    // Payment links can be created by any merchant.
-    // Admins can read/list all, merchants can only read/list their own.
-    match /paymentLinks/{linkId} {
-        allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' 
-                           || resource.data.merchantId == request.auth.uid;
-        allow create: if request.auth.uid != null;
-        allow update: if resource.data.merchantId == request.auth.uid;
-    }
-
-    // Transactions can be read by the merchant they belong to, or by an admin.
-    // Transactions are only created via the payment page (client-side) or server-side logic.
+    // Transactions collection rules
     match /transactions/{txId} {
-        allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                           || resource.data.merchantId == request.auth.uid;
-        allow create: if request.auth.uid != null;
-        allow update, delete: if false;
+      // Admins can read any transaction
+      allow read: if request.auth.token.role == 'admin';
+      // Merchants can only read their own transactions
+      allow read: if request.auth.uid == resource.data.merchantId;
+      // Clients/Customers can create transactions
+      allow create: if true;
     }
     
-    // Tickets can be created by a merchant.
-    // They can only be read/updated by the merchant who created them or an admin.
-    match /tickets/{ticketId} {
-        allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                          || resource.data.merchantId == request.auth.uid;
-        allow create, update: if request.auth.uid != null;
+    // Payment Links collection rules
+    match /paymentLinks/{linkId} {
+      // Anyone can read a payment link to make a payment
+      allow read: if true;
+      // Admins can read/write any link
+      allow read, write: if request.auth.token.role == 'admin';
+      // Merchants can create links and read/update/delete their own
+      allow create, update, delete: if request.auth.uid == request.resource.data.merchantId;
+      allow read: if request.auth.uid == resource.data.merchantId;
     }
 
-    // Withdrawals can be created by a merchant.
-    // They can be read by the merchant or admin.
-    // They can only be updated by an admin (via a cloud function).
+    // Tickets collection rules
+    match /tickets/{ticketId} {
+      // Admins can read/write any ticket
+      allow read, write: if request.auth.token.role == 'admin';
+      // Merchants can create tickets and read/update their own
+      allow create: if request.auth.uid == request.resource.data.merchantId;
+      allow read, update: if request.auth.uid == resource.data.merchantId;
+    }
+
+    // Withdrawals collection rules
     match /withdrawals/{withdrawalId} {
-        allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                          || resource.data.merchantId == request.auth.uid;
-        allow create: if request.auth.uid != null;
-        allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        // Admins can read/write any withdrawal request
+        allow read, write: if request.auth.token.role == 'admin';
+        // Merchants can create withdrawals and read their own
+        allow create: if request.auth.uid == request.resource.data.merchantId;
+        allow read: if request.auth.uid == resource.data.merchantId;
+    }
+    
+    // Audit Logs can only be read by admins
+    match /audit_logs/{logId} {
+      allow read: if request.auth.token.role == 'admin';
+      // Writes to audit logs should only be done by server-side Cloud Functions
+      allow write: if false; 
     }
   }
 }
