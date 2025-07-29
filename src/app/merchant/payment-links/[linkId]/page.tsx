@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPaymentLinkById, type PaymentLink } from "@/lib/paymentLinksData";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 
 
 type Payment = {
@@ -45,19 +45,21 @@ const getStatusBadgeVariant = (status: Payment["status"]) => {
 };
 
 
-export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
+export default function PaymentLinkDetailPage() {
+  const params = useParams();
+  const linkId = params.linkId as string;
   const { toast } = useToast();
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
 
   useEffect(() => {
-    const link = getPaymentLinkById(params.linkId);
+    const link = getPaymentLinkById(linkId);
     if (link) {
       setLinkDetails(link);
     } else {
         notFound();
     }
-  }, [params.linkId]);
+  }, [linkId]);
 
   const copyToClipboard = (text: string, label: string) => {
     const fullUrl = text.startsWith('/') ? `${window.location.origin}${text}` : text;
@@ -139,7 +141,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <div className="text-2xl font-bold">{successfulPayments}</div>
                 </CardContent>
             </Card>
-            <Card>
+             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
