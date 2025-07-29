@@ -288,16 +288,18 @@ const txTotalPages = useMemo(() => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 {merchant.role === 'admin' ? (
-                                    <DropdownMenuItem onClick={() => handleRoleChange('merchant')}>
-                                        <ShieldIcon className="mr-2 h-4 w-4" />
-                                        Make Merchant
-                                    </DropdownMenuItem>
+                                    <>
+                                        <DropdownMenuItem onClick={() => handleRoleChange('merchant')}>
+                                            <ShieldIcon className="mr-2 h-4 w-4" />
+                                            Make Merchant
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <KeyRound className="mr-2 h-4 w-4" />
+                                            Reset Password
+                                        </DropdownMenuItem>
+                                    </>
                                 ) : (
                                     <>
-                                        <DropdownMenuItem onClick={() => handleRoleChange('admin')}>
-                                            <ShieldIcon className="mr-2 h-4 w-4" />
-                                            Make Admin
-                                        </DropdownMenuItem>
                                         <DropdownMenuItem onClick={handleToggleSuspend}>
                                         {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
                                         {merchant.status === 'Active' ? 'Suspend Merchant' : 'Unsuspend Merchant'}
@@ -307,16 +309,10 @@ const txTotalPages = useMemo(() => {
                                             <Briefcase className="mr-2 h-4 w-4" />
                                             Change Plan
                                         </DropdownMenuItem>
-                                    </>
-                                )}
-
-                                <DropdownMenuItem>
-                                    <KeyRound className="mr-2 h-4 w-4" />
-                                    Reset Password
-                                </DropdownMenuItem>
-
-                                {merchant.role !== 'admin' && (
-                                    <>
+                                        <DropdownMenuItem>
+                                            <KeyRound className="mr-2 h-4 w-4" />
+                                            Reset Password
+                                        </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className="text-destructive">
                                             <Trash2 className="mr-2 h-4 w-4" />
