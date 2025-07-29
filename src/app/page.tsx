@@ -203,6 +203,11 @@ const howItWorksSteps = [
         icon: <Zap className="w-10 h-10 text-primary" />,
         title: "Start Accepting Payments",
         description: "Use our SDKs, Payment Links, or Invoicing system to start receiving payments from anywhere in the world."
+    },
+    {
+        icon: <LayoutGrid className="w-10 h-10 text-primary" />,
+        title: "Track & Analyze",
+        description: "Monitor your sales, track transactions, and gain insights with our comprehensive dashboard."
     }
 ]
 
@@ -238,15 +243,17 @@ export default function Home() {
         <section className="py-20 px-4 md:px-8 bg-muted">
             <div className="container mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Go Live in Minutes</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                     {howItWorksSteps.map((step, index) => (
-                        <div key={index} className="flex flex-col items-center text-center">
-                            <div className="p-4 bg-primary/10 rounded-full mb-4">
-                                {step.icon}
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                            <p className="text-muted-foreground">{step.description}</p>
-                        </div>
+                        <Card key={index} className="text-center bg-card">
+                            <CardContent className="pt-6">
+                                <div className="p-4 bg-primary/10 rounded-full inline-block mb-4">
+                                    {step.icon}
+                                </div>
+                                <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+                                <p className="text-muted-foreground">{step.description}</p>
+                            </CardContent>
+                        </Card>
                     ))}
                 </div>
             </div>
