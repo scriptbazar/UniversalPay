@@ -34,7 +34,7 @@ let tickets: Ticket[] = [
     status: 'Open',
     priority: 'High',
     createdAt: '2023-11-10T09:00:00Z',
-    updatedAt: '2023-11-10T09:00:00Z',
+    updatedAt: '2023-11-10T09:00:05Z',
     replies: [
       {
         author: 'Admin',
@@ -125,30 +125,36 @@ export const addTicket = (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'upda
 
 // Function to add a reply to a ticket
 export const addReply = (ticketId: string, replyData: Omit<TicketReply, 'createdAt'>): void => {
-  const ticket = getTicketById(ticketId);
-  if (ticket) {
+  const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
+  if (ticketIndex !== -1) {
     const now = new Date().toISOString();
-    ticket.replies.push({
+    const newReply: TicketReply = {
       ...replyData,
       createdAt: now,
-    });
-    ticket.updatedAt = now;
-    if(replyData.author === 'Admin') {
-        ticket.status = 'In Progress';
-    }
+    };
+    
+    // Create a new ticket object to avoid direct mutation
+    const updatedTicket = {
+        ...tickets[ticketIndex],
+        replies: [...tickets[ticketIndex].replies, newReply],
+        updatedAt: now,
+        status: replyData.author === 'Admin' ? 'In Progress' as const : 'Open' as const,
+    };
+    
+    // Replace the old ticket with the updated one
+    tickets[ticketIndex] = updatedTicket;
   }
 };
 
 // Function to update a ticket's status or priority
 export const updateTicket = (ticketId: string, updates: Partial<Pick<Ticket, 'status' | 'priority'>>) => {
-  const ticket = getTicketById(ticketId);
-  if (ticket) {
-    if (updates.status) {
-        ticket.status = updates.status;
-    }
-    if (updates.priority) {
-        ticket.priority = updates.priority;
-    }
-    ticket.updatedAt = new Date().toISOString();
+  const ticketIndex = tickets.findIndex(ticket => ticket.id === ticketId);
+  if (ticketIndex !== -1) {
+    const updatedTicket = {
+      ...tickets[ticketIndex],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    tickets[ticketIndex] = updatedTicket;
   }
 };

@@ -77,7 +77,7 @@ export default function MerchantTicketDetailPage() {
     });
 
     const updatedTicket = getTicketById(ticket.id);
-    if (updatedTicket) setTicket(updatedTicket);
+    setTicket(updatedTicket || null);
     setReplyMessage('');
     toast({ title: 'Reply Sent!' });
   };

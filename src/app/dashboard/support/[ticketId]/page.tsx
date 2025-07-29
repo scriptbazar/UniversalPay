@@ -79,7 +79,7 @@ export default function AdminTicketDetailPage() {
     });
 
     const updatedTicket = getTicketById(ticket.id);
-    if (updatedTicket) setTicket(updatedTicket);
+    setTicket(updatedTicket || null);
     setReplyMessage('');
     toast({ title: 'Reply Sent!' });
   };
@@ -87,14 +87,14 @@ export default function AdminTicketDetailPage() {
   const handleStatusChange = (newStatus: Ticket['status']) => {
       updateTicket(ticket.id, { status: newStatus });
       const updatedTicket = getTicketById(ticket.id);
-      if (updatedTicket) setTicket(updatedTicket);
+      setTicket(updatedTicket || null);
       toast({ title: "Status Updated" });
   };
 
   const handlePriorityChange = (newPriority: Ticket['priority']) => {
       updateTicket(ticket.id, { priority: newPriority });
       const updatedTicket = getTicketById(ticket.id);
-      if (updatedTicket) setTicket(updatedTicket);
+      setTicket(updatedTicket || null);
       toast({ title: "Priority Updated" });
   };
 
