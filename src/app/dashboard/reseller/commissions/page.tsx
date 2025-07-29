@@ -26,77 +26,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-
-type SubMerchant = {
-    id: string;
-    name: string;
-    email: string;
-    sales: string;
-    commission: string;
-    status: "Active" | "Inactive";
-};
-
-const subMerchants: SubMerchant[] = [
-  {
-    id: "user_1",
-    name: "MyStore.com",
-    email: "contact@mystore.com",
-    sales: "12500.00",
-    commission: "5%",
-    status: "Active",
-  },
-  {
-    id: "sub_2",
-    name: "AnotherShop",
-    email: "sales@anothershop.io",
-    sales: "8200.00",
-    commission: "5%",
-    status: "Active",
-  },
-  {
-    id: "sub_3",
-    name: "CreativeGoods",
-    email: "support@creative.co",
-    sales: "4500.00",
-    commission: "7%",
-    status: "Inactive",
-  },
-  {
-    id: "sub_4",
-    name: "TechGadgets",
-    email: "info@techgadgets.com",
-    sales: "22000.00",
-    commission: "4.5%",
-    status: "Active",
-  },
-  {
-    id: "sub_5",
-    name: "FashionHub",
-    email: "contact@fashionhub.com",
-    sales: "9500.00",
-    commission: "6%",
-    status: "Active",
-  },
-  {
-    id: "sub_6",
-    name: "BookwormDen",
-    email: "orders@bookwormden.com",
-    sales: "3200.00",
-    commission: "8%",
-    status: "Active",
-  },
-  {
-    id: "sub_7",
-    name: "HomeDecorCo",
-    email: "sales@homedecor.co",
-    sales: "0.00",
-    commission: "5%",
-    status: "Inactive",
-  },
-];
+import { type SubMerchant, getSubMerchants } from '@/lib/resellerData';
 
 export default function CommissionsPage() {
     const { toast } = useToast();
+    const [subMerchants] = useState<SubMerchant[]>(getSubMerchants());
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMerchant, setSelectedMerchant] = useState<SubMerchant | null>(null);
     const itemsPerPage = 10;
