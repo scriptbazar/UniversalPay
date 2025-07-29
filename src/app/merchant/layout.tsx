@@ -124,11 +124,19 @@ export default function MerchantDashboardLayout({
     const [hasUnread, setHasUnread] = useState(true);
     
     useEffect(() => {
-        setNotifications(getNotifications('merchant'));
-    }, []);
+        const fetchNotifs = async () => {
+            if (user) {
+                setNotifications(await getNotifications('merchant', user.uid));
+            }
+        }
+        fetchNotifs();
+    }, [user]);
 
-    const handleReadNotifications = () => {
+    const handleReadNotifications = async () => {
         setHasUnread(false);
+         if (user) {
+            setNotifications(await getNotifications('merchant', user.uid));
+        }
     }
 
     useEffect(() => {

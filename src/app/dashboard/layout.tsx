@@ -115,11 +115,18 @@ export default function AdminDashboardLayout({
     const [hasUnread, setHasUnread] = useState(true);
     
     useEffect(() => {
-        setNotifications(getNotifications('admin'));
-    }, []);
+        const fetchNotifs = async () => {
+            setNotifications(await getNotifications('admin'));
+        }
+        if(user) {
+            fetchNotifs();
+        }
+    }, [user]);
 
-    const handleReadNotifications = () => {
+    const handleReadNotifications = async () => {
         setHasUnread(false);
+        // Optionally fetch again to ensure freshness
+        setNotifications(await getNotifications('admin'));
     }
     
     useEffect(() => {
