@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPaymentLinkBySlug, type PaymentLink } from "@/lib/paymentLinksData";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 
 type Transaction = {
     id: string;
@@ -50,6 +50,7 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
 };
 
 export default function PaymentPageDetailPage({ params }: { params: { pageId: string } }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -81,6 +82,22 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
   
   const totalVolume = linkDetails.payments * (linkDetails.amount || 50);
   const averagePayment = linkDetails.payments > 0 ? totalVolume / linkDetails.payments : 0;
+  
+  const handleCardClick = (type: 'volume' | 'payments' | 'avg' | 'fraud') => {
+    switch (type) {
+        case 'volume':
+        case 'payments':
+             router.push(`/merchant/analytics/transactions-by-method/page`);
+            break;
+        case 'avg':
+             toast({ title: 'Average Payment Value', description: `$${averagePayment.toFixed(2)}` });
+            break;
+        case 'fraud':
+             router.push(`/merchant/settings#kyc`); // Or a dedicated fraud page for merchant
+            break;
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -110,7 +127,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                            <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4" /> Created: {new Date(linkDetails.createdAt).toLocaleDateString()}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                         <Button asChild variant="secondary">
                             <Link href={linkDetails.url} target="_blank">
                                 <Eye className="mr-2 h-4 w-4"/> View Page
@@ -123,7 +140,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
         </Card>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card onClick={() => handleCardClick('volume')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -132,7 +149,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                     <div className="text-2xl font-bold">${totalVolume.toFixed(2)}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Successful Payments</CardTitle>
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -141,7 +158,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                     <div className="text-2xl font-bold">{linkDetails.payments}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('avg')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -150,7 +167,7 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                     <div className="text-2xl font-bold">${averagePayment.toFixed(2)}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('fraud')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Fraud Alerts</CardTitle>
                     <Shield className="h-4 w-4 text-muted-foreground" />

@@ -73,24 +73,6 @@ export default function PaymentLinkDetailPage() {
   const handlePaymentRowClick = (payment: Payment) => {
     setSelectedPayment(payment);
   }
-  
-  const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
-     const sourceQuery = '?source=payment-links';
-     switch (type) {
-         case 'successful':
-         case 'volume':
-             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
-             break;
-         case 'fraud':
-             router.push(`/dashboard/fraud-detection`); // Redirect to main fraud page for now
-             break;
-         case 'avg':
-              // Avg value doesn't need a list, can show a dialog or be static
-             toast({ title: 'Average Payment Value', description: `$${averagePayment}` });
-             break;
-     }
-  };
-
 
   if (!linkDetails) {
     return <div>Loading...</div>; // Or a skeleton loader
@@ -99,6 +81,22 @@ export default function PaymentLinkDetailPage() {
   const totalVolume = allPayments.filter(p=>p.status === 'Success').reduce((acc, p) => acc + parseFloat(p.amount), 0);
   const successfulPayments = linkDetails.payments;
   const averagePayment = successfulPayments > 0 ? (totalVolume / successfulPayments).toFixed(2) : "0.00";
+  
+  const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
+     switch (type) {
+         case 'successful':
+         case 'volume':
+             router.push(`/merchant/analytics/transactions-by-method/link`);
+             break;
+         case 'fraud':
+             router.push(`/merchant/settings#kyc`); // Or a dedicated fraud page for merchant
+             break;
+         case 'avg':
+              // Avg value doesn't need a list, can show a dialog or be static
+             toast({ title: 'Average Payment Value', description: `$${averagePayment}` });
+             break;
+     }
+  };
 
 
   return (
