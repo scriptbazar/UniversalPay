@@ -57,7 +57,7 @@ export default function UsersPage() {
 
     // Filtering and Searching State
     const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('all');
+    const [roleFilter, setRoleFilter] = useState('merchant'); // Default to merchant
     const [statusFilter, setStatusFilter] = useState('all');
     const [countryFilter, setCountryFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -66,8 +66,11 @@ export default function UsersPage() {
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Query to get all users, will filter client-side
                 const usersCollectionRef = collection(db, "users");
-                const unsubscribeSnapshot = onSnapshot(usersCollectionRef, (querySnapshot) => {
+                const q = query(usersCollectionRef, where("role", "==", "merchant"));
+
+                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     let userList: User[] = [];
                     querySnapshot.forEach((doc) => {
                         userList.push({ id: doc.id, ...doc.data() } as User);
@@ -101,20 +104,19 @@ export default function UsersPage() {
     }, [toast]);
     
     const filteredUsers = useMemo(() => {
+        // Start with all users, which are already pre-filtered to be merchants by the Firestore query
         return users.filter(user => {
             const matchesSearch = searchTerm === '' || 
                                   user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                   user.email?.toLowerCase().includes(searchTerm.toLowerCase());
             
-            const matchesRole = roleFilter === 'all' || (user.role || 'merchant').toLowerCase() === roleFilter;
-            
             const matchesStatus = statusFilter === 'all' || (user.status || 'Active').toLowerCase() === statusFilter;
             
             const matchesCountry = countryFilter === 'all' || user.country === countryFilter;
 
-            return matchesSearch && matchesRole && matchesStatus && matchesCountry;
+            return matchesSearch && matchesStatus && matchesCountry;
         });
-    }, [users, searchTerm, roleFilter, statusFilter, countryFilter]);
+    }, [users, searchTerm, statusFilter, countryFilter]);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const paginatedUsers = filteredUsers.slice(
@@ -145,7 +147,7 @@ export default function UsersPage() {
         }
 
         if (users.length === 0) {
-            return <div className="text-center p-8 text-muted-foreground">No users found in the database.</div>;
+            return <div className="text-center p-8 text-muted-foreground">No merchants found in the database.</div>;
         }
 
         return (
@@ -183,7 +185,7 @@ export default function UsersPage() {
                     </TableBody>
                 </Table>
                 {filteredUsers.length === 0 && (
-                    <div className="text-center p-8 text-muted-foreground">No users match the current filters.</div>
+                    <div className="text-center p-8 text-muted-foreground">No merchants match the current filters.</div>
                 )}
             </>
         );
@@ -197,7 +199,7 @@ export default function UsersPage() {
                         <div>
                             <CardTitle>Users & Merchants</CardTitle>
                             <CardDescription>
-                                Manage all users on the platform, including merchants and administrators. Click a user to see details.
+                                Manage all merchants on the platform. Click a user to see details.
                             </CardDescription>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -218,16 +220,6 @@ export default function UsersPage() {
                                 <SelectContent>
                                     <SelectItem value="all">All Countries</SelectItem>
                                     {countries.map(c => <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                <SelectTrigger className="w-[150px]">
-                                    <SelectValue placeholder="Filter by role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Roles</SelectItem>
-                                    <SelectItem value="merchant">Merchant</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
                                 </SelectContent>
                             </Select>
                              <Select value={statusFilter} onValueChange={setStatusFilter}>

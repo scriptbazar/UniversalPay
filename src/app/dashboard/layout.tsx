@@ -244,7 +244,7 @@ export default function AdminDashboardLayout({
               <DropdownMenuLabel>{userProfile?.fullName || 'Admin'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/users">Profile</Link>
+                <Link href={`/dashboard/users/${user.uid}`}>Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">Settings</Link>
