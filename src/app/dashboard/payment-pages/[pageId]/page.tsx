@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPaymentLinkBySlug, type PaymentLink } from "@/lib/paymentLinksData";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 
 type Transaction = {
     id: string;
@@ -50,11 +50,10 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
 };
 
 export default function PaymentPageDetailPage({ params }: { params: { pageId: string } }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode } | null>(null);
-
 
   useEffect(() => {
     const link = getPaymentLinkBySlug(params.pageId);
@@ -88,52 +87,13 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
     switch (type) {
         case 'volume':
         case 'payments':
-            setDialogContent({
-                title: "Successful Payments",
-                description: "A list of all successful payments made via this page.",
-                data: (
-                    <Table>
-                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {successfulTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
-                                <TableCell>{tx.id}</TableCell>
-                                <TableCell>{tx.customer}</TableCell>
-                                <TableCell className="text-right">${tx.amount}</TableCell>
-                                </TableRow>)}
-                        </TableBody>
-                    </Table>
-                )
-            });
+             router.push(`/dashboard/analytics/details/successful-transactions_all`);
             break;
         case 'avg':
-             setDialogContent({
-                title: "Average Payment Value",
-                description: "This is the average value of all successful payments.",
-                 data: (
-                    <div className="space-y-2 text-center p-4">
-                        <p className="text-4xl font-bold">${averagePayment.toFixed(2)}</p>
-                        <p className="text-sm text-muted-foreground">Calculated from {successfulTransactions.length} successful payments totalling ${totalVolume.toFixed(2)}.</p>
-                    </div>
-                 )
-            });
+             toast({ title: 'Average Payment Value', description: `$${averagePayment.toFixed(2)}` });
             break;
         case 'fraud':
-             setDialogContent({
-                title: "Fraud Alerts",
-                description: "A list of all payments flagged for suspicious activity.",
-                data: (
-                     <Table>
-                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {fraudulentTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
-                                <TableCell>{tx.id}</TableCell>
-                                <TableCell>{tx.customer}</TableCell>
-                                <TableCell className="text-right">${tx.amount}</TableCell>
-                                </TableRow>)}
-                        </TableBody>
-                    </Table>
-                )
-            });
+             router.push(`/dashboard/fraud-detection`);
             break;
     }
   };
@@ -281,19 +241,6 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
                         <Link href={`/dashboard/users/user_1`}>View Merchant Profile</Link>
                     </Button>
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        
-        {/* Dialog for Stat Cards */}
-        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-            <DialogContent className="max-w-xl">
-                <DialogHeader>
-                    <DialogTitle>{dialogContent?.title}</DialogTitle>
-                    <DialogDescription>{dialogContent?.description}</DialogDescription>
-                </DialogHeader>
-                <div className="py-4 max-h-[60vh] overflow-y-auto">
-                    {dialogContent?.data}
-                </div>
             </DialogContent>
         </Dialog>
     </div>

@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
 const linkDetails = {
     id: "plink_1",
@@ -65,9 +66,9 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
 
 
 export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode } | null>(null);
 
   const averagePayment = linkDetails.payments > 0 ? (parseFloat(linkDetails.volume) / linkDetails.payments).toFixed(2) : "0.00";
 
@@ -79,57 +80,19 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
   };
 
   const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
-    switch (type) {
-        case 'successful':
-        case 'volume':
-            setDialogContent({
-                title: "Successful Payments",
-                description: "A list of all successful payments made via this link.",
-                data: (
-                     <Table>
-                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {successfulTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
-                                <TableCell>{tx.id}</TableCell>
-                                <TableCell>{tx.customer}</TableCell>
-                                <TableCell className="text-right">${tx.amount}</TableCell>
-                                </TableRow>)}
-                        </TableBody>
-                    </Table>
-                )
-            });
-            break;
-        case 'avg':
-             setDialogContent({
-                title: "Average Payment Value",
-                description: "This is the average value of all successful payments.",
-                 data: (
-                    <div className="space-y-2 text-center p-4">
-                        <p className="text-4xl font-bold">${averagePayment}</p>
-                        <p className="text-sm text-muted-foreground">Calculated from {successfulTransactions.length} successful payments totalling ${parseFloat(linkDetails.volume).toFixed(2)}.</p>
-                    </div>
-                 )
-            });
-            break;
-        case 'fraud':
-            setDialogContent({
-                title: "Fraud Alerts",
-                description: "A list of all payments flagged for suspicious activity.",
-                data: (
-                     <Table>
-                        <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {fraudulentTransactions.map(tx => <TableRow key={tx.id} onClick={() => handleTransactionRowClick(tx)} className="cursor-pointer">
-                                <TableCell>{tx.id}</TableCell>
-                                <TableCell>{tx.customer}</TableCell>
-                                <TableCell className="text-right">${tx.amount}</TableCell>
-                                </TableRow>)}
-                        </TableBody>
-                    </Table>
-                )
-            });
-            break;
-    }
+     switch (type) {
+         case 'successful':
+         case 'volume':
+             router.push(`/dashboard/analytics/details/successful-transactions_all`);
+             break;
+         case 'fraud':
+             router.push(`/dashboard/fraud-detection`); // Redirect to main fraud page for now
+             break;
+         case 'avg':
+              // Avg value doesn't need a list, can show a dialog or be static
+             toast({ title: 'Average Payment Value', description: `$${averagePayment}` });
+             break;
+     }
   };
 
   const handleTransactionRowClick = (transaction: Transaction) => {
@@ -279,22 +242,6 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <Button asChild>
                         <Link href={`/dashboard/users/${linkDetails.merchant.id}`}>View Merchant Profile</Link>
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        
-        {/* Dialog for Stat Cards */}
-        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
-            <DialogContent className="max-w-xl">
-                <DialogHeader>
-                    <DialogTitle>{dialogContent?.title}</DialogTitle>
-                    <DialogDescription>{dialogContent?.description}</DialogDescription>
-                </DialogHeader>
-                <div className="py-4 max-h-[60vh] overflow-y-auto">
-                    {dialogContent?.data}
-                </div>
-                 <DialogFooter>
-                    <Button onClick={() => setDialogContent(null)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

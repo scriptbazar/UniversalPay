@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowLeft, Copy, User as UserIcon, CreditCard, Image as ImageIcon, Mail, Landmark, ShieldCheck, FileText } from "lucide-react";
