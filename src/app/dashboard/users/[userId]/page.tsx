@@ -25,7 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 
 // MOCK DATA - This will be replaced by dynamic data where needed
 const stats = {
@@ -119,16 +120,8 @@ interface UserProfile {
     avatar?: string;
     role?: string;
     kycStatus?: "Verified" | "Pending Approval" | "Not Started";
-    createdAt?: { seconds: number, nanoseconds: number } | string;
+    createdAt?: Timestamp;
 }
-
-const mockUsers: { [key: string]: UserProfile } = {
-    "user_1": { id: "user_1", fullName: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A", role: "merchant", kycStatus: "Verified", createdAt: "2023-01-15T10:00:00Z" },
-    "user_2": { id: "user_2", fullName: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B", role: "merchant", kycStatus: "Pending Approval", createdAt: "2023-02-20T11:00:00Z" },
-    "user_3": { id: "user_3", fullName: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C", role: "merchant", kycStatus: "Not Started", createdAt: "2023-03-10T12:00:00Z" },
-    "user_4": { id: "user_4", fullName: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D", role: "merchant", kycStatus: "Verified", createdAt: "2023-04-05T13:00:00Z" },
-};
-
 
 export default function UserDetailPage() {
   const { toast } = useToast();
@@ -154,20 +147,27 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     if (!userId) return;
-    setLoading(true);
-    // Use mock data instead of Firestore
-    const userData = mockUsers[userId];
 
-    if (userData) {
-      setMerchant(userData);
-      if (userData.createdAt) {
-          setJoinedDate(new Date(userData.createdAt).toLocaleDateString());
-      }
-    } else {
-      setMerchant(null);
-      notFound();
-    }
-    setLoading(false);
+    const fetchUser = async () => {
+        setLoading(true);
+        const userDocRef = doc(db, "users", userId);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as UserProfile;
+            userData.id = userDocSnap.id;
+            setMerchant(userData);
+            if (userData.createdAt) {
+                setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
+            }
+        } else {
+            setMerchant(null);
+            notFound();
+        }
+        setLoading(false);
+    };
+
+    fetchUser();
   }, [userId]);
 
 
@@ -418,7 +418,7 @@ export default function UserDetailPage() {
                                     fontSize={12}
                                     tickLine={false}
                                     axisLine={false}
-                                    tickFormatter={(value) => `$${value/1000}K`}
+                                    tickFormatter={(value) => `$${'${value/1000}'}K`}
                                     />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
@@ -451,7 +451,7 @@ export default function UserDetailPage() {
                                         className="cursor-pointer"
                                     >
                                         {paymentMethodData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                            <Cell key={`cell-${'${index}'}`} fill={entry.color} />
                                         ))}
                                     </Pie>
                                     <Tooltip formatter={formatTooltipValue} />
@@ -710,5 +710,3 @@ export default function UserDetailPage() {
     </div>
   )
 }
-
-    
