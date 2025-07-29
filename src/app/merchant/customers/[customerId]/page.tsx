@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Copy, Download, Mail, Phone, Calendar, DollarSign, CreditCard, Search, File } from "lucide-react";
+import { ArrowLeft, Copy, Download, Mail, Phone, Calendar, DollarSign, CreditCard, Search, File, Percent, Eye } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -100,6 +100,11 @@ export default function CustomerDetailPage() {
     if (!customer) {
         return <div>Loading...</div>;
     }
+    
+    const successfulTxns = transactions.filter(tx => tx.status === 'Success').length;
+    const successRate = customer.transactions > 0 ? ((successfulTxns / customer.transactions) * 100).toFixed(1) : "0.0";
+    const avgTxnValue = customer.transactions > 0 ? (customer.totalSpent / successfulTxns).toFixed(2) : "0.00";
+
 
     return (
         <div className="space-y-6">
@@ -124,7 +129,7 @@ export default function CustomerDetailPage() {
                 </div>
             </div>
             
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
@@ -141,6 +146,24 @@ export default function CustomerDetailPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{customer.transactions}</div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Avg. Transaction Value</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">${avgTxnValue}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Last Seen</CardTitle>
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{customer.lastSeen}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -263,4 +286,3 @@ export default function CustomerDetailPage() {
         </div>
     );
 }
-

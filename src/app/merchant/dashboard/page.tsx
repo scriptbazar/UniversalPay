@@ -105,7 +105,6 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
-  const [monthlyTransactions, setMonthlyTransactions] = useState<{month: string; transactions: Transaction[]} | null>(null);
   const [merchantName, setMerchantName] = useState("Merchant");
 
   useEffect(() => {
@@ -137,14 +136,8 @@ export default function Dashboard() {
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const monthName = payload.name;
-    const monthIndex = payload.monthIndex;
-
-    const transactionsForMonth = allTransactions.filter(
-        (tx) => tx.date.getMonth() === monthIndex
-    );
-    
-    setMonthlyTransactions({ month: monthName, transactions: transactionsForMonth });
+    const monthSlug = payload.name.toLowerCase();
+    router.push(`/merchant/analytics/transactions/${monthSlug}`);
   };
   
     const getStatusBadgeVariant = (status: string) => {
@@ -342,49 +335,6 @@ export default function Dashboard() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={!!monthlyTransactions} onOpenChange={() => setMonthlyTransactions(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Transactions for {monthlyTransactions?.month}</DialogTitle>
-            <DialogDescription>
-              A list of all transactions for the selected month.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {monthlyTransactions?.transactions.map(tx => (
-                        <TableRow key={tx.id}>
-                            <TableCell>{tx.id}</TableCell>
-                            <TableCell>{tx.name}</TableCell>
-                            <TableCell>
-                                <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">${tx.amount}</TableCell>
-                        </TableRow>
-                    ))}
-                    {monthlyTransactions?.transactions.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={4} className="text-center h-24">No transactions found for this month.</TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMonthlyTransactions(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
