@@ -9,19 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getPaymentLinkById, type PaymentLink } from "@/lib/paymentLinksData";
+import { notFound } from "next/navigation";
 
-const linkDetails = {
-    id: "plink_1",
-    url: "https://universalpay.com/pay/t-shirt-sale",
-    status: "Active",
-    createdAt: "2023-10-26",
-    expiresAt: "2023-11-02",
-    volume: "3000.00",
-    payments: 120,
-    fraudAlerts: 2,
-};
 
 type Payment = {
     id: string;
@@ -56,9 +48,20 @@ const getStatusBadgeVariant = (status: Payment["status"]) => {
 export default function PaymentLinkDetailPage({ params }: { params: { linkId: string } }) {
   const { toast } = useToast();
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [linkDetails, setLinkDetails] = useState<PaymentLink | null>(null);
+
+  useEffect(() => {
+    const link = getPaymentLinkById(params.linkId);
+    if (link) {
+      setLinkDetails(link);
+    } else {
+        notFound();
+    }
+  }, [params.linkId]);
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+    const fullUrl = text.startsWith('/') ? `${window.location.origin}${text}` : text;
+    navigator.clipboard.writeText(fullUrl);
     toast({
         title: `${label} Copied!`,
     });
@@ -66,6 +69,10 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
 
   const handlePaymentRowClick = (payment: Payment) => {
     setSelectedPayment(payment);
+  }
+
+  if (!linkDetails) {
+    return <div>Loading...</div>; // Or a skeleton loader
   }
 
 
@@ -83,7 +90,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                         <div className="flex items-center gap-4">
                             <Link2 className="h-8 w-8 text-muted-foreground" />
                             <div>
-                                <CardTitle className="text-2xl">Payment Link Details</CardTitle>
+                                <CardTitle className="text-2xl">{linkDetails.title}</CardTitle>
                                 <div className="flex items-center gap-2">
                                     <a href={linkDetails.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline flex items-center gap-1">
                                         {linkDetails.url} <ExternalLink className="h-3 w-3" />
@@ -93,9 +100,8 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                             </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
-                           <Badge variant={linkDetails.status === 'Active' ? 'default' : 'secondary'}>{linkDetails.status}</Badge>
-                           <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4" /> Created: {linkDetails.createdAt}</span>
-                            <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4 text-destructive" /> Expires: {linkDetails.expiresAt}</span>
+                           <Badge variant={linkDetails.isActive ? 'default' : 'secondary'}>{linkDetails.isActive ? 'Active' : 'Inactive'}</Badge>
+                           <span className="text-sm text-muted-foreground flex items-center gap-1"><Calendar className="h-4 w-4" /> Created: {new Date(linkDetails.createdAt).toLocaleDateString()}</span>
                         </div>
                     </div>
                     <Button variant="outline">Deactivate Link</Button>
@@ -110,7 +116,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${linkDetails.volume}</div>
+                    <div className="text-2xl font-bold">${(allPayments.filter(p=>p.status === 'Success').reduce((acc, p) => acc + parseFloat(p.amount), 0)).toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -128,7 +134,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                     <Shield className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{linkDetails.fraudAlerts}</div>
+                    <div className="text-2xl font-bold">{allPayments.filter(p=>p.status === 'Flagged').length}</div>
                 </CardContent>
             </Card>
         </div>

@@ -19,42 +19,55 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-
-// Mock data, in a real app this would come from an API
-const initialLinks = [
-  { id: 'plink_1', url: 'https://universalpay.com/pay/t-shirt-sale', amount: '25.00', status: 'Active', payments: 120, createdAt: '2023-11-05' },
-  { id: 'plink_2', url: 'https://universalpay.com/pay/donation', amount: 'Dynamic', status: 'Active', payments: 50, createdAt: '2023-11-04' },
-  { id: 'plink_3', url: 'https://universalpay.com/pay/workshop', amount: '100.00', status: 'Inactive', payments: 75, createdAt: '2023-11-01' },
-];
+import { getPaymentLinks, addPaymentLink, type PaymentLink } from '@/lib/paymentLinksData';
 
 export default function PaymentLinksPage() {
   const { toast } = useToast();
-  const [links, setLinks] = useState(initialLinks);
+  const [links, setLinks] = useState<PaymentLink[]>([]);
   
   // Form state
   const [isDynamic, setIsDynamic] = useState(false);
   const [amount, setAmount] = useState('');
+  const [title, setTitle] = useState('');
+
+  const fetchLinks = () => {
+      setLinks(getPaymentLinks());
+  }
+
+  useEffect(() => {
+    fetchLinks();
+  }, []);
 
   const handleCreateLink = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isDynamic && !amount) {
+    if (!title || (!isDynamic && !amount)) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please set a fixed amount or enable dynamic amount.',
+        description: 'Please provide a title and set a fixed amount or enable dynamic amount.',
       });
       return;
     }
-    const newLink = {
-      id: `plink_${Math.random().toString(36).substr(2, 9)}`,
-      url: `https://universalpay.com/pay/${Math.random().toString(36).substr(2, 9)}`,
-      amount: isDynamic ? 'Dynamic' : parseFloat(amount).toFixed(2),
-      status: 'Active',
+
+    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    addPaymentLink({
+      title,
+      description: 'A custom payment link.',
+      slug,
+      url: `/pay/${slug}`,
+      type: isDynamic ? 'Dynamic' : 'Fixed',
+      amount: isDynamic ? null : parseFloat(amount),
+      isActive: true,
+      brandColor: '#29ABE2', // Default color
+      collectPhone: false,
       payments: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setLinks([newLink, ...links]);
+      createdAt: new Date().toISOString(),
+    });
+    
+    fetchLinks();
     setAmount('');
+    setTitle('');
     toast({
       title: 'Success!',
       description: 'New payment link has been created.',
@@ -62,8 +75,9 @@ export default function PaymentLinksPage() {
   };
   
   const copyToClipboard = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({ title: 'Copied to clipboard!', description: url });
+    const fullUrl = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
+    toast({ title: 'Copied to clipboard!', description: fullUrl });
   };
 
   return (
@@ -83,6 +97,16 @@ export default function PaymentLinksPage() {
             </CardHeader>
             <form onSubmit={handleCreateLink}>
               <CardContent className="space-y-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="title">Link Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="e.g., T-Shirt Sale"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                    />
+                  </div>
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <div>
                     <Label htmlFor="type-switch">Dynamic Amount</Label>
@@ -128,7 +152,7 @@ export default function PaymentLinksPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>URL</TableHead>
+                    <TableHead>Title</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Payments</TableHead>
@@ -141,15 +165,18 @@ export default function PaymentLinksPage() {
                       <TableCell>
                         <div className="font-medium flex items-center gap-2">
                           <Link href={`/merchant/payment-links/${link.id}`} className="truncate hover:underline">
-                            .../{link.url.split('/').pop()}
+                            {link.title}
                           </Link>
-                          <Copy className="h-4 w-4 cursor-pointer text-muted-foreground" onClick={() => copyToClipboard(link.url)} />
+                        </div>
+                         <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            {link.url}
+                            <Copy className="h-3 w-3 cursor-pointer" onClick={() => copyToClipboard(link.url)} />
                         </div>
                       </TableCell>
-                      <TableCell>{link.amount}</TableCell>
+                      <TableCell>{link.amount ? `$${link.amount.toFixed(2)}` : 'Dynamic'}</TableCell>
                       <TableCell>
-                        <Badge variant={link.status === 'Active' ? 'default' : 'secondary'}>
-                          {link.status}
+                        <Badge variant={link.isActive ? 'default' : 'secondary'}>
+                          {link.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                        <TableCell>
@@ -172,7 +199,14 @@ export default function PaymentLinksPage() {
                               <Copy className="mr-2 h-4 w-4" /> Copy Link
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              <Switch className="mr-2 h-4 w-4" /> {link.status === 'Active' ? 'Deactivate' : 'Activate'}
+                               <Switch
+                                    className="mr-2 h-4 w-4"
+                                    checked={link.isActive}
+                                    onCheckedChange={() => {
+                                        setLinks(links.map(l => l.id === link.id ? { ...l, isActive: !l.isActive } : l));
+                                    }}
+                                />
+                              {link.isActive ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" /> Delete

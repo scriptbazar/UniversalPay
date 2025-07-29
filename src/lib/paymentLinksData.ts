@@ -72,6 +72,11 @@ export const getPaymentLinkBySlug = (slug: string): PaymentLink | undefined => {
   return links.find(link => link.slug === slug);
 };
 
+export const getPaymentLinkById = (id: string): PaymentLink | undefined => {
+  return links.find(link => link.id === id);
+};
+
+
 export const addPaymentLink = (newLinkData: Omit<PaymentLink, 'id'>): void => {
   const newLink: PaymentLink = {
     ...newLinkData,
