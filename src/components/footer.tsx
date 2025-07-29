@@ -45,7 +45,7 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} UniversalPay. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} UniversalPay. All rights reserved. Made By <a href="https://scriptbazar.in" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-primary">Script Bazar Team</a></p>
         </div>
       </div>
     </footer>
