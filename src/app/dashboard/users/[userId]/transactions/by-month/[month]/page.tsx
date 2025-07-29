@@ -56,8 +56,20 @@ export default function MonthlyTransactionsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    
+    // Function to create a consistent 6-digit number from the userId
+    const formatUserId = (uid: string) => {
+        let hash = 0;
+        for (let i = 0; i < uid.length; i++) {
+            const char = uid.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0; // Convert to 32bit integer
+        }
+        const shortId = Math.abs(hash).toString().substring(0, 6).padEnd(6, '0');
+        return `UVPAYM${shortId}`;
+    };
 
-    const formattedUserId = `UVPAYM${userId.slice(0, 8)}...`;
+    const formattedUserId = useMemo(() => formatUserId(userId), [userId]);
 
     useEffect(() => {
         // Generate data on the client side to avoid hydration issues
@@ -108,7 +120,7 @@ export default function MonthlyTransactionsPage() {
                 <CardHeader className="flex flex-row items-center">
                     <div className="grid gap-2">
                         <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
-                        <CardDescription>A list of all transactions for {formattedUserId} in the selected month. Click a row for details.</CardDescription>
+                        <CardDescription>A list of all transactions for merchant {formattedUserId} in the selected month. Click a row for details.</CardDescription>
                     </div>
                     <div className="ml-auto flex items-center gap-2">
                         <div className="relative">
