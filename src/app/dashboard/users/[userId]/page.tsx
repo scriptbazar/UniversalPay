@@ -287,28 +287,43 @@ const txTotalPages = useMemo(() => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleRoleChange(merchant.role === 'admin' ? 'merchant' : 'admin')}>
-                                    <ShieldIcon className="mr-2 h-4 w-4" />
-                                    {merchant.role === 'admin' ? 'Make Merchant' : 'Make Admin'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleToggleSuspend}>
-                                   {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
-                                   {merchant.status === 'Active' ? 'Suspend Merchant' : 'Unsuspend Merchant'}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                    <Briefcase className="mr-2 h-4 w-4" />
-                                    Change Plan
-                                </DropdownMenuItem>
+                                {merchant.role === 'admin' ? (
+                                    <DropdownMenuItem onClick={() => handleRoleChange('merchant')}>
+                                        <ShieldIcon className="mr-2 h-4 w-4" />
+                                        Make Merchant
+                                    </DropdownMenuItem>
+                                ) : (
+                                    <>
+                                        <DropdownMenuItem onClick={() => handleRoleChange('admin')}>
+                                            <ShieldIcon className="mr-2 h-4 w-4" />
+                                            Make Admin
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleToggleSuspend}>
+                                        {merchant.status === 'Active' ? <UserX className="mr-2 h-4 w-4"/> : <UserCheck className="mr-2 h-4 w-4"/>}
+                                        {merchant.status === 'Active' ? 'Suspend Merchant' : 'Unsuspend Merchant'}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem>
+                                            <Briefcase className="mr-2 h-4 w-4" />
+                                            Change Plan
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+
                                 <DropdownMenuItem>
                                     <KeyRound className="mr-2 h-4 w-4" />
                                     Reset Password
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Merchant
-                                </DropdownMenuItem>
+
+                                {merchant.role !== 'admin' && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-destructive">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete Merchant
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
