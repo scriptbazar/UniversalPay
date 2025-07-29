@@ -104,3 +104,48 @@ exports.setAdminRole = onCall(async (request) => {
     throw new HttpsError('internal', 'An internal error occurred while setting the admin role.');
   }
 });
+
+
+// Callable function for a merchant to update their own profile
+exports.updateMerchantProfile = onCall(async (request) => {
+    // 1. Authentication Check
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in to update your profile.');
+    }
+
+    const uid = request.auth.uid;
+    const userEmail = request.auth.token.email || 'Unknown';
+    const dataToUpdate = request.data;
+
+    // 2. Data Validation (simple check)
+    if (!dataToUpdate || Object.keys(dataToUpdate).length === 0) {
+        throw new HttpsError('invalid-argument', 'No update data provided.');
+    }
+    
+    // 3. Security Check: Prevent users from changing their own role
+    if (dataToUpdate.role) {
+        delete dataToUpdate.role;
+    }
+
+    try {
+        const userDocRef = db.collection('users').doc(uid);
+
+        // Update the user document in Firestore
+        await userDocRef.update(dataToUpdate);
+
+        // Create an audit log for the profile update
+        await db.collection('audit_logs').add({
+            type: 'MERCHANT_PROFILE_UPDATE',
+            level: 'INFO',
+            message: `Merchant ${userEmail} (${uid}) updated their profile.`,
+            details: dataToUpdate, // Log the changes made
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return { success: true, message: 'Profile updated successfully.' };
+
+    } catch (error) {
+        console.error(`Error updating profile for user ${uid}:`, error);
+        throw new HttpsError('internal', 'An internal error occurred while updating the profile.');
+    }
+});

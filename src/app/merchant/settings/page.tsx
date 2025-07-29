@@ -20,9 +20,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useForm } from "react-hook-form";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, Timestamp, updateDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, app } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 
 type PaymentMethodsState = {
@@ -145,12 +146,10 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         {!hideIdentity && (
-                             <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                                <Globe className="h-4 w-4 text-primary"/>
-                                <span>Powered by UniversalPay</span>
-                             </div>
-                         )}
+                         <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
+                            <Globe className="h-4 w-4 text-primary"/>
+                            <span>Powered by UniversalPay</span>
+                         </div>
                     </div>
                 </CardContent>
             </Card>
@@ -407,26 +406,13 @@ export default function SettingsPage() {
       }
       
       try {
-          const userDocRef = doc(db, "users", user.uid);
-          const finalData: { [key: string]: any } = {};
-          
-          Object.keys(dataToSave).forEach(keyStr => {
-              const key = keyStr as keyof UserProfile;
-              const value = dataToSave[key];
-              if (value !== undefined) {
-                   if (key === 'avatar' && (value === '' || value === null)) {
-                      // Don't save empty avatar
-                  } else {
-                     finalData[key] = value;
-                  }
-              }
-          });
-          
-          await setDoc(userDocRef, finalData, { merge: true });
+          const functions = getFunctions(app);
+          const updateProfileFunction = httpsCallable(functions, 'updateMerchantProfile');
+          await updateProfileFunction(dataToSave);
           
           toast({
               title: "Settings Saved",
-              description: "Your settings have been updated.",
+              description: "Your settings have been updated and an audit log has been created.",
           });
       } catch(error: any) {
           console.error("Error updating profile:", error);
@@ -545,7 +531,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
-                        <h4 className="font-medium flex items-center gap-2"><User className="w-4 h-4" /> Email Notifications</h4>
+                        <h4 className="font-medium flex items-center gap-2"><Mail className="w-4 h-4" /> Email Notifications</h4>
                         <p className="text-sm text-muted-foreground">Receive alerts for payments, withdrawals, and updates.</p>
                         </div>
                         <Switch checked={profileData.notifications?.email} onCheckedChange={(checked) => handleSwitchChange('notifications.email', checked)} />
