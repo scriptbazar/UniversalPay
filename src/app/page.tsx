@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer";
 import { DollarSign, ShieldCheck, Code, Globe, Zap, Users, Shuffle, Settings, AppWindow, FileText, Repeat, Briefcase, Link as LinkIcon, LayoutGrid, Check, ArrowRight } from "lucide-react";
 import OrbitingCurrencies from "@/components/OrbitingCurrencies";
 import Link from "next/link";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const features = [
   {
@@ -243,7 +244,8 @@ export default function Home() {
         <section id="pricing" className="py-20 px-4 md:px-8 bg-muted">
             <div className="container mx-auto">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Choose Your Plan</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
+                {/* Desktop View */}
+                <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
                   {tiers.map((tier) => (
                     <Card key={tier.name} className={`flex flex-col rounded-xl shadow-lg ${tier.popular ? 'border-2 border-primary' : ''}`}>
                       {tier.popular && (
@@ -276,6 +278,51 @@ export default function Home() {
                       </div>
                     </Card>
                   ))}
+                </div>
+                {/* Mobile View */}
+                 <div className="md:hidden">
+                    <Carousel className="w-full max-w-xs mx-auto">
+                        <CarouselContent>
+                            {tiers.map((tier) => (
+                                <CarouselItem key={tier.name}>
+                                    <div className="p-1">
+                                        <Card className={`flex flex-col rounded-xl shadow-lg ${tier.popular ? 'border-2 border-primary' : ''}`}>
+                                        {tier.popular && (
+                                            <div className="bg-primary text-primary-foreground text-center py-1.5 text-sm font-semibold rounded-t-lg">
+                                            Most Popular
+                                            </div>
+                                        )}
+                                        <CardHeader className="text-center">
+                                            <CardTitle className="text-2xl font-bold">{tier.name}</CardTitle>
+                                            <CardDescription>{tier.description}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="flex-grow flex flex-col">
+                                            <div className="text-center mb-6">
+                                            <span className="text-5xl font-bold">{tier.price}</span>
+                                            <span className="text-muted-foreground">{tier.freq}</span>
+                                            </div>
+                                            <ul className="space-y-4 flex-grow">
+                                            {tier.features.map((feature) => (
+                                                <li key={feature} className="flex items-start">
+                                                <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                                                <span className="text-muted-foreground">{feature}</span>
+                                                </li>
+                                            ))}
+                                            </ul>
+                                        </CardContent>
+                                        <div className="p-6">
+                                            <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
+                                            {tier.cta}
+                                            </Button>
+                                        </div>
+                                        </Card>
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </Carousel>
                 </div>
             </div>
         </section>
