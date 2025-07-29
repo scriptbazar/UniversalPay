@@ -17,9 +17,14 @@ export type Invoice = {
   status: "Pending" | "Paid" | "Overdue";
 };
 
+const generateRandomId = (prefix: string) => {
+    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
+    return `${prefix}${randomNum}`;
+};
+
 let invoices: Invoice[] = [
   {
-    id: "UVRLPINV001",
+    id: generateRandomId("UVPAYINV"),
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Liam Johnson",
@@ -31,7 +36,7 @@ let invoices: Invoice[] = [
     status: "Paid",
   },
   {
-    id: "UVRLPINV002",
+    id: generateRandomId("UVPAYINV"),
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Olivia Smith",
@@ -43,7 +48,7 @@ let invoices: Invoice[] = [
     status: "Pending",
   },
   {
-    id: "UVRLPINV003",
+    id: generateRandomId("UVPAYINV"),
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Noah Williams",
@@ -55,7 +60,7 @@ let invoices: Invoice[] = [
     status: "Paid",
   },
   {
-    id: "UVRLPINV004",
+    id: generateRandomId("UVPAYINV"),
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     customerName: "Emma Brown",
@@ -67,7 +72,7 @@ let invoices: Invoice[] = [
     status: "Overdue",
   },
   {
-    id: "UVRLPINV005",
+    id: generateRandomId("UVPAYINV"),
     merchantId: "merch_789",
     merchantName: "AnotherShop",
     customerName: "James White",
@@ -106,7 +111,7 @@ export const addInvoice = (newInvoiceData: Omit<Invoice, 'id' | 'totalAmount'>):
   const totalAmount = newInvoiceData.items.reduce((sum, item) => sum + item.amount, 0);
   const newInvoice: Invoice = {
     ...newInvoiceData,
-    id: `UVRLPINV${String(invoices.length + 1).padStart(3, '0')}`,
+    id: generateRandomId("UVPAYINV"),
     totalAmount,
   };
   invoices.unshift(newInvoice); // Add to the beginning of the array

@@ -18,9 +18,15 @@ export type Ticket = {
   replies: TicketReply[];
 };
 
+const generateRandomId = (prefix: string) => {
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    return `${prefix}${randomNum}`;
+};
+
+
 let tickets: Ticket[] = [
   {
-    id: 'TKT-001',
+    id: generateRandomId('UVPAYTKT-'),
     merchantId: 'merch_123',
     merchantName: 'John Doe',
     subject: 'Issue with USDT Withdrawal',
@@ -38,7 +44,7 @@ let tickets: Ticket[] = [
     ],
   },
   {
-    id: 'TKT-002',
+    id: generateRandomId('UVPAYTKT-'),
     merchantId: 'merch_456',
     merchantName: 'CreativeGoods',
     subject: 'How to enable SEPA payments?',
@@ -56,7 +62,7 @@ let tickets: Ticket[] = [
     ],
   },
    {
-    id: 'TKT-003',
+    id: generateRandomId('UVPAYTKT-'),
     merchantId: 'merch_123',
     merchantName: 'John Doe',
     subject: 'API Key not working',
@@ -100,7 +106,7 @@ export const addTicket = (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'upda
 
   const newTicket: Ticket = {
     ...newTicketData,
-    id: `TKT-${String(tickets.length + 1).padStart(3, '0')}`,
+    id: generateRandomId('UVPAYTKT-'),
     createdAt: createdAt,
     updatedAt: createdAt,
     status: 'Open',

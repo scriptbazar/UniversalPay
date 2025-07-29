@@ -14,9 +14,14 @@ export type PaymentLink = {
   collectPhone: boolean;
 };
 
+const generateRandomId = (prefix: string) => {
+    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
+    return `${prefix}${randomNum}`;
+};
+
 let links: PaymentLink[] = [
   {
-    id: 'plink_1',
+    id: generateRandomId('UVPAYLINK'),
     slug: 't-shirt-sale',
     title: 'T-Shirt Sale',
     description: 'High-quality cotton t-shirts available in all sizes. Grab yours now!',
@@ -30,7 +35,7 @@ let links: PaymentLink[] = [
     collectPhone: false,
   },
   {
-    id: 'plink_2',
+    id: generateRandomId('UVPAYLINK'),
     slug: 'donation',
     title: 'General Donation',
     description: 'Support our cause by making a donation. Every bit helps!',
@@ -44,7 +49,7 @@ let links: PaymentLink[] = [
     collectPhone: true,
   },
   {
-    id: 'plink_3',
+    id: generateRandomId('UVPAYLINK'),
     slug: 'workshop',
     title: 'Workshop Registration',
     description: 'Join our exclusive workshop on modern web development.',
@@ -70,7 +75,7 @@ export const getPaymentLinkBySlug = (slug: string): PaymentLink | undefined => {
 export const addPaymentLink = (newLinkData: Omit<PaymentLink, 'id'>): void => {
   const newLink: PaymentLink = {
     ...newLinkData,
-    id: `plink_${Date.now()}`,
+    id: generateRandomId('UVPAYLINK'),
   };
   links.unshift(newLink);
 };

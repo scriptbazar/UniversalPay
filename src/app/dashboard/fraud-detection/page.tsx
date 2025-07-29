@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -30,9 +29,14 @@ type Transaction = {
     timestamp: string;
 };
 
+const generateRandomId = (prefix: string) => {
+    const randomNum = Math.floor(10000000 + Math.random() * 90000000);
+    return `${prefix}${randomNum}`;
+};
+
 const suspiciousTransactionsData: Transaction[] = [
   {
-    id: "UVRLP123456789",
+    id: generateRandomId("UVPAYTRX"),
     user: "user_1",
     ip: "123.45.67.89",
     amount: "1500.00",
@@ -42,7 +46,7 @@ const suspiciousTransactionsData: Transaction[] = [
     timestamp: "2023-10-26 10:00:00",
   },
   {
-    id: "UVRLP987654321",
+    id: generateRandomId("UVPAYTRX"),
     user: "user_2",
     ip: "98.76.54.32",
     amount: "50.00",
@@ -52,7 +56,7 @@ const suspiciousTransactionsData: Transaction[] = [
     timestamp: "2023-10-26 10:05:00",
   },
   {
-    id: "UVRLP112233445",
+    id: generateRandomId("UVPAYTRX"),
     user: "user_3",
     ip: "111.222.111.222",
     amount: "200.00",
@@ -62,7 +66,7 @@ const suspiciousTransactionsData: Transaction[] = [
     timestamp: "2023-10-26 10:10:00",
   },
   {
-    id: "UVRLP556677889",
+    id: generateRandomId("UVPAYTRX"),
     user: "user_4",
     ip: "123.45.67.89",
     amount: "3000.00",

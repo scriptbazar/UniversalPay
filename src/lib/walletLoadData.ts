@@ -12,9 +12,15 @@ export type WalletLoadRequest = {
   createdAt: string;
 };
 
+const generateRandomId = (prefix: string) => {
+    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
+    return `${prefix}${randomNum}`;
+};
+
+
 let walletLoadRequests: WalletLoadRequest[] = [
   {
-    id: "WLR-001",
+    id: generateRandomId("UVPAYWLREQ"),
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     merchantEmail: "contact@mystore.com",
@@ -26,7 +32,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     createdAt: '2023-11-10T10:00:00Z',
   },
   {
-    id: "WLR-002",
+    id: generateRandomId("UVPAYWLREQ"),
     merchantId: "merch_456",
     merchantName: "CreativeGoods",
     merchantEmail: "support@creative.co",
@@ -38,7 +44,7 @@ let walletLoadRequests: WalletLoadRequest[] = [
     createdAt: '2023-11-09T15:00:00Z',
   },
    {
-    id: "WLR-003",
+    id: generateRandomId("UVPAYWLREQ"),
     merchantId: "merch_123",
     merchantName: "MyStore.com",
     merchantEmail: "contact@mystore.com",
@@ -58,7 +64,7 @@ export const getWalletLoadRequests = (): WalletLoadRequest[] => {
 export const addWalletLoadRequest = (requestData: Omit<WalletLoadRequest, 'id' | 'createdAt' | 'status'>): void => {
   const newRequest: WalletLoadRequest = {
     ...requestData,
-    id: `WLR-${String(walletLoadRequests.length + 1).padStart(3, '0')}`,
+    id: generateRandomId("UVPAYWLREQ"),
     createdAt: new Date().toISOString(),
     status: "Pending",
   };
