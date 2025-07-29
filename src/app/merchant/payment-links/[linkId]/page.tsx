@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArrowLeft, CreditCard, DollarSign, Shield, Link2, ExternalLink, User, Copy, Calendar, Mail, Eye, PowerOff } from "lucide-react";
@@ -106,7 +107,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
                      <div className="flex items-center gap-2">
                         <Button asChild variant="secondary">
                             <Link href={linkDetails.url} target="_blank">
-                                <Eye className="mr-2 h-4 w-4"/> View Page
+                                <Eye className="mr-2 h-4 w-4"/> View Link
                             </Link>
                         </Button>
                         <Button variant="outline"><PowerOff className="mr-2 h-4 w-4"/> Deactivate Link</Button>
