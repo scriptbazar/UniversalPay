@@ -24,6 +24,7 @@ import {
   LogOut,
   AppWindow,
   Repeat,
+  User as UserIcon
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,7 @@ const navItems = [
   { href: "/merchant/invoices", icon: FileText, label: "Invoices" },
   { href: "/merchant/subscriptions", icon: Repeat, label: "My Subscription" },
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
+  { href: "/merchant/profile", icon: UserIcon, label: "Profile" },
   { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
@@ -181,7 +183,7 @@ export default function MerchantDashboardLayout({
                   key={item.label}
                   href={item.href}
                   className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
-                      "bg-muted text-primary": pathname.startsWith(item.href) && (item.href !== '/merchant/dashboard' || pathname === '/merchant/dashboard')
+                      "bg-muted text-primary": pathname === item.href
                   })}
                 >
                   <item.icon className="h-4 w-4" />
@@ -218,7 +220,7 @@ export default function MerchantDashboardLayout({
                     key={item.label}
                     href={item.href}
                     className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
-                        "bg-muted text-foreground": pathname.startsWith(item.href) && (item.href !== '/merchant/dashboard' || pathname === '/merchant/dashboard'),
+                        "bg-muted text-foreground": pathname === item.href,
                     })}
                     >
                     <item.icon className="h-5 w-5" />
@@ -254,7 +256,7 @@ export default function MerchantDashboardLayout({
               <DropdownMenuLabel>{userProfile?.fullName || 'Merchant'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/merchant/settings">Profile</Link>
+                <Link href="/merchant/profile">Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/merchant/settings">Settings</Link>
