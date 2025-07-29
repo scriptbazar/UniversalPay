@@ -83,10 +83,11 @@ export default function PaymentLinkDetailPage() {
   const averagePayment = successfulPayments > 0 ? (totalVolume / successfulPayments).toFixed(2) : "0.00";
   
   const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
+     const sourceQuery = `?source=payment-links&title=${encodeURIComponent(linkDetails.title)}`;
      switch (type) {
          case 'successful':
          case 'volume':
-             router.push(`/merchant/analytics/transactions-by-method/link`);
+             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
              break;
          case 'fraud':
              router.push(`/merchant/settings#kyc`); // Or a dedicated fraud page for merchant

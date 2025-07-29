@@ -84,16 +84,17 @@ export default function PaymentPageDetailPage({ params }: { params: { pageId: st
   const averagePayment = linkDetails.payments > 0 ? totalVolume / linkDetails.payments : 0;
   
   const handleCardClick = (type: 'volume' | 'payments' | 'avg' | 'fraud') => {
+    const sourceQuery = `?source=payment-pages&title=${encodeURIComponent(linkDetails.title)}`;
     switch (type) {
         case 'volume':
         case 'payments':
-             router.push(`/merchant/analytics/transactions-by-method/page`);
+             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
             break;
         case 'avg':
              toast({ title: 'Average Payment Value', description: `$${averagePayment.toFixed(2)}` });
             break;
         case 'fraud':
-             router.push(`/merchant/settings#kyc`); // Or a dedicated fraud page for merchant
+             router.push(`/merchant/settings#kyc`);
             break;
     }
   };

@@ -104,6 +104,7 @@ function AnalyticsDetailPageContent() {
     const { toast } = useToast();
     const slug = params.slug as string;
     const source = searchParams.get('source');
+    const linkTitle = searchParams.get('title');
     
     const [title, setTitle] = useState('');
     const [data, setData] = useState<(User | Transaction)[]>([]);
@@ -151,6 +152,9 @@ function AnalyticsDetailPageContent() {
                 break;
             case 'successful-transactions':
                 pageTitle = `Successful Transactions in ${monthName}`;
+                if (linkTitle) {
+                  pageTitle = `Successful Transactions for '${linkTitle}'`;
+                }
                 fetchedData = transactions.filter(t => t.status === 'Successful' && (month === 'all' || t.month === month));
                 tableColumns = [
                     { header: 'Transaction ID', accessor: 'id' },
@@ -175,7 +179,7 @@ function AnalyticsDetailPageContent() {
         setTitle(pageTitle);
         setData(fetchedData);
         setColumns(tableColumns);
-    }, [slug]);
+    }, [slug, linkTitle]);
     
     const totalPages = Math.ceil(data.length / itemsPerPage);
     const paginatedData = data.slice(
@@ -196,7 +200,7 @@ function AnalyticsDetailPageContent() {
         toast({ title: `${label} Copied!` });
     };
 
-    const backLink = source === 'payment-links' ? '/dashboard/payment-links' : '/dashboard/analytics';
+    const backLink = source === 'payment-links' ? '/merchant/payment-links' : '/dashboard/analytics';
     const backLinkText = source === 'payment-links' ? 'Back to All Payment Links' : 'Back to Analytics';
 
 
