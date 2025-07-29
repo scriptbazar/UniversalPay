@@ -1,23 +1,25 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Grant admin users full read access (get, list) to the entire users collection.
-    // Individual users can still read their own document.
-    match /users/{userId} {
-      allow get: if request.auth != null && (request.auth.token.role == 'admin' || request.auth.uid == userId);
-      allow list: if request.auth != null && request.auth.token.role == 'admin';
-
-      // Allow a user to create their own document or an admin to update any user.
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && (request.auth.token.role == 'admin' || request.auth.uid == userId);
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
+
+    // Allow users to read/update their own document
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+
+      // Allow admins to read/list all user documents
+      allow get, list: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // Allow admins to read the audit logs collection
     match /audit_logs/{logId} {
-      // Only allow admins to read audit logs
       allow read: if request.auth != null && request.auth.token.role == 'admin';
-      // Only allow backend (e.g., Cloud Functions) to write audit logs
-      allow write: if false; 
+      // Writes are only allowed from the backend (Cloud Functions)
+      allow write: if false;
     }
   }
 }
