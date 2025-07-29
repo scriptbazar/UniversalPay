@@ -1,29 +1,31 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Rules for the users collection
-    match /users/{userId} {
 
-      // Admins can list all documents in the collection.
-      allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-
-      // Admins can read any user document.
-      // A user can read their own document.
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == userId;
-      
-      // Admins can update any user document.
-      // A user can update their own document.
-      // A user can be created.
-      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == userId;
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Rules for the audit_logs collection
+    // Allow authenticated users to read their own user document
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
+      // Only admins can update user roles/status etc.
+      allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Admins can read all user documents
+    match /users/{userId} {
+       allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Audit logs can only be created by backend functions (or admins for specific cases)
+    // No one should be able to read them directly from the client except maybe admins.
     match /audit_logs/{logId} {
-      // Only admins can read audit logs.
       allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      
-      // Audit logs can only be created by the server (Cloud Functions).
+      // Writes are handled by backend Cloud Functions
       allow write: if false;
     }
   }

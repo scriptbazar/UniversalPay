@@ -247,7 +247,7 @@ export default function CurrencyConverterPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+             <CardTitle className="flex items-center gap-2">
                 <Bitcoin /> Crypto Converter
             </CardTitle>
             <CardDescription>Convert between cryptocurrencies and major fiat.</CardDescription>

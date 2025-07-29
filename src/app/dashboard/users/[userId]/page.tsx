@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Image from "next/image";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,31 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-
-// MOCK DATA - This will be replaced by dynamic data where needed
-const stats = {
-    revenue: "45,231.89",
-    walletBalance: "5,430.50",
-    availableToWithdraw: "5,200.00",
-    successRate: "98.2%",
-};
-
-const revenueData = [
-    { name: 'Jan', revenue: 4230, monthIndex: 0 },
-    { name: 'Feb', revenue: 3120, monthIndex: 1 },
-    { name: 'Mar', revenue: 5890, monthIndex: 2 },
-    { name: 'Apr', revenue: 4500, monthIndex: 3 },
-    { name: 'May', revenue: 6200, monthIndex: 4 },
-    { name: 'Jun', revenue: 7100, monthIndex: 5 },
-];
-
-
-const paymentMethodData = [
-  { name: 'UPI', value: 20050, color: '#0088FE' },
-  { name: 'Crypto', value: 15125, color: '#00C49F' },
-  { name: 'Page', value: 8056.89, color: '#FFBB28' },
-  { name: 'Link', value: 2000, color: '#FF8042' },
-];
 
 type Transaction = {
     id: string;
@@ -140,9 +114,7 @@ export default function UserDetailPage() {
   const [txCurrentPage, setTxCurrentPage] = useState(1);
   const [wdCurrentPage, setWdCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  const [walletBalance, setWalletBalance] = useState(parseFloat(stats.walletBalance.replace(/,/g, '')));
-  const [adjustmentAmount, setAdjustmentAmount] = useState('');
+  
   const [joinedDate, setJoinedDate] = useState('N/A');
 
   const formattedUserId = useMemo(() => {
@@ -214,32 +186,6 @@ export default function UserDetailPage() {
       }
   };
 
-  const handleWalletAdjustment = async (type: 'credit' | 'debit') => {
-      const amount = parseFloat(adjustmentAmount);
-      if (isNaN(amount) || amount <= 0) {
-          toast({ variant: 'destructive', title: 'Invalid Amount' });
-          return;
-      }
-
-      if (type === 'debit' && amount > walletBalance) {
-          toast({ variant: 'destructive', title: 'Insufficient Balance' });
-          return;
-      }
-
-      if (!auth.currentUser || !merchant) return;
-      
-      const result = await adjustWalletBalance(merchant.id, amount, type, auth.currentUser.uid);
-
-      if (result.success) {
-        const newBalance = type === 'credit' ? walletBalance + amount : walletBalance - amount;
-        setWalletBalance(newBalance);
-        toast({ title: `Balance Updated!`, description: `New balance is $${newBalance.toFixed(2)}`});
-        setAdjustmentAmount('');
-      } else {
-        toast({ variant: 'destructive', title: 'Error', description: result.error });
-      }
-  };
-
   const handleTransactionRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setDialogOpen('transaction');
@@ -262,13 +208,6 @@ export default function UserDetailPage() {
 
   const wdTotalPages = Math.ceil(withdrawalHistory.length / itemsPerPage);
 
-  const formatTooltipValue = (value: number, name: string) => {
-    if (name === 'UPI') {
-      return `₹${value.toLocaleString()}`;
-    }
-    return `$${value.toLocaleString()}`;
-  };
-
   const copyToClipboard = (text: string, label: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -276,19 +215,6 @@ export default function UserDetailPage() {
         title: `${label} Copied!`,
     });
   };
-
-  const handlePieClick = (data: any) => {
-    const methodName = data.name;
-    router.push(`/dashboard/users/${userId}/transactions/by-method/${methodName.toLowerCase()}`);
-  };
-
-  const handleBarClick = (data: any) => {
-    if (!data || !data.activePayload) return;
-    const payload = data.activePayload[0].payload;
-    const monthSlug = payload.name.toLowerCase();
-    router.push(`/dashboard/users/${userId}/transactions/by-month/${monthSlug}`);
-  };
-
 
   if (loading) {
     return <div className="flex-grow flex items-center justify-center">Loading user details...</div>;
@@ -378,117 +304,11 @@ export default function UserDetailPage() {
             </div>
         </div>
         
-        <Tabs defaultValue="overview">
+        <Tabs defaultValue="transactions">
             <TabsList>
-                <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
                 <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
                 <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
-                <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview" className="mt-4">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">${stats.revenue}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Available Wallet Balance</CardTitle>
-                            <Wallet className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">${walletBalance.toFixed(2)}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Available to Withdraw</CardTitle>
-                            <Landmark className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">${stats.availableToWithdraw}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                            <Percent className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.successRate}</div>
-                        </CardContent>
-                    </Card>
-                </div>
-                <div className="grid lg:grid-cols-5 gap-6 mt-6">
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <CardTitle>Revenue Over Time</CardTitle>
-                            <CardDescription>Click a bar to view transactions for that month.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={revenueData} onClick={handleBarClick}>
-                                    <XAxis
-                                    dataKey="name"
-                                    stroke="#888888"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    />
-                                    <YAxis
-                                    stroke="#888888"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tickFormatter={(value) => `$${value/1000}K`}
-                                    />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                                        labelStyle={{ color: 'hsl(var(--foreground))' }}
-                                        cursor={{fill: 'hsl(var(--muted))'}}
-                                    />
-                                    <Legend iconType="circle" />
-                                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} className="cursor-pointer" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
-                    <Card className="lg:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Payment Method Mix</CardTitle>
-                            <CardDescription>Click a slice for details.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie 
-                                        data={paymentMethodData} 
-                                        dataKey="value" 
-                                        nameKey="name" 
-                                        cx="50%" 
-                                        cy="50%" 
-                                        outerRadius={80} 
-                                        label 
-                                        onClick={handlePieClick}
-                                        className="cursor-pointer"
-                                    >
-                                        {paymentMethodData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={formatTooltipValue} />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
-                </div>
-            </TabsContent>
              <TabsContent value="transactions" className="mt-4">
                  <Card>
                     <CardHeader>
@@ -603,40 +423,6 @@ export default function UserDetailPage() {
                             </div>
                         </div>
                     </CardFooter>
-                </Card>
-             </TabsContent>
-             <TabsContent value="wallet" className="mt-4">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Wallet Management</CardTitle>
-                        <CardDescription>Manually adjust the merchant's wallet balance.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
-                            <Wallet className="w-6 h-6 text-muted-foreground"/>
-                            <span className="text-muted-foreground">Current Balance:</span>
-                            <span className="text-2xl font-bold">${walletBalance.toFixed(2)}</span>
-                        </div>
-                        <Separator/>
-                        <div className="space-y-2">
-                            <Label htmlFor="adjustment-amount">Adjustment Amount (USD)</Label>
-                            <Input
-                                id="adjustment-amount"
-                                type="number"
-                                placeholder="e.g., 100.00"
-                                value={adjustmentAmount}
-                                onChange={(e) => setAdjustmentAmount(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex gap-2">
-                            <Button onClick={() => handleWalletAdjustment('credit')}>
-                                <PlusCircle className="mr-2 h-4 w-4"/> Credit (Add Funds)
-                            </Button>
-                            <Button variant="destructive" onClick={() => handleWalletAdjustment('debit')}>
-                                <MinusCircle className="mr-2 h-4 w-4"/> Debit (Remove Funds)
-                            </Button>
-                        </div>
-                    </CardContent>
                 </Card>
              </TabsContent>
         </Tabs>
