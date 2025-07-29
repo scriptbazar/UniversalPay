@@ -1,4 +1,17 @@
 
+import { db } from './firebase';
+import { 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    updateDoc, 
+    query, 
+    where, 
+    orderBy,
+    serverTimestamp
+} from 'firebase/firestore';
+
 export type Withdrawal = {
   id: string;
   merchantName: string;
@@ -7,7 +20,7 @@ export type Withdrawal = {
   currency: string;
   destination: string;
   status: "Pending" | "Completed" | "Failed";
-  date: string;
+  createdAt: any; // Can be a Date or Firestore Timestamp
   transactionId?: string; // Optional field for withdrawal transaction
 };
 
@@ -16,35 +29,43 @@ const generateRandomId = (prefix: string) => {
     return `${prefix}${randomNum}`;
 };
 
-// This acts as a simple in-memory database.
-let withdrawals: Withdrawal[] = [
-  { id: generateRandomId("UVPAYWD"), merchantName: "MyStore.com", merchantId: "merch_123", amount: "500.00", currency: "USDT", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25", transactionId: generateRandomId("UVWDTRX") },
-  { id: generateRandomId("UVPAYWD"), merchantName: "CreativeGoods", merchantId: "merch_456", amount: "1200.00", currency: "USDT", destination: "TXkLgSAz4TSiS5i2i2c4i5YJz5xQ8vYfBc", status: "Pending", date: "2023-10-27" },
-  { id: generateRandomId("UVPAYWD"), merchantName: "AnotherShop", merchantId: "merch_789", amount: "1000.00", currency: "INR", destination: "XXXX-XXXX-1234", status: "Completed", date: "2023-10-20", transactionId: generateRandomId("UVWDTRX") },
-  { id: generateRandomId("UVPAYWD"), merchantName: "MyStore.com", merchantId: "merch_123", amount: "250.00", currency: "BTC", destination: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", status: "Completed", date: "2023-10-18", transactionId: generateRandomId("UVWDTRX") },
-  { id: generateRandomId("UVPAYWD"), merchantName: "AnotherShop", merchantId: "merch_789", amount: "750.00", currency: "USDT", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Failed", date: "2023-10-15" },
-  { id: generateRandomId("UVPAYWD"), merchantName: "TechGadgets", merchantId: "merch_101", amount: "300.00", currency: "USDT", destination: "TDRS2s4i5YJz5xQ8vYfBcGoce3yYdHjC5yYwY", status: "Pending", date: "2023-10-28" },
-  { id: generateRandomId("UVPAYWD"), merchantName: "FashionHub", merchantId: "merch_202", amount: "850.00", currency: "INR", destination: "XXXX-XXXX-5678", status: "Pending", date: "2023-10-28" },
-];
-
 // Function to get all withdrawals, sorted by most recent first
-export const getWithdrawals = (): Withdrawal[] => {
-  return [...withdrawals].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+export const getWithdrawals = async (): Promise<Withdrawal[]> => {
+  const q = query(collection(db, 'withdrawals'), orderBy('createdAt', 'desc'));
+  const querySnapshot = await getDocs(q);
+  const withdrawals: Withdrawal[] = [];
+  querySnapshot.forEach((doc) => {
+    withdrawals.push({ id: doc.id, ...doc.data() } as Withdrawal);
+  });
+  return withdrawals;
+};
+
+// Function to get withdrawals for a specific merchant
+export const getMerchantWithdrawals = async (merchantId: string): Promise<Withdrawal[]> => {
+    const q = query(collection(db, 'withdrawals'), where('merchantId', '==', merchantId), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const withdrawals: Withdrawal[] = [];
+    querySnapshot.forEach((doc) => {
+        withdrawals.push({ id: doc.id, ...doc.data() } as Withdrawal);
+    });
+    return withdrawals;
 };
 
 // Function to add a new withdrawal
-export const addWithdrawal = (newWithdrawalData: Omit<Withdrawal, 'id' | 'date'>): void => {
-  const newWithdrawal: Withdrawal = {
+export const addWithdrawal = async (newWithdrawalData: Omit<Withdrawal, 'id' | 'createdAt'>): Promise<void> => {
+  await addDoc(collection(db, 'withdrawals'), {
     ...newWithdrawalData,
-    id: generateRandomId("UVWDREQ"), // Withdrawal Requests
-    date: new Date().toISOString().split("T")[0],
-  };
-  withdrawals.push(newWithdrawal);
+    id: generateRandomId("UVRLWDREQ"),
+    createdAt: serverTimestamp(),
+  });
 };
 
 // Function to update the status of a withdrawal
-export const updateWithdrawalStatus = (id: string, newStatus: "Completed" | "Failed"): void => {
-  withdrawals = withdrawals.map(w =>
-    w.id === id ? { ...w, status: newStatus, transactionId: newStatus === 'Completed' ? generateRandomId("UVWDTRX") : undefined } : w
-  );
+export const updateWithdrawalStatus = async (id: string, newStatus: "Completed" | "Failed"): Promise<void> => {
+  const withdrawalRef = doc(db, 'withdrawals', id);
+  const updateData: { status: "Completed" | "Failed"; transactionId?: string } = { status: newStatus };
+  if (newStatus === 'Completed') {
+    updateData.transactionId = generateRandomId("UVWDTRX");
+  }
+  await updateDoc(withdrawalRef, updateData);
 };

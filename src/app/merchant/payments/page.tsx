@@ -39,36 +39,34 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useSearchParams } from 'next/navigation';
-
-const allTransactionsData = Array.from({ length: 25 }, (_, i) => {
-    const statuses = ["Success", "Failed", "Pending"] as const;
-    const methods = ["UPI", "Crypto", "Link", "Page"] as const;
-    const day = 28 - Math.floor(i / 2);
-    const dateStr = `2023-11-${day < 10 ? '0' + day : day}`;
-    return {
-        id: `UVRLP${987654321 - i}`,
-        customerEmail: `customer${i + 1}@example.com`,
-        amount: ((i + 1) * 15.50).toFixed(2),
-        status: statuses[i % 3],
-        method: methods[i % 4],
-        date: dateStr,
-    };
-});
-
-type Transaction = typeof allTransactionsData[0];
+import { getMerchantTransactions, type Transaction } from '@/lib/transactionsData';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 function PaymentsComponent() {
     const searchParams = useSearchParams();
     const initialFilter = searchParams.get('filter') || 'all';
 
     const { toast } = useToast();
-    const [transactions, setTransactions] = useState<Transaction[]>(allTransactionsData);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [filter, setFilter] = useState(initialFilter);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // In a real app, you'd use user.uid. Here we use a placeholder for the demo.
+                setTransactions(getMerchantTransactions('placeholder-merchant-id'));
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         setFilter(initialFilter);
@@ -216,7 +214,11 @@ function PaymentsComponent() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedTransactions.map(tx => (
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">Loading transactions...</TableCell>
+                                    </TableRow>
+                                ) : paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
                                         <TableCell>{tx.customerEmail}</TableCell>
@@ -230,7 +232,7 @@ function PaymentsComponent() {
                                 ))}
                             </TableBody>
                         </Table>
-                         {filteredTransactions.length === 0 && (
+                         {!loading && filteredTransactions.length === 0 && (
                             <div className="text-center p-8 text-muted-foreground">
                                 No transactions found for the selected filters.
                             </div>

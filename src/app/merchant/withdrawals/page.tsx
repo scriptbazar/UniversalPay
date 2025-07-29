@@ -12,8 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { type Withdrawal, getWithdrawals, addWithdrawal } from "@/lib/withdrawalsData";
+import { type Withdrawal, getMerchantWithdrawals, addWithdrawal } from "@/lib/withdrawalsData";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
   switch (status) {
@@ -35,18 +39,38 @@ export default function WithdrawalsPage() {
   const [method, setMethod] = useState("");
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
   const processingFee = 0.50;
+  const [merchantName, setMerchantName] = useState('Your Business');
+  const [loading, setLoading] = useState(true);
 
-  const fetchMerchantWithdrawals = () => {
-     // In a real app, you'd get the merchantId from the user session.
-     setWithdrawals(getWithdrawals().filter(w => w.merchantId === "merch_123"));
+  const fetchMerchantWithdrawals = async (merchantId: string) => {
+    setLoading(true);
+    const data = await getMerchantWithdrawals(merchantId);
+    setWithdrawals(data);
+    setLoading(false);
   }
 
   useEffect(() => {
-    fetchMerchantWithdrawals();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                setMerchantName(userDoc.data().fullName || 'Your Business');
+            }
+            fetchMerchantWithdrawals(user.uid);
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleWithdrawal = (e: React.FormEvent) => {
+  const handleWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) {
+        toast({ variant: "destructive", title: "Error", description: "You must be logged in to request a withdrawal." });
+        return;
+    }
+
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount <= 0 || !method) {
       toast({
@@ -57,17 +81,17 @@ export default function WithdrawalsPage() {
       return;
     }
 
-    const newWithdrawal: Omit<Withdrawal, 'id' | 'date'> = {
+    const newWithdrawal: Omit<Withdrawal, 'id' | 'createdAt'> = {
         amount: numericAmount.toFixed(2),
         currency: method === "bank_inr" ? "INR" : "USDT",
         destination: method === "bank_inr" ? "Bank A/c ...5678" : "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc",
         status: "Pending",
-        merchantId: "merch_123", // Hardcoded for this example
-        merchantName: "MyStore.com", // Hardcoded for this example
+        merchantId: user.uid,
+        merchantName: merchantName,
     };
 
-    addWithdrawal(newWithdrawal);
-    fetchMerchantWithdrawals(); // Re-fetch to show the new request
+    await addWithdrawal(newWithdrawal);
+    await fetchMerchantWithdrawals(user.uid); // Re-fetch to show the new request
 
     setAmount("");
     setMethod("");
@@ -164,7 +188,7 @@ export default function WithdrawalsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Withdrawal ID</TableHead>
+                    <TableHead>Request ID</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Destination</TableHead>
                     <TableHead>Status</TableHead>
@@ -172,10 +196,12 @@ export default function WithdrawalsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {withdrawals.map((w) => (
+                  {loading ? (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading history...</TableCell></TableRow>
+                  ) : withdrawals.map((w) => (
                     <TableRow key={w.id} onClick={() => setSelectedWithdrawal(w)} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell className="font-medium">{w.id}</TableCell>
-                      <TableCell>{w.date}</TableCell>
+                      <TableCell className="font-medium font-mono">{w.id.substring(0, 12)}...</TableCell>
+                      <TableCell>{new Date(w.createdAt?.toDate()).toLocaleDateString()}</TableCell>
                       <TableCell>{w.destination}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
@@ -183,6 +209,9 @@ export default function WithdrawalsPage() {
                       <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
                     </TableRow>
                   ))}
+                  {!loading && withdrawals.length === 0 && (
+                      <TableRow><TableCell colSpan={5} className="h-24 text-center">No withdrawal requests found.</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -194,7 +223,7 @@ export default function WithdrawalsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Withdrawal Details</DialogTitle>
-            {selectedWithdrawal && <DialogDescription>Details for withdrawal request {selectedWithdrawal.id}.</DialogDescription>}
+            {selectedWithdrawal && <DialogDescription>Details for withdrawal request {selectedWithdrawal.id.substring(0, 12)}...</DialogDescription>}
           </DialogHeader>
           {selectedWithdrawal && (
             <div className="space-y-4 py-4">
@@ -208,7 +237,7 @@ export default function WithdrawalsPage() {
               <Separator />
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Date:</span>
-                <span className="font-semibold">{new Date(selectedWithdrawal.date).toLocaleDateString()}</span>
+                <span className="font-semibold">{new Date(selectedWithdrawal.createdAt?.toDate()).toLocaleDateString()}</span>
               </div>
               <Separator />
               <div className="flex justify-between items-center">

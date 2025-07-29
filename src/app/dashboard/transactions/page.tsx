@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   File,
   Search,
@@ -38,35 +39,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
-
-const allTransactionsData = Array.from({ length: 50 }, (_, i) => {
-    const statuses = ["Success", "Failed", "Pending"] as const;
-    const methods = ["UPI", "Crypto", "Page", "Link"] as const;
-    const day = 28 - Math.floor(i / 2);
-    const dateStr = `2023-11-${day < 10 ? '0' + day : day}`;
-    return {
-        id: `UVRLP${123456789 + i}`,
-        merchant: `Merchant ${i % 4 + 1}`,
-        merchantId: `user_${(i%4)+1}`,
-        customerEmail: `customer${i + 1}@example.com`,
-        amount: ((i + 1) * 12.34).toFixed(2),
-        status: statuses[i % 3],
-        method: methods[i % 4],
-        date: dateStr,
-    };
-});
-
-type Transaction = typeof allTransactionsData[0];
+import { getAllTransactions, type Transaction } from '@/lib/transactionsData';
 
 export default function AllTransactionsPage() {
     const { toast } = useToast();
-    const [transactions, setTransactions] = useState<Transaction[]>(allTransactionsData);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    useEffect(() => {
+        // Fetch all transactions for the admin view
+        setTransactions(getAllTransactions());
+    }, []);
 
     const filteredTransactions = useMemo(() => {
         let filtered = transactions;
@@ -84,7 +72,7 @@ export default function AllTransactionsPage() {
         if (searchTerm) {
             filtered = filtered.filter(tx =>
                 tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.merchantId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
@@ -215,7 +203,7 @@ export default function AllTransactionsPage() {
                                 {paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
-                                        <TableCell>{tx.merchant}</TableCell>
+                                        <TableCell>{tx.merchantId}</TableCell>
                                         <TableCell>{tx.customerEmail}</TableCell>
                                         <TableCell>
                                             <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
@@ -279,8 +267,8 @@ export default function AllTransactionsPage() {
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Merchant:</span>
-                            <span className="font-semibold">{selectedTransaction.merchant}</span>
+                            <span className="text-muted-foreground">Merchant ID:</span>
+                            <span className="font-semibold">{selectedTransaction.merchantId}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center">

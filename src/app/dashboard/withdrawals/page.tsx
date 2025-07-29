@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { type Withdrawal, getWithdrawals } from "@/lib/withdrawalsData";
+import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,9 +42,17 @@ export default function AdminWithdrawalsPage() {
     const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    const fetchWithdrawals = async () => {
+        setLoading(true);
+        const data = await getWithdrawals();
+        setWithdrawals(data);
+        setLoading(false);
+    }
 
     useEffect(() => {
-        setWithdrawals(getWithdrawals());
+        fetchWithdrawals();
     }, []);
 
     const handleAction = async (e: React.MouseEvent, id: string, newStatus: "Completed" | "Failed") => {
@@ -57,7 +65,8 @@ export default function AdminWithdrawalsPage() {
         const result = await processWithdrawal(auth.currentUser.uid, id, newStatus);
         
         if (result.success) {
-            setWithdrawals(getWithdrawals()); // Refresh data from source
+            await updateWithdrawalStatus(id, newStatus); // Update Firestore
+            await fetchWithdrawals(); // Re-fetch data
             setSelectedWithdrawal(null); // Close the dialog
             toast({
                 title: `Withdrawal ${newStatus}`,
@@ -155,14 +164,16 @@ export default function AdminWithdrawalsPage() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {paginatedWithdrawals.map((w) => (
+                {loading ? (
+                    <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading requests...</TableCell></TableRow>
+                ) : paginatedWithdrawals.map((w) => (
                     <TableRow key={w.id} onClick={() => handleRowClick(w)} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{w.id}</TableCell>
+                    <TableCell className="font-medium font-mono">{w.id.substring(0, 12)}...</TableCell>
                     <TableCell>
                         <div className="font-medium">{w.merchantName}</div>
                         <div className="text-xs text-muted-foreground">{w.merchantId}</div>
                     </TableCell>
-                    <TableCell>{w.date}</TableCell>
+                    <TableCell>{new Date(w.createdAt?.toDate()).toLocaleDateString()}</TableCell>
                     <TableCell>{truncateAddress(w.destination)}</TableCell>
                     <TableCell>${w.amount} {w.currency}</TableCell>
                     <TableCell>
@@ -170,7 +181,7 @@ export default function AdminWithdrawalsPage() {
                     </TableCell>
                     </TableRow>
                 ))}
-                 {filteredWithdrawals.length === 0 && (
+                 {filteredWithdrawals.length === 0 && !loading && (
                     <TableRow>
                         <TableCell colSpan={6} className="text-center h-24">
                             No withdrawals found for the current filters.
@@ -244,7 +255,7 @@ export default function AdminWithdrawalsPage() {
                                     <Calendar className="w-6 h-6 text-primary" />
                                     <div>
                                         <p className="text-sm text-muted-foreground">Requested On</p>
-                                        <p className="font-semibold">{selectedWithdrawal.date}</p>
+                                        <p className="font-semibold">{new Date(selectedWithdrawal.createdAt?.toDate()).toLocaleString()}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
