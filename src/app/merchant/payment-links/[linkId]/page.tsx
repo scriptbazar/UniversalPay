@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPaymentLinkById, type PaymentLink } from "@/lib/paymentLinksData";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 
 
 type Payment = {
@@ -47,6 +47,7 @@ const getStatusBadgeVariant = (status: Payment["status"]) => {
 
 export default function PaymentLinkDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const linkId = params.linkId as string;
   const { toast } = useToast();
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
@@ -72,6 +73,24 @@ export default function PaymentLinkDetailPage() {
   const handlePaymentRowClick = (payment: Payment) => {
     setSelectedPayment(payment);
   }
+  
+  const handleCardClick = (type: 'successful' | 'fraud' | 'avg' | 'volume') => {
+     const sourceQuery = '?source=payment-links';
+     switch (type) {
+         case 'successful':
+         case 'volume':
+             router.push(`/dashboard/analytics/details/successful-transactions_all${sourceQuery}`);
+             break;
+         case 'fraud':
+             router.push(`/dashboard/fraud-detection`); // Redirect to main fraud page for now
+             break;
+         case 'avg':
+              // Avg value doesn't need a list, can show a dialog or be static
+             toast({ title: 'Average Payment Value', description: `$${averagePayment}` });
+             break;
+     }
+  };
+
 
   if (!linkDetails) {
     return <div>Loading...</div>; // Or a skeleton loader
@@ -123,7 +142,7 @@ export default function PaymentLinkDetailPage() {
         </Card>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card onClick={() => handleCardClick('volume')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -132,7 +151,7 @@ export default function PaymentLinkDetailPage() {
                     <div className="text-2xl font-bold">${totalVolume.toFixed(2)}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('successful')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Successful Payments</CardTitle>
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -141,7 +160,7 @@ export default function PaymentLinkDetailPage() {
                     <div className="text-2xl font-bold">{successfulPayments}</div>
                 </CardContent>
             </Card>
-             <Card>
+             <Card onClick={() => handleCardClick('avg')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Average Payment Value</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -150,7 +169,7 @@ export default function PaymentLinkDetailPage() {
                     <div className="text-2xl font-bold">${averagePayment}</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card onClick={() => handleCardClick('fraud')} className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Fraud Alerts</CardTitle>
                     <Shield className="h-4 w-4 text-muted-foreground" />
