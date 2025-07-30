@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { collection, query, orderBy, onSnapshot, Timestamp, where, or } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, Timestamp, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AlertCircle, ShieldAlert, AlertTriangle } from 'lucide-react';
 
@@ -56,11 +56,7 @@ export default function ErrorLogsPage() {
         const logsCollectionRef = collection(db, 'audit_logs');
         const q = query(
             logsCollectionRef, 
-            or(
-                where('level', '==', 'ERROR'),
-                where('level', '==', 'CRITICAL'),
-                where('level', '==', 'SECURITY_ALERT')
-            ),
+            where('level', 'in', ['ERROR', 'CRITICAL', 'SECURITY_ALERT']),
             orderBy('timestamp', 'desc')
         );
 
@@ -72,8 +68,8 @@ export default function ErrorLogsPage() {
             setLogs(logsData);
             setLoading(false);
             setError(null);
-        }, (error) => {
-            console.error("Error fetching error logs: ", error);
+        }, (err) => {
+            console.error("Error fetching error logs: ", err);
             setError("Could not fetch error logs. Check console and Firebase rules.");
             setLoading(false);
         });
