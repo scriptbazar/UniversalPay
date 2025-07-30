@@ -14,6 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { getWalletLoadRequests, addWalletLoadRequest, type WalletLoadRequest } from "@/lib/walletLoadData";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
   switch (status) {
@@ -36,18 +39,32 @@ export default function MerchantWalletPage() {
   const [method, setMethod] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
   const currentBalance = 5430.50; // Placeholder value
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const fetchMerchantRequests = () => {
+  const fetchMerchantRequests = (uid: string) => {
      // In a real app, you'd get the merchantId from the user session.
-     setRequests(getWalletLoadRequests().filter(w => w.merchantId === "merch_123"));
+     setRequests(getWalletLoadRequests().filter(w => w.merchantId === uid));
   }
 
   useEffect(() => {
-    fetchMerchantRequests();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            setCurrentUser(user);
+            fetchMerchantRequests(user.uid);
+        }
+    });
+    return () => unsubscribe();
   }, []);
 
-  const handleRequestLoad = (e: React.FormEvent) => {
+  const handleRequestLoad = async (e: React.FormEvent) => {
     e.preventDefault();
+    const user = auth.currentUser;
+
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Not Authenticated', description: 'You must be logged in to make a request.' });
+        return;
+    }
+
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount <= 0 || !transactionId || !method) {
       toast({
@@ -57,18 +74,22 @@ export default function MerchantWalletPage() {
       });
       return;
     }
+    
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const merchantName = userDoc.exists() ? userDoc.data().fullName : 'Your Business';
+    const merchantEmail = userDoc.exists() ? userDoc.data().email : 'your-email@example.com';
 
     addWalletLoadRequest({
         amount: numericAmount.toFixed(2),
         currency: "USD",
         method: method,
         transactionId: transactionId,
-        merchantId: "merch_123", // Hardcoded for this example
-        merchantName: "MyStore.com", // Hardcoded for this example
-        merchantEmail: "contact@mystore.com",
+        merchantId: user.uid,
+        merchantName: merchantName,
+        merchantEmail: merchantEmail,
     });
     
-    fetchMerchantRequests(); // Re-fetch to show the new request
+    fetchMerchantRequests(user.uid); // Re-fetch to show the new request
     setAmount("");
     setTransactionId("");
     setMethod("");
