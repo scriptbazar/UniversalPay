@@ -23,7 +23,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -32,7 +32,6 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addCountryToUsers } from '@/lib/mockUserCountry';
 import { countries } from "@/lib/countries";
 
 
@@ -57,7 +56,7 @@ export default function UsersPage() {
 
     // Filtering and Searching State
     const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('merchant'); // Default to merchant
+    const [roleFilter, setRoleFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [countryFilter, setCountryFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -66,17 +65,14 @@ export default function UsersPage() {
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Query to get all users, will filter client-side
                 const usersCollectionRef = collection(db, "users");
-                const q = query(usersCollectionRef, where("role", "==", "merchant"));
+                const q = query(usersCollectionRef);
 
                 const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     let userList: User[] = [];
                     querySnapshot.forEach((doc) => {
                         userList.push({ id: doc.id, ...doc.data() } as User);
                     });
-                    // Add mock country data for demonstration
-                    userList = addCountryToUsers(userList);
                     setUsers(userList);
                     setLoading(false);
                 }, (err: any) => {
@@ -104,19 +100,20 @@ export default function UsersPage() {
     }, [toast]);
     
     const filteredUsers = useMemo(() => {
-        // Start with all users, which are already pre-filtered to be merchants by the Firestore query
         return users.filter(user => {
             const matchesSearch = searchTerm === '' || 
                                   user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                   user.email?.toLowerCase().includes(searchTerm.toLowerCase());
             
+            const matchesRole = roleFilter === 'all' || (user.role || 'merchant').toLowerCase() === roleFilter;
+
             const matchesStatus = statusFilter === 'all' || (user.status || 'Active').toLowerCase() === statusFilter;
             
             const matchesCountry = countryFilter === 'all' || user.country === countryFilter;
 
-            return matchesSearch && matchesStatus && matchesCountry;
+            return matchesSearch && matchesRole && matchesStatus && matchesCountry;
         });
-    }, [users, searchTerm, statusFilter, countryFilter]);
+    }, [users, searchTerm, roleFilter, statusFilter, countryFilter]);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const paginatedUsers = filteredUsers.slice(
@@ -213,6 +210,16 @@ export default function UsersPage() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+                             <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                <SelectTrigger className="w-[150px]">
+                                    <SelectValue placeholder="Filter by role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="merchant">Merchant</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <Select value={countryFilter} onValueChange={setCountryFilter}>
                                 <SelectTrigger className="w-[180px]">
                                     <SelectValue placeholder="Filter by country" />
@@ -319,5 +326,3 @@ export default function UsersPage() {
         </div>
     )
 }
-
-    

@@ -1,42 +1,37 @@
+"use server"
+import { revalidatePath } from "next/cache";
+import { db, auth } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-'use server';
+// Define the Withdrawal type
+export type Withdrawal = {
+  id: string;
+  amount: number;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  status: 'Pending' | 'Completed' | 'Failed';
+  date: string;
+  userId: string;
+};
 
-import { db } from "@/lib/firebase";
-import { updateWithdrawalStatus as updateLocalWithdrawalStatus } from "@/lib/withdrawalsData";
-import admin from 'firebase-admin';
-
-if (!admin.apps.length) {
-    try {
-      admin.initializeApp();
-    } catch (e) {
-      console.error('Firebase admin initialization error', e);
-    }
-}
-
-export async function processWithdrawal(adminUid: string, withdrawalId: string, newStatus: "Completed" | "Failed") {
-    if (!adminUid) {
-        return { success: false, error: 'Admin user not identified.' };
-    }
-    
-    // This is where you would interact with a real payment provider API.
-    // For this demo, we'll just update our mock data.
-    updateLocalWithdrawalStatus(withdrawalId, newStatus);
-    
-    try {
-        const adminUser = await admin.auth().getUser(adminUid);
-        await db.collection('audit_logs').add({
-            type: 'FINANCIAL_ACTION',
-            level: 'MAJOR',
-            message: `Admin ${adminUser.email} (${adminUid}) ${newStatus.toLowerCase()} withdrawal request ${withdrawalId}.`,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            details: {
-                withdrawalId,
-                status: newStatus,
-            }
-        });
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error logging withdrawal processing:", error);
-        return { success: false, error: 'Failed to create audit log.' };
-    }
+/**
+ * Creates a new withdrawal request.
+ * @param withdrawalData - The data for the new withdrawal.
+ * @returns An object with the success status and the new withdrawal data or an error message.
+ */
+export async function createWithdrawal(withdrawalData: Omit<Withdrawal, 'id' | 'date' | 'status'>) {
+  try {
+    const newWithdrawal = {
+      ...withdrawalData,
+      status: 'Pending' as const,
+      date: serverTimestamp(),
+    };
+    const docRef = await addDoc(collection(db, "withdrawals"), newWithdrawal);
+    revalidatePath("/merchant/withdrawals");
+    return { success: true, withdrawal: { ...newWithdrawal, id: docRef.id } };
+  } catch (error) {
+    console.error("Error creating withdrawal:", error);
+    return { success: false, error: "Failed to create withdrawal." };
+  }
 }

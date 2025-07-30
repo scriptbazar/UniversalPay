@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "./theme-toggle";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import * as React from 'react';
 import { Separator } from "./ui/separator";
@@ -48,6 +48,10 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetTitle className="sr-only">Menu</SheetTitle>
+              <SheetDescription className="sr-only">
+                A list of navigation links and actions.
+              </SheetDescription>
               <nav className="grid gap-6 text-lg font-medium p-6">
                 <Link href="#" className="flex items-center gap-2 text-lg font-semibold">
                   <Logo />

@@ -36,7 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -216,6 +216,8 @@ export default function AdminDashboardLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
+              <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+              <SheetDescription className="sr-only">A list of navigation links and actions for mobile view.</SheetDescription>
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
                   href="/dashboard"

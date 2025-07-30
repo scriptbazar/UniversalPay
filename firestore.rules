@@ -1,36 +1,83 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for admin role using custom claims
     function isAdmin() {
+      // Check for the admin custom claim on the auth token.
+      // This is the correct and efficient way to check roles for list queries.
       return request.auth.token.role == 'admin';
     }
 
     // Rules for the 'users' collection
     match /users/{userId} {
-      allow read: if request.auth.uid == userId || isAdmin();
+      // An admin can list all users.
       allow list: if isAdmin();
-      allow write: if request.auth.uid == userId || isAdmin();
+      // An admin or the specific user can read/write their own document.
+      allow read, write: if isAdmin() || request.auth.uid == userId;
     }
 
     // Rules for the 'audit_logs' collection
     match /audit_logs/{logId} {
-      // Admins can create, read, and list all logs.
-      allow read, list, create: if isAdmin();
+      // Allow creating logs for any authenticated user (e.g., cloud functions).
+      allow create: if request.auth != null;
 
-      // Authenticated merchants can read logs pertaining to them.
-      allow read: if request.auth.uid == resource.data.details.targetUser;
+      // COMBINED RULE:
+      // An Admin can list/read ALL logs.
+      // A merchant can ONLY list/read logs where they are the targetUser.
+      allow list, read: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
 
-      // This is a more specific rule for the list/query operation on the merchant side.
-      // It ensures a merchant can only query for their own logs.
-      allow list: if isAdmin() || (request.auth.uid != null && request.query.where.size() > 0 && request.query.where[0][0] == 'details.targetUser' && request.query.where[0][2] == request.auth.uid);
+      // No one else can update or delete logs directly.
+      allow update, delete: if false;
     }
 
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
+    // Rules for 'paymentLinks'
+    match /paymentLinks/{linkId} {
+        // Only the merchant who owns it or an admin can manage it.
+        allow read, write: if isAdmin() || request.auth.uid == resource.data.merchantId;
+        // Anyone can create a payment link if they are authenticated.
+        allow create: if request.auth != null;
+        // Allow public read for payment pages (pay/[slug] route)
+        allow get: if true;
     }
+    
+    // Rules for 'invoices'
+    match /invoices/{invoiceId} {
+      // Only the merchant who owns it or an admin can manage it.
+      allow read, write: if isAdmin() || request.auth.uid == resource.data.merchantId;
+      // Authenticated users can create invoices.
+      allow create: if request.auth != null;
+    }
+
+    // Rules for 'tickets'
+    match /tickets/{ticketId} {
+       // Only the merchant who owns it or an admin can read/write.
+      allow read, write: if isAdmin() || request.auth.uid == resource.data.merchantId;
+      // Authenticated users can create tickets.
+      allow create: if request.auth != null;
+    }
+    
+    // Rules for 'transactions'
+    match /transactions/{txId} {
+       // Admins can read all. Merchants can read their own.
+       allow read: if isAdmin() || request.auth.uid == resource.data.merchantId;
+       // Allow creation by authenticated users (e.g., from a payment page).
+       allow create: if request.auth != null;
+       // Transactions should not be updated or deleted from the client.
+       allow update, delete: if false;
+    }
+    
+    // Rules for 'withdrawals'
+    match /withdrawals/{wdId} {
+        // Admins can read all. Merchants can read their own.
+        allow read: if isAdmin() || request.auth.uid == resource.data.merchantId;
+        // Merchants can create their own withdrawal requests.
+        allow create: if request.auth.uid == request.resource.data.merchantId;
+        // Only admins can update (approve/reject).
+        allow update: if isAdmin();
+        allow delete: if false;
+    }
+
   }
 }

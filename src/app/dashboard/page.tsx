@@ -46,7 +46,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
 type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; };
@@ -80,44 +80,47 @@ export default function AdminDashboard() {
 
 
   useEffect(() => {
-    // Generate mock data on the client side
-    const generateAllTransactions = (): Transaction[] => {
-      const methods = ["UPI", "Crypto", "Page", "Link"];
-      return Array.from({ length: 50 }, (_, i) => {
-          const monthIndex = Math.floor(i / 4);
-          const date = new Date(2023, monthIndex, (i % 28) + 1);
-          return {
-              id: `TXN${12345 + i}`,
-              name: `Customer ${i + 1}`,
-              email: `customer${i + 1}@example.com`,
-              amount: (Math.random() * 500 + 20).toFixed(2),
-              status: Math.random() > 0.1 ? "Success" : "Failed",
-              date: date,
-              method: methods[i % 4],
-              merchantId: `user_${(i%4)+1}`
-          }
+    const fetchDashboardData = async () => {
+      // Fetch transactions from Firestore
+      const transactionsQuery = query(collection(db, "transactions"), orderBy("date", "desc"), limit(50));
+      const transactionsSnapshot = await getDocs(transactionsQuery);
+      const fetchedTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+      setAllTransactions(fetchedTransactions);
+      
+      // Fetch recent signups from Firestore
+      const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(4));
+      const usersSnapshot = await getDocs(usersQuery);
+      const fetchedSignups = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Signup));
+      setRecentSignups(fetchedSignups);
+
+      // Process data for the chart
+      const monthlyData: { [key: string]: { revenue: number, newUsers: number, totalTransactions: number, successfulTransactions: number }} = {};
+      fetchedTransactions.forEach(tx => {
+        const month = tx.date.toLocaleString('default', { month: 'short' });
+        if (!monthlyData[month]) {
+          monthlyData[month] = { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 };
+        }
+        monthlyData[month].totalTransactions++;
+        if (tx.status === 'Success') {
+          monthlyData[month].revenue += parseFloat(tx.amount);
+          monthlyData[month].successfulTransactions++;
+        }
       });
+      fetchedSignups.forEach(signup => {
+        const month = (signup as any).createdAt.toDate().toLocaleString('default', { month: 'short' });
+         if (monthlyData[month]) {
+          monthlyData[month].newUsers++;
+        }
+      });
+
+      const chartDataArray = Object.keys(monthlyData).map(month => ({
+        name: month,
+        ...monthlyData[month]
+      }));
+      setChartData(chartDataArray);
     };
 
-    const allTxns = generateAllTransactions();
-    setAllTransactions(allTxns);
-    
-    setRecentSignups([
-      { id: "user_1", name: "Alice Johnson", email: "alice@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=A" },
-      { id: "user_2", name: "Bob Williams", email: "bob@example.com", plan: "Free", status: "Active", avatar: "https://placehold.co/40x40.png?text=B" },
-      { id: "user_3", name: "Charlie Brown", email: "charlie@example.com", plan: "Premium", status: "Suspended", avatar: "https://placehold.co/40x40.png?text=C" },
-      { id: "user_4", name: "Diana Miller", email: "diana@example.com", plan: "Pro", status: "Active", avatar: "https://placehold.co/40x40.png?text=D" },
-    ]);
-
-    setChartData([
-      { name: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380, monthIndex: 0 },
-      { name: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320, monthIndex: 1 },
-      { name: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, successfulTransactions: 480, monthIndex: 2 },
-      { name: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, successfulTransactions: 450, monthIndex: 3 },
-      { name: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, successfulTransactions: 530, monthIndex: 4 },
-      { name: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, successfulTransactions: 510, monthIndex: 5 },
-    ]);
-
+    fetchDashboardData();
   }, []);
 
   const copyToClipboard = (text: string, label: string) => {

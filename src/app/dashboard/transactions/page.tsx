@@ -39,7 +39,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
-import { getAllTransactions, type Transaction } from '@/lib/transactionsData';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+// Define the Transaction type according to your Firestore data structure
+type Transaction = {
+    id: string;
+    merchantId: string;
+    customerEmail: string;
+    status: string;
+    method: string;
+    date: string; // Assuming date is stored as a string in Firestore
+    amount: string;
+};
 
 export default function AllTransactionsPage() {
     const { toast } = useToast();
@@ -52,8 +64,16 @@ export default function AllTransactionsPage() {
     const itemsPerPage = 10;
 
     useEffect(() => {
-        // Fetch all transactions for the admin view
-        setTransactions(getAllTransactions());
+        const fetchTransactions = async () => {
+            const transactionsQuery = query(collection(db, "transactions"), orderBy("date", "desc"));
+            const querySnapshot = await getDocs(transactionsQuery);
+            const fetchedTransactions = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as Transaction));
+            setTransactions(fetchedTransactions);
+        };
+        fetchTransactions();
     }, []);
 
     const filteredTransactions = useMemo(() => {
