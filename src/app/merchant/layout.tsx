@@ -24,7 +24,8 @@ import {
   LogOut,
   AppWindow,
   Repeat,
-  User as UserIcon
+  User as UserIcon,
+  Activity
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +73,7 @@ const navItems = [
   { href: "/merchant/subscriptions", icon: Repeat, label: "My Subscription" },
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
   { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
+  { href: "/merchant/activity", icon: Activity, label: "My Activity" },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
