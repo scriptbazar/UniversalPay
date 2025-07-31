@@ -50,6 +50,11 @@ export async function updateUserRole(uid: string, role: 'admin' | 'merchant', ad
             level: 'CRITICAL',
             message: `Admin ${adminUser.email} (${adminUid}) changed role of ${targetUser.email} (${uid}) to ${role}.`,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            details: {
+                targetUser: uid,
+                changedBy: adminUid,
+                newRole: role,
+            },
         });
         
         await batch.commit();
@@ -91,6 +96,11 @@ export async function updateUserStatus(uid: string, status: 'Active' | 'Suspende
             level: 'CRITICAL',
             message: `Admin ${adminUser.email} (${adminUid}) ${status === 'Active' ? 'unsuspended' : 'suspended'} user ${targetUser.email} (${uid}).`,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            details: {
+                targetUser: uid,
+                changedBy: adminUid,
+                newStatus: status,
+            },
         });
 
         await batch.commit();

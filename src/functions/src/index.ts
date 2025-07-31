@@ -48,6 +48,9 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: 'merchant'.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         level: 'INFO',
+        details: { // Add details object for potential future use
+            targetUser: user.uid,
+        }
     });
 
     console.log(`Custom claim '${role}' and Firestore document created for user: ${user.uid}`);
@@ -103,6 +106,10 @@ exports.setAdminRole = onCall(async (request) => {
         message: `Admin ${callingUserEmail} (${callingUserUid}) promoted ${targetEmail} (${targetUid}) to admin.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         level: 'CRITICAL',
+        details: {
+            targetUser: targetUid,
+            changedBy: callingUserUid,
+        }
     });
 
 
