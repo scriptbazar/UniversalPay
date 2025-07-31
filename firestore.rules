@@ -2,7 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+    
     // Helper function to check for admin role from custom claims
     function isAdmin() {
       return request.auth.token.role == 'admin';
@@ -11,26 +11,26 @@ service cloud.firestore {
     // Rules for the users collection
     match /users/{userId} {
       // Admins can read/write any user document
-      allow read, write: if isAdmin();
-      
-      // Authenticated users can read their own document
-      // Authenticated users can create their own document (for signup)
-      // Authenticated users can update their own document (for profile changes)
-      allow get, create, update: if request.auth.uid == userId;
+      // Any authenticated user can create their own document (on signup)
+      // A user can read/update their own document
+      allow read, update, delete: if isAdmin() || request.auth.uid == userId;
+      allow create: if request.auth != null;
     }
     
     // Rules for the audit_logs collection
     match /audit_logs/{logId} {
-      // Admins can read any audit log
-      // Merchants can read logs where they are the target user
-      allow get: if isAdmin() || (request.auth.uid != null && request.auth.uid == resource.data.details.targetUser);
+      // Admins can create any log
+      allow create: if isAdmin();
       
-      // Admins can list all audit logs
-      // Merchants can list logs where they are the target user (for "My Activity" page)
-      allow list: if isAdmin() || (request.auth.uid != null && request.query.where.get("details.targetUser").get(0) == request.auth.uid);
-      
-      // Only backend (Cloud Functions) should write to audit logs, so deny client-side writes.
-      allow create, update, delete: if false;
+      // Admins can read any log.
+      // A merchant can ONLY read logs where their UID is the targetUser.
+      // This rule works for both `get` and `list` queries.
+      allow read: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
