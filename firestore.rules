@@ -2,35 +2,70 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check for admin role from custom claims
+  
+    // Helper function to check for admin role using custom claims
     function isAdmin() {
       return request.auth.token.role == 'admin';
     }
 
-    // Rules for the users collection
+    // Rules for the 'users' collection
     match /users/{userId} {
       // Admins can read/write any user document
-      // Any authenticated user can create their own document (on signup)
-      // A user can read/update their own document
-      allow read, update, delete: if isAdmin() || request.auth.uid == userId;
-      allow create: if request.auth != null;
+      // Authenticated users can read/update their own document
+      allow read: if isAdmin() || request.auth.uid == userId;
+      allow create; // Anyone can create a user (signup)
+      allow update: if isAdmin() || request.auth.uid == userId;
+      allow delete: if isAdmin(); // Only admins can delete users
     }
     
-    // Rules for the audit_logs collection
+    // Rules for the 'paymentLinks' collection
+    match /paymentLinks/{linkId} {
+        // Public can read, authenticated merchants can create/update/delete their own
+        allow read: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.merchantId;
+        allow update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
+    }
+    
+     // Rules for the 'transactions' collection
+    match /transactions/{transactionId} {
+        // Public can create (e.g., from a payment page)
+        allow create;
+        // Merchants can read their own transactions, Admins can read all
+        allow read: if isAdmin() || request.auth.uid == resource.data.merchantId;
+        // Only Admins can update/delete transactions
+        allow update, delete: if isAdmin();
+    }
+    
+    // Rules for the 'invoices' collection
+    match /invoices/{invoiceId} {
+        allow create, read, update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
+    }
+    
+    // Rules for the 'tickets' collection
+    match /tickets/{ticketId} {
+        allow create, read, update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
+    }
+    
+    // Rules for the 'withdrawals' collection
+    match /withdrawals/{withdrawalId} {
+        // Admins can manage all withdrawals
+        // Merchants can only manage their own
+        allow read, create, update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
+    }
+
+    // Rules for the 'audit_logs' collection
     match /audit_logs/{logId} {
-      // Admins can create any log
-      allow create: if isAdmin();
-      
-      // Admins can read any log.
-      // A merchant can ONLY read logs where their UID is the targetUser.
-      // This rule works for both `get` and `list` queries.
-      allow read: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
-    }
-    
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
+        // Admins can write any log.
+        allow write: if isAdmin();
+        
+        // **FIXED RULES FOR READING/LISTING LOGS**
+        // A user can LIST logs if they are an admin OR if they are querying for their own logs.
+        allow list: if isAdmin() || 
+                     (request.auth.uid != null && request.query.where.details.targetUser == request.auth.uid);
+                     
+        // A user can GET a single log if they are an admin OR if the log pertains to them.
+        allow get: if isAdmin() || 
+                    (request.auth.uid != null && resource.data.details.targetUser == request.auth.uid);
     }
   }
 }
