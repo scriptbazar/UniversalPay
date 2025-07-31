@@ -1,7 +1,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { DollarSign, Landmark, Users, ShieldCheck, Repeat, FileText } from "lucide-react";
-import { db } from './firebase';
+import { db, auth } from './firebase'; // Import auth
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export type Notification = {
@@ -10,6 +10,7 @@ export type Notification = {
     description: string;
     icon: LucideIcon;
     createdAt: string;
+    userId?: string; // Add userId to the Notification type
 };
 
 // A map to convert audit log types to user-friendly notification content
@@ -25,22 +26,31 @@ const notificationTypeMap: { [key: string]: { icon: LucideIcon; title: (log: any
 
 export const getNotifications = async (userType: 'admin' | 'merchant', userId?: string): Promise<Notification[]> => {
     try {
-        const logsCol = collection(db, 'audit_logs');
+        const notificationsCol = collection(db, 'notifications');
         let q;
 
         if (userType === 'admin') {
-            // Admin sees everything of high importance
-            q = query(logsCol, orderBy('timestamp', 'desc'), limit(10));
-        } else if (userId) {
-            // Merchant sees their own relevant logs
-            q = query(logsCol, where('details.targetUser', '==', userId), orderBy('timestamp', 'desc'), limit(10));
+            // Admin can see all notifications
+            q = query(notificationsCol, orderBy('createdAt', 'desc'), limit(10));
+        } else if (userType === 'merchant') { // Explicitly check for merchant type
+            const currentUserId = auth.currentUser?.uid; // Get current user ID
+            if (!currentUserId) {
+                 // If it's a merchant but no authenticated user, return empty.
+                return [];
+            }
+            // Merchant sees their own notifications filtered by the authenticated user's ID
+            q = query(notificationsCol, where('userId', '==', currentUserId), orderBy('createdAt', 'desc'), limit(10));
         } else {
-            // If it's a merchant but no userId is provided, return empty.
+            // For any other unexpected userType, return empty
             return [];
         }
 
-        const logSnapshot = await getDocs(q);
-        const notifications = logSnapshot.docs.map(docToNotification);
+        const notificationSnapshot = await getDocs(q);
+        const notifications = notificationSnapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString() // Ensure date is formatted
+        } as Notification));
         
         if (notifications.length === 0) {
              const defaultMessage = userType === 'admin' ? {
@@ -74,14 +84,15 @@ export const getNotifications = async (userType: 'admin' | 'merchant', userId?: 
 };
 
 function docToNotification(doc: any): Notification {
-    const log = doc.data();
-    const eventType = notificationTypeMap[log.type] || { icon: Users, title: () => log.type };
-    
+    const notificationData = doc.data();
+    // You might want to map specific fields from your notification document to the Notification type
+    // For now, assuming direct mapping for title, description, and icon (if stored)
     return {
         id: doc.id,
-        title: eventType.title(log),
-        description: log.message,
-        icon: eventType.icon,
-        createdAt: log.timestamp?.toDate().toISOString() || new Date().toISOString(),
+        title: notificationData.title || 'No Title',
+        description: notificationData.description || 'No description.',
+        icon: notificationData.icon || Users, // Default icon if not specified
+        createdAt: notificationData.createdAt?.toDate().toISOString() || new Date().toISOString(),
+        userId: notificationData.userId || undefined,
     };
 }

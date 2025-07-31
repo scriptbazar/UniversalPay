@@ -12,21 +12,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if all required Firebase config keys are present and not placeholders
-const isConfigValid = 
-    firebaseConfig.apiKey && firebaseConfig.apiKey !== 'YOUR_API_KEY_HERE' &&
-    firebaseConfig.projectId && firebaseConfig.projectId !== 'YOUR_PROJECT_ID_HERE';
-
 // Initialize Firebase for SSR and CSR, ensuring it's only done once.
-const app: FirebaseApp = !getApps().length && isConfigValid ? initializeApp(firebaseConfig) : getApp();
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
-
-
-if (!isConfigValid) {
-    console.error(
-      "Firebase config is missing or invalid. Make sure to set NEXT_PUBLIC_FIREBASE environment variables in your .env file."
-    );
-}
 
 export { app, auth, db };

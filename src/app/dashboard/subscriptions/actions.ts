@@ -3,13 +3,16 @@
 
 import { db } from "@/lib/firebase";
 import admin from 'firebase-admin';
+import serviceAccount from "../../../../serviceAccountKey.json";
 
 if (!admin.apps.length) {
-    try {
-      admin.initializeApp();
-    } catch (e) {
-      console.error('Firebase admin initialization error', e);
-    }
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch (e) {
+    console.error('Firebase admin initialization error', e);
+  }
 }
 
 export async function logSubscriptionChange(adminUid: string, action: 'created' | 'updated' | 'deleted', planName: string, details?: any) {

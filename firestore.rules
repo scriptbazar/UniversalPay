@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -23,10 +22,9 @@ service cloud.firestore {
       // Allow creating logs for any authenticated user (e.g., cloud functions).
       allow create: if request.auth != null;
 
-      // COMBINED RULE:
       // An Admin can list/read ALL logs.
-      // A merchant can ONLY list/read logs where they are the targetUser.
-      allow list, read: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
+      allow list: if isAdmin();
+      allow read: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
 
       // No one else can update or delete logs directly.
       allow update, delete: if false;
@@ -41,7 +39,7 @@ service cloud.firestore {
         // Allow public read for payment pages (pay/[slug] route)
         allow get: if true;
     }
-    
+
     // Rules for 'invoices'
     match /invoices/{invoiceId} {
       // Only the merchant who owns it or an admin can manage it.
@@ -57,7 +55,7 @@ service cloud.firestore {
       // Authenticated users can create tickets.
       allow create: if request.auth != null;
     }
-    
+
     // Rules for 'transactions'
     match /transactions/{txId} {
        // Admins can read all. Merchants can read their own.
@@ -67,16 +65,25 @@ service cloud.firestore {
        // Transactions should not be updated or deleted from the client.
        allow update, delete: if false;
     }
-    
+
     // Rules for 'withdrawals'
     match /withdrawals/{wdId} {
-        // Admins can read all. Merchants can read their own.
-        allow read: if isAdmin() || request.auth.uid == resource.data.merchantId;
+        // Admins can read and list all. Merchants can read their own.
+        allow read, list: if isAdmin() || request.auth.uid == resource.data.merchantId;
         // Merchants can create their own withdrawal requests.
         allow create: if request.auth.uid == request.resource.data.merchantId;
         // Only admins can update (approve/reject).
         allow update: if isAdmin();
         allow delete: if false;
+    }
+
+    // Rules for 'notifications'
+    match /notifications/{notificationId} {
+      allow read, list: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.userId);
+      // Allow creation by authenticated users (e.g., by cloud functions).
+      allow create: if request.auth != null;
+      // Notifications should not be updated or deleted by clients.
+      allow update, delete: if false;
     }
 
   }

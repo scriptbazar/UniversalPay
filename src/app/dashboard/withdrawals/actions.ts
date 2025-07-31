@@ -1,7 +1,7 @@
 "use server"
 import { revalidatePath } from "next/cache";
 import { db, auth } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 // Define the Withdrawal type
 export type Withdrawal = {
@@ -34,4 +34,22 @@ export async function createWithdrawal(withdrawalData: Omit<Withdrawal, 'id' | '
     console.error("Error creating withdrawal:", error);
     return { success: false, error: "Failed to create withdrawal." };
   }
+}
+
+/**
+ * Processes a withdrawal request by updating its status.
+ * @param withdrawalId - The ID of the withdrawal to process.
+ * @param newStatus - The new status of the withdrawal.
+ * @returns An object with the success status or an error message.
+ */
+export async function processWithdrawal(withdrawalId: string, newStatus: 'Completed' | 'Failed') {
+    try {
+        const withdrawalRef = doc(db, "withdrawals", withdrawalId);
+        await updateDoc(withdrawalRef, { status: newStatus });
+        revalidatePath("/dashboard/withdrawals");
+        return { success: true };
+    } catch (error) {
+        console.error("Error processing withdrawal:", error);
+        return { success: false, error: "Failed to process withdrawal." };
+    }
 }

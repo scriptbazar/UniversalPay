@@ -39,9 +39,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useSearchParams } from 'next/navigation';
-import { getMerchantTransactions, type Transaction } from '@/lib/transactionsData';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase'; // Import db
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore'; // Import firestore functions
+
+// Define the Transaction type according to your Firestore data structure
+type Transaction = {
+    id: string;
+    merchantId: string;
+    customerEmail: string;
+    status: string;
+    method: string;
+    date: Timestamp; // Assuming date is stored as a Timestamp in Firestore
+    amount: string;
+};
 
 function PaymentsComponent() {
     const searchParams = useSearchParams();
@@ -58,15 +69,43 @@ function PaymentsComponent() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // In a real app, you'd use user.uid. Here we use a placeholder for the demo.
-                setTransactions(getMerchantTransactions('placeholder-merchant-id'));
+                const merchantId = user.uid; // Get the authenticated user's ID
+                const transactionsCollectionRef = collection(db, "transactions");
+                const q = query(
+                    transactionsCollectionRef,
+                    where("merchantId", "==", merchantId), // Filter by merchantId
+                    orderBy("date", "desc") // Order by date
+                );
+
+                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+                    const fetchedTransactions = querySnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        date: doc.data().date // Keep as Timestamp initially
+                    } as Transaction));
+                    setTransactions(fetchedTransactions);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching merchant transactions:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Failed to fetch transactions. Check console and Firebase rules.",
+                    });
+                    setLoading(false);
+                });
+
+                return () => unsubscribeSnapshot(); // Cleanup snapshot listener
+            } else {
+                setTransactions([]); // Clear transactions if not authenticated
+                setLoading(false);
             }
-            setLoading(false);
         });
-        return () => unsubscribe();
-    }, []);
+
+        return () => unsubscribeAuth(); // Cleanup auth listener
+    }, [toast]);
 
     useEffect(() => {
         setFilter(initialFilter);
@@ -93,10 +132,10 @@ function PaymentsComponent() {
         }
 
         if (dateRange?.from) {
-            filtered = filtered.filter(tx => new Date(tx.date) >= dateRange.from!);
+            filtered = filtered.filter(tx => tx.date.toDate() >= dateRange.from!);
         }
         if (dateRange?.to) {
-            filtered = filtered.filter(tx => new Date(tx.date) <= dateRange.to!);
+            filtered = filtered.filter(tx => tx.date.toDate() <= dateRange.to!);
         }
 
         return filtered;
@@ -226,7 +265,7 @@ function PaymentsComponent() {
                                             <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                         </TableCell>
                                         <TableCell>{tx.method}</TableCell>
-                                        <TableCell>{tx.date}</TableCell>
+                                        <TableCell>{tx.date.toDate().toLocaleString()}</TableCell>{/* Format date here */}
                                         <TableCell className="text-right">${tx.amount}</TableCell>
                                     </TableRow>
                                 ))}

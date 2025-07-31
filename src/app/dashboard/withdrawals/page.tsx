@@ -1,316 +1,208 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Check, X, Landmark, User, Calendar, DollarSign, Wallet, Hash, Copy, Search } from "lucide-react";
+import { collection, onSnapshot, query, where, doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { type Withdrawal, getWithdrawals, updateWithdrawalStatus } from "@/lib/withdrawalsData";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import Link from "next/link";
+import type { Withdrawal } from "./actions";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { processWithdrawal } from "./actions";
+import { createWithdrawal } from "./actions";
 import { auth } from "@/lib/firebase";
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
-  switch (status) {
-    case 'Completed':
-      return 'default';
-    case 'Pending':
-      return 'secondary';
-    case 'Failed':
-      return 'destructive';
-    default:
-      return 'outline';
-  }
-}
-
-const truncateAddress = (address: string) => {
-    if (address.length <= 10) return address;
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-}
+    switch (status) {
+        case 'Completed': return 'default';
+        case 'Pending': return 'secondary';
+        case 'Failed': return 'destructive';
+        default: return 'outline';
+    }
+};
 
 export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-    const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(true);
-
-    const fetchWithdrawals = async () => {
-        setLoading(true);
-        const data = await getWithdrawals();
-        setWithdrawals(data);
-        setLoading(false);
-    }
+    const [user, setUser] = useState(auth.currentUser);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        fetchWithdrawals();
+        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+                // Force refresh token to get latest custom claims
+                const idTokenResult = await currentUser.getIdTokenResult(true);
+                setIsAdmin(!!idTokenResult.claims.role && idTokenResult.claims.role === 'admin');
+            } else {
+                setIsAdmin(false);
+            }
+        });
+        return () => unsubscribe();
     }, []);
 
-    const handleAction = async (e: React.MouseEvent, id: string, newStatus: "Completed" | "Failed") => {
-        e.stopPropagation(); // Prevent row click event
-        if (!auth.currentUser) {
-            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to perform this action.' });
+    useEffect(() => {
+        // Only fetch withdrawals if the user is an admin
+        if (!user || !isAdmin) {
+            setLoading(false);
+            if (user && !isAdmin) {
+                 toast({
+                    title: "Permission Denied",
+                    description: "You do not have administrative permissions to view all withdrawals.",
+                    variant: "destructive",
+                });
+            }
+            setWithdrawals([]);
             return;
-        }
+        };
 
-        const result = await processWithdrawal(auth.currentUser.uid, id, newStatus);
+        const withdrawalsCollectionRef = collection(db, "withdrawals");
+        // The query can be unfiltered because the security rules allow admins to list all
+        const q = query(withdrawalsCollectionRef);
         
-        if (result.success) {
-            await updateWithdrawalStatus(id, newStatus); // Update Firestore
-            await fetchWithdrawals(); // Re-fetch data
-            setSelectedWithdrawal(null); // Close the dialog
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const withdrawalsList: Withdrawal[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Withdrawal));
+            setWithdrawals(withdrawalsList);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching withdrawals:", error);
             toast({
-                title: `Withdrawal ${newStatus}`,
-                description: `The withdrawal request (ID: ${id}) has been updated.`,
+                title: "Error",
+                description: "Failed to fetch withdrawals. Check console and Firebase rules.",
+                variant: "destructive",
             });
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user, isAdmin, toast]);
+
+    const handleProcessWithdrawal = async (id: string, newStatus: 'Completed' | 'Failed') => {
+        try {
+            const withdrawalRef = doc(db, "withdrawals", id);
+            await updateDoc(withdrawalRef, { status: newStatus });
+            toast({
+                title: "Success",
+                description: `Withdrawal has been marked as ${newStatus}.`,
+            });
+        } catch (error) {
+            console.error("Error processing withdrawal:", error);
+            toast({
+                title: "Error",
+                description: "Failed to process withdrawal.",
+                variant: "destructive",
+            });
         }
     };
     
-    const handleRowClick = (withdrawal: Withdrawal) => {
-        setSelectedWithdrawal(withdrawal);
-    };
-
-    const copyToClipboard = (text: string, label: string) => {
-        navigator.clipboard.writeText(text);
-        toast({
-            title: `${label} Copied!`,
-        });
-    };
-
     const filteredWithdrawals = useMemo(() => {
-        let results = withdrawals;
+        let filtered = withdrawals;
 
         if (filter !== 'all') {
-            results = results.filter(w => {
-                const method = w.currency === 'INR' ? 'upi' : 'crypto';
-                return method === filter;
-            });
+            filtered = filtered.filter(w => w.status.toLowerCase() === filter);
         }
-        
+
         if (searchTerm) {
-            const lowercasedFilter = searchTerm.toLowerCase();
-            results = results.filter(w => 
-                w.id.toLowerCase().includes(lowercasedFilter) ||
-                w.merchantName.toLowerCase().includes(lowercasedFilter) ||
-                w.destination.toLowerCase().includes(lowercasedFilter)
+            filtered = filtered.filter(w => 
+                w.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                w.userId.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        return results;
+        return filtered;
     }, [withdrawals, filter, searchTerm]);
 
-    const itemsPerPage = 10;
-    const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
-    const paginatedWithdrawals = filteredWithdrawals.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-    );
+    if (loading) {
+        return <div className="text-center p-8">Loading withdrawals...</div>;
+    }
 
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manage Withdrawals</h1>
-        <p className="text-muted-foreground">Approve or reject withdrawal requests from merchants.</p>
-      </div>
-      <Separator />
-
-       <Tabs value={filter} onValueChange={setFilter}>
-        <div className="flex items-center justify-between">
-            <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="upi">UPI</TabsTrigger>
-                <TabsTrigger value="crypto">Crypto</TabsTrigger>
-            </TabsList>
-             <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Search withdrawals..."
-                    className="pl-8 w-64"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+    if (!isAdmin) {
+        return (
+            <div className="text-center p-8 text-destructive">
+                You do not have the necessary permissions to view this page.
             </div>
-        </div>
+        );
+    }
 
-        <Card className="mt-4">
-            <CardHeader>
-            <CardTitle>Withdrawal Requests</CardTitle>
-            <CardDescription>A list of all withdrawal requests across the platform. Click a row to see details.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            <Table>
-                <TableHeader>
-                <TableRow>
-                    <TableHead>Request ID</TableHead>
-                    <TableHead>Merchant</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Destination</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {loading ? (
-                    <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading requests...</TableCell></TableRow>
-                ) : paginatedWithdrawals.map((w) => (
-                    <TableRow key={w.id} onClick={() => handleRowClick(w)} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium font-mono">{w.id.substring(0, 12)}...</TableCell>
-                    <TableCell>
-                        <div className="font-medium">{w.merchantName}</div>
-                        <div className="text-xs text-muted-foreground">{w.merchantId}</div>
-                    </TableCell>
-                    <TableCell>{new Date(w.createdAt?.toDate()).toLocaleDateString()}</TableCell>
-                    <TableCell>{truncateAddress(w.destination)}</TableCell>
-                    <TableCell>${w.amount} {w.currency}</TableCell>
-                    <TableCell>
-                        <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
-                    </TableCell>
-                    </TableRow>
-                ))}
-                 {filteredWithdrawals.length === 0 && !loading && (
-                    <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24">
-                            No withdrawals found for the current filters.
-                        </TableCell>
-                    </TableRow>
-                )}
-                </TableBody>
-            </Table>
-            </CardContent>
-            <CardFooter>
-                <div className="flex justify-between items-center w-full">
-                    <div className="text-xs text-muted-foreground">
-                        Showing <strong>{(currentPage - 1) * itemsPerPage + 1}-{(currentPage - 1) * itemsPerPage + paginatedWithdrawals.length}</strong> of <strong>{filteredWithdrawals.length}</strong> withdrawals
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                        >
-                            Previous
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            </CardFooter>
-        </Card>
-      </Tabs>
-      
-      <Dialog open={!!selectedWithdrawal} onOpenChange={() => setSelectedWithdrawal(null)}>
-            <DialogContent className="max-w-xl">
-                 {selectedWithdrawal && (
-                    <>
-                        <DialogHeader>
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <div className="flex items-center gap-4">
-                                        <Landmark className="h-8 w-8 text-muted-foreground" />
-                                        <div>
-                                            <DialogTitle className="text-2xl">Withdrawal Details</DialogTitle>
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-sm text-muted-foreground font-mono">{selectedWithdrawal.id}</p>
-                                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedWithdrawal.id, 'Request ID')} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <Badge variant={getStatusBadgeVariant(selectedWithdrawal.status)} className="text-base px-4 py-1">{selectedWithdrawal.status}</Badge>
-                            </div>
-                        </DialogHeader>
-                        <div className="py-4 space-y-6">
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div className="flex items-center gap-4">
-                                    <User className="w-6 h-6 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Merchant</p>
-                                        <Link href={`/dashboard/users/${selectedWithdrawal.merchantId}`} className="font-semibold hover:underline">
-                                            {selectedWithdrawal.merchantName}
-                                        </Link>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <Calendar className="w-6 h-6 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Requested On</p>
-                                        <p className="font-semibold">{new Date(selectedWithdrawal.createdAt?.toDate()).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <DollarSign className="w-6 h-6 text-primary" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Amount</p>
-                                        <p className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <Separator/>
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="flex items-start gap-4">
-                                    <Wallet className="w-6 h-6 text-primary mt-1" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Destination Type</p>
-                                        <p className="font-semibold">{selectedWithdrawal.destination.startsWith('bc1') ? 'Bitcoin Wallet' : selectedWithdrawal.destination.startsWith('T') ? 'USDT (TRC20) Wallet' : 'Bank Account'}</p> 
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <Hash className="w-6 h-6 text-primary mt-1" />
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Destination Address</p>
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-semibold font-mono break-all">{selectedWithdrawal.destination}</p>
-                                            <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground flex-shrink-0" onClick={() => copyToClipboard(selectedWithdrawal.destination, 'Destination Address')} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {selectedWithdrawal.status === "Pending" && (
-                                <>
-                                    <Separator />
-                                    <div>
-                                        <h3 className="text-lg font-semibold mb-2">Actions</h3>
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            Please verify the transaction details before approving. This action cannot be undone.
-                                        </p>
-                                        <div className="flex gap-4">
-                                            <Button size="lg" variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Completed")}>
-                                                <Check className="mr-2 h-5 w-5" />Approve
-                                            </Button>
-                                            <Button size="lg" variant="destructive" onClick={(e) => handleAction(e, selectedWithdrawal.id, "Failed")}>
-                                                <X className="mr-2 h-5 w-5" />Reject
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+    return (
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>Withdrawal Requests</CardTitle>
+                            <CardDescription>Review and process all merchant withdrawal requests.</CardDescription>
                         </div>
-                    </>
-                 )}
-            </DialogContent>
-      </Dialog>
-    </div>
-  );
+                        <Input 
+                            placeholder="Search by name or user ID..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-64"
+                        />
+                    </div>
+                     <Tabs value={filter} onValueChange={setFilter} className="mt-4">
+                        <TabsList>
+                            <TabsTrigger value="all">All</TabsTrigger>
+                            <TabsTrigger value="pending">Pending</TabsTrigger>
+                            <TabsTrigger value="completed">Completed</TabsTrigger>
+                            <TabsTrigger value="failed">Failed</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User ID</TableHead>
+                                <TableHead>Account Name</TableHead>
+                                <TableHead>Bank</TableHead>
+                                <TableHead>Account Number</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredWithdrawals.map(w => (
+                                <TableRow key={w.id}>
+                                    <TableCell>{w.userId}</TableCell>
+                                    <TableCell>{w.accountName}</TableCell>
+                                    <TableCell>{w.bankName}</TableCell>
+                                    <TableCell>{w.accountNumber}</TableCell>
+                                    <TableCell className="text-right">${w.amount.toFixed(2)}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {w.status === 'Pending' && (
+                                            <div className="flex gap-2">
+                                                <Button size="sm" onClick={() => handleProcessWithdrawal(w.id, 'Completed')}>Approve</Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleProcessWithdrawal(w.id, 'Failed')}>Decline</Button>
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    {filteredWithdrawals.length === 0 && (
+                        <div className="text-center p-8 text-muted-foreground">
+                            No withdrawals match your search criteria.
+                        </div>
+                    )}
+                </CardContent>
+                 <CardFooter>
+                    <div className="text-xs text-muted-foreground">
+                        Showing {filteredWithdrawals.length} of {withdrawals.length} withdrawals.
+                    </div>
+                </CardFooter>
+            </Card>
+        </div>
+    );
 }

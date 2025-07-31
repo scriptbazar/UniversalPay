@@ -11,7 +11,10 @@ import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 
-admin.initializeApp();
+// Correct initialization of the Firebase Admin SDK
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
 
 // This function now only assigns a default 'merchant' role upon creation.
 // This simplifies the logic and removes potential points of failure.

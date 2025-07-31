@@ -13,7 +13,7 @@ import {
   Users,
   Copy,
 } from "lucide-react"
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import {
   Avatar,
@@ -54,49 +54,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
 
-
-const chartData = [
-    { name: 'Jan', revenue: 4230, monthIndex: 0 },
-    { name: 'Feb', revenue: 3120, monthIndex: 1 },
-    { name: 'Mar', revenue: 5890, monthIndex: 2 },
-    { name: 'Apr', revenue: 4500, monthIndex: 3 },
-    { name: 'May', revenue: 6200, monthIndex: 4 },
-    { name: 'Jun', revenue: 7100, monthIndex: 5 },
-    { name: 'Jul', revenue: 6800, monthIndex: 6 },
-    { name: 'Aug', revenue: 7500, monthIndex: 7 },
-    { name: 'Sep', revenue: 6400, monthIndex: 8 },
-    { name: 'Oct', revenue: 8100, monthIndex: 9 },
-    { name: 'Nov', revenue: 8500, monthIndex: 10 },
-    { name: 'Dec', revenue: 9200, monthIndex: 11 },
-];
-
-const generateAllTransactions = () => {
-    const methods = ["UPI", "Crypto", "Page", "Link"];
-    return Array.from({ length: 50 }, (_, i) => {
-        const monthIndex = Math.floor(i / 4);
-        const date = new Date(2023, monthIndex, (i % 28) + 1);
-        return {
-            id: `TXN${12345 + i}`,
-            name: `Customer ${i + 1}`,
-            email: `customer${i + 1}@example.com`,
-            amount: (Math.random() * 500 + 20).toFixed(2),
-            status: Math.random() > 0.1 ? "Success" : "Failed",
-            date: date,
-            method: methods[i % 4],
-        }
-    });
-};
 
 type Transaction = {
     id: string;
-    name: string;
-    email: string;
-    amount: string;
-    status: "Success" | "Failed";
-    date: Date;
+    merchantId: string;
+    customerEmail: string;
+    status: "Success" | "Failed" | "Pending";
     method: string;
+    date: string; // Assuming date is stored as a string in Firestore
+    amount: string;
 };
 
 export default function Dashboard() {
@@ -106,6 +74,7 @@ export default function Dashboard() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
   const [merchantName, setMerchantName] = useState("Merchant");
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -115,16 +84,67 @@ export default function Dashboard() {
             if (userDoc.exists()) {
                 setMerchantName(userDoc.data().fullName || "Merchant");
             }
+
+            // Fetch merchant's transactions
+            const transactionsCol = collection(db, "transactions");
+            const q = query(
+                transactionsCol,
+                where("merchantId", "==", user.uid),
+                orderBy("date", "desc")
+            );
+
+            const unsubscribeTransactions = onSnapshot(q, (querySnapshot) => {
+                const fetchedTransactions = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    date: doc.data().date?.toDate().toISOString() || new Date().toISOString(), // Convert Firestore Timestamp to string
+                } as Transaction));
+                setAllTransactions(fetchedTransactions);
+                setRecentTransactionsData(fetchedTransactions.slice(0, 5)); // Get top 5 recent transactions
+
+                // Process data for the chart
+                const monthlyData: { [key: string]: { revenue: number }} = {};
+                 fetchedTransactions.forEach(tx => {
+                    const month = new Date(tx.date).toLocaleString('default', { month: 'short' });
+                     if (!monthlyData[month]) {
+                      monthlyData[month] = { revenue: 0 };
+                    }
+                    if (tx.status === 'Success') {
+                      monthlyData[month].revenue += parseFloat(tx.amount);
+                    }
+                  });
+
+                const chartDataArray = Object.keys(monthlyData).map(month => ({
+                    name: month,
+                    ...monthlyData[month]
+                  })).sort((a, b) => {
+                      // Sort by month name (simple alphabetical for now, can improve with date parsing if needed)
+                      const monthsOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                      return monthsOrder.indexOf(a.name) - monthsOrder.indexOf(b.name);
+                  });
+                setChartData(chartDataArray);
+
+            }, (error) => {
+                console.error("Error fetching merchant transactions:", error);
+                 toast({
+                    variant: "destructive",
+                    title: "Failed to load transactions",
+                    description: error.message,
+                });
+            });
+
+            return () => unsubscribeTransactions(); // Cleanup listener
+
+        } else {
+            setMerchantName("Merchant");
+            setAllTransactions([]);
+            setRecentTransactionsData([]);
+            setChartData([]);
         }
     });
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribe(); // Cleanup auth listener
+  }, [toast]);
 
-  useEffect(() => {
-    const generated = generateAllTransactions();
-    setAllTransactions(generated);
-    setRecentTransactionsData(generated.slice(-4).reverse());
-  }, []);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -141,8 +161,21 @@ export default function Dashboard() {
   };
   
     const getStatusBadgeVariant = (status: string) => {
-        return status === 'Success' ? 'default' : 'destructive';
+        switch (status.toLowerCase()) {
+            case 'success': return 'default';
+            case 'pending': return 'secondary';
+            case 'failed': return 'destructive';
+            default: return 'outline';
+        }
     };
+
+  // Calculate total revenue from fetched transactions
+  const totalRevenue = useMemo(() => {
+    return allTransactions
+      .filter(tx => tx.status === 'Success')
+      .reduce((acc, tx) => acc + parseFloat(tx.amount), 0)
+      .toFixed(2);
+  }, [allTransactions]);
 
 
   return (
@@ -161,8 +194,9 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$45,231.89</div>
+              <div className="text-2xl font-bold">${totalRevenue}</div>
               <p className="text-xs text-muted-foreground">
+                {/* This percentage change is still static - would need more historical data */}
                 +20.1% from last month
               </p>
             </CardContent>
@@ -177,8 +211,9 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+2350</div>
+              <div className="text-2xl font-bold">{/* This is still static - need to fetch from Firestore */} +2350</div>
               <p className="text-xs text-muted-foreground">
+                {/* This percentage change is still static */}
                 +180.1% from last month
               </p>
             </CardContent>
@@ -191,8 +226,9 @@ export default function Dashboard() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12,234</div>
+              <div className="text-2xl font-bold">{allTransactions.length}</div>
               <p className="text-xs text-muted-foreground">
+                {/* This percentage change is still static */}
                 +19% from last month
               </p>
             </CardContent>
@@ -207,8 +243,9 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">98.2%</div>
+              <div className="text-2xl font-bold">{/* This is still static */}98.2%</div>
               <p className="text-xs text-muted-foreground">
+                {/* This percentage change is still static */}
                 +2% from last month
               </p>
             </CardContent>
@@ -271,17 +308,22 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentTransactionsData.map((tx) => (
+                {recentTransactionsData.length > 0 ? recentTransactionsData.map((tx) => (
                     <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
                         <TableCell>
-                            <div className="font-medium">{tx.name}</div>
-                            <div className="hidden text-sm text-muted-foreground md:inline">
+                            <div className="font-medium">{tx.customerEmail}</div> {/* Use customerEmail */}
+                            {/* Assuming customer name is not stored directly on transaction */}
+                            {/* <div className="hidden text-sm text-muted-foreground md:inline">
                                 {tx.email}
-                            </div>
+                            </div> */}
                         </TableCell>
                         <TableCell className="text-right">${tx.amount}</TableCell>
                     </TableRow>
-                ))}
+                )) : (
+                    <TableRow>
+                         <TableCell colSpan={2} className="text-center p-4">No recent transactions.</TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -307,13 +349,14 @@ export default function Dashboard() {
               </div>
               <Separator />
                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Customer:</span>
+                  <span className="text-muted-foreground">Customer Email:</span> {/* Use customerEmail */}
                   <div className="flex items-center gap-2">
                       <div className="text-right">
-                          <p className="font-semibold">{selectedTransaction.name}</p>
-                          <p className="text-sm text-muted-foreground">{selectedTransaction.email}</p>
+                          {/* Assuming customer name is not stored directly */}
+                          {/* <p className="font-semibold">{selectedTransaction.name}</p> */}
+                          <p className="text-sm text-muted-foreground">{selectedTransaction.customerEmail}</p> {/* Use customerEmail */}
                       </div>
-                      <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.email, 'Customer Email')} />
+                      <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
                   </div>
               </div>
               <Separator />
@@ -329,7 +372,12 @@ export default function Dashboard() {
               <Separator />
                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Status:</span>
-                  <Badge variant={selectedTransaction.status === 'Success' ? 'default' : 'destructive'}>{selectedTransaction.status}</Badge>
+                  <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
+              </div>
+               <Separator />
+              <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Date:</span>
+                  <span className="font-semibold">{new Date(selectedTransaction.date).toLocaleString()}</span> {/* Format date */}
               </div>
             </div>
           )}

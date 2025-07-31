@@ -19,10 +19,27 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { getPaymentLinks, addPaymentLink, updatePaymentLink, type PaymentLink } from '@/lib/paymentLinksData';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+
+// Define the PaymentLink type according to your Firestore data structure
+export type PaymentLink = {
+  id: string;
+  merchantId: string;
+  title: string;
+  description: string;
+  slug: string;
+  url: string;
+  type: 'Dynamic' | 'Fixed';
+  amount: number | null;
+  isActive: boolean;
+  brandColor: string;
+  collectPhone: boolean;
+  payments: number;
+  createdAt: Timestamp;
+};
 
 export default function PaymentLinksPage() {
   const { toast } = useToast();
@@ -35,22 +52,42 @@ export default function PaymentLinksPage() {
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
 
-  const fetchLinks = async (uid: string) => {
-      const merchantLinks = await getPaymentLinks(uid);
-      setLinks(merchantLinks);
-      setLoading(false);
-  }
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
-        fetchLinks(user.uid);
+        const merchantId = user.uid;
+        const linksCollectionRef = collection(db, "paymentLinks");
+        const q = query(
+          linksCollectionRef,
+          where("merchantId", "==", merchantId),
+          orderBy("createdAt", "desc")
+        );
+
+        const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+          const fetchedLinks = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data() as any, // Use as any for now, will refine type mapping if needed
+              createdAt: doc.data().createdAt
+            }) as PaymentLink);
+          setLinks(fetchedLinks);
+          setLoading(false);
+        }, (error) => {
+          console.error("Error fetching payment links:", error);
+          toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to fetch payment links. Check console and Firebase rules.",
+          });
+          setLoading(false);
+        });
+
+        return () => unsubscribeSnapshot();
       } else {
         router.push('/login');
       }
     });
-    return () => unsubscribe();
-  }, [router]);
+    return () => unsubscribeAuth();
+  }, [router, toast]);
 
   const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,29 +106,39 @@ export default function PaymentLinksPage() {
       return;
     }
 
-    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = title.toLowerCase().replace(/s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-    await addPaymentLink({
-      merchantId: user.uid,
-      title,
-      description: 'A custom payment link.',
-      slug,
-      url: `/pay/${slug}`,
-      type: isDynamic ? 'Dynamic' : 'Fixed',
-      amount: isDynamic ? null : parseFloat(amount),
-      isActive: true,
-      brandColor: '#29ABE2', // Default color
-      collectPhone: false,
-      payments: 0,
-    });
-    
-    await fetchLinks(user.uid);
-    setAmount('');
-    setTitle('');
-    toast({
-      title: 'Success!',
-      description: 'New payment link has been created.',
-    });
+    try {
+        await addDoc(collection(db, "paymentLinks"), {
+            merchantId: user.uid,
+            title,
+            description: 'A custom payment link.',
+            slug,
+            url: `/pay/${slug}`,
+            type: isDynamic ? 'Dynamic' : 'Fixed',
+            amount: isDynamic ? null : parseFloat(amount),
+            isActive: true,
+            brandColor: '#29ABE2', // Default color
+            collectPhone: false,
+            payments: 0,
+            createdAt: Timestamp.now(),
+        });
+        
+        // No need to refetch all links, onSnapshot will update state
+        setAmount('');
+        setTitle('');
+        toast({
+          title: 'Success!',
+          description: 'New payment link has been created.',
+        });
+    } catch (error) {
+        console.error("Error creating payment link:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to create payment link.",
+        });
+    }
   };
   
   const copyToClipboard = (url: string) => {
@@ -105,18 +152,47 @@ export default function PaymentLinksPage() {
   };
 
   const handleToggleActive = async (link: PaymentLink) => {
-    await updatePaymentLink(link.id, { isActive: !link.isActive });
-    await fetchLinks(auth.currentUser!.uid);
-    toast({
-      title: `Link ${!link.isActive ? 'activated' : 'deactivated'}`,
-    });
+    try {
+        const linkRef = doc(db, "paymentLinks", link.id);
+        await updateDoc(linkRef, { isActive: !link.isActive });
+        // No need to refetch all links, onSnapshot will update state
+        toast({
+          title: `Link ${!link.isActive ? 'activated' : 'deactivated'}`,
+        });
+    } catch (error) {
+        console.error("Error toggling link status:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to update link status.",
+        });
+    }
+  }
+
+  const handleDeleteLink = async (linkId: string) => {
+      try {
+          const linkRef = doc(db, "paymentLinks", linkId);
+          await deleteDoc(linkRef);
+          // No need to refetch all links, onSnapshot will update state
+          toast({
+              title: 'Link deleted!',
+              description: 'The payment link has been successfully deleted.',
+          });
+      } catch (error) {
+           console.error("Error deleting payment link:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to delete payment link.",
+            });
+      }
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Payment Links</h1>
-        <p className="text-muted-foreground">Create and manage temporary links to accept payments from anyone. Links are valid for 7 days.</p>
+        <p className="text-muted-foreground">Create and manage temporary links to accept payments from anyone.</p>
       </div>
       <Separator />
 
@@ -207,7 +283,7 @@ export default function PaymentLinksPage() {
                             <Copy className="h-3 w-3 cursor-pointer" onClick={(e) => { e.stopPropagation(); copyToClipboard(link.url); }} />
                         </div>
                       </TableCell>
-                      <TableCell>{link.amount ? `$${link.amount.toFixed(2)}` : 'Dynamic'}</TableCell>
+                      <TableCell>{link.amount !== null ? `$${link.amount.toFixed(2)}` : 'Dynamic'}</TableCell>
                       <TableCell>
                         <Badge variant={link.isActive ? 'default' : 'secondary'}>
                           {link.isActive ? 'Active' : 'Inactive'}
@@ -240,7 +316,7 @@ export default function PaymentLinksPage() {
                                 />
                               {link.isActive ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteLink(link.id); }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
