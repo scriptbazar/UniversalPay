@@ -11,11 +11,12 @@ import {
     where, 
     orderBy,
     serverTimestamp,
-    arrayUnion
+    arrayUnion,
+    Timestamp
 } from 'firebase/firestore';
 
 export type TicketReply = {
-  author: 'Admin' | string; // Admin or merchant name
+  author: 'Admin' | string;
   message: string;
   createdAt: string;
 };
@@ -28,42 +29,88 @@ export type Ticket = {
   message: string;
   status: 'Open' | 'In Progress' | 'Closed';
   priority: 'Low' | 'Medium' | 'High';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   replies: TicketReply[];
 };
 
+// Helper to safely convert Firestore Timestamps or date strings to JS Date objects
+const processTimestamp = (timestamp: any): Date => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate(); // It's a Firestore Timestamp
+    }
+    if (typeof timestamp === 'string') {
+        const date = new Date(timestamp);
+        if (!isNaN(date.getTime())) {
+            return date; // It's a valid date string
+        }
+    }
+    // Fallback for null, undefined, or invalid formats
+    return new Date();
+};
+
+
 // Function to get all tickets, or tickets for a specific merchant
 export const getTickets = async (merchantId?: string): Promise<Ticket[]> => {
+    console.log(`Fetching tickets for merchantId: ${merchantId}`);
     const ticketsCol = collection(db, 'tickets');
     let q;
+    // Temporarily removing orderBy to diagnose the issue.
     if (merchantId) {
-        q = query(ticketsCol, where('merchantId', '==', merchantId), orderBy('updatedAt', 'desc'));
+        q = query(ticketsCol, where('merchantId', '==', merchantId));
     } else {
-        q = query(ticketsCol, orderBy('updatedAt', 'desc'));
+        q = query(ticketsCol);
     }
-    const ticketSnapshot = await getDocs(q);
-    const ticketList = ticketSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ticket));
-    return ticketList;
+    try {
+        const ticketSnapshot = await getDocs(q);
+        const ticketList = ticketSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: processTimestamp(data.createdAt),
+                updatedAt: processTimestamp(data.updatedAt),
+            } as Ticket;
+        });
+        console.log('Successfully fetched tickets (without ordering):', ticketList);
+        return ticketList;
+    } catch (error) {
+        console.error("Error fetching tickets: ", error);
+        throw error;
+    }
 };
 
 // Function to get a single ticket by its ID
 export const getTicketById = async (id: string): Promise<Ticket | null> => {
+    console.log(`Fetching ticket with id: ${id}`);
     const ticketRef = doc(db, 'tickets', id);
-    const ticketSnap = await getDoc(ticketRef);
-    if (ticketSnap.exists()) {
-        return { id: ticketSnap.id, ...ticketSnap.data() } as Ticket;
-    } else {
-        return null;
+    try {
+        const ticketSnap = await getDoc(ticketRef);
+        if (ticketSnap.exists()) {
+            const data = ticketSnap.data();
+            const ticketData = {
+                id: ticketSnap.id,
+                ...data,
+                createdAt: processTimestamp(data.createdAt),
+                updatedAt: processTimestamp(data.updatedAt),
+            } as Ticket;
+            console.log('Successfully fetched ticket:', ticketData);
+            return ticketData;
+        } else {
+            console.log('No such ticket found!');
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching ticket by id: ", error);
+        throw error;
     }
 };
 
 // Function to add a new ticket
-export const addTicket = async (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'replies'>): Promise<void> => {
+export const addTicket = async (newTicketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'replies'>): Promise<void> => {
+    console.log('Attempting to add new ticket:', newTicketData);
     const now = new Date();
-    const createdAt = now.toISOString();
-    now.setSeconds(now.getSeconds() + 5); 
-    const autoReplyCreatedAt = now.toISOString();
+    const autoReplyCreatedAt = new Date(now.getTime() + 5000).toISOString();
 
     const autoReply = {
         author: 'Admin',
@@ -71,17 +118,23 @@ export const addTicket = async (newTicketData: Omit<Ticket, 'id' | 'createdAt' |
         createdAt: autoReplyCreatedAt,
     };
 
-    await addDoc(collection(db, 'tickets'), {
-        ...newTicketData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        status: 'Open',
-        replies: [autoReply],
-    });
+    try {
+        await addDoc(collection(db, 'tickets'), {
+            ...newTicketData,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            replies: [autoReply],
+        });
+        console.log('Ticket added successfully to Firestore.');
+    } catch (error) {
+        console.error("Error adding ticket to Firestore: ", error);
+        throw error;
+    }
 };
 
 // Function to add a reply to a ticket
 export const addReply = async (ticketId: string, replyData: Omit<TicketReply, 'createdAt'>): Promise<void> => {
+    console.log(`Adding reply to ticket ${ticketId}:`, replyData);
     const ticketRef = doc(db, 'tickets', ticketId);
     
     const newReply: TicketReply = {
@@ -89,18 +142,31 @@ export const addReply = async (ticketId: string, replyData: Omit<TicketReply, 'c
       createdAt: new Date().toISOString(),
     };
     
-    await updateDoc(ticketRef, {
-        replies: arrayUnion(newReply),
-        updatedAt: serverTimestamp(),
-        status: replyData.author === 'Admin' ? 'In Progress' : 'Open',
-    });
+    try {
+        await updateDoc(ticketRef, {
+            replies: arrayUnion(newReply),
+            updatedAt: serverTimestamp(),
+            status: replyData.author === 'Admin' ? 'In Progress' : 'Open',
+        });
+        console.log('Reply added successfully.');
+    } catch (error) {
+        console.error("Error adding reply: ", error);
+        throw error;
+    }
 };
 
 // Function to update a ticket's status or priority
 export const updateTicket = async (ticketId: string, updates: Partial<Pick<Ticket, 'status' | 'priority'>>) => {
+    console.log(`Updating ticket ${ticketId} with:`, updates);
     const ticketRef = doc(db, 'tickets', ticketId);
-    await updateDoc(ticketRef, {
-        ...updates,
-        updatedAt: serverTimestamp()
-    });
+    try {
+        await updateDoc(ticketRef, {
+            ...updates,
+            updatedAt: serverTimestamp()
+        });
+        console.log('Ticket updated successfully.');
+    } catch (error) {
+        console.error("Error updating ticket: ", error);
+        throw error;
+    }
 };

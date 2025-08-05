@@ -51,9 +51,12 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log('Submitting ticket...');
+
     if (!subject || !message) {
         toast({ variant: 'destructive', title: 'Please fill all fields.' });
         setIsLoading(false);
+        console.error('Validation failed: Subject or message is empty.');
         return;
     }
 
@@ -61,28 +64,43 @@ function CreateTicketDialog({ onTicketCreated }: { onTicketCreated: () => void; 
     if (!user) {
         toast({ variant: 'destructive', title: 'You must be logged in to create a ticket.'});
         setIsLoading(false);
+        console.error('Authentication failed: User is not logged in.');
         return;
     }
     
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userDocRef);
-    const merchantName = userDoc.exists() ? userDoc.data().fullName : 'Unknown Merchant';
-    
-    await addTicket({
-      subject,
-      message,
-      priority,
-      merchantId: user.uid,
-      merchantName: merchantName,
-    });
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const merchantName = userDoc.exists() ? userDoc.data().fullName : 'Unknown Merchant';
+        console.log('User UID:', user.uid);
+        console.log('Merchant Name:', merchantName);
 
-    toast({ title: 'Ticket Created', description: 'Our team will get back to you shortly.' });
-    onTicketCreated();
-    setOpen(false);
-    setSubject('');
-    setMessage('');
-    setPriority('Medium');
-    setIsLoading(false);
+        const newTicketData = {
+          subject,
+          message,
+          priority,
+          status: 'Open' as 'Open',
+          merchantId: user.uid,
+          merchantName: merchantName,
+        };
+
+        console.log('New Ticket Data:', newTicketData);
+        
+        await addTicket(newTicketData);
+
+        console.log('Ticket created successfully.');
+        toast({ title: 'Ticket Created', description: 'Our team will get back to you shortly.' });
+        onTicketCreated();
+        setOpen(false);
+        setSubject('');
+        setMessage('');
+        setPriority('Medium');
+    } catch (error) {
+        console.error("Error creating ticket: ", error);
+        toast({ variant: 'destructive', title: 'Error creating ticket', description: 'An unexpected error occurred. Please try again.' });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -138,8 +156,14 @@ export default function MerchantSupportPage() {
   const fetchTickets = async () => {
     const user = auth.currentUser;
     if (user) {
-        const fetchedTickets = await getTickets(user.uid);
-        setTickets(fetchedTickets);
+        try {
+            console.log('Fetching tickets for user:', user.uid);
+            const fetchedTickets = await getTickets(user.uid);
+            setTickets(fetchedTickets);
+            console.log('Tickets fetched successfully:', fetchedTickets);
+        } catch (error) {
+            console.error('Error fetching tickets:', error);
+        }
     }
   };
 

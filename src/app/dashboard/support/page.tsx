@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 
 const getStatusVariant = (status: Ticket['status']) => {
@@ -37,12 +39,20 @@ export default function AdminSupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const fetchedTickets = await getTickets();
-            setTickets(fetchedTickets);
+            try {
+                const fetchedTickets = await getTickets();
+                setTickets(fetchedTickets);
+            } catch (err: any) {
+                console.error("Caught error in component:", err);
+                setError(`Failed to fetch tickets. Please check console for details. Firebase Error: ${err.message}`);
+            }
+        } else {
+            setError("Authentication error. Please log in again.");
         }
         setLoading(false);
     });
@@ -84,6 +94,14 @@ export default function AdminSupportPage() {
       </div>
       <Separator />
 
+      {error && (
+          <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+          </Alert>
+      )}
+
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList>
           <TabsTrigger value="all">All ({ticketCounts.all})</TabsTrigger>
@@ -111,11 +129,11 @@ export default function AdminSupportPage() {
               <TableBody>
                 {loading ? (
                     <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
-                            <Skeleton className="h-8 w-full" />
+                        <TableCell colSpan={6}>
+                           <Skeleton className="h-24 w-full" />
                         </TableCell>
                     </TableRow>
-                ) : filteredTickets.length > 0 ? (
+                ) : !error && filteredTickets.length > 0 ? (
                     filteredTickets.map((ticket) => (
                     <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">
                         <TableCell className="font-mono">{ticket.id.substring(0, 10)}...</TableCell>
@@ -133,7 +151,7 @@ export default function AdminSupportPage() {
                 ) : (
                     <TableRow>
                          <TableCell colSpan={6} className="h-24 text-center">
-                           No tickets found.
+                           {error ? "An error occurred. See message above." : "No tickets found."}
                         </TableCell>
                     </TableRow>
                 )}

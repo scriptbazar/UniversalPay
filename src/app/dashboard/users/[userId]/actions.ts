@@ -1,22 +1,9 @@
 
 'use server';
 
-import { db } from "@/lib/firebase";
+import { db, admin } from '@/lib/firebaseAdmin';
 import { doc, updateDoc, writeBatch, collection } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
-import admin from 'firebase-admin';
-import serviceAccount from "../../../../../serviceAccountKey.json";
-
-// This is a simplified check. In a real app, you'd initialize admin only once.
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } catch (e) {
-    console.error('Firebase admin initialization error', e);
-  }
-}
 
 /**
  * Updates a user's role in Firestore and their custom claim in Firebase Auth.

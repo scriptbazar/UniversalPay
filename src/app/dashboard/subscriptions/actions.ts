@@ -1,19 +1,7 @@
 
 'use server';
 
-import { db } from "@/lib/firebase";
-import admin from 'firebase-admin';
-import serviceAccount from "../../../../serviceAccountKey.json";
-
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } catch (e) {
-    console.error('Firebase admin initialization error', e);
-  }
-}
+import { db, admin } from '@/lib/firebaseAdmin';
 
 export async function logSubscriptionChange(adminUid: string, action: 'created' | 'updated' | 'deleted', planName: string, details?: any) {
     if (!adminUid) {

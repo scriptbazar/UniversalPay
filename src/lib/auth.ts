@@ -14,6 +14,7 @@ import {
     type User
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { logActivity } from './log'; // Import the logger
 
 interface UserData {
     fullName: string;
@@ -41,6 +42,17 @@ export async function createUser(email: string, password: string, additionalData
             createdAt: serverTimestamp(),
             avatar: user.photoURL || `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`
         });
+
+        // Log merchant creation activity
+        await logActivity({
+            action: 'MERCHANT_CREATED',
+            details: `New merchant account created for ${email}.`,
+            status: 'succeeded',
+            targetUser: user.uid,
+            ipAddress: 'N/A', // IP address is not available in this context
+            userRole: 'merchant',
+        });
+
 
         return { success: true, userId: user.uid };
     } catch (error: any) {
@@ -76,6 +88,18 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         if (loginType === 'merchant' && userRole !== 'merchant') {
             await signOut(auth);
             return { success: false, error: "Access denied. Please use the Admin Login page." };
+        }
+        
+        // Log successful login for merchants
+        if (loginType === 'merchant') {
+            await logActivity({
+                action: 'MERCHANT_LOGIN',
+                details: `Merchant ${user.email} logged in successfully via email/password.`,
+                status: 'succeeded',
+                targetUser: user.uid,
+                ipAddress: 'N/A',
+                userRole: 'merchant',
+            });
         }
 
         return { success: true, user: { uid: user.uid, ...userDoc.data() } };
@@ -136,6 +160,16 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
             return { success: false, error: 'Admin accounts cannot use social login.' };
         }
 
+        // Log successful social login
+        await logActivity({
+            action: 'MERCHANT_SOCIAL_LOGIN',
+            details: `Merchant ${user.email} logged in successfully via ${providerName}.`,
+            status: 'succeeded',
+            targetUser: user.uid,
+            ipAddress: 'N/A',
+            userRole: 'merchant',
+        });
+
         return { success: true, user: { uid: user.uid, ...userData } };
 
     } catch (error: any) {
@@ -149,6 +183,22 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
 
 export async function signOutUser() {
     try {
+        const user = auth.currentUser;
+        if (user) {
+            // Log logout activity before signing out
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists() && userDoc.data()?.role === 'merchant') {
+                await logActivity({
+                    action: 'MERCHANT_LOGOUT',
+                    details: `Merchant ${user.email} logged out.`,
+                    status: 'succeeded',
+                    targetUser: user.uid,
+                    ipAddress: 'N/A',
+                    userRole: 'merchant'
+                });
+            }
+        }
         await signOut(auth);
         return { success: true };
     } catch (error: any) {
