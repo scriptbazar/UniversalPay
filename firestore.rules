@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -6,49 +7,23 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth.token.role == 'admin';
     }
-
+  
     match /users/{userId} {
-      allow read: if isAdmin() || request.auth.uid == userId;
+      allow get: if request.auth.uid == userId || isAdmin();
+      allow list: if isAdmin();
       allow create;
-      allow update: if isAdmin() || request.auth.uid == userId;
-      allow delete: if isAdmin();
+      allow update: if request.auth.uid == userId || isAdmin();
     }
     
-    match /paymentLinks/{linkId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth.uid == request.resource.data.merchantId;
-        allow update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
-    }
-    
-     match /transactions/{transactionId} {
-        allow create;
-        allow read: if isAdmin() || request.auth.uid == resource.data.merchantId;
-        allow update, delete: if isAdmin();
-    }
-    
-    match /invoices/{invoiceId} {
-        allow create, read, update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
-    }
-    
-    match /tickets/{ticketId} {
-      // Admins can read all tickets.
-      // Merchants can read their own tickets.
-      allow read: if isAdmin() || (request.auth.uid != null && request.auth.uid == resource.data.merchantId);
-      
-      // Merchants can create tickets for themselves.
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.merchantId;
-      
-      // Admins or the ticket owner can update/delete.
-      allow update, delete: if isAdmin() || (request.auth.uid != null && request.auth.uid == resource.data.merchantId);
-    }
-    
-    match /withdrawals/{withdrawalId} {
-        allow read, create, update, delete: if isAdmin() || request.auth.uid == resource.data.merchantId;
-    }
-
     match /audit_logs/{logId} {
-        allow write: if isAdmin();
-        allow read: if isAdmin() || (request.auth.uid != null && resource.data.details.targetUser == request.auth.uid);
+      allow create: if request.auth != null;
+
+      // Allow listing logs only for admins OR for a user querying their own logs.
+      // This is crucial for the "My Activity" page for merchants.
+      allow list: if isAdmin() || (request.query.where.details.targetUser is string && request.query.where.details.targetUser == request.auth.uid);
+
+      // Allow getting a single log if the user is an admin OR it's their own log.
+      allow get: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
     }
   }
 }
