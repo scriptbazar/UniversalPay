@@ -1,3 +1,4 @@
+
 {
   "indexes": [
     {
@@ -6,6 +7,20 @@
       "fields": [
         {
           "fieldPath": "details.targetUser",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "audit_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "level",
           "order": "ASCENDING"
         },
         {
