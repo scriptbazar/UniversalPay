@@ -23,7 +23,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -66,7 +66,8 @@ export default function UsersPage() {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
                 const usersCollectionRef = collection(db, "users");
-                const q = query(usersCollectionRef);
+                // Query to only fetch users with the 'merchant' role
+                const q = query(usersCollectionRef, where("role", "==", "merchant"));
 
                 const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     let userList: User[] = [];
@@ -77,11 +78,7 @@ export default function UsersPage() {
                     setLoading(false);
                 }, (err: any) => {
                     console.error("Error fetching users from Firestore: ", err);
-                    if (err.code === 'permission-denied') {
-                        setError("Permission Denied: Your account does not have the necessary permissions to view all users. Please check your security rules in Firebase to ensure admins can list the 'users' collection.");
-                    } else {
-                        setError(`Failed to load users: ${err.message}`);
-                    }
+                    setError(`Failed to load users: ${err.message}`);
                     toast({
                         variant: "destructive",
                         title: "Failed to load users",
