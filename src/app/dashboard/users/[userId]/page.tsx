@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, Timestamp, collection, query, where, getDocs } from "firebase/firestore";
 import { type Customer, getAllCustomers } from '@/lib/customersData';
 
 type Transaction = {
@@ -108,6 +108,7 @@ export default function UserDetailPage() {
   const [merchant, setMerchant] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [merchantCount, setMerchantCount] = useState(0);
   
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   
@@ -150,10 +151,15 @@ export default function UserDetailPage() {
                 setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
             }
 
-            // Fetch customers for this merchant
-            const allCustomers = await getAllCustomers();
-            const merchantCustomers = allCustomers.filter(c => c.merchantId === userId);
-            setCustomers(merchantCustomers);
+            if (userData.role === 'admin') {
+                const merchantsQuery = query(collection(db, "users"), where("role", "==", "merchant"));
+                const merchantsSnapshot = await getDocs(merchantsQuery);
+                setMerchantCount(merchantsSnapshot.size);
+            } else {
+                const allCustomers = await getAllCustomers();
+                const merchantCustomers = allCustomers.filter(c => c.merchantId === userId);
+                setCustomers(merchantCustomers);
+            }
 
         } else {
             setMerchant(null);
@@ -281,6 +287,8 @@ const txTotalPages = useMemo(() => {
     return <div className="flex-grow flex items-center justify-center">User not found.</div>;
   }
 
+  const isAdminProfile = merchant.role === 'admin';
+
   return (
     <div className="space-y-6">
         <Link href="/dashboard/users" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -371,10 +379,10 @@ const txTotalPages = useMemo(() => {
         <Tabs defaultValue="overview">
             <TabsList className="gap-2">
                 <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
-                <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
-                <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>
-                <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
-                <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
+                {!isAdminProfile && <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>}
+                {!isAdminProfile && <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>}
+                {!isAdminProfile && <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>}
+                {!isAdminProfile && <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>}
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -412,16 +420,31 @@ const txTotalPages = useMemo(() => {
                             <p className="text-xs text-muted-foreground">+2 since last month</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                            <Percent className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{successRate}</div>
-                            <p className="text-xs text-muted-foreground">+1.2% from last month</p>
-                        </CardContent>
-                    </Card>
+                    {isAdminProfile ? (
+                        <Card asChild>
+                             <Link href="/dashboard/users" className="cursor-pointer hover:bg-muted/50">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">All Merchants</CardTitle>
+                                    <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{merchantCount}</div>
+                                    <p className="text-xs text-muted-foreground">Total merchants on the platform.</p>
+                                </CardContent>
+                            </Link>
+                        </Card>
+                    ) : (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                                <Percent className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{successRate}</div>
+                                <p className="text-xs text-muted-foreground">+1.2% from last month</p>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
