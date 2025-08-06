@@ -55,6 +55,7 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
   { href: "/dashboard/analytics", icon: BarChart, label: "Analytics" },
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
+  { href: "/dashboard/customers", icon: Users, label: "All Customers" },
   { href: "/dashboard/transactions", icon: CreditCard, label: "All Transactions" },
   { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
   { href: "/dashboard/payment-pages", icon: AppWindow, label: "Payment Pages" },
@@ -134,28 +135,30 @@ export default function AdminDashboardLayout({
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    setUser(user);
-                    setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string });
+                const idTokenResult = await user.getIdTokenResult();
+                if (idTokenResult.claims.role === 'admin') {
+                     setUser(user);
+                     const userDocRef = doc(db, "users", user.uid);
+                     const userDoc = await getDoc(userDocRef);
+                     if (userDoc.exists()) {
+                         setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string });
+                     }
                 } else {
-                    await signOutUser();
-                    toast({
-                        variant: 'destructive',
-                        title: 'Access Denied',
-                        description: 'You do not have permission to access the admin dashboard.'
-                    });
-                    router.push('/admin'); 
+                     await signOutUser();
+                     toast({
+                         variant: 'destructive',
+                         title: 'Access Denied',
+                         description: 'You do not have permission to access the admin dashboard.'
+                     });
+                     router.push('/admin'); 
                 }
             } else {
-                router.push('/admin'); 
+                 router.push('/admin'); 
             }
             setLoading(false);
         });
         return () => unsubscribe();
-    }, [router, toast]);
+    }, []);
     
     const handleLogout = async () => {
         const { success, error } = await signOutUser();
