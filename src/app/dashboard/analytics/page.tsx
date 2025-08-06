@@ -1,3 +1,4 @@
+
 'use client';
 
 import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy } from "lucide-react";
@@ -15,15 +16,22 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Transaction = {
     id: string;
     method: string;
     amount: string;
-    date: string;
-    status: 'Successful' | 'Failed';
+    date: any; // Keep as any to handle both Timestamp and string
+    status: 'Successful' | 'Failed' | 'Pending';
     customerEmail: string;
     merchantId: string;
+};
+
+type User = {
+    id: string;
+    country?: string;
+    createdAt: any; // Keep as any to handle both Timestamp and string
 };
 
 const getStatusBadgeVariant = (status: string) => {
@@ -38,52 +46,122 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [dialogContent, setDialogContent] = useState<{ title: string; description: string; data: React.ReactNode; type: 'month' | 'payment-method' } | null>(null);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
+  const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+      totalVolume: 0,
+      successfulPayments: 0,
+      newMerchants: 0,
+      avgTransaction: 0
+  });
 
   // State for Geo Data pagination
   const [geoCurrentPage, setGeoCurrentPage] = useState(1);
   const geoItemsPerPage = 5;
-  
+
   useEffect(() => {
     const fetchData = async () => {
         setLoading(true);
-        // In a real app, these would be aggregated queries from your backend/database
-        setRevenueData([
-            { month: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380 },
-            { month: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320 },
-            { month: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, successfulTransactions: 480 },
-            { month: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, successfulTransactions: 450 },
-            { month: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, successfulTransactions: 530 },
-            { month: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, successfulTransactions: 510 },
-        ]);
+        try {
+            const usersQuery = query(collection(db, "users"));
+            const transactionsQuery = query(collection(db, "transactions"));
 
-        setPaymentMethodData([
-            { name: 'UPI', value: 400, color: '#0088FE' },
-            { name: 'Crypto', value: 300, color: '#00C49F' },
-            { name: 'Page', value: 300, color: '#FFBB28' },
-            { name: 'Link', value: 200, color: '#FF8042' },
-        ]);
+            const [usersSnapshot, transactionsSnapshot] = await Promise.all([
+                getDocs(usersQuery),
+                getDocs(transactionsQuery),
+            ]);
 
-        setGeoData([
-            { country: 'India', flag: 'in', volume: 120500, transactions: 1250, merchants: 45 },
-            { country: 'United States', flag: 'us', volume: 85200, transactions: 890, merchants: 22 },
-            { country: 'United Kingdom', flag: 'gb', volume: 45300, transactions: 512, merchants: 15 },
-            { country: 'Germany', flag: 'de', volume: 32100, transactions: 450, merchants: 18 },
-            { country: 'Australia', flag: 'au', volume: 28000, transactions: 300, merchants: 8 },
-            { country: 'Canada', flag: 'ca', volume: 25400, transactions: 280, merchants: 12 },
-        ]);
-        setLoading(false);
+            const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+            const allTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+            
+            // --- Process Stats ---
+            const successfulTxns = allTransactions.filter(t => t.status === 'Successful');
+            const totalVolume = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount), 0);
+            const successfulPayments = successfulTxns.length;
+            const newMerchants = allUsers.length; // Simplified: total users as new merchants
+            const avgTransaction = successfulPayments > 0 ? totalVolume / successfulPayments : 0;
+            setStats({ totalVolume, successfulPayments, newMerchants, avgTransaction });
+
+            // --- Process Revenue Chart Data ---
+            const monthlyData: { [key: string]: { revenue: number, newUsers: number, totalTransactions: number, successfulTransactions: number }} = {};
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            
+            allTransactions.forEach(tx => {
+                const date = tx.date?.toDate ? tx.date.toDate() : new Date(tx.date);
+                const month = monthNames[date.getMonth()];
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 };
+                }
+                monthlyData[month].totalTransactions++;
+                if (tx.status === 'Successful') {
+                    monthlyData[month].revenue += parseFloat(tx.amount);
+                    monthlyData[month].successfulTransactions++;
+                }
+            });
+             allUsers.forEach(user => {
+                const date = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+                const month = monthNames[date.getMonth()];
+                 if (monthlyData[month]) {
+                    monthlyData[month].newUsers++;
+                }
+            });
+
+            const revenueChartData = monthNames.map(month => ({
+                month: month,
+                ... (monthlyData[month] || { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 })
+            }));
+            setRevenueData(revenueChartData);
+
+
+            // --- Process Payment Method Chart ---
+            const paymentMethods: { [key: string]: number } = {};
+            successfulTxns.forEach(tx => {
+                paymentMethods[tx.method] = (paymentMethods[tx.method] || 0) + 1;
+            });
+            const paymentMethodChartData = Object.keys(paymentMethods).map((name) => ({
+                name,
+                value: paymentMethods[name],
+                color: { UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042' }[name] || '#8884d8'
+            }));
+            setPaymentMethodData(paymentMethodChartData);
+
+
+            // --- Process Geo Data ---
+            const geoDistribution: { [key: string]: { volume: number, transactions: number, merchants: number, flag: string } } = {};
+            allUsers.forEach(user => {
+                if(user.country) {
+                    if (!geoDistribution[user.country]) {
+                        geoDistribution[user.country] = { volume: 0, transactions: 0, merchants: 0, flag: user.country.toLowerCase() };
+                    }
+                    geoDistribution[user.country].merchants++;
+                }
+            });
+            successfulTxns.forEach(tx => {
+                const user = allUsers.find(u => u.id === tx.merchantId);
+                if (user?.country && geoDistribution[user.country]) {
+                    geoDistribution[user.country].volume += parseFloat(tx.amount);
+                    geoDistribution[user.country].transactions++;
+                }
+            });
+
+            const geoChartData = Object.keys(geoDistribution).map(country => ({
+                country,
+                ...geoDistribution[country]
+            })).sort((a, b) => b.volume - a.volume);
+            setGeoData(geoChartData);
+
+        } catch (error) {
+            console.error("Failed to fetch analytics data:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load platform analytics.' });
+        } finally {
+            setLoading(false);
+        }
     }
     fetchData();
-  }, []);
+  }, [toast]);
 
     const geoTotalPages = Math.ceil(geoData.length / geoItemsPerPage);
     const paginatedGeoData = geoData.slice(
@@ -91,12 +169,6 @@ export default function AnalyticsPage() {
       geoCurrentPage * geoItemsPerPage
     );
 
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: `${label} Copied!` });
-  };
-  
   const handleStatCardClick = (stat: string) => {
      switch(stat) {
          case 'volume':
@@ -106,10 +178,10 @@ export default function AnalyticsPage() {
              router.push(`/dashboard/analytics/details/successful-transactions_all`);
              break;
          case 'merchants':
-            router.push(`/dashboard/analytics/details/new-users_all`);
+            router.push(`/dashboard/users`);
              break;
         case 'avg_transaction':
-            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-center p-4">Average Value: <span className="font-bold">$125.50</span></p>, type: 'month' });
+            setDialogContent({ title: 'Average Transaction Value', description: 'The average value of a single transaction.', data: <p className="text-center p-4">Average Value: <span className="font-bold">${stats.avgTransaction.toFixed(2)}</span></p>, type: 'month' });
             break;
      }
   };
@@ -177,8 +249,8 @@ export default function AnalyticsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$2,86,300</div>
-            <p className="text-xs text-muted-foreground">+15.2% from last month</p>
+             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">${stats.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
+             {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+15.2% from last month</p>}
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -187,8 +259,8 @@ export default function AnalyticsPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2,670</div>
-            <p className="text-xs text-muted-foreground">+12.4% from last month</p>
+             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">+{stats.successfulPayments.toLocaleString()}</div>}
+             {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+12.4% from last month</p>}
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('merchants')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -197,8 +269,8 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+177</div>
-            <p className="text-xs text-muted-foreground">+8.1% from last month</p>
+             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">+{stats.newMerchants.toLocaleString()}</div>}
+             {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+8.1% from last month</p>}
           </CardContent>
         </Card>
         <Card onClick={() => handleStatCardClick('avg_transaction')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -207,8 +279,8 @@ export default function AnalyticsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$125.50</div>
-            <p className="text-xs text-muted-foreground">+1.2% from last month</p>
+             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">${stats.avgTransaction.toFixed(2)}</div>}
+             {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+1.2% from last month</p>}
           </CardContent>
         </Card>
       </div>
@@ -220,6 +292,7 @@ export default function AnalyticsPage() {
             <CardDescription>Monthly revenue and new merchant signups. Click on a bar to see details.</CardDescription>
           </CardHeader>
           <CardContent>
+            {loading ? <Skeleton className="h-[300px] w-full" /> : 
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={revenueData} onClick={handleBarClick}>
                 <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
@@ -239,6 +312,7 @@ export default function AnalyticsPage() {
                 <Bar yAxisId="right" dataKey="newUsers" fill="hsl(var(--accent))" name="New Users" radius={[4, 4, 0, 0]} className="cursor-pointer" />
               </BarChart>
             </ResponsiveContainer>
+            }
           </CardContent>
         </Card>
         <Card>
@@ -247,6 +321,7 @@ export default function AnalyticsPage() {
             <CardDescription>Breakdown by payment type. Click a slice for details.</CardDescription>
           </CardHeader>
           <CardContent>
+            {loading ? <Skeleton className="h-[300px] w-full" /> : 
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={paymentMethodData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label onClick={handlePieClick} className="cursor-pointer" stroke="none">
@@ -264,6 +339,7 @@ export default function AnalyticsPage() {
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
+            }
           </CardContent>
         </Card>
       </div>
@@ -274,6 +350,7 @@ export default function AnalyticsPage() {
             <CardDescription>Top countries by transaction volume.</CardDescription>
         </CardHeader>
         <CardContent>
+            {loading ? <Skeleton className="h-48 w-full" /> : 
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -288,7 +365,7 @@ export default function AnalyticsPage() {
                     {paginatedGeoData.length > 0 ? paginatedGeoData.map(geo => (
                         <TableRow key={geo.country}>
                             <TableCell className="font-medium flex items-center gap-2">
-                                <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} />
+                                <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} data-ai-hint="country flag" />
                                 {geo.country}
                             </TableCell>
                             <TableCell>${geo.volume.toLocaleString()}</TableCell>
@@ -305,7 +382,9 @@ export default function AnalyticsPage() {
                     )}
                 </TableBody>
             </Table>
+            }
         </CardContent>
+        { !loading && geoData.length > 0 &&
         <CardFooter>
             <div className="flex justify-between items-center w-full">
                 <div className="text-xs text-muted-foreground">
@@ -331,6 +410,7 @@ export default function AnalyticsPage() {
                 </div>
             </div>
         </CardFooter>
+        }
       </Card>
       
        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
@@ -349,60 +429,6 @@ export default function AnalyticsPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Transaction Details</DialogTitle>
-                <DialogDescription>
-                Full details for transaction {selectedTransaction?.id}
-                </DialogDescription>
-            </DialogHeader>
-            {selectedTransaction && (
-                <div className="space-y-4 py-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Transaction ID:</span>
-                        <div className="flex items-center gap-2">
-                                <span className="font-mono font-semibold">{selectedTransaction.id}</span>
-                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.id, 'Transaction ID')} />
-                            </div>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Customer Email:</span>
-                        <div className="flex items-center gap-2">
-                                <span className="font-semibold">{selectedTransaction.customerEmail}</span>
-                                <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
-                            </div>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="font-semibold">${selectedTransaction.amount}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Method:</span>
-                        <span className="font-semibold">{selectedTransaction.method}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Status:</span>
-                        <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>{selectedTransaction.status}</Badge>
-                    </div>
-                </div>
-            )}
-            <DialogFooter className="sm:justify-between gap-2">
-                <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
-                {selectedTransaction && (
-                    <Button asChild>
-                        <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
-                    </Button>
-                )}
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
     </div>
   );
 }
