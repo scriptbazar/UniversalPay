@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +17,17 @@ export default function AdminPaymentPagesPage() {
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would fetch from a database.
-    setLinks(getPaymentLinks());
+    async function fetchLinks() {
+        setLoading(true);
+        // Fetch data asynchronously and update state
+        const fetchedLinks = await getPaymentLinks();
+        setLinks(fetchedLinks);
+        setLoading(false);
+    }
+    fetchLinks();
   }, []);
 
   const handleRowClick = (linkId: string) => {
@@ -27,6 +35,10 @@ export default function AdminPaymentPagesPage() {
   };
 
   const filteredLinks = useMemo(() => {
+    // Ensure links is an array before filtering
+    if (!Array.isArray(links)) {
+        return [];
+    }
     return links.filter(link => {
       const matchesSearch = searchTerm === '' || link.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || (link.isActive ? 'active' : 'inactive') === statusFilter;
@@ -85,20 +97,24 @@ export default function AdminPaymentPagesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLinks.map((link) => (
+              {loading ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">Loading pages...</TableCell>
+                </TableRow>
+              ) : filteredLinks.map((link) => (
                 <TableRow key={link.id} onClick={() => handleRowClick(link.slug)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{link.title}</TableCell>
-                  <TableCell>MyStore.com</TableCell>
+                  <TableCell>{link.merchantId}</TableCell>
                   <TableCell>{link.payments}</TableCell>
                   <TableCell>
                     <Badge variant={link.isActive ? "default" : "secondary"}>
                       {link.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(link.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(link.createdAt?.toDate()).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
-               {filteredLinks.length === 0 && (
+               {!loading && filteredLinks.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={5} className="text-center h-24">
                         No pages found for the current filters.
