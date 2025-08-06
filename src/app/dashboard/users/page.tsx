@@ -130,6 +130,12 @@ export default function UsersPage() {
             title: `${label} Copied!`,
         });
     };
+    
+    const getCountryCode = (countryName?: string) => {
+        if (!countryName) return null;
+        const country = countries.find(c => c.name === countryName);
+        return country?.code.toLowerCase();
+    };
 
     const renderContent = () => {
         if (loading) {
@@ -162,7 +168,12 @@ export default function UsersPage() {
                                   <div className="flex items-center gap-3">
                                       <Image src={user.avatar || `https://placehold.co/40x40.png?text=${(user.fullName || 'U').charAt(0)}`} width={40} height={40} alt={user.fullName || 'User'} className="rounded-full" data-ai-hint="user avatar" />
                                       <div>
-                                          <div>{user.fullName || 'Unnamed User'}</div>
+                                          <div className="flex items-center gap-2">
+                                            {getCountryCode(user.country) && (
+                                                <Image src={`https://flagcdn.com/w20/${getCountryCode(user.country)}.png`} width={20} height={15} alt={user.country!} data-ai-hint="country flag" />
+                                            )}
+                                            <span>{user.fullName || 'Unnamed User'}</span>
+                                          </div>
                                           <div className="text-sm text-muted-foreground">{user.email}</div>
                                       </div>
                                   </div>

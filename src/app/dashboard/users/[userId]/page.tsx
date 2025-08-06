@@ -27,6 +27,7 @@ import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp, collection, query, where, getDocs } from "firebase/firestore";
 import { type Customer, getAllCustomers } from '@/lib/customersData';
+import { countries } from "@/lib/countries";
 
 type Transaction = {
     id: string;
@@ -97,6 +98,7 @@ interface UserProfile {
     role?: string;
     kycStatus?: "Verified" | "Pending Approval" | "Not Started";
     createdAt?: Timestamp;
+    country?: string;
 }
 
 export default function UserDetailPage() {
@@ -134,6 +136,13 @@ export default function UserDetailPage() {
     const shortId = Math.abs(hash).toString().substring(0, 8).padEnd(8, '0');
     return `UVPAYM${shortId}`;
   }, [userId]);
+
+  const countryCode = useMemo(() => {
+    if (!merchant?.country) return null;
+    const countryData = countries.find(c => c.name === merchant.country);
+    return countryData?.code;
+  }, [merchant?.country]);
+
 
   useEffect(() => {
     if (!userId) return;
@@ -356,6 +365,12 @@ const txTotalPages = useMemo(() => {
                     <span className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {merchant.email} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.email, 'Email')} /></span>
                     {merchant.mobile && <span className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {merchant.mobile} <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(merchant.mobile!, 'Mobile Number')} /></span>}
                     {merchant.businessName && <span className="flex items-center gap-2 text-muted-foreground"><Briefcase className="h-4 w-4" /> {merchant.businessName}</span>}
+                    {merchant.country && countryCode && (
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                            <Image src={`https://flagcdn.com/w20/${countryCode.toLowerCase()}.png`} width={20} height={15} alt={`${merchant.country} flag`} data-ai-hint="country flag" />
+                            {merchant.country}
+                        </span>
+                    )}
                 </div>
                  <div className="flex items-center gap-4 mt-2">
                     <Badge variant={getStatusBadgeVariant(merchant.status)}>
