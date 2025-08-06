@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,15 +25,29 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-import { type SubMerchant, getSubMerchants } from '@/lib/resellerData';
+
+export type SubMerchant = {
+    id: string;
+    name: string;
+    email: string;
+    sales: string;
+    commission: string;
+    status: 'Active' | 'Inactive';
+};
 
 export default function CommissionsPage() {
     const { toast } = useToast();
-    const [subMerchants] = useState<SubMerchant[]>(getSubMerchants());
+    const [subMerchants, setSubMerchants] = useState<SubMerchant[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMerchant, setSelectedMerchant] = useState<SubMerchant | null>(null);
     const itemsPerPage = 10;
     
+    useEffect(() => {
+        // In a real app, you would fetch this from your database
+        // For now, it's an empty array since mock data is removed.
+        setSubMerchants([]);
+    }, []);
+
     const totalPages = Math.ceil(subMerchants.length / itemsPerPage);
     const paginatedMerchants = subMerchants.slice(
       (currentPage - 1) * itemsPerPage,
@@ -72,7 +85,7 @@ export default function CommissionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedMerchants.map(merchant => (
+                            {paginatedMerchants.length > 0 ? paginatedMerchants.map(merchant => (
                                 <TableRow key={merchant.id} onClick={() => setSelectedMerchant(merchant)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell>
                                         <div className="font-medium">{merchant.name}</div>
@@ -84,7 +97,13 @@ export default function CommissionsPage() {
                                     <TableCell>${parseFloat(merchant.sales).toLocaleString()}</TableCell>
                                     <TableCell className="text-right font-semibold">{merchant.commission}</TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        No sub-merchants found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>

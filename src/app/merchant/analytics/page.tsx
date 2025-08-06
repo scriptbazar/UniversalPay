@@ -1,4 +1,3 @@
-
 'use client';
 
 import { DollarSign, Users, CreditCard, Percent, Copy, ExternalLink, ArrowRight } from "lucide-react";
@@ -13,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 
 type Transaction = {
     id: string;
@@ -22,33 +24,6 @@ type Transaction = {
     status: 'Successful' | 'Failed';
 };
 
-const mockTransactions: Transaction[] = Array.from({ length: 100 }, (_, i) => {
-    const monthIndex = Math.floor(i / 8); // Spread across 12 months
-    const date = new Date(2023, monthIndex, (i % 28) + 1);
-    return {
-        id: `TXN20${i + 1}`,
-        method: ['UPI', 'Crypto', 'Page', 'Link'][i % 4],
-        amount: (Math.random() * 250).toFixed(2),
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD
-        status: Math.random() > 0.2 ? 'Successful' : 'Failed'
-    };
-});
-
-const initialRevenueData = [
-  { name: 'Jan', revenue: 4000, monthIndex: 0 },
-  { name: 'Feb', revenue: 3000, monthIndex: 1 },
-  { name: 'Mar', revenue: 5000, monthIndex: 2 },
-  { name: 'Apr', revenue: 4500, monthIndex: 3 },
-  { name: 'May', revenue: 6000, monthIndex: 4 },
-  { name: 'Jun', revenue: 5500, monthIndex: 5 },
-  { name: 'Jul', revenue: 6200, monthIndex: 6 },
-  { name: 'Aug', revenue: 7000, monthIndex: 7 },
-  { name: 'Sep', revenue: 6800, monthIndex: 8 },
-  { name: 'Oct', revenue: 7500, monthIndex: 9 },
-  { name: 'Nov', revenue: 7100, monthIndex: 10 },
-  { name: 'Dec', revenue: 8000, monthIndex: 11 },
-];
-
 type TopCustomer = {
     email: string;
     name: string;
@@ -56,34 +31,69 @@ type TopCustomer = {
     id: string;
 };
 
-const initialTopCustomers: TopCustomer[] = [
-    { id: 'cust_1', email: 'liam@example.com', name: 'Liam Johnson', totalSpent: 250.00 },
-    { id: 'cust_2', email: 'olivia@example.com', name: 'Olivia Smith', totalSpent: 150.00 },
-    { id: 'cust_3', email: 'noah@example.com', name: 'Noah Williams', totalSpent: 350.00 },
-    { id: 'cust_4', email: 'emma@example.com', name: 'Emma Brown', totalSpent: 450.00 },
-    { id: 'cust_5', email: 'ava@example.com', name: 'Ava Jones', totalSpent: 200.00 },
-];
-
-const initialPaymentMethodData = [
-    { name: 'UPI', value: 400, color: '#0088FE' },
-    { name: 'Crypto', value: 300, color: '#00C49F' },
-    { name: 'Page', value: 300, color: '#FFBB28' },
-    { name: 'Link', value: 150, color: '#FF8042' },
-];
-
-
 export default function AnalyticsPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [topCustomers, setTopCustomers] = useState<any[]>([]);
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
-  
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Set data on client-side to avoid hydration errors
-    setRevenueData(initialRevenueData);
-    setTopCustomers(initialTopCustomers);
-    setPaymentMethodData(initialPaymentMethodData);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            setLoading(true);
+            const transactionsRef = collection(db, "transactions");
+            const q = query(transactionsRef, where("merchantId", "==", user.uid), orderBy("date", "desc"));
+            const querySnapshot = await getDocs(q);
+            const transactions = querySnapshot.docs.map(doc => doc.data());
+
+            // Process revenue data
+            const monthlyRevenue: { [key: string]: number } = {};
+            transactions.forEach(tx => {
+                if(tx.status === 'Successful') {
+                    const month = new Date(tx.date).toLocaleString('default', { month: 'short' });
+                    if (!monthlyRevenue[month]) {
+                        monthlyRevenue[month] = 0;
+                    }
+                    monthlyRevenue[month] += parseFloat(tx.amount);
+                }
+            });
+            const revenueChartData = Object.keys(monthlyRevenue).map(month => ({ name: month, revenue: monthlyRevenue[month] }));
+            setRevenueData(revenueChartData);
+
+            // Process payment method data
+            const methodCounts: { [key: string]: number } = {};
+            transactions.forEach(tx => {
+                 if(tx.status === 'Successful') {
+                    if(!methodCounts[tx.method]) {
+                        methodCounts[tx.method] = 0;
+                    }
+                    methodCounts[tx.method]++;
+                 }
+            });
+            const paymentMethodChartData = Object.keys(methodCounts).map(method => ({
+                name: method,
+                value: methodCounts[method],
+                color: {UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042'}[method] || '#8884d8'
+            }));
+            setPaymentMethodData(paymentMethodChartData);
+            
+            // Process top customers
+            // This is a simplified version. In a real app, this might be a more complex aggregation.
+            const customerSpending: { [key: string]: { total: number, name: string } } = {};
+            const customersRef = collection(db, "customers"); // Assuming you have a customers collection
+            const customerQuery = query(customersRef, where("merchantId", "==", user.uid));
+            const customerSnapshot = await getDocs(customerQuery);
+            const customers = customerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+            setTopCustomers(customers.sort((a,b) => b.totalSpent - a.totalSpent).slice(0, 5));
+
+            setLoading(false);
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleBarClick = (data: any) => {
@@ -173,7 +183,7 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
+            <div className="text-2xl font-bold">{topCustomers.length}</div>
             <p className="text-xs text-muted-foreground">View your most frequent payers.</p>
           </CardContent>
         </Card>

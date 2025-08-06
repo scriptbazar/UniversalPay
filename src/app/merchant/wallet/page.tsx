@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -11,12 +10,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, Wallet, Copy, Banknote, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getWalletLoadRequests, addWalletLoadRequest, type WalletLoadRequest } from "@/lib/walletLoadData";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+
+export type WalletLoadRequest = {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  merchantEmail: string;
+  amount: string;
+  currency: 'USD';
+  method: string; // Method used for payment
+  transactionId: string;
+  status: "Pending" | "Approved" | "Rejected";
+  createdAt: any;
+};
 
 const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
   switch (status) {
@@ -40,10 +51,16 @@ export default function MerchantWalletPage() {
   const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
   const currentBalance = 5430.50; // Placeholder value
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchMerchantRequests = (uid: string) => {
-     // In a real app, you'd get the merchantId from the user session.
-     setRequests(getWalletLoadRequests().filter(w => w.merchantId === uid));
+  const fetchMerchantRequests = async (uid: string) => {
+     setLoading(true);
+     const requestsRef = collection(db, "walletLoadRequests");
+     const q = query(requestsRef, where("merchantId", "==", uid), orderBy("createdAt", "desc"));
+     const querySnapshot = await getDocs(q);
+     const fetchedRequests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletLoadRequest));
+     setRequests(fetchedRequests);
+     setLoading(false);
   }
 
   useEffect(() => {
@@ -79,7 +96,7 @@ export default function MerchantWalletPage() {
     const merchantName = userDoc.exists() ? userDoc.data().fullName : 'Your Business';
     const merchantEmail = userDoc.exists() ? userDoc.data().email : 'your-email@example.com';
 
-    addWalletLoadRequest({
+    await addDoc(collection(db, "walletLoadRequests"), {
         amount: numericAmount.toFixed(2),
         currency: "USD",
         method: method,
@@ -87,6 +104,8 @@ export default function MerchantWalletPage() {
         merchantId: user.uid,
         merchantName: merchantName,
         merchantEmail: merchantEmail,
+        status: "Pending",
+        createdAt: serverTimestamp(),
     });
     
     fetchMerchantRequests(user.uid); // Re-fetch to show the new request
@@ -163,7 +182,7 @@ export default function MerchantWalletPage() {
                   <Input 
                     id="transactionId" 
                     type="text" 
-                    placeholder="e.g., PAYID123456" 
+                    placeholder="e.g., PAYID12345678" 
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                     required 
@@ -194,16 +213,20 @@ export default function MerchantWalletPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {requests.map((req) => (
+                  {loading ? (
+                    <TableRow><TableCell colSpan={4} className="h-24 text-center">Loading requests...</TableCell></TableRow>
+                  ) : requests.length > 0 ? requests.map((req) => (
                     <TableRow key={req.id} onClick={() => setSelectedRequest(req)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium">{req.id}</TableCell>
-                      <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{req.createdAt.toDate().toLocaleDateString()}</TableCell>
                       <TableCell>${req.amount}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(req.status)}>{req.status}</Badge>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                     <TableRow><TableCell colSpan={4} className="h-24 text-center">No requests found.</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -226,7 +249,7 @@ export default function MerchantWalletPage() {
                     <Separator />
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Date:</span>
-                        <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span>
+                        <span className="font-semibold">{selectedRequest.createdAt.toDate().toLocaleString()}</span>
                     </div>
                     <Separator />
                      <div className="flex justify-between items-center">

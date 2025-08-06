@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
@@ -10,32 +10,49 @@ import { useRouter } from "next/navigation";
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { onSnapshot, collection, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { PaymentLink } from '@/lib/paymentLinksData';
 
-const allLinks = [
-  { id: 'plink_1', merchant: 'MyStore.com', title: 'T-Shirt Sale', payments: 120, fraud: 2, status: 'Active', expiresAt: '2023-11-10' },
-  { id: 'plink_2', merchant: 'CreativeGoods', title: 'General Donation', payments: 50, fraud: 0, status: 'Active', expiresAt: '2023-11-09' },
-  { id: 'plink_3', merchant: 'AnotherShop', title: 'Workshop Registration', payments: 75, fraud: 5, status: 'Inactive', expiresAt: '2023-11-06' },
-  { id: 'plink_4', merchant: 'MyStore.com', title: 'Ebook Download', payments: 250, fraud: 1, status: 'Active', expiresAt: '2023-11-05' },
-];
 
 export default function AdminPaymentLinksPage() {
   const router = useRouter();
+  const [links, setLinks] = useState<PaymentLink[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const linksCollectionRef = collection(db, "paymentLinks");
+    const q = query(linksCollectionRef, orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const fetchedLinks: PaymentLink[] = [];
+        querySnapshot.forEach((doc) => {
+            fetchedLinks.push({ id: doc.id, ...doc.data() } as PaymentLink);
+        });
+        setLinks(fetchedLinks);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
 
   const handleRowClick = (linkId: string) => {
     router.push(`/dashboard/payment-links/${linkId}`);
   };
 
   const filteredLinks = useMemo(() => {
-    return allLinks.filter(link => {
+    return links.filter(link => {
       const matchesSearch = searchTerm === '' || 
-                            link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            link.merchant.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || link.status.toLowerCase() === statusFilter;
+                            link.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || (link.isActive ? 'active' : 'inactive') === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [searchTerm, statusFilter]);
+  }, [links, searchTerm, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -83,31 +100,33 @@ export default function AdminPaymentLinksPage() {
                 <TableHead>Link Title</TableHead>
                 <TableHead>Merchant</TableHead>
                 <TableHead>Total Payments</TableHead>
-                <TableHead>Fraudulent Payments</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Expires At</TableHead>
+                <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLinks.map((link) => (
+              {loading ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">Loading links...</TableCell>
+                </TableRow>
+              ) : filteredLinks.map((link) => (
                 <TableRow key={link.id} onClick={() => handleRowClick(link.id)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{link.title}</TableCell>
-                  <TableCell>{link.merchant}</TableCell>
-                  <TableCell>{link.payments}</TableCell>
+                  <TableCell>{link.merchantId}</TableCell>
                   <TableCell>
-                    <Badge variant={link.fraud > 0 ? "destructive" : "outline"}>
-                      {link.fraud}
+                    <Badge variant={"outline"}>
+                      {link.payments}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={link.status === 'Active' ? 'default' : 'secondary'}>
-                      {link.status}
+                    <Badge variant={link.isActive ? 'default' : 'secondary'}>
+                      {link.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{link.expiresAt}</TableCell>
+                  <TableCell>{link.createdAt.toDate().toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
-               {filteredLinks.length === 0 && (
+               {!loading && filteredLinks.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={6} className="text-center h-24">
                         No links found for the current filters.

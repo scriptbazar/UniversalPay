@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,16 +8,29 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Users, DollarSign, Percent, Copy, User, CreditCard } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
-import { type SubMerchant, getSubMerchants } from "@/lib/resellerData";
+
+export type SubMerchant = {
+    id: string;
+    name: string;
+    email: string;
+    sales: string;
+    commission: string;
+    status: 'Active' | 'Inactive';
+};
 
 export default function ResellerPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [subMerchants] = useState<SubMerchant[]>(getSubMerchants());
+  const [subMerchants, setSubMerchants] = useState<SubMerchant[]>([]);
+
+  useEffect(() => {
+    // In a real app, you would fetch this from your database
+    // For now, it's an empty array since mock data is removed.
+    setSubMerchants([]);
+  }, []);
 
   const totalSales = subMerchants.reduce((acc, m) => acc + parseFloat(m.sales), 0);
 
@@ -103,7 +115,7 @@ export default function ResellerPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {subMerchants.map((merchant) => (
+              {subMerchants.length > 0 ? subMerchants.map((merchant) => (
                 <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell>
                     <div className="font-medium">{merchant.name}</div>
@@ -117,7 +129,13 @@ export default function ResellerPage() {
                     </Badge>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                        No sub-merchants found.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy } from "lucide-react";
@@ -14,6 +13,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 
 type Transaction = {
     id: string;
@@ -25,59 +26,12 @@ type Transaction = {
     merchantId: string;
 };
 
-const mockTransactions: Transaction[] = Array.from({ length: 50 }, (_, i) => ({
-    id: `TXN10${i + 1}`,
-    method: ['UPI', 'Crypto', 'Page', 'Link'][i % 4],
-    amount: (Math.random() * 500).toFixed(2),
-    date: `2023-11-${(i % 10) + 1}`,
-    status: Math.random() > 0.2 ? 'Successful' : 'Failed',
-    customerEmail: `customer${i + 1}@example.com`,
-    merchantId: `user_${(i % 5) + 1}`,
-}));
-
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
         case 'Successful': return 'default';
         case 'Failed': return 'destructive';
         default: return 'secondary';
     }
-};
-
-const PaginatedTransactionTable = ({ transactions, onRowClick, onPageChange, currentPage, itemsPerPage }: { transactions: Transaction[], onRowClick: (tx: Transaction) => void, onPageChange: (page: number) => void, currentPage: number, itemsPerPage: number }) => {
-    const totalPages = Math.ceil(transactions.length / itemsPerPage);
-
-    const paginatedData = transactions.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    return (
-        <div>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {paginatedData.map(tx => (
-                        <TableRow key={tx.id} onClick={() => onRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
-                            <TableCell>{tx.id}</TableCell>
-                            <TableCell>${tx.amount}</TableCell>
-                            <TableCell>{tx.date}</TableCell>
-                            <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-             <div className="text-xs text-muted-foreground pt-4">
-                Page {currentPage} of {totalPages}
-            </div>
-        </div>
-    );
 };
 
 export default function AnalyticsPage() {
@@ -92,40 +46,43 @@ export default function AnalyticsPage() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // State for Geo Data pagination
   const [geoCurrentPage, setGeoCurrentPage] = useState(1);
   const geoItemsPerPage = 5;
   
   useEffect(() => {
-    setRevenueData([
-        { month: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380 },
-        { month: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320 },
-        { month: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, successfulTransactions: 480 },
-        { month: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, successfulTransactions: 450 },
-        { month: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, successfulTransactions: 530 },
-        { month: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, successfulTransactions: 510 },
-    ]);
+    const fetchData = async () => {
+        setLoading(true);
+        // In a real app, these would be aggregated queries from your backend/database
+        setRevenueData([
+            { month: 'Jan', revenue: 4000, newUsers: 24, totalTransactions: 400, successfulTransactions: 380 },
+            { month: 'Feb', revenue: 3000, newUsers: 18, totalTransactions: 350, successfulTransactions: 320 },
+            { month: 'Mar', revenue: 5000, newUsers: 32, totalTransactions: 500, successfulTransactions: 480 },
+            { month: 'Apr', revenue: 4500, newUsers: 28, totalTransactions: 480, successfulTransactions: 450 },
+            { month: 'May', revenue: 6000, newUsers: 40, totalTransactions: 550, successfulTransactions: 530 },
+            { month: 'Jun', revenue: 5800, newUsers: 35, totalTransactions: 520, successfulTransactions: 510 },
+        ]);
 
-    setPaymentMethodData([
-        { name: 'UPI', value: 400, color: '#0088FE' },
-        { name: 'Crypto', value: 300, color: '#00C49F' },
-        { name: 'Page', value: 300, color: '#FFBB28' },
-        { name: 'Link', value: 200, color: '#FF8042' },
-    ]);
+        setPaymentMethodData([
+            { name: 'UPI', value: 400, color: '#0088FE' },
+            { name: 'Crypto', value: 300, color: '#00C49F' },
+            { name: 'Page', value: 300, color: '#FFBB28' },
+            { name: 'Link', value: 200, color: '#FF8042' },
+        ]);
 
-    setGeoData([
-        { country: 'India', flag: 'in', volume: 120500, transactions: 1250, merchants: 45 },
-        { country: 'United States', flag: 'us', volume: 85200, transactions: 890, merchants: 22 },
-        { country: 'United Kingdom', flag: 'gb', volume: 45300, transactions: 512, merchants: 15 },
-        { country: 'Germany', flag: 'de', volume: 32100, transactions: 450, merchants: 18 },
-        { country: 'Australia', flag: 'au', volume: 28000, transactions: 300, merchants: 8 },
-        { country: 'Canada', flag: 'ca', volume: 25400, transactions: 280, merchants: 12 },
-        { country: 'Japan', flag: 'jp', volume: 21800, transactions: 250, merchants: 10 },
-        { country: 'Brazil', flag: 'br', volume: 18600, transactions: 210, merchants: 7 },
-        { country: 'Singapore', flag: 'sg', volume: 15300, transactions: 180, merchants: 9 },
-        { country: 'United Arab Emirates', flag: 'ae', volume: 13200, transactions: 150, merchants: 11 },
-    ]);
+        setGeoData([
+            { country: 'India', flag: 'in', volume: 120500, transactions: 1250, merchants: 45 },
+            { country: 'United States', flag: 'us', volume: 85200, transactions: 890, merchants: 22 },
+            { country: 'United Kingdom', flag: 'gb', volume: 45300, transactions: 512, merchants: 15 },
+            { country: 'Germany', flag: 'de', volume: 32100, transactions: 450, merchants: 18 },
+            { country: 'Australia', flag: 'au', volume: 28000, transactions: 300, merchants: 8 },
+            { country: 'Canada', flag: 'ca', volume: 25400, transactions: 280, merchants: 12 },
+        ]);
+        setLoading(false);
+    }
+    fetchData();
   }, []);
 
     const geoTotalPages = Math.ceil(geoData.length / geoItemsPerPage);
@@ -204,8 +161,6 @@ export default function AnalyticsPage() {
   const handleCountryClick = (country: any) => {
      router.push(`/dashboard/users/country/${country.country}`);
   };
-
-  const totalPages = dialogContent?.type === 'payment-method' ? Math.ceil(mockTransactions.filter(t => t.method === dialogContent.title.split(' ')[0]).length / itemsPerPage) : 0;
 
   return (
     <div className="space-y-6">
@@ -451,5 +406,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-
-    

@@ -8,50 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { getCustomerById, getTransactionsByCustomerId, type Customer, type CustomerTransaction } from "@/lib/customersData";
 
-
-type Customer = {
-    id: string;
-    email: string;
-    name: string;
-    avatar: string;
-    totalSpent: number;
-    transactions: number;
-    lastSeen: string;
-    joinedDate: string;
-};
-
-type Transaction = {
-    id: string;
-    amount: string;
-    status: 'Success' | 'Failed';
-    date: string;
-    method: 'UPI' | 'Crypto' | 'Page' | 'Link';
-}
-
-const mockCustomer: Customer = {
-    id: 'cust_1',
-    email: 'liam@example.com',
-    name: 'Liam Johnson',
-    avatar: 'https://placehold.co/96x96.png?text=L',
-    totalSpent: 250.00,
-    transactions: 5,
-    lastSeen: '2 days ago',
-    joinedDate: '2023-01-15',
-};
-
-const mockTransactions: Transaction[] = [
-    { id: 'TXN101', amount: '50.00', status: 'Success', date: '2023-11-10', method: 'Page' },
-    { id: 'TXN102', amount: '25.50', status: 'Success', date: '2023-10-22', method: 'Link' },
-    { id: 'TXN103', amount: '100.00', status: 'Success', date: '2023-09-05', method: 'Page' },
-    { id: 'TXN104', amount: '14.50', status: 'Failed', date: '2023-08-18', method: 'UPI' },
-    { id: 'TXN105', amount: '60.00', status: 'Success', date: '2023-07-30', method: 'Crypto' },
-];
 
 const getStatusBadgeVariant = (status: string) => {
     return status === 'Success' ? 'default' : 'destructive';
@@ -62,16 +25,28 @@ export default function CustomerDetailPage() {
     const customerId = params.customerId as string;
     const { toast } = useToast();
     const [customer, setCustomer] = useState<Customer | null>(null);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [transactions, setTransactions] = useState<CustomerTransaction[]>([]);
+    const [selectedTransaction, setSelectedTransaction] = useState<CustomerTransaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const itemsPerPage = 5;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // In a real app, you would fetch this data based on customerId
-        setCustomer(mockCustomer);
-        setTransactions(mockTransactions);
+        if (!customerId) return;
+        setLoading(true);
+        Promise.all([
+            getCustomerById(customerId),
+            getTransactionsByCustomerId(customerId)
+        ]).then(([customerData, transactionsData]) => {
+            if (customerData) {
+                setCustomer(customerData);
+                setTransactions(transactionsData);
+            } else {
+                notFound();
+            }
+            setLoading(false);
+        })
     }, [customerId]);
     
     const filteredTransactions = useMemo(() => {
@@ -96,8 +71,12 @@ export default function CustomerDetailPage() {
         currentPage * itemsPerPage
     );
 
-    if (!customer) {
+    if (loading) {
         return <div>Loading...</div>;
+    }
+
+    if (!customer) {
+        return notFound();
     }
     
     const successfulTxns = transactions.filter(tx => tx.status === 'Success').length;
@@ -206,7 +185,7 @@ export default function CustomerDetailPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map(tx => (
+                            {paginatedTransactions.length > 0 ? paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedTransaction(tx)}>
                                     <TableCell className="font-medium">{tx.id}</TableCell>
                                     <TableCell>{tx.date}</TableCell>
@@ -216,7 +195,11 @@ export default function CustomerDetailPage() {
                                     </TableCell>
                                     <TableCell className="text-right">${tx.amount}</TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center">No transactions found.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>

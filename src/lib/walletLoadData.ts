@@ -1,3 +1,5 @@
+import { db } from './firebase';
+import { collection, addDoc, getDocs, doc, updateDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
 
 export type WalletLoadRequest = {
   id: string;
@@ -9,71 +11,28 @@ export type WalletLoadRequest = {
   method: string; // Method used for payment
   transactionId: string;
   status: "Pending" | "Approved" | "Rejected";
-  createdAt: string;
-};
-
-const generateRandomId = (prefix: string) => {
-    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
-    return `${prefix}${randomNum}`;
+  createdAt: any; // Firestore Timestamp
 };
 
 
-let walletLoadRequests: WalletLoadRequest[] = [
-  {
-    id: generateRandomId("UVPAYWLREQ"),
-    merchantId: "merch_123",
-    merchantName: "MyStore.com",
-    merchantEmail: "contact@mystore.com",
-    amount: "1000.00",
-    currency: "USD",
-    method: "Bank Transfer",
-    transactionId: "PAYID12345678",
-    status: "Pending",
-    createdAt: '2023-11-10T10:00:00Z',
-  },
-  {
-    id: generateRandomId("UVPAYWLREQ"),
-    merchantId: "merch_456",
-    merchantName: "CreativeGoods",
-    merchantEmail: "support@creative.co",
-    amount: "500.00",
-    currency: "USD",
-    method: "Crypto (USDT)",
-    transactionId: "DEPOSIT98765",
-    status: "Approved",
-    createdAt: '2023-11-09T15:00:00Z',
-  },
-   {
-    id: generateRandomId("UVPAYWLREQ"),
-    merchantId: "merch_123",
-    merchantName: "MyStore.com",
-    merchantEmail: "contact@mystore.com",
-    amount: "2500.00",
-    currency: "USD",
-    method: "Bank Transfer",
-    transactionId: "REF11223344",
-    status: "Rejected",
-    createdAt: '2023-11-08T12:00:00Z',
-  },
-];
-
-export const getWalletLoadRequests = (): WalletLoadRequest[] => {
-  return [...walletLoadRequests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+// In a real app, you would fetch this data from Firestore.
+// The functions are kept for structural consistency, but they no longer use hardcoded data.
+export const getWalletLoadRequests = async (): Promise<WalletLoadRequest[]> => {
+  const requestsRef = collection(db, "walletLoadRequests");
+  const q = query(requestsRef, orderBy("createdAt", "desc"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletLoadRequest));
 };
 
-export const addWalletLoadRequest = (requestData: Omit<WalletLoadRequest, 'id' | 'createdAt' | 'status'>): void => {
-  const newRequest: WalletLoadRequest = {
+export const addWalletLoadRequest = async (requestData: Omit<WalletLoadRequest, 'id' | 'createdAt' | 'status'>): Promise<void> => {
+  await addDoc(collection(db, "walletLoadRequests"), {
     ...requestData,
-    id: generateRandomId("UVPAYWLREQ"),
-    createdAt: new Date().toISOString(),
+    createdAt: serverTimestamp(),
     status: "Pending",
-  };
-  walletLoadRequests.unshift(newRequest);
+  });
 };
 
-export const updateWalletLoadRequestStatus = (id: string, status: "Approved" | "Rejected"): void => {
-  const index = walletLoadRequests.findIndex(req => req.id === id);
-  if (index !== -1) {
-    walletLoadRequests[index].status = status;
-  }
+export const updateWalletLoadRequestStatus = async (id: string, status: "Approved" | "Rejected"): Promise<void> => {
+  const requestRef = doc(db, "walletLoadRequests", id);
+  await updateDoc(requestRef, { status });
 };

@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, X, User, Calendar, DollarSign, Hash, Copy, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getWalletLoadRequests, updateWalletLoadRequestStatus, type WalletLoadRequest } from "@/lib/walletLoadData";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Link from "next/link";
+import { onSnapshot, collection, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { updateWalletLoadRequestStatus, type WalletLoadRequest } from "@/lib/walletLoadData";
 
 const getStatusBadgeVariant = (status: WalletLoadRequest["status"]) => {
   switch (status) {
@@ -29,15 +31,32 @@ export default function AdminWalletLoadsPage() {
     const { toast } = useToast();
     const [requests, setRequests] = useState<WalletLoadRequest[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setRequests(getWalletLoadRequests());
-    }, []);
+        const requestsRef = collection(db, "walletLoadRequests");
+        const q = query(requestsRef, orderBy("createdAt", "desc"));
 
-    const handleAction = (e: React.MouseEvent, id: string, newStatus: "Approved" | "Rejected") => {
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const fetchedRequests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletLoadRequest));
+            setRequests(fetchedRequests);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching wallet load requests:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to fetch wallet load requests."
+            });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [toast]);
+
+    const handleAction = async (e: React.MouseEvent, id: string, newStatus: "Approved" | "Rejected") => {
         e.stopPropagation();
-        updateWalletLoadRequestStatus(id, newStatus);
-        setRequests(getWalletLoadRequests()); // Refresh data
+        await updateWalletLoadRequestStatus(id, newStatus);
         setSelectedRequest(null);
         toast({
             title: `Request ${newStatus}`,
@@ -78,21 +97,25 @@ export default function AdminWalletLoadsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {requests.map((req) => (
+              {loading ? (
+                <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading requests...</TableCell></TableRow>
+              ) : requests.length > 0 ? requests.map((req) => (
                 <TableRow key={req.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedRequest(req)}>
                   <TableCell className="font-medium">{req.id}</TableCell>
                   <TableCell>
                       <div>{req.merchantName}</div>
                       <div className="text-xs text-muted-foreground">{req.merchantEmail}</div>
                   </TableCell>
-                  <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{req.createdAt.toDate().toLocaleDateString()}</TableCell>
                   <TableCell>{req.method}</TableCell>
                   <TableCell>${req.amount}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(req.status)}>{req.status}</Badge>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow><TableCell colSpan={6} className="h-24 text-center">No wallet load requests found.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -118,7 +141,7 @@ export default function AdminWalletLoadsPage() {
                         </div>
                     </div>
                 </div>
-                <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span className="font-semibold">{new Date(selectedRequest.createdAt).toLocaleString()}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Date:</span> <span className="font-semibold">{selectedRequest.createdAt.toDate().toLocaleString()}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Method:</span> <span className="font-semibold flex items-center gap-2"><CreditCard className="w-4 h-4" />{selectedRequest.method}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">${selectedRequest.amount}</span></div>
                 <div className="flex justify-between items-center">

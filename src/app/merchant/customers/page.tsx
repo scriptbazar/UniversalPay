@@ -1,44 +1,44 @@
-
 'use client';
 
 import { ArrowLeft, Copy, Download, Search } from "lucide-react";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { auth, db } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import type { Customer } from "@/lib/customersData";
+import { getAllCustomers } from "@/lib/customersData";
 
-type Customer = {
-    id: string;
-    email: string;
-    name: string;
-    totalSpent: number;
-    transactions: number;
-    lastSeen: string;
-    joinedDate: string;
-};
-
-const initialTopCustomers: Customer[] = [
-    { id: 'cust_1', email: 'liam@example.com', name: 'Liam Johnson', totalSpent: 250.00, transactions: 5, lastSeen: '2 days ago', joinedDate: '2023-01-15' },
-    { id: 'cust_2', email: 'olivia@example.com', name: 'Olivia Smith', totalSpent: 150.00, transactions: 3, lastSeen: '1 day ago', joinedDate: '2023-03-22' },
-    { id: 'cust_3', email: 'noah@example.com', name: 'Noah Williams', totalSpent: 350.00, transactions: 8, lastSeen: '5 days ago', joinedDate: '2022-11-10' },
-    { id: 'cust_4', email: 'emma@example.com', name: 'Emma Brown', totalSpent: 450.00, transactions: 12, lastSeen: '10 hours ago', joinedDate: '2023-05-01' },
-    { id: 'cust_5', email: 'ava@example.com', name: 'Ava Jones', totalSpent: 200.00, transactions: 4, lastSeen: '1 week ago', joinedDate: '2023-02-18' },
-    { id: 'cust_6', email: 'william@example.com', name: 'William Garcia', totalSpent: 120.50, transactions: 2, lastSeen: '3 days ago', joinedDate: '2023-06-30' },
-    { id: 'cust_7', email: 'sophia@example.com', name: 'Sophia Miller', totalSpent: 550.75, transactions: 15, lastSeen: '6 hours ago', joinedDate: '2022-09-05' },
-    { id: 'cust_8', email: 'james@example.com', name: 'James Davis', totalSpent: 80.00, transactions: 1, lastSeen: '2 weeks ago', joinedDate: '2023-08-12' },
-];
 
 export default function CustomersPage() {
     const router = useRouter();
     const { toast } = useToast();
-    const [customers, setCustomers] = useState<Customer[]>(initialTopCustomers);
+    const [customers, setCustomers] = useState<Customer[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                setLoading(true);
+                const allCustomers = await getAllCustomers();
+                const merchantCustomers = allCustomers.filter(c => c.merchantId === user.uid);
+                setCustomers(merchantCustomers);
+                setLoading(false);
+            } else {
+                router.push("/login");
+            }
+        });
+        return () => unsubscribe();
+    }, [router]);
     
     const filteredCustomers = useMemo(() => {
         if (!searchTerm) {
@@ -101,7 +101,11 @@ export default function CustomersPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedCustomers.map(customer => (
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24">Loading customers...</TableCell>
+                                </TableRow>
+                            ) : paginatedCustomers.map(customer => (
                                 <TableRow key={customer.id} onClick={() => handleRowClick(customer)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell>
                                         <div className="font-medium">{customer.name}</div>
@@ -113,7 +117,7 @@ export default function CustomersPage() {
                                     <TableCell className="text-right font-semibold">${customer.totalSpent.toFixed(2)}</TableCell>
                                 </TableRow>
                             ))}
-                            {filteredCustomers.length === 0 && (
+                            {!loading && filteredCustomers.length === 0 && (
                                  <TableRow>
                                     <TableCell colSpan={5} className="text-center h-24">
                                         No customers found.
