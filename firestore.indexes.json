@@ -175,7 +175,7 @@
       "fields": [
         {
           "fieldPath": "level",
-          "order": "ASCENDING"
+          "arrayConfig": "CONTAINS"
         },
         {
           "fieldPath": "timestamp",
