@@ -101,7 +101,7 @@ export default function AdminCustomerDetailPage() {
                      <h1 className="text-3xl font-bold tracking-tight">{customer.name}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Link href={`/dashboard/users/${customer.merchantId}`} className="text-sm hover:underline">
-                            Customer of Merchant {customer.merchantId.substring(0, 8)}...
+                            Customer of {customer.merchantName}
                         </Link>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-muted-foreground">
