@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings, ArrowRight } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings, ArrowRight, Users as UsersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { type Customer, getAllCustomers } from '@/lib/customersData';
 
 type Transaction = {
     id: string;
@@ -75,7 +76,6 @@ const getStatusBadgeVariant = (status: string) => {
             return 'secondary';
         case 'suspended':
         case 'not started':
-            return 'destructive';
         case 'failed':
             return 'destructive';
         default:
@@ -107,6 +107,7 @@ export default function UserDetailPage() {
 
   const [merchant, setMerchant] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   
@@ -114,9 +115,9 @@ export default function UserDetailPage() {
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
   const [walletAdjustment, setWalletAdjustment] = useState({ amount: '', type: 'credit' });
 
-
   const [txCurrentPage, setTxCurrentPage] = useState(1);
   const [wdCurrentPage, setWdCurrentPage] = useState(1);
+  const [custCurrentPage, setCustCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
   const [joinedDate, setJoinedDate] = useState('N/A');
@@ -136,7 +137,7 @@ export default function UserDetailPage() {
   useEffect(() => {
     if (!userId) return;
 
-    const fetchUser = async () => {
+    const fetchUserData = async () => {
         setLoading(true);
         const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
@@ -148,6 +149,12 @@ export default function UserDetailPage() {
             if (userData.createdAt) {
                 setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
             }
+
+            // Fetch customers for this merchant
+            const allCustomers = await getAllCustomers();
+            const merchantCustomers = allCustomers.filter(c => c.merchantId === userId);
+            setCustomers(merchantCustomers);
+
         } else {
             setMerchant(null);
             notFound();
@@ -155,7 +162,7 @@ export default function UserDetailPage() {
         setLoading(false);
     };
 
-    fetchUser();
+    fetchUserData();
   }, [userId]);
 
 
@@ -222,6 +229,17 @@ const txTotalPages = useMemo(() => {
 
   const wdTotalPages = Math.ceil(withdrawalHistory.length / itemsPerPage);
 
+  const paginatedCustomers = useMemo(() => {
+    return customers.slice(
+        (custCurrentPage - 1) * itemsPerPage,
+        custCurrentPage * itemsPerPage
+    );
+  }, [customers, custCurrentPage]);
+
+  const custTotalPages = useMemo(() => {
+      return Math.ceil(customers.length / itemsPerPage);
+  }, [customers]);
+
   const copyToClipboard = (text: string, label: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -247,6 +265,12 @@ const txTotalPages = useMemo(() => {
           toast({ variant: 'destructive', title: 'Error', description: result.error });
       }
   }
+
+  const successRate = useMemo(() => {
+      if (userTransactions.length === 0) return "0.0%";
+      const successfulTxns = userTransactions.filter(tx => tx.status === 'Success').length;
+      return `${((successfulTxns / userTransactions.length) * 100).toFixed(1)}%`;
+  }, [userTransactions]);
 
 
   if (loading) {
@@ -348,6 +372,7 @@ const txTotalPages = useMemo(() => {
             <TabsList className="gap-2">
                 <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
                 <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
+                <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>
                 <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
                 <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
             </TabsList>
@@ -372,10 +397,20 @@ const txTotalPages = useMemo(() => {
                                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">+235</div>
+                                <div className="text-2xl font-bold">+{userTransactions.filter(t => t.status === 'Success').length}</div>
                                 <p className="text-xs text-muted-foreground">+18.1% from last month</p>
                             </CardContent>
                         </Link>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">All Customers</CardTitle>
+                            <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{customers.length}</div>
+                            <p className="text-xs text-muted-foreground">+2 since last month</p>
+                        </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -383,18 +418,8 @@ const txTotalPages = useMemo(() => {
                             <Percent className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">98.5%</div>
+                            <div className="text-2xl font-bold">{successRate}</div>
                             <p className="text-xs text-muted-foreground">+1.2% from last month</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Last Transaction</CardTitle>
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">2d ago</div>
-                            <p className="text-xs text-muted-foreground">on {new Date(new Date().setDate(new Date().getDate()-2)).toLocaleDateString()}</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -511,6 +536,69 @@ const txTotalPages = useMemo(() => {
                     </CardFooter>
                 </Card>
              </TabsContent>
+              <TabsContent value="customers" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Merchant's Customers</CardTitle>
+                        <CardDescription>A list of all customers who have transacted with this merchant.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Transactions</TableHead>
+                                    <TableHead className="text-right">Total Spent</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedCustomers.map(customer => (
+                                    <TableRow key={customer.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                                        <TableCell>
+                                            <div className="font-medium">{customer.name}</div>
+                                            <div className="text-sm text-muted-foreground">{customer.email}</div>
+                                        </TableCell>
+                                        <TableCell>{customer.transactions}</TableCell>
+                                        <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {paginatedCustomers.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="h-24 text-center">
+                                            No customers found for this merchant.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                    <CardFooter>
+                         <div className="flex justify-between items-center w-full">
+                            <div className="text-xs text-muted-foreground">
+                                Page {custCurrentPage} of {custTotalPages}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setCustCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={custCurrentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => setCustCurrentPage(prev => Math.min(prev + 1, custTotalPages))}
+                                    disabled={custCurrentPage === custTotalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                </Card>
+              </TabsContent>
               <TabsContent value="withdrawals" className="mt-4">
                  <Card>
                     <CardHeader>
