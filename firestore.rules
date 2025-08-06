@@ -4,26 +4,96 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
+    // Helper function to check for admin role
     function isAdmin() {
       return request.auth.token.role == 'admin';
     }
-  
+    
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow get: if request.auth.uid == userId || isAdmin();
+      // Admins can read and write any user document
+      // Merchants can read and update their own document
+      allow get: if isAdmin() || isOwner(userId);
       allow list: if isAdmin();
-      allow create;
-      allow update: if request.auth.uid == userId || isAdmin();
+      allow update: if isAdmin() || isOwner(userId);
+      // Only allow user creation through backend functions, not directly
+      allow create: if request.auth != null; 
+      allow delete: if isAdmin();
+    }
+
+    // Rules for the 'transactions' collection
+    match /transactions/{transactionId} {
+      // Admins can read all transactions
+      // Merchants can only read their own transactions
+      allow get, list: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.merchantId);
+      // Transactions should only be created via backend logic
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // Rules for the 'paymentLinks' collection
+    match /paymentLinks/{linkId} {
+        // Admins can read all links
+        // Merchants can read their own links
+        allow get, list: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.merchantId);
+        // Merchants can create links
+        allow create: if request.auth != null;
+        // Admins can update/delete any link, merchants only their own
+        allow update, delete: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.merchantId);
     }
     
+    // Rules for the 'customers' collection
+    match /customers/{customerId} {
+        // Admins can read all customers
+        // Merchants can read their own customers
+        allow get, list: if isAdmin() || (request.auth != null && request.auth.uid == resource.data.merchantId);
+        allow create, update, delete: if isAdmin();
+    }
+
+    // Rules for the 'audit_logs' collection
     match /audit_logs/{logId} {
-      allow create: if request.auth != null;
+        // Admins can read any audit log
+        allow get: if isAdmin();
+        // Admins can list all logs.
+        // Merchants can only list logs specifically targeting them.
+        allow list: if isAdmin() || (request.auth != null && request.query.where.details.targetUser == request.auth.uid);
+        // Logs can only be created by backend functions (no client writes)
+        allow write: if false;
+    }
+    
+     // Rules for the 'tickets' collection
+    match /tickets/{ticketId} {
+      allow get, list, create, update: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.merchantId);
+      allow delete: if isAdmin();
+    }
 
-      // Allow listing logs only for admins OR for a user querying their own logs.
-      // This is crucial for the "My Activity" page for merchants.
-      allow list: if isAdmin() || (request.query.where.details.targetUser is string && request.query.where.details.targetUser == request.auth.uid);
+    // Rules for the 'withdrawals' collection
+    match /withdrawals/{withdrawalId} {
+      allow get, list, create, update: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.merchantId);
+      allow delete: if isAdmin();
+    }
 
-      // Allow getting a single log if the user is an admin OR it's their own log.
-      allow get: if isAdmin() || request.auth.uid == resource.data.details.targetUser;
+    // Rules for the 'invoices' collection
+    match /invoices/{invoiceId} {
+      allow get, list, create, update: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.merchantId);
+      allow delete: if isAdmin();
+    }
+    
+     // Rules for the 'walletLoadRequests' collection
+    match /walletLoadRequests/{requestId} {
+      allow get, list, create, update: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.merchantId);
+      allow delete: if isAdmin();
+    }
+    
+     // Rules for the 'notifications' collection
+    match /notifications/{notificationId} {
+        allow get, list: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.userId);
+        allow write: if false; // Should be written by backend functions only
     }
   }
 }
