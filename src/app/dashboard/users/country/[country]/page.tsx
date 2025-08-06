@@ -32,8 +32,6 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, Search, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addCountryToUsers } from '@/lib/mockUserCountry';
-
 
 interface User {
     id: string;
@@ -66,17 +64,15 @@ export default function UsersByCountryPage() {
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // In a real app, you would fetch users with a where("country", "==", country) clause.
-                // Since our data doesn't have country, we'll fetch all and filter client-side.
                 const usersCollectionRef = collection(db, "users");
-                const unsubscribeSnapshot = onSnapshot(usersCollectionRef, (querySnapshot) => {
+                // Fetch users from the specific country
+                const q = query(usersCollectionRef, where("country", "==", decodeURIComponent(country)));
+                
+                const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     let userList: User[] = [];
                     querySnapshot.forEach((doc) => {
                         userList.push({ id: doc.id, ...doc.data() } as User);
                     });
-                    
-                    // Add mock country data for demonstration
-                    userList = addCountryToUsers(userList);
                     
                     setAllUsers(userList);
                     setLoading(false);
@@ -93,13 +89,10 @@ export default function UsersByCountryPage() {
         });
 
         return () => unsubscribeAuth();
-    }, [toast]);
+    }, [toast, country]);
     
     const filteredUsers = useMemo(() => {
-        const decodedCountry = decodeURIComponent(country);
         return allUsers.filter(user => {
-            const matchesCountry = user.country === decodedCountry;
-            
             const matchesSearch = searchTerm === '' || 
                                   user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                   user.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -108,9 +101,9 @@ export default function UsersByCountryPage() {
             
             const matchesStatus = statusFilter === 'all' || (user.status || 'Active').toLowerCase() === statusFilter;
 
-            return matchesCountry && matchesSearch && matchesRole && matchesStatus;
+            return matchesSearch && matchesRole && matchesStatus;
         });
-    }, [allUsers, searchTerm, roleFilter, statusFilter, country]);
+    }, [allUsers, searchTerm, roleFilter, statusFilter]);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const paginatedUsers = filteredUsers.slice(
