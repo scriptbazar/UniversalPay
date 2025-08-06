@@ -379,10 +379,20 @@ const txTotalPages = useMemo(() => {
         <Tabs defaultValue="overview">
             <TabsList className="gap-2">
                 <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
-                {!isAdminProfile && <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>}
-                {!isAdminProfile && <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>}
-                {!isAdminProfile && <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>}
-                {!isAdminProfile && <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>}
+                {isAdminProfile ? (
+                     <>
+                        <TabsTrigger value="transactions" className="gap-2" asChild><Link href="/dashboard/transactions">All Transactions</Link></TabsTrigger>
+                        <TabsTrigger value="customers" className="gap-2" asChild><Link href="/dashboard/customers">All Customers</Link></TabsTrigger>
+                        <TabsTrigger value="withdrawals" className="gap-2" asChild><Link href="/dashboard/withdrawals">All Withdrawals</Link></TabsTrigger>
+                    </>
+                ) : (
+                    <>
+                        <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
+                        <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>
+                        <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
+                        <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
+                    </>
+                )}
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
