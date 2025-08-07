@@ -164,7 +164,7 @@ export default function UserDetailPage() {
             setPlatformMerchantCount(merchantsSnapshot.size);
         } else {
             // Fetch data specific to the merchant
-            const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId));
+            const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId), orderBy('date', 'desc'));
             onSnapshot(txQuery, (snapshot) => {
                 setMerchantTransactions(snapshot.docs.map(d => ({...d.data(), id: d.id, date: d.data().date.toDate() } as Transaction)));
             });
@@ -174,7 +174,7 @@ export default function UserDetailPage() {
                 setMerchantCustomers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
             });
 
-            const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId));
+            const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId), orderBy('createdAt', 'desc'));
              onSnapshot(wdQuery, (snapshot) => {
                 setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id } as Withdrawal)));
             });
@@ -404,29 +404,25 @@ const txTotalPages = useMemo(() => {
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card asChild={!isAdminProfile}>
-                         <Link href={!isAdminProfile ? `/dashboard/users/${userId}/transactions/by-month/all` : '#'} className={!isAdminProfile ? "cursor-pointer hover:bg-muted/50" : ""}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">${isAdminProfile ? platformTotalVolume.toFixed(2) : merchantTotalVolume.toFixed(2)}</div>
-                            </CardContent>
-                        </Link>
-                    </Card>
-                    <Card asChild={!isAdminProfile}>
-                       <Link href={!isAdminProfile ? `/dashboard/users/${userId}/transactions/by-month/all` : '#'} className={!isAdminProfile ? "cursor-pointer hover:bg-muted/50" : ""}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
-                                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">+{isAdminProfile ? platformTotalTransactions : merchantTotalSuccessfulTxns}</div>
-                            </CardContent>
-                        </Link>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">${isAdminProfile ? platformTotalVolume.toFixed(2) : merchantTotalVolume.toFixed(2)}</div>
+                        </CardContent>
                     </Card>
                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">+{isAdminProfile ? platformTotalTransactions : merchantTotalSuccessfulTxns}</div>
+                        </CardContent>
+                    </Card>
+                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">All Customers</CardTitle>
                             <UsersIcon className="h-4 w-4 text-muted-foreground" />
@@ -436,17 +432,15 @@ const txTotalPages = useMemo(() => {
                         </CardContent>
                     </Card>
                     {isAdminProfile ? (
-                        <Card asChild>
-                             <Link href="/dashboard/users" className="cursor-pointer hover:bg-muted/50">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">All Merchants</CardTitle>
-                                    <UsersIcon className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{platformMerchantCount}</div>
-                                    <p className="text-xs text-muted-foreground">Total merchants on the platform.</p>
-                                </CardContent>
-                            </Link>
+                        <Card>
+                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">All Merchants</CardTitle>
+                                <UsersIcon className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{platformMerchantCount}</div>
+                                <p className="text-xs text-muted-foreground">Total merchants on the platform.</p>
+                            </CardContent>
                         </Card>
                     ) : (
                         <Card>
@@ -465,10 +459,12 @@ const txTotalPages = useMemo(() => {
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Recent Transactions</CardTitle>
-                            <CardDescription>This merchant's 5 most recent transactions.</CardDescription>
+                            <CardDescription>
+                                {isAdminProfile ? "5 most recent platform transactions." : "This merchant's 5 most recent transactions."}
+                            </CardDescription>
                         </div>
-                        <Button asChild variant="outline">
-                            <Link href="#">
+                         <Button asChild variant="outline">
+                            <Link href={isAdminProfile ? "/dashboard/transactions" : `/dashboard/users/${userId}`}>
                                 View All <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
@@ -512,7 +508,9 @@ const txTotalPages = useMemo(() => {
                  <Card>
                     <CardHeader>
                         <CardTitle>All Transactions</CardTitle>
-                        <CardDescription>The full transaction history for this merchant.</CardDescription>
+                        <CardDescription>
+                             {isAdminProfile ? "Full transaction history for the platform." : "The full transaction history for this merchant."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -641,7 +639,9 @@ const txTotalPages = useMemo(() => {
                  <Card>
                     <CardHeader>
                         <CardTitle>Withdrawal History</CardTitle>
-                        <CardDescription>Full withdrawal history for this merchant.</CardDescription>
+                         <CardDescription>
+                            {isAdminProfile ? "Full withdrawal history for the platform." : "Full withdrawal history for this merchant."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -846,5 +846,3 @@ const txTotalPages = useMemo(() => {
     </div>
   )
 }
-
-    
