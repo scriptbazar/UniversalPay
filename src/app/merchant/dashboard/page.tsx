@@ -98,7 +98,7 @@ export default function Dashboard() {
                 const fetchedTransactions = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
-                    date: doc.data().date?.toDate().toISOString() || new Date().toISOString(), // Convert Firestore Timestamp to string
+                    date: doc.data().date || new Date().toISOString(), // Use the date string directly
                 } as Transaction));
                 setAllTransactions(fetchedTransactions);
                 setRecentTransactionsData(fetchedTransactions.slice(0, 5)); // Get top 5 recent transactions
@@ -282,7 +282,7 @@ export default function Dashboard() {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value/1000}K`}
+                    tickFormatter={(value) => `$${"$"}{value/1000}K`}
                     />
                     <Tooltip
                         contentStyle={{ 
