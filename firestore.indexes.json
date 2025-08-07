@@ -30,6 +30,20 @@
       ]
     },
     {
+      "collectionGroup": "customers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "merchantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "totalSpent",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "kyc_documents",
       "queryScope": "COLLECTION",
       "fields": [
