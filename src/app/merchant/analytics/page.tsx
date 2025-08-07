@@ -1,3 +1,4 @@
+
 'use client';
 
 import { DollarSign, Users, CreditCard, Percent, Copy, ExternalLink, ArrowRight } from "lucide-react";
@@ -13,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, onSnapshot, Timestamp, limit } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Transaction = {
