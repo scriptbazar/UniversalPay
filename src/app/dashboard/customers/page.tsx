@@ -24,12 +24,21 @@ export default function AllCustomersPage() {
     useEffect(() => {
         async function fetchData() {
             setLoading(true);
-            const allCustomers = await getAllCustomers();
-            setCustomers(allCustomers);
+            try {
+                const allCustomers = await getAllCustomers();
+                setCustomers(allCustomers);
+            } catch (error) {
+                console.error("Failed to fetch customers:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Could not load customers data.'
+                });
+            }
             setLoading(false);
         }
         fetchData();
-    }, []);
+    }, [toast]);
     
     const filteredCustomers = useMemo(() => {
         if (!searchTerm) {

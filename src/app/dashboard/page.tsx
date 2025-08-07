@@ -46,7 +46,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
 
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
 type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; };
@@ -55,6 +55,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   const [adminName, setAdminName] = useState("Admin");
+  const [fraudAlertsCount, setFraudAlertsCount] = useState(0);
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedSignup, setSelectedSignup] = useState<Signup | null>(null);
@@ -86,6 +87,11 @@ export default function AdminDashboard() {
       const transactionsSnapshot = await getDocs(transactionsQuery);
       const fetchedTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
       setAllTransactions(fetchedTransactions);
+
+      // Fetch flagged transactions for fraud alerts count
+      const fraudQuery = query(collection(db, "transactions"), where("status", "==", "Flagged"));
+      const fraudSnapshot = await getDocs(fraudQuery);
+      setFraudAlertsCount(fraudSnapshot.size);
       
       // Fetch recent signups from Firestore
       const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(4));
@@ -236,7 +242,7 @@ export default function AdminDashboard() {
             <ShieldAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
+            <div className="text-2xl font-bold">{fraudAlertsCount}</div>
             <p className="text-xs text-muted-foreground">
               Review required
             </p>
