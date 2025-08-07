@@ -28,6 +28,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { type Customer, getAllCustomers } from '@/lib/customersData';
 import { countries } from "@/lib/countries";
+import type { Withdrawal } from "@/app/dashboard/withdrawals/actions";
 
 type Transaction = {
     id: string;
@@ -37,16 +38,6 @@ type Transaction = {
     status: string;
     date: Date;
     merchantId?: string; // Add merchantId for filtering
-};
-
-type Withdrawal = {
-  id: string;
-  amount: string;
-  currency: string;
-  destinationType: string;
-  destination: string;
-  status: "Completed" | "Pending" | "Failed";
-  date: string;
 };
 
 const getStatusBadgeVariant = (status: string) => {
@@ -98,11 +89,12 @@ export default function UserDetailPage() {
   const [platformTotalVolume, setPlatformTotalVolume] = useState(0);
   const [platformTotalTransactions, setPlatformTotalTransactions] = useState(0);
   const [platformTotalCustomers, setPlatformTotalCustomers] = useState(0);
+  const [platformMerchantCount, setPlatformMerchantCount] = useState(0);
 
+  // Merchant-specific stats
   const [merchantCustomers, setMerchantCustomers] = useState<Customer[]>([]);
   const [merchantTransactions, setMerchantTransactions] = useState<Transaction[]>([]);
   const [merchantWithdrawals, setMerchantWithdrawals] = useState<Withdrawal[]>([]);
-  const [merchantCount, setMerchantCount] = useState(0);
   
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   
@@ -144,44 +136,48 @@ export default function UserDetailPage() {
         const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-            const userData = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
-            setMerchant(userData);
-            if (userData.createdAt) {
-                setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
-            }
-
-            if (userData.role === 'admin') {
-                // Fetch platform-wide data
-                const txQuery = query(collection(db, "transactions"), where("status", "==", "Success"));
-                const txSnap = await getDocs(txQuery);
-                const totalVolume = txSnap.docs.reduce((sum, doc) => sum + parseFloat(doc.data().amount), 0);
-                setPlatformTotalVolume(totalVolume);
-                setPlatformTotalTransactions(txSnap.size);
-
-                const custSnap = await getDocs(collection(db, "customers"));
-                setPlatformTotalCustomers(custSnap.size);
-
-                const merchantsQuery = query(collection(db, "users"), where("role", "==", "merchant"));
-                const merchantsSnapshot = await getDocs(merchantsQuery);
-                setMerchantCount(merchantsSnapshot.size);
-
-            } else {
-                 // Fetch data specific to the merchant
-                const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId));
-                onSnapshot(txQuery, (snapshot) => {
-                    setMerchantTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction)));
-                });
-                
-                const custQuery = query(collection(db, "customers"), where("merchantId", "==", userId));
-                 onSnapshot(custQuery, (snapshot) => {
-                    setMerchantCustomers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer)));
-                });
-            }
-
-        } else {
+        if (!userDocSnap.exists()) {
             setMerchant(null);
             notFound();
+            return;
+        }
+
+        const userData = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+        setMerchant(userData);
+        if (userData.createdAt) {
+            setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
+        }
+
+        if (userData.role === 'admin') {
+            // Fetch platform-wide data
+            const txQuery = query(collection(db, "transactions"), where("status", "==", "Success"));
+            const txSnap = await getDocs(txQuery);
+            const totalVolume = txSnap.docs.reduce((sum, doc) => sum + parseFloat(doc.data().amount), 0);
+            setPlatformTotalVolume(totalVolume);
+            setPlatformTotalTransactions(txSnap.size);
+
+            const custSnap = await getDocs(collection(db, "customers"));
+            setPlatformTotalCustomers(custSnap.size);
+
+            const merchantsQuery = query(collection(db, "users"), where("role", "==", "merchant"));
+            const merchantsSnapshot = await getDocs(merchantsQuery);
+            setPlatformMerchantCount(merchantsSnapshot.size);
+        } else {
+            // Fetch data specific to the merchant
+            const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId));
+            onSnapshot(txQuery, (snapshot) => {
+                setMerchantTransactions(snapshot.docs.map(d => ({...d.data(), id: d.id, date: d.data().date.toDate() } as Transaction)));
+            });
+            
+            const custQuery = query(collection(db, "customers"), where("merchantId", "==", userId));
+            onSnapshot(custQuery, (snapshot) => {
+                setMerchantCustomers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
+            });
+
+            const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId));
+             onSnapshot(wdQuery, (snapshot) => {
+                setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id } as Withdrawal)));
+            });
         }
         setLoading(false);
     };
@@ -243,8 +239,8 @@ const txTotalPages = useMemo(() => {
 }, [merchantTransactions]);
   
   const paginatedWithdrawals = useMemo(() => {
-      return merchantWithdrawals.slice(0, itemsPerPage);
-  }, [merchantWithdrawals]);
+      return merchantWithdrawals.slice((wdCurrentPage - 1) * itemsPerPage, wdCurrentPage * itemsPerPage);
+  }, [merchantWithdrawals, wdCurrentPage]);
 
   const wdTotalPages = Math.ceil(merchantWithdrawals.length / itemsPerPage);
 
@@ -301,6 +297,9 @@ const txTotalPages = useMemo(() => {
   }
 
   const isAdminProfile = merchant.role === 'admin';
+  const merchantTotalVolume = merchantTransactions.filter(t=>t.status==='Success').reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+  const merchantTotalSuccessfulTxns = merchantTransactions.filter(t => t.status === 'Success').length;
+
 
   return (
     <div className="space-y-6">
@@ -332,7 +331,7 @@ const txTotalPages = useMemo(() => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                {merchant.role === 'admin' ? (
+                                {isAdminProfile ? (
                                     <>
                                         <DropdownMenuItem>
                                             <KeyRound className="mr-2 h-4 w-4" />
@@ -398,9 +397,9 @@ const txTotalPages = useMemo(() => {
         <Tabs defaultValue="overview">
             <TabsList className="gap-2">
                 <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
-                <TabsTrigger value="transactions" className="gap-2" asChild={isAdminProfile}><Link href="/dashboard/transactions">Transactions</Link></TabsTrigger>
-                <TabsTrigger value="customers" className="gap-2" asChild={isAdminProfile}><Link href="/dashboard/customers">Customers</Link></TabsTrigger>
-                <TabsTrigger value="withdrawals" className="gap-2" asChild={isAdminProfile}><Link href="/dashboard/withdrawals">Withdrawals</Link></TabsTrigger>
+                <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
+                <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>
+                <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4"/>Withdrawals</TabsTrigger>
                 {!isAdminProfile && <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>}
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-6">
@@ -412,7 +411,7 @@ const txTotalPages = useMemo(() => {
                                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">${isAdminProfile ? platformTotalVolume.toFixed(2) : merchantTransactions.filter(t=>t.status==='Success').reduce((sum, tx) => sum + parseFloat(tx.amount), 0).toFixed(2)}</div>
+                                <div className="text-2xl font-bold">${isAdminProfile ? platformTotalVolume.toFixed(2) : merchantTotalVolume.toFixed(2)}</div>
                             </CardContent>
                         </Link>
                     </Card>
@@ -423,7 +422,7 @@ const txTotalPages = useMemo(() => {
                                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">+{isAdminProfile ? platformTotalTransactions : merchantTransactions.filter(t => t.status === 'Success').length}</div>
+                                <div className="text-2xl font-bold">+{isAdminProfile ? platformTotalTransactions : merchantTotalSuccessfulTxns}</div>
                             </CardContent>
                         </Link>
                     </Card>
@@ -444,7 +443,7 @@ const txTotalPages = useMemo(() => {
                                     <UsersIcon className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{merchantCount}</div>
+                                    <div className="text-2xl font-bold">{platformMerchantCount}</div>
                                     <p className="text-xs text-muted-foreground">Total merchants on the platform.</p>
                                 </CardContent>
                             </Link>
@@ -664,7 +663,7 @@ const txTotalPages = useMemo(() => {
                                         <TableCell>{w.date}</TableCell>
                                         <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
                                     </TableRow>
-                                ))}
+                                 ))}
                                  {paginatedWithdrawals.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={4} className="h-24 text-center">No withdrawals found.</TableCell>
@@ -820,11 +819,6 @@ const txTotalPages = useMemo(() => {
                             <span className="font-semibold">${selectedWithdrawal.amount} {selectedWithdrawal.currency}</span>
                         </div>
                         <Separator/>
-                        <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Destination Type:</span>
-                            <span className="font-semibold">{selectedWithdrawal.destinationType}</span>
-                        </div>
-                         <Separator/>
                          <div className="flex flex-col space-y-2">
                             <span className="text-muted-foreground">Destination Address:</span>
                             <div className="flex items-center gap-2">
@@ -852,3 +846,5 @@ const txTotalPages = useMemo(() => {
     </div>
   )
 }
+
+    
