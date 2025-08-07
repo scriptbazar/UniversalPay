@@ -87,7 +87,8 @@ export default function PaymentLinksPage() {
       }
     });
     return () => unsubscribeAuth();
-  }, [router, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
