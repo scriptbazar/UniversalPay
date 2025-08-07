@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, Timestamp, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, Timestamp, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { type Customer, getAllCustomers } from '@/lib/customersData';
 import { countries } from "@/lib/countries";
 
@@ -39,17 +39,6 @@ type Transaction = {
     merchantId?: string; // Add merchantId for filtering
 };
 
-const allTransactions: Transaction[] = Array.from({ length: 50 }, (_, i) => ({
-    id: `UVRLP${111111111 + i}`,
-    amount: (Math.random() * 500).toFixed(2),
-    currency: i % 2 === 0 ? "USD" : "INR",
-    method: ["Crypto", "UPI", "Page", "Link"][i % 4],
-    status: ["Success", "Failed", "Pending"][i % 3],
-    date: new Date(2023, i % 12, (i % 28) + 1),
-    merchantId: `user_${(i % 5) + 1}`, // Assign to one of 5 mock users
-}));
-
-
 type Withdrawal = {
   id: string;
   amount: string;
@@ -59,11 +48,6 @@ type Withdrawal = {
   status: "Completed" | "Pending" | "Failed";
   date: string;
 };
-
-const withdrawalHistory: Withdrawal[] = [
-    { id: "UVRLP789012345", amount: "500.00", currency: "USDT", destinationType: "Crypto Wallet", destination: "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc", status: "Completed", date: "2023-10-25" },
-    { id: "UVRLP890123456", amount: "1000.00", currency: "INR", destinationType: "Bank Account", destination: "XXXX-XXXX-1234", status: "Pending", date: "2023-11-01" },
-];
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -109,7 +93,15 @@ export default function UserDetailPage() {
 
   const [merchant, setMerchant] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  
+  // Platform-wide stats for admin view
+  const [platformTotalVolume, setPlatformTotalVolume] = useState(0);
+  const [platformTotalTransactions, setPlatformTotalTransactions] = useState(0);
+  const [platformTotalCustomers, setPlatformTotalCustomers] = useState(0);
+
+  const [merchantCustomers, setMerchantCustomers] = useState<Customer[]>([]);
+  const [merchantTransactions, setMerchantTransactions] = useState<Transaction[]>([]);
+  const [merchantWithdrawals, setMerchantWithdrawals] = useState<Withdrawal[]>([]);
   const [merchantCount, setMerchantCount] = useState(0);
   
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
@@ -153,21 +145,38 @@ export default function UserDetailPage() {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-            const userData = userDocSnap.data() as UserProfile;
-            userData.id = userDocSnap.id;
+            const userData = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
             setMerchant(userData);
             if (userData.createdAt) {
                 setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
             }
 
             if (userData.role === 'admin') {
+                // Fetch platform-wide data
+                const txQuery = query(collection(db, "transactions"), where("status", "==", "Success"));
+                const txSnap = await getDocs(txQuery);
+                const totalVolume = txSnap.docs.reduce((sum, doc) => sum + parseFloat(doc.data().amount), 0);
+                setPlatformTotalVolume(totalVolume);
+                setPlatformTotalTransactions(txSnap.size);
+
+                const custSnap = await getDocs(collection(db, "customers"));
+                setPlatformTotalCustomers(custSnap.size);
+
                 const merchantsQuery = query(collection(db, "users"), where("role", "==", "merchant"));
                 const merchantsSnapshot = await getDocs(merchantsQuery);
                 setMerchantCount(merchantsSnapshot.size);
+
             } else {
-                const allCustomers = await getAllCustomers();
-                const merchantCustomers = allCustomers.filter(c => c.merchantId === userId);
-                setCustomers(merchantCustomers);
+                 // Fetch data specific to the merchant
+                const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId));
+                onSnapshot(txQuery, (snapshot) => {
+                    setMerchantTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction)));
+                });
+                
+                const custQuery = query(collection(db, "customers"), where("merchantId", "==", userId));
+                 onSnapshot(custQuery, (snapshot) => {
+                    setMerchantCustomers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer)));
+                });
             }
 
         } else {
@@ -221,39 +230,34 @@ export default function UserDetailPage() {
     setSelectedWithdrawal(withdrawal);
     setDialogOpen('withdrawalDetail');
   };
-
-  const userTransactions = useMemo(() => {
-      if (!userId) return [];
-      return allTransactions.filter(tx => tx.merchantId === userId);
-  }, [userId]);
-
+  
   const paginatedTransactions = useMemo(() => {
-    return userTransactions.slice(
+    return merchantTransactions.slice(
         (txCurrentPage - 1) * itemsPerPage,
         txCurrentPage * itemsPerPage
     );
-}, [userTransactions, txCurrentPage]);
+}, [merchantTransactions, txCurrentPage]);
 
 const txTotalPages = useMemo(() => {
-    return Math.ceil(userTransactions.length / itemsPerPage);
-}, [userTransactions]);
+    return Math.ceil(merchantTransactions.length / itemsPerPage);
+}, [merchantTransactions]);
   
   const paginatedWithdrawals = useMemo(() => {
-      return withdrawalHistory.slice(0, itemsPerPage);
-  }, []);
+      return merchantWithdrawals.slice(0, itemsPerPage);
+  }, [merchantWithdrawals]);
 
-  const wdTotalPages = Math.ceil(withdrawalHistory.length / itemsPerPage);
+  const wdTotalPages = Math.ceil(merchantWithdrawals.length / itemsPerPage);
 
   const paginatedCustomers = useMemo(() => {
-    return customers.slice(
+    return merchantCustomers.slice(
         (custCurrentPage - 1) * itemsPerPage,
         custCurrentPage * itemsPerPage
     );
-  }, [customers, custCurrentPage]);
+  }, [merchantCustomers, custCurrentPage]);
 
   const custTotalPages = useMemo(() => {
-      return Math.ceil(customers.length / itemsPerPage);
-  }, [customers]);
+      return Math.ceil(merchantCustomers.length / itemsPerPage);
+  }, [merchantCustomers]);
 
   const copyToClipboard = (text: string, label: string) => {
     if (!text) return;
@@ -282,10 +286,10 @@ const txTotalPages = useMemo(() => {
   }
 
   const successRate = useMemo(() => {
-      if (userTransactions.length === 0) return "0.0%";
-      const successfulTxns = userTransactions.filter(tx => tx.status === 'Success').length;
-      return `${((successfulTxns / userTransactions.length) * 100).toFixed(1)}%`;
-  }, [userTransactions]);
+      if (merchantTransactions.length === 0) return "0.0%";
+      const successfulTxns = merchantTransactions.filter(tx => tx.status === 'Success').length;
+      return `${((successfulTxns / merchantTransactions.length) * 100).toFixed(1)}%`;
+  }, [merchantTransactions]);
 
 
   if (loading) {
@@ -394,44 +398,32 @@ const txTotalPages = useMemo(() => {
         <Tabs defaultValue="overview">
             <TabsList className="gap-2">
                 <TabsTrigger value="overview" className="gap-2"><LayoutGrid className="h-4 w-4" />Overview</TabsTrigger>
-                {isAdminProfile ? (
-                     <>
-                        <TabsTrigger value="transactions" className="gap-2" asChild><Link href="/dashboard/transactions">All Transactions</Link></TabsTrigger>
-                        <TabsTrigger value="customers" className="gap-2" asChild><Link href="/dashboard/customers">All Customers</Link></TabsTrigger>
-                        <TabsTrigger value="withdrawals" className="gap-2" asChild><Link href="/dashboard/withdrawals">All Withdrawals</Link></TabsTrigger>
-                    </>
-                ) : (
-                    <>
-                        <TabsTrigger value="transactions" className="gap-2"><CreditCard className="h-4 w-4" />Transactions</TabsTrigger>
-                        <TabsTrigger value="customers" className="gap-2"><UsersIcon className="h-4 w-4" />Customers</TabsTrigger>
-                        <TabsTrigger value="withdrawals" className="gap-2"><Landmark className="h-4 w-4" />Withdrawals</TabsTrigger>
-                        <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>
-                    </>
-                )}
+                <TabsTrigger value="transactions" className="gap-2" asChild={isAdminProfile}><Link href="/dashboard/transactions">Transactions</Link></TabsTrigger>
+                <TabsTrigger value="customers" className="gap-2" asChild={isAdminProfile}><Link href="/dashboard/customers">Customers</Link></TabsTrigger>
+                <TabsTrigger value="withdrawals" className="gap-2" asChild={isAdminProfile}><Link href="/dashboard/withdrawals">Withdrawals</Link></TabsTrigger>
+                {!isAdminProfile && <TabsTrigger value="wallet" className="gap-2"><Wallet className="h-4 w-4" />Wallet Management</TabsTrigger>}
             </TabsList>
             <TabsContent value="overview" className="mt-4 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card asChild>
-                         <Link href={`/dashboard/users/${userId}/transactions/by-month/all`} className="cursor-pointer hover:bg-muted/50">
+                    <Card asChild={!isAdminProfile}>
+                         <Link href={!isAdminProfile ? `/dashboard/users/${userId}/transactions/by-month/all` : '#'} className={!isAdminProfile ? "cursor-pointer hover:bg-muted/50" : ""}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
                                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">$4,523.89</div>
-                                <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                                <div className="text-2xl font-bold">${isAdminProfile ? platformTotalVolume.toFixed(2) : merchantTransactions.filter(t=>t.status==='Success').reduce((sum, tx) => sum + parseFloat(tx.amount), 0).toFixed(2)}</div>
                             </CardContent>
                         </Link>
                     </Card>
-                    <Card asChild>
-                       <Link href={`/dashboard/users/${userId}/transactions/by-month/all`} className="cursor-pointer hover:bg-muted/50">
+                    <Card asChild={!isAdminProfile}>
+                       <Link href={!isAdminProfile ? `/dashboard/users/${userId}/transactions/by-month/all` : '#'} className={!isAdminProfile ? "cursor-pointer hover:bg-muted/50" : ""}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Successful Transactions</CardTitle>
                                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">+{userTransactions.filter(t => t.status === 'Success').length}</div>
-                                <p className="text-xs text-muted-foreground">+18.1% from last month</p>
+                                <div className="text-2xl font-bold">+{isAdminProfile ? platformTotalTransactions : merchantTransactions.filter(t => t.status === 'Success').length}</div>
                             </CardContent>
                         </Link>
                     </Card>
@@ -441,8 +433,7 @@ const txTotalPages = useMemo(() => {
                             <UsersIcon className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{customers.length}</div>
-                            <p className="text-xs text-muted-foreground">+2 since last month</p>
+                            <div className="text-2xl font-bold">{isAdminProfile ? platformTotalCustomers : merchantCustomers.length}</div>
                         </CardContent>
                     </Card>
                     {isAdminProfile ? (
@@ -495,7 +486,7 @@ const txTotalPages = useMemo(() => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {userTransactions.slice(0, 5).map(p => (
+                                {merchantTransactions.slice(0, 5).map(p => (
                                     <TableRow key={p.id} onClick={() => handleTransactionRowClick(p)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{p.id}</TableCell>
                                     <TableCell>
@@ -506,7 +497,7 @@ const txTotalPages = useMemo(() => {
                                     <TableCell className="text-right">${p.amount} {p.currency}</TableCell>
                                     </TableRow>
                                 ))}
-                                {userTransactions.length === 0 && (
+                                {merchantTransactions.length === 0 && (
                                      <TableRow>
                                         <TableCell colSpan={5} className="h-24 text-center">
                                             No transactions found for this merchant.
@@ -674,6 +665,11 @@ const txTotalPages = useMemo(() => {
                                         <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
                                     </TableRow>
                                 ))}
+                                 {paginatedWithdrawals.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center">No withdrawals found.</TableCell>
+                                    </TableRow>
+                                 )}
                             </TableBody>
                         </Table>
                     </CardContent>
