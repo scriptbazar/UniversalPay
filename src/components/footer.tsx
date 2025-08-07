@@ -31,14 +31,15 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
-              <li><Link href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
-              <li><Link href="#" className="text-muted-foreground hover:text-foreground">Cookie Policy</Link></li>
+              <li><Link href="/legal/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
+              <li><Link href="/legal/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
+              <li><Link href="/legal/cookies" className="text-muted-foreground hover:text-foreground">Cookie Policy</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
+               <li><Link href="/legal/support" className="text-muted-foreground hover:text-foreground">Support</Link></li>
               <li>support@universalpay.com</li>
               <li>+1 (555) 123-4567</li>
             </ul>
