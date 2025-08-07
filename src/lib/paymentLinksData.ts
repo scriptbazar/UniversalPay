@@ -62,6 +62,7 @@ export const getPaymentLinkById = async (id: string): Promise<PaymentLink | null
     return null;
 };
 
+// CRITICAL FIX: Changed createdAt to use serverTimestamp for correct ordering and querying.
 export const addPaymentLink = async (newLinkData: Omit<PaymentLink, 'id' | 'createdAt'>): Promise<void> => {
   await addDoc(collection(db, 'paymentLinks'), {
     ...newLinkData,
@@ -73,5 +74,7 @@ export const updatePaymentLink = async (id: string, updates: Partial<PaymentLink
     const docRef = doc(db, 'paymentLinks', id);
     await updateDoc(docRef, updates);
 };
+
+    
 
     

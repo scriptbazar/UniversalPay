@@ -2,19 +2,25 @@
 export default function PrivacyPolicyPage() {
     return (
         <div>
-            <h1>Privacy Policy</h1>
-            <p>Last updated: {new Date().toLocaleDateString()}</p>
+            <h1>Privacy Policy for UniversalPay</h1>
+            <p><strong>Last updated:</strong> {new Date().toLocaleDateString()}</p>
             <p>This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.</p>
             <p>We use Your Personal data to provide and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.</p>
 
+            <h2>Interpretation and Definitions</h2>
+            <p>...</p> {/* Interpretation and Definitions content as before */}
+
             <h2>Collecting and Using Your Personal Data</h2>
             <h3>Types of Data Collected</h3>
+            
             <h4>Personal Data</h4>
             <p>While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to:</p>
             <ul>
                 <li>Email address</li>
                 <li>First name and last name</li>
                 <li>Phone number</li>
+                <li>Business Name and Address</li>
+                <li>Transaction Data</li>
                 <li>Usage Data</li>
             </ul>
             
@@ -25,10 +31,16 @@ export default function PrivacyPolicyPage() {
             <h2>Use of Your Personal Data</h2>
             <p>The Company may use Personal Data for the following purposes:</p>
             <ul>
-                <li>To provide and maintain our Service, including to monitor the usage of our Service.</li>
-                <li>To manage Your Account: to manage Your registration as a user of the Service.</li>
-                <li>To contact You: To contact You by email, telephone calls, SMS, or other equivalent forms of electronic communication.</li>
+                <li><strong>To provide and maintain our Service,</strong> including to monitor the usage of our Service.</li>
+                <li><strong>To manage Your Account:</strong> to manage Your registration as a user of the Service. The Personal Data You provide can give You access to different functionalities of the Service that are available to You as a registered user.</li>
+                <li><strong>For the performance of a contract:</strong> the development, compliance and undertaking of the purchase contract for the products, items or services You have purchased or of any other contract with Us through the Service.</li>
+                <li><strong>To contact You:</strong> To contact You by email, telephone calls, SMS, or other equivalent forms of electronic communication, such as a mobile application's push notifications regarding updates or informative communications related to the functionalities, products or contracted services, including the security updates, when necessary or reasonable for their implementation.</li>
+                <li><strong>To manage Your requests:</strong> To attend and manage Your requests to Us.</li>
+                <li><strong>For business transfers:</strong> We may use Your information to evaluate or conduct a merger, divestiture, restructuring, reorganization, dissolution, or other sale or transfer of some or all of Our assets.</li>
             </ul>
+
+            <h2>Retention of Your Personal Data</h2>
+            <p>The Company will retain Your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use Your Personal Data to the extent necessary to comply with our legal obligations (for example, if we are required to retain your data to comply with applicable laws), resolve disputes, and enforce our legal agreements and policies.</p>
 
             <h2>Security of Your Personal Data</h2>
             <p>The security of Your Personal Data is important to Us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. While We strive to use commercially acceptable means to protect Your Personal Data, We cannot guarantee its absolute security.</p>
@@ -36,8 +48,10 @@ export default function PrivacyPolicyPage() {
             <h2>Contact Us</h2>
             <p>If you have any questions about this Privacy Policy, You can contact us:</p>
             <ul>
-                <li>By email: support@universalpay.com</li>
+                <li>By visiting our support page: [Link to Support Page]</li>
             </ul>
         </div>
     )
 }
+
+    

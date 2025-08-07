@@ -66,7 +66,7 @@ export default function PaymentLinksPage() {
         const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
           const fetchedLinks = querySnapshot.docs.map(doc => ({
               id: doc.id,
-              ...doc.data() as any, // Use as any for now, will refine type mapping if needed
+              ...doc.data() as any,
               createdAt: doc.data().createdAt
             }) as PaymentLink);
           setLinks(fetchedLinks);
@@ -87,8 +87,7 @@ export default function PaymentLinksPage() {
       }
     });
     return () => unsubscribeAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, toast]);
 
   const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +124,6 @@ export default function PaymentLinksPage() {
             createdAt: Timestamp.now(),
         });
         
-        // No need to refetch all links, onSnapshot will update state
         setAmount('');
         setTitle('');
         toast({
@@ -156,7 +154,6 @@ export default function PaymentLinksPage() {
     try {
         const linkRef = doc(db, "paymentLinks", link.id);
         await updateDoc(linkRef, { isActive: !link.isActive });
-        // No need to refetch all links, onSnapshot will update state
         toast({
           title: `Link ${!link.isActive ? 'activated' : 'deactivated'}`,
         });
@@ -174,7 +171,6 @@ export default function PaymentLinksPage() {
       try {
           const linkRef = doc(db, "paymentLinks", linkId);
           await deleteDoc(linkRef);
-          // No need to refetch all links, onSnapshot will update state
           toast({
               title: 'Link deleted!',
               description: 'The payment link has been successfully deleted.',
@@ -341,3 +337,5 @@ export default function PaymentLinksPage() {
     </div>
   );
 }
+
+    

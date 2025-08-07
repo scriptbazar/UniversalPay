@@ -2,15 +2,27 @@
 export default function CookiePolicyPage() {
     return (
         <div>
-            <h1>Cookie Policy</h1>
-            <p>Last updated: {new Date().toLocaleDateString()}</p>
-            <p>This Cookie Policy explains what Cookies are and how We use them. You should read this policy so You can understand what type of cookies We use, or the information We collect using Cookies and how that information is used.</p>
-            
-            <h2>What are Cookies?</h2>
-            <p>Cookies are small files that are placed on Your computer, mobile device or any other device by a website, containing the details of Your browsing history on that website among its many uses.</p>
-            
-            <h2>Types of Cookies We Use</h2>
-            <p>Cookies can be "Persistent" or "Session" Cookies. Persistent Cookies remain on Your personal computer or mobile device when You go offline, while Session Cookies are deleted as soon as You close Your web browser.</p>
+            <h1>Cookie Policy for UniversalPay</h1>
+            <p><strong>Last updated:</strong> {new Date().toLocaleDateString()}</p>
+            <p>This Cookie Policy explains what Cookies are and how We use them. You should read this policy so You can understand what type of cookies We use, the information We collect using Cookies, and how that information is used. This Cookie Policy has been created with the help of the TermsFeed Cookie Policy Generator.</p>
+            <p>Cookies do not typically contain any information that personally identifies a user, but personal information that we store about You may be linked to the information stored in and obtained from Cookies. For further information on how We use, store and keep your personal data secure, see our Privacy Policy.</p>
+            <p>We do not store sensitive personal information, such as mailing addresses, account passwords, etc. in the Cookies We use.</p>
+
+            <h2>Interpretation and Definitions</h2>
+            <h3>Interpretation</h3>
+            <p>The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.</p>
+            <h3>Definitions</h3>
+            <p>For the purposes of this Cookie Policy:</p>
+            <ul>
+                <li><strong>Company</strong> (referred to as either "the Company", "We", "Us" or "Our" in this Cookie Policy) refers to UniversalPay.</li>
+                <li><strong>Cookies</strong> mean small files that are placed on Your computer, mobile device or any other device by a website, containing details of your browsing history on that website among its many uses.</li>
+                <li><strong>Website</strong> refers to UniversalPay, accessible from your current URL.</li>
+                <li><strong>You</strong> means the individual accessing or using the Website, or a company, or any legal entity on behalf of which such individual is accessing or using the Website, as applicable.</li>
+            </ul>
+
+            <h2>The use of the Cookies</h2>
+            <h3>Type of Cookies We Use</h3>
+            <p>Cookies can be "Persistent" or "Session" Cookies. Persistent Cookies remain on your personal computer or mobile device when You go offline, while Session Cookies are deleted as soon as You close your web browser.</p>
             <p>We use both session and persistent Cookies for the purposes set out below:</p>
             <ul>
                 <li>
@@ -30,12 +42,15 @@ export default function CookiePolicyPage() {
             <h2>Your Choices Regarding Cookies</h2>
             <p>If You prefer to avoid the use of Cookies on the Website, first You must disable the use of Cookies in your browser and then delete the Cookies saved in your browser associated with this website. You may use this option for preventing the use of Cookies at any time.</p>
             <p>If You do not accept Our Cookies, You may experience some inconvenience in your use of the Website and some features may not function properly.</p>
+            <p>If You'd like to delete Cookies or instruct your web browser to delete or refuse Cookies, please visit the help pages of your web browser.</p>
 
             <h2>Contact Us</h2>
             <p>If you have any questions about this Cookie Policy, You can contact us:</p>
             <ul>
-                <li>By email: support@universalpay.com</li>
+                <li>By visiting our support page: [Link to Support Page]</li>
             </ul>
         </div>
     )
 }
+
+    

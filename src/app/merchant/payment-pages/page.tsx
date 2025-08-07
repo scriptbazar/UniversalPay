@@ -24,6 +24,8 @@ import { addPaymentLink, getPaymentLinks, updatePaymentLink, type PaymentLink } 
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { Timestamp } from 'firebase/firestore';
+
 
 export default function PaymentPagesPage() {
   const { toast } = useToast();
@@ -57,7 +59,7 @@ export default function PaymentPagesPage() {
     return () => unsubscribe();
   }, [router]);
 
-  const handleCreateLink = async (e: React.FormEvent) => {
+  const handleCreatePage = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) {
@@ -88,6 +90,7 @@ export default function PaymentPagesPage() {
       brandColor,
       collectPhone,
       payments: 0,
+      createdAt: Timestamp.now(), // This will be replaced by serverTimestamp in the function
     });
     
     await fetchLinks(user.uid);
@@ -138,7 +141,7 @@ export default function PaymentPagesPage() {
               <CardTitle>Create a New Page</CardTitle>
               <CardDescription>Generate a new page to share with your customers.</CardDescription>
             </CardHeader>
-            <form onSubmit={handleCreateLink}>
+            <form onSubmit={handleCreatePage}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Page Title</Label>
@@ -308,3 +311,5 @@ export default function PaymentPagesPage() {
     </div>
   );
 }
+
+    
