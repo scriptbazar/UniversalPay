@@ -97,11 +97,11 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                     <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                             {hideIdentity ? (
-                                <Globe className="w-12 h-12 text-primary" />
+                                <Globe className="w-10 h-10 text-primary" />
                             ) : logo ? (
                                 <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
-                                <Globe className="w-12 h-12 text-primary" />
+                                <Globe className="w-10 h-10 text-primary" />
                             )}
                         </div>
                         <div className="text-center">
@@ -146,12 +146,10 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                          <p className="text-xs text-muted-foreground text-center pt-2">
                             By proceeding, you agree to the <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
                          </p>
-                         {!hideIdentity && (
-                             <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
-                                <Globe className="h-4 w-4 text-primary"/>
-                                <span>Powered by UniversalPay</span>
-                             </div>
-                         )}
+                        <div className="flex items-center justify-center pt-2 gap-2 text-sm text-muted-foreground">
+                            <Globe className="h-4 w-4 text-primary"/>
+                            <span>Powered by UniversalPay</span>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -915,3 +913,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

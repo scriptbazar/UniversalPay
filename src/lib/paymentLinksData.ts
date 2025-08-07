@@ -11,7 +11,8 @@ import {
     updateDoc, 
     query, 
     where, 
-    orderBy
+    orderBy,
+    serverTimestamp
 } from 'firebase/firestore';
 
 export type PaymentLink = {
@@ -64,7 +65,7 @@ export const getPaymentLinkById = async (id: string): Promise<PaymentLink | null
 export const addPaymentLink = async (newLinkData: Omit<PaymentLink, 'id' | 'createdAt'>): Promise<void> => {
   await addDoc(collection(db, 'paymentLinks'), {
     ...newLinkData,
-    createdAt: new Date().toISOString(),
+    createdAt: serverTimestamp(),
   });
 };
 
@@ -72,3 +73,5 @@ export const updatePaymentLink = async (id: string, updates: Partial<PaymentLink
     const docRef = doc(db, 'paymentLinks', id);
     await updateDoc(docRef, updates);
 };
+
+    
