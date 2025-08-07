@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Link2, MoreVertical, Trash2, IndianRupee, Eye, AppWindow } from 'lucide-react';
+import { Copy, Link2, MoreVertical, Trash2, IndianRupee, Eye, AppWindow, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Timestamp } from 'firebase/firestore';
+import Image from 'next/image';
 
 
 export default function PaymentPagesPage() {
@@ -40,6 +41,7 @@ export default function PaymentPagesPage() {
   const [amount, setAmount] = useState('');
   const [brandColor, setBrandColor] = useState('#29ABE2');
   const [collectPhone, setCollectPhone] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const fetchLinks = async (uid: string) => {
     setLoading(true);
@@ -58,6 +60,18 @@ export default function PaymentPagesPage() {
     });
     return () => unsubscribe();
   }, [router]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   const handleCreatePage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +103,9 @@ export default function PaymentPagesPage() {
       isActive: true,
       brandColor,
       collectPhone,
+      imageUrl: imageUrl, // Save image URL
       payments: 0,
-      createdAt: Timestamp.now(), // This will be replaced by serverTimestamp in the function
+      createdAt: Timestamp.now(), 
     });
     
     await fetchLinks(user.uid);
@@ -101,6 +116,7 @@ export default function PaymentPagesPage() {
     setAmount('');
     setBrandColor('#29ABE2');
     setCollectPhone(false);
+    setImageUrl(null);
     
     toast({
       title: 'Success!',
@@ -161,6 +177,20 @@ export default function PaymentPagesPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Product Image</Label>
+                    <div className="flex items-center gap-4">
+                        <div className="w-24 h-24 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
+                        {imageUrl ? (
+                                <Image src={imageUrl} alt="Product" width={96} height={96} className="object-cover" data-ai-hint="product image" />
+                            ) : (
+                                <Upload className="w-8 h-8 text-muted-foreground" />
+                            )}
+                        </div>
+                        <Input id="image-upload" type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                        <Button variant="outline" type="button" onClick={() => document.getElementById('image-upload')?.click()}>Upload Image</Button>
+                    </div>
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border p-3">
@@ -311,5 +341,3 @@ export default function PaymentPagesPage() {
     </div>
   );
 }
-
-    

@@ -121,7 +121,11 @@ export default function PayPage() {
                     <CardContent className="p-6">
                         <div className="flex flex-col items-center space-y-4">
                             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
-                                <Globe className="w-10 h-10 text-muted-foreground" />
+                                {link.imageUrl ? (
+                                    <Image src={link.imageUrl} alt={link.title} width={80} height={80} className="object-cover" data-ai-hint="product image" />
+                                ) : (
+                                    <Globe className="w-10 h-10 text-muted-foreground" />
+                                )}
                             </div>
                             <div className="text-center">
                                 <CardTitle className="text-xl">{link.title}</CardTitle>
