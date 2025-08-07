@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit, PlusCircle, Trash2, Users, FileText } from "lucide-react";
@@ -31,10 +31,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { logSubscriptionChange } from './actions';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 
 
 type Plan = {
@@ -53,19 +54,12 @@ const initialSubscriptionPlans: Plan[] = [
 
 type SubscribedMerchant = {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   plan: 'Free' | 'Pro' | 'Premium';
   status: 'Active' | 'Cancelled';
-  subscribedOn: string;
+  createdAt: Timestamp;
 };
-
-const subscribedMerchants: SubscribedMerchant[] = [
-    { id: 'user_1', name: 'Alice Johnson', email: 'alice@example.com', plan: 'Pro', status: 'Active', subscribedOn: '2023-10-15' },
-    { id: 'user_2', name: 'Bob Williams', email: 'bob@example.com', plan: 'Free', status: 'Active', subscribedOn: '2023-11-01' },
-    { id: 'user_3', name: 'Charlie Brown', email: 'charlie@example.com', plan: 'Premium', status: 'Active', subscribedOn: '2023-09-20' },
-    { id: 'user_4', name: 'Diana Miller', email: 'diana@example.com', plan: 'Pro', status: 'Cancelled', subscribedOn: '2023-08-05' },
-];
 
 
 function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Plan) => void; }) {
@@ -133,6 +127,34 @@ export default function SubscriptionsPage() {
   const [plans, setPlans] = React.useState<Plan[]>(initialSubscriptionPlans);
   const { toast } = useToast();
   const router = useRouter();
+  const [subscribedMerchants, setSubscribedMerchants] = useState<SubscribedMerchant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+    setLoading(true);
+    // Fetch users with Pro or Premium plans
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("plan", "in", ["Pro", "Premium"]));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const merchants = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as SubscribedMerchant));
+        setSubscribedMerchants(merchants);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching subscribed merchants:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not fetch subscribed merchants."
+        });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
 
 
   const handleCreatePlan = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -305,28 +327,38 @@ export default function SubscriptionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {subscribedMerchants.map(merchant => (
-                                <TableRow key={merchant.id}>
-                                    <TableCell>
-                                        <div className="font-medium">{merchant.name}</div>
-                                        <div className="text-sm text-muted-foreground">{merchant.email}</div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={merchant.plan === 'Pro' ? 'default' : merchant.plan === 'Premium' ? 'default' : 'secondary'}>
-                                            {merchant.plan}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={merchant.status === 'Active' ? 'default' : 'outline'}>
-                                            {merchant.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{merchant.subscribedOn}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="outline" size="sm" onClick={() => handleRowClick(merchant.id)}>View Profile</Button>
-                                    </TableCell>
+                            {loading ? (
+                                 <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center">Loading subscribers...</TableCell>
                                 </TableRow>
-                            ))}
+                            ) : subscribedMerchants.length > 0 ? (
+                                subscribedMerchants.map(merchant => (
+                                    <TableRow key={merchant.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(merchant.id)}>
+                                        <TableCell>
+                                            <div className="font-medium">{merchant.fullName}</div>
+                                            <div className="text-sm text-muted-foreground">{merchant.email}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={merchant.plan === 'Pro' ? 'default' : merchant.plan === 'Premium' ? 'default' : 'secondary'}>
+                                                {merchant.plan}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={merchant.status === 'Active' ? 'default' : 'outline'}>
+                                                {merchant.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{merchant.createdAt?.toDate().toLocaleDateString()}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="outline" size="sm" onClick={(e) => {e.stopPropagation(); handleRowClick(merchant.id)}}>View Profile</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center">No subscribed merchants found.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
