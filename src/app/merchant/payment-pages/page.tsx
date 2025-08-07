@@ -46,7 +46,8 @@ export default function PaymentPagesPage() {
   const fetchLinks = async (uid: string) => {
     setLoading(true);
     const merchantLinks = await getPaymentLinks(uid);
-    setLinks(merchantLinks);
+    // Filter for pages only
+    setLinks(merchantLinks.filter(link => link.isPage));
     setLoading(false);
   }
 
@@ -101,9 +102,10 @@ export default function PaymentPagesPage() {
       type: isDynamic ? 'Dynamic' : 'Fixed',
       amount: isDynamic ? null : parseFloat(amount),
       isActive: true,
+      isPage: true, // Explicitly set as a page
       brandColor,
       collectPhone,
-      imageUrl: imageUrl, // Save image URL
+      imageUrl: imageUrl, 
       payments: 0,
       createdAt: Timestamp.now(), 
     });
@@ -341,3 +343,5 @@ export default function PaymentPagesPage() {
     </div>
   );
 }
+
+    

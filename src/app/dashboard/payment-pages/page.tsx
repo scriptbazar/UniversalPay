@@ -6,11 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { getPaymentLinks, type PaymentLink } from "@/lib/paymentLinksData";
+import { type PaymentLink } from '@/lib/paymentLinksData';
 import { useEffect, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { onSnapshot, collection, query, orderBy, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function AdminPaymentPagesPage() {
   const router = useRouter();
@@ -20,14 +22,21 @@ export default function AdminPaymentPagesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchLinks() {
-        setLoading(true);
-        // Fetch data asynchronously and update state
-        const fetchedLinks = await getPaymentLinks();
+    setLoading(true);
+    const linksCollectionRef = collection(db, "paymentLinks");
+    // Corrected query to only fetch pages
+    const q = query(linksCollectionRef, where("isPage", "==", true), orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const fetchedLinks: PaymentLink[] = [];
+        querySnapshot.forEach((doc) => {
+            fetchedLinks.push({ id: doc.id, ...doc.data() } as PaymentLink);
+        });
         setLinks(fetchedLinks);
         setLoading(false);
-    }
-    fetchLinks();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleRowClick = (linkId: string) => {
@@ -35,7 +44,6 @@ export default function AdminPaymentPagesPage() {
   };
 
   const filteredLinks = useMemo(() => {
-    // Ensure links is an array before filtering
     if (!Array.isArray(links)) {
         return [];
     }
@@ -128,3 +136,5 @@ export default function AdminPaymentPagesPage() {
     </div>
   );
 }
+
+    

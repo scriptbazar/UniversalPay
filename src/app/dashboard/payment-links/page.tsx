@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { onSnapshot, collection, query, orderBy } from 'firebase/firestore';
+import { onSnapshot, collection, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { PaymentLink } from '@/lib/paymentLinksData';
 
@@ -26,7 +27,8 @@ export default function AdminPaymentLinksPage() {
   useEffect(() => {
     setLoading(true);
     const linksCollectionRef = collection(db, "paymentLinks");
-    const q = query(linksCollectionRef, orderBy("createdAt", "desc"));
+    // Corrected query to only fetch links, not pages
+    const q = query(linksCollectionRef, where("isPage", "==", false), orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const fetchedLinks: PaymentLink[] = [];
@@ -140,3 +142,5 @@ export default function AdminPaymentLinksPage() {
     </div>
   );
 }
+
+    

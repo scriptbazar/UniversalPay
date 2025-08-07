@@ -29,7 +29,8 @@ export type PaymentLink = {
   payments: number;
   brandColor: string;
   collectPhone: boolean;
-  imageUrl: string | null; // Added for product image
+  imageUrl: string | null;
+  isPage?: boolean; // To distinguish between links and pages
 };
 
 // Function to get all links (for admin) or links for a specific merchant
@@ -75,3 +76,5 @@ export const updatePaymentLink = async (id: string, updates: Partial<PaymentLink
     const docRef = doc(db, 'paymentLinks', id);
     await updateDoc(docRef, updates);
 };
+
+    

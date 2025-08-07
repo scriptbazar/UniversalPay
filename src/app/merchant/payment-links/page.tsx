@@ -23,23 +23,7 @@ import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
-
-// Define the PaymentLink type according to your Firestore data structure
-export type PaymentLink = {
-  id: string;
-  merchantId: string;
-  title: string;
-  description: string;
-  slug: string;
-  url: string;
-  type: 'Dynamic' | 'Fixed';
-  amount: number | null;
-  isActive: boolean;
-  brandColor: string;
-  collectPhone: boolean;
-  payments: number;
-  createdAt: Timestamp;
-};
+import { type PaymentLink, updatePaymentLink } from '@/lib/paymentLinksData';
 
 export default function PaymentLinksPage() {
   const { toast } = useToast();
@@ -52,41 +36,46 @@ export default function PaymentLinksPage() {
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
 
+  const fetchLinks = (uid: string) => {
+    setLoading(true);
+    const linksCollectionRef = collection(db, "paymentLinks");
+    const q = query(
+      linksCollectionRef,
+      where("merchantId", "==", uid),
+      where("isPage", "==", false), // Only fetch links
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
+      const fetchedLinks = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data() as any,
+          createdAt: doc.data().createdAt
+        }) as PaymentLink);
+      setLinks(fetchedLinks);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching payment links:", error);
+      toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch payment links. Check console and Firebase rules.",
+      });
+      setLoading(false);
+    });
+
+    return unsubscribeSnapshot;
+  }
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
-        const merchantId = user.uid;
-        const linksCollectionRef = collection(db, "paymentLinks");
-        const q = query(
-          linksCollectionRef,
-          where("merchantId", "==", merchantId),
-          orderBy("createdAt", "desc")
-        );
-
-        const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
-          const fetchedLinks = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data() as any,
-              createdAt: doc.data().createdAt
-            }) as PaymentLink);
-          setLinks(fetchedLinks);
-          setLoading(false);
-        }, (error) => {
-          console.error("Error fetching payment links:", error);
-          toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to fetch payment links. Check console and Firebase rules.",
-          });
-          setLoading(false);
-        });
-
-        return () => unsubscribeSnapshot();
+        return fetchLinks(user.uid);
       } else {
         router.push('/login');
       }
     });
-    return () => unsubscribeAuth();
+    return () => unsubscribeAuth && unsubscribeAuth();
   }, [router, toast]);
 
   const handleCreateLink = async (e: React.FormEvent) => {
@@ -118,7 +107,8 @@ export default function PaymentLinksPage() {
             type: isDynamic ? 'Dynamic' : 'Fixed',
             amount: isDynamic ? null : parseFloat(amount),
             isActive: true,
-            brandColor: '#29ABE2', // Default color
+            isPage: false, // Explicitly set as not a page
+            brandColor: '#29ABE2', 
             collectPhone: false,
             payments: 0,
             createdAt: Timestamp.now(),
@@ -152,8 +142,7 @@ export default function PaymentLinksPage() {
 
   const handleToggleActive = async (link: PaymentLink) => {
     try {
-        const linkRef = doc(db, "paymentLinks", link.id);
-        await updateDoc(linkRef, { isActive: !link.isActive });
+        await updatePaymentLink(link.id, { isActive: !link.isActive });
         toast({
           title: `Link ${!link.isActive ? 'activated' : 'deactivated'}`,
         });

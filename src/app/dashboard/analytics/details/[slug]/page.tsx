@@ -13,72 +13,30 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 
-type Transaction = { 
-    id: string; 
-    merchant: string; 
+type Transaction = {
+    id: string;
+    merchant: string; // This will now be merchantId
     merchantId: string;
-    merchantEmail: string; // Added for details
-    amount: string; 
-    date: string; 
-    month: string; 
-    status: 'Successful' | 'Failed';
-    method: string; // Added for details
+    merchantEmail: string;
+    amount: string;
+    date: string;
+    month: string;
+    status: 'Successful' | 'Failed' | 'Pending';
+    method: string;
 };
-type User = { 
-    id: string; 
-    name: string; 
-    email: string; 
-    avatar: string; 
-    joined: string; 
+type User = {
+    id: string;
+    fullName: string;
+    email: string;
+    avatar: string;
+    createdAt: Timestamp;
     month: string;
     status: 'Active' | 'Suspended';
     plan: 'Free' | 'Pro' | 'Premium';
 };
-
-const generateMockData = () => {
-    const months = ["jan", "feb", "mar", "apr", "may", "jun"];
-    const users: User[] = [];
-    const transactions: Transaction[] = [];
-    const plans: User['plan'][] = ['Free', 'Pro', 'Premium'];
-
-    for (let i = 0; i < 50; i++) {
-        const monthIndex = i % 6;
-        const month = months[monthIndex];
-        users.push({
-            id: `user_${i + 1}`,
-            name: `User ${i + 1}`,
-            email: `user${i+1}@example.com`,
-            avatar: `https://placehold.co/40x40.png?text=U${i+1}`,
-            joined: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
-            month: month,
-            status: Math.random() > 0.1 ? 'Active' : 'Suspended',
-            plan: plans[i % 3]
-        });
-    }
-
-    const methods = ["UPI", "Crypto", "Page", "Link"];
-    for (let i = 0; i < 150; i++) {
-         const monthIndex = i % 6;
-         const month = months[monthIndex];
-         const success = Math.random() > 0.2;
-         const merchantIndex = i % 10 + 1;
-         transactions.push({
-            id: `txn_${i + 1}`,
-            merchant: `Merchant ${merchantIndex}`,
-            merchantId: `user_${merchantIndex}`,
-            merchantEmail: `merchant${merchantIndex}@example.com`,
-            amount: (Math.random() * 200 + 10).toFixed(2),
-            date: new Date(2023, monthIndex, (i % 28) + 1).toLocaleDateString(),
-            month: month,
-            status: success ? 'Successful' : 'Failed',
-            method: methods[i % 4],
-         });
-    }
-
-    return { users, transactions };
-};
-
 
 type DetailDialogContent = {
     type: 'user' | 'transaction';
@@ -87,14 +45,23 @@ type DetailDialogContent = {
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-        case 'Successful': 
+        case 'Successful':
         case 'Active':
             return 'default';
-        case 'Failed': 
+        case 'Failed':
         case 'Suspended':
+        case 'Pending':
             return 'destructive';
         default: return 'secondary';
     }
+};
+
+// Helper to format date and extract month
+const formatDateAndMonth = (timestamp: Timestamp | Date) => {
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+    const month = date.toLocaleString('default', { month: 'short' }).toLowerCase();
+    const dateString = date.toLocaleDateString();
+    return { dateString, month };
 };
 
 function AnalyticsDetailPageContent() {
@@ -105,88 +72,95 @@ function AnalyticsDetailPageContent() {
     const slug = params.slug as string;
     const source = searchParams.get('source');
     const linkTitle = searchParams.get('title');
-    
+
     const [title, setTitle] = useState('');
     const [data, setData] = useState<(User | Transaction)[]>([]);
     const [columns, setColumns] = useState<any[]>([]);
     const [dialogContent, setDialogContent] = useState<DetailDialogContent>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         if (!slug) return;
 
-        // Generate data on the client side to avoid hydration issues
-        const { users, transactions } = generateMockData();
+        const fetchData = async () => {
+            setLoading(true);
+            const [type, month] = slug.split('_');
 
-        const [type, month] = slug.split('_');
-        
-        let pageTitle = '';
-        let fetchedData: (User | Transaction)[] = [];
-        let tableColumns: any[] = [];
-        
-        const monthName = month && month !== 'all' ? month.charAt(0).toUpperCase() + month.slice(1) : 'All Time';
-        
-        switch(type) {
-            case 'new-users':
-                pageTitle = `New Users in ${monthName}`;
-                fetchedData = users.filter(u => month === 'all' || u.month === month);
-                tableColumns = [
-                    { header: 'Merchant', accessor: 'name' },
-                    { header: 'Joined On', accessor: 'joined' },
-                    { header: 'Plan', accessor: 'plan' },
-                    { header: 'Status', accessor: 'status' },
-                ];
-                break;
-            case 'total-transactions':
-                pageTitle = `Total Transactions in ${monthName}`;
-                fetchedData = transactions.filter(t => month === 'all' || t.month === month);
-                 tableColumns = [
-                    { header: 'Transaction ID', accessor: 'id' },
-                    { header: 'Merchant', accessor: 'merchant' },
-                    { header: 'Date', accessor: 'date' },
-                    { header: 'Method', accessor: 'method' },
-                    { header: 'Status', accessor: 'status' },
-                    { header: 'Amount', accessor: 'amount', isNumeric: true },
-                ];
-                break;
-            case 'successful-transactions':
-                pageTitle = `Successful Transactions in ${monthName}`;
-                if (linkTitle) {
-                  pageTitle = `Successful Transactions for '${linkTitle}'`;
+            let pageTitle = '';
+            let fetchedData: (User | Transaction)[] = [];
+            let tableColumns: any[] = [];
+            const monthName = month && month !== 'all' ? month.charAt(0).toUpperCase() + month.slice(1) : 'All Time';
+
+            try {
+                if (type === 'new-users' || type === 'new-merchants') {
+                    const usersQuery = query(collection(db, "users"));
+                    const usersSnapshot = await getDocs(usersQuery);
+                    const allUsers = usersSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        const { dateString, month: docMonth } = formatDateAndMonth(data.createdAt);
+                        return { id: doc.id, ...data, joined: dateString, month: docMonth } as User;
+                    });
+                    
+                    fetchedData = allUsers.filter(u => month === 'all' || u.month === month);
+                    pageTitle = type === 'new-users' ? `New Users in ${monthName}` : 'All New Merchants';
+                    tableColumns = [
+                        { header: 'Merchant', accessor: 'fullName' },
+                        { header: 'Joined On', accessor: 'joined' },
+                        { header: 'Plan', accessor: 'plan' },
+                        { header: 'Status', accessor: 'status' },
+                    ];
+
+                } else if (type.includes('transactions')) {
+                    const txQuery = query(collection(db, "transactions"));
+                    const txSnapshot = await getDocs(txQuery);
+                    const allTransactions = txSnapshot.docs.map(doc => {
+                         const data = doc.data();
+                         const { dateString, month: docMonth } = formatDateAndMonth(data.date);
+                         return { id: doc.id, ...data, date: dateString, month: docMonth, merchant: data.merchantId } as Transaction;
+                    });
+
+                    let filteredTransactions = allTransactions;
+                    if (type === 'successful-transactions') {
+                        pageTitle = linkTitle ? `Successful Transactions for '${linkTitle}'` : `Successful Transactions in ${monthName}`;
+                        filteredTransactions = allTransactions.filter(t => t.status === 'Successful');
+                    } else {
+                        pageTitle = `Total Transactions in ${monthName}`;
+                    }
+
+                    fetchedData = filteredTransactions.filter(t => month === 'all' || t.month === month);
+                     tableColumns = [
+                        { header: 'Transaction ID', accessor: 'id' },
+                        { header: 'Merchant', accessor: 'merchantId' },
+                        { header: 'Date', accessor: 'date' },
+                        { header: 'Method', accessor: 'method' },
+                        { header: 'Status', accessor: 'status' },
+                        { header: 'Amount', accessor: 'amount', isNumeric: true },
+                    ];
                 }
-                fetchedData = transactions.filter(t => t.status === 'Successful' && (month === 'all' || t.month === month));
-                tableColumns = [
-                    { header: 'Transaction ID', accessor: 'id' },
-                    { header: 'Merchant', accessor: 'merchant' },
-                    { header: 'Date', accessor: 'date' },
-                    { header: 'Method', accessor: 'method' },
-                    { header: 'Amount', accessor: 'amount', isNumeric: true },
-                ];
-                break;
-            case 'new-merchants': // from stat card
-                 pageTitle = 'All New Merchants';
-                 fetchedData = users;
-                 tableColumns = [
-                    { header: 'Merchant', accessor: 'name' },
-                    { header: 'Joined On', accessor: 'joined' },
-                    { header: 'Plan', accessor: 'plan' },
-                    { header: 'Status', accessor: 'status' },
-                ];
-                 break;
-        }
 
-        setTitle(pageTitle);
-        setData(fetchedData);
-        setColumns(tableColumns);
-    }, [slug, linkTitle]);
-    
+                setTitle(pageTitle);
+                setData(fetchedData);
+                setColumns(tableColumns);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                toast({ variant: "destructive", title: "Error", description: "Could not fetch analytics details." });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [slug, linkTitle, toast]);
+
     const totalPages = Math.ceil(data.length / itemsPerPage);
     const paginatedData = data.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
     );
-    
+
     const handleRowClick = (item: User | Transaction) => {
         if ('email' in item && 'joined' in item) { // It's a User
             setDialogContent({ type: 'user', data: item });
@@ -228,15 +202,17 @@ function AnalyticsDetailPageContent() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedData.map((item) => (
+                            {loading ? (
+                                <TableRow><TableCell colSpan={columns.length} className="text-center h-24">Loading data...</TableCell></TableRow>
+                            ) : paginatedData.map((item) => (
                                 <TableRow key={item.id} onClick={() => handleRowClick(item)} className="cursor-pointer hover:bg-muted/50">
                                     {columns.map(col => (
                                         <TableCell key={col.accessor} className={col.isNumeric ? 'text-right' : ''}>
-                                            {col.accessor === 'name' || col.accessor === 'merchant' ? (
+                                            {col.accessor === 'fullName' || col.accessor === 'merchantId' ? (
                                                 <div className="flex items-center gap-2">
-                                                    <Image src={'avatar' in item ? (item as User).avatar : `https://placehold.co/40x40.png?text=M`} alt={(item as any).name || (item as any).merchant} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
+                                                    <Image src={'avatar' in item ? (item as User).avatar : `https://placehold.co/40x40.png?text=M`} alt={(item as any).fullName || (item as any).merchant} width={40} height={40} className="rounded-full" data-ai-hint="user avatar" />
                                                     <div>
-                                                        <p className="font-medium">{(item as any).name || (item as any).merchant}</p>
+                                                        <p className="font-medium">{(item as any).fullName || (item as any).merchantId}</p>
                                                         <p className="text-xs text-muted-foreground">{'email' in item ? (item as User).email : (item as Transaction).merchantEmail}</p>
                                                     </div>
                                                 </div>
@@ -259,7 +235,7 @@ function AnalyticsDetailPageContent() {
                             ))}
                         </TableBody>
                     </Table>
-                    {data.length === 0 && (
+                    {!loading && data.length === 0 && (
                         <p className="p-4 text-center text-muted-foreground">No data found.</p>
                     )}
                 </CardContent>
@@ -268,17 +244,17 @@ function AnalyticsDetailPageContent() {
                         Page {currentPage} of {totalPages}
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                         >
                             Previous
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
                         >
@@ -301,9 +277,9 @@ function AnalyticsDetailPageContent() {
                     {dialogContent?.type === 'user' && (
                         <div className="py-4 space-y-4">
                             <div className="flex items-center gap-4">
-                                <Image src={(dialogContent.data as User).avatar} alt={(dialogContent.data as User).name} width={64} height={64} className="rounded-full" data-ai-hint="user avatar" />
+                                <Image src={(dialogContent.data as User).avatar} alt={(dialogContent.data as User).fullName} width={64} height={64} className="rounded-full" data-ai-hint="user avatar" />
                                 <div>
-                                    <h3 className="text-lg font-semibold">{(dialogContent.data as User).name}</h3>
+                                    <h3 className="text-lg font-semibold">{(dialogContent.data as User).fullName}</h3>
                                     <div className="flex items-center gap-2">
                                         <p className="text-sm text-muted-foreground">{(dialogContent.data as User).email}</p>
                                         <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as User).email, 'Email')} />
@@ -320,7 +296,7 @@ function AnalyticsDetailPageContent() {
                                 <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground"/> <span>Plan:</span> <span className="font-semibold">{(dialogContent.data as User).plan}</span></div>
                                 <div className="flex justify-between items-center col-span-2">
                                     <span className="text-muted-foreground">Joined On:</span>
-                                    <span className="font-semibold">{(dialogContent.data as User).joined}</span>
+                                    <span className="font-semibold">{(dialogContent.data as User).createdAt.toDate().toLocaleDateString()}</span>
                                 </div>
                             </div>
                         </div>
@@ -338,7 +314,7 @@ function AnalyticsDetailPageContent() {
                              <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Merchant:</span>
                                 <div className="text-right">
-                                    <p className="font-semibold">{(dialogContent.data as Transaction).merchant}</p>
+                                    <p className="font-semibold">{(dialogContent.data as Transaction).merchantId}</p>
                                     <div className="flex items-center gap-2">
                                         <p className="text-sm text-muted-foreground">{(dialogContent.data as Transaction).merchantEmail}</p>
                                         <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard((dialogContent.data as Transaction).merchantEmail, 'Email')} />
@@ -388,3 +364,5 @@ export default function AnalyticsDetailPage() {
         </Suspense>
     )
 }
+
+    
