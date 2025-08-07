@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { collection, onSnapshot, query, where, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, where, doc, updateDoc, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Withdrawal } from "./actions";
@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { createWithdrawal } from "./actions";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from 'firebase/auth';
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
     switch (status) {
@@ -30,58 +31,54 @@ export default function AdminWithdrawalsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [user, setUser] = useState(auth.currentUser);
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                // Force refresh token to get latest custom claims
-                const idTokenResult = await currentUser.getIdTokenResult(true);
-                setIsAdmin(!!idTokenResult.claims.role && idTokenResult.claims.role === 'admin');
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const idTokenResult = await user.getIdTokenResult(true);
+                const userIsAdmin = !!idTokenResult.claims.role && idTokenResult.claims.role === 'admin';
+                setIsAdmin(userIsAdmin);
+
+                if (userIsAdmin) {
+                    const withdrawalsCollectionRef = collection(db, "withdrawals");
+                    const q = query(withdrawalsCollectionRef, orderBy('createdAt', 'desc'));
+                    
+                    const unsubscribeSnapshots = onSnapshot(q, (querySnapshot) => {
+                        const withdrawalsList: Withdrawal[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Withdrawal));
+                        setWithdrawals(withdrawalsList);
+                        setLoading(false);
+                    }, (error) => {
+                        console.error("Error fetching withdrawals:", error);
+                        toast({
+                            title: "Error",
+                            description: "Failed to fetch withdrawals. Check console and Firebase rules.",
+                            variant: "destructive",
+                        });
+                        setLoading(false);
+                    });
+                     // Return the snapshot listener unsubscriber to be called on cleanup
+                    return unsubscribeSnapshots;
+                } else {
+                    // If user is not an admin, stop loading and show permission error toast.
+                    setLoading(false);
+                    setWithdrawals([]);
+                    toast({
+                        title: "Permission Denied",
+                        description: "You do not have administrative permissions to view all withdrawals.",
+                        variant: "destructive",
+                    });
+                }
             } else {
-                setIsAdmin(false);
+                // If no user is logged in, stop loading.
+                setLoading(false);
             }
         });
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        // Only fetch withdrawals if the user is an admin
-        if (!user || !isAdmin) {
-            setLoading(false);
-            if (user && !isAdmin) {
-                 toast({
-                    title: "Permission Denied",
-                    description: "You do not have administrative permissions to view all withdrawals.",
-                    variant: "destructive",
-                });
-            }
-            setWithdrawals([]);
-            return;
-        };
-
-        const withdrawalsCollectionRef = collection(db, "withdrawals");
-        // The query can be unfiltered because the security rules allow admins to list all
-        const q = query(withdrawalsCollectionRef);
         
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const withdrawalsList: Withdrawal[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Withdrawal));
-            setWithdrawals(withdrawalsList);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching withdrawals:", error);
-            toast({
-                title: "Error",
-                description: "Failed to fetch withdrawals. Check console and Firebase rules.",
-                variant: "destructive",
-            });
-            setLoading(false);
-        });
-
+        // This is the cleanup function for the auth state listener
         return () => unsubscribe();
-    }, [user, isAdmin, toast]);
+    }, [toast]);
+
 
     const handleProcessWithdrawal = async (id: string, newStatus: 'Completed' | 'Failed') => {
         try {
