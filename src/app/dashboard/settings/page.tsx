@@ -154,7 +154,7 @@ export default function SettingsPage() {
   };
   
    const handleSaveGateways = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission
     setIsSaving(true);
     if (!auth.currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save settings.'});
