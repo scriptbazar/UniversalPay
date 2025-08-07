@@ -2,7 +2,7 @@
 export default function TermsOfServicePage() {
     return (
         <div>
-            <h1>Terms of Service for UniversalPay</h1>
+            <h1 className="text-center">Terms of Service for UniversalPay</h1>
             <p><strong>Last updated:</strong> {new Date().toLocaleDateString()}</p>
             <p>Please read these terms and conditions carefully before using Our Service.</p>
             

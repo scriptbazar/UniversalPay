@@ -2,7 +2,7 @@
 export default function CookiePolicyPage() {
     return (
         <div>
-            <h1>Cookie Policy for UniversalPay</h1>
+            <h1 className="text-center">Cookie Policy for UniversalPay</h1>
             <p><strong>Last updated:</strong> {new Date().toLocaleDateString()}</p>
             <p>This Cookie Policy explains what Cookies are and how We use them. You should read this policy so You can understand what type of cookies We use, the information We collect using Cookies, and how that information is used. This Cookie Policy has been created with the help of the TermsFeed Cookie Policy Generator.</p>
             <p>Cookies do not typically contain any information that personally identifies a user, but personal information that we store about You may be linked to the information stored in and obtained from Cookies. For further information on how We use, store and keep your personal data secure, see our Privacy Policy.</p>
