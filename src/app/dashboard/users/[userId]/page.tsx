@@ -25,10 +25,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, Timestamp, collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, Timestamp, collection, query, where, getDocs, onSnapshot, orderBy } from "firebase/firestore";
 import { type Customer, getAllCustomers } from '@/lib/customersData';
 import { countries } from "@/lib/countries";
-import type { Withdrawal } from "@/app/dashboard/withdrawals/actions";
+import type { Withdrawal } from "@/lib/withdrawalsData";
 
 type Transaction = {
     id: string;
@@ -176,7 +176,7 @@ export default function UserDetailPage() {
 
             const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId), orderBy('createdAt', 'desc'));
              onSnapshot(wdQuery, (snapshot) => {
-                setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id } as Withdrawal)));
+                setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id, createdAt: d.data().createdAt.toDate() } as Withdrawal)));
             });
         }
         setLoading(false);
@@ -660,7 +660,7 @@ const txTotalPages = useMemo(() => {
                                         <TableCell>
                                             <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
                                         </TableCell>
-                                        <TableCell>{w.date}</TableCell>
+                                        <TableCell>{w.createdAt.toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
                                     </TableRow>
                                  ))}
@@ -829,7 +829,7 @@ const txTotalPages = useMemo(() => {
                         <Separator/>
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Date:</span>
-                            <span className="font-semibold">{selectedWithdrawal.date}</span>
+                            <span className="font-semibold">{selectedWithdrawal.createdAt.toLocaleDateString()}</span>
                         </div>
                         <Separator/>
                         <div className="flex justify-between items-center">
