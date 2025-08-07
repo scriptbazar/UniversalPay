@@ -6,7 +6,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "details.targetUser",
+          "fieldPath": "level",
           "order": "ASCENDING"
         },
         {
@@ -20,7 +20,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "level",
+          "fieldPath": "details.targetUser",
           "order": "ASCENDING"
         },
         {
@@ -58,7 +58,7 @@
       ]
     },
     {
-      "collectionGroup": "payment_links",
+      "collectionGroup": "paymentLinks",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -136,7 +136,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "timestamp",
+          "fieldPath": "date",
           "order": "DESCENDING"
         }
       ]
@@ -170,15 +170,35 @@
       ]
     },
     {
-      "collectionGroup": "audit_logs",
+      "collectionGroup": "walletLoadRequests",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "level",
-          "arrayConfig": "CONTAINS"
+          "fieldPath": "merchantId",
+          "order": "ASCENDING"
         },
         {
-          "fieldPath": "timestamp",
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "role",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "withdrawals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
