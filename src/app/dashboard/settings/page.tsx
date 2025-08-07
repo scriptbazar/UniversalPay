@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { updateSecuritySettings, getSecuritySettings } from './actions';
+import { updateSecuritySettings, getSecuritySettings, updatePaymentSettings, getPaymentSettings } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -49,15 +49,25 @@ type GatewayState = {
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Security settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [reCaptchaSiteKey, setReCaptchaSiteKey] = useState('');
   const [reCaptchaSecretKey, setReCaptchaSecretKey] = useState('');
-  const [logo, setLogo] = useState<string | null>(null);
-  
   const [isCaptchaEnabled, setIsCaptchaEnabled] = useState(true);
   const [isMerchantCaptchaRequired, setIsMerchantCaptchaRequired] = useState(true);
   const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
 
+  // Payment settings state
+  const [stripePk, setStripePk] = useState('');
+  const [stripeSk, setStripeSk] = useState('');
+  const [paypalClientId, setPaypalClientId] = useState('');
+  const [paypalSecret, setPaypalSecret] = useState('');
+  const [usdtWallet, setUsdtWallet] = useState('');
+  const [btcWallet, setBtcWallet] = useState('');
+
+  const [logo, setLogo] = useState<string | null>(null);
   
   const [gateways, setGateways] = useState<GatewayState>({
     paytm: true,
@@ -78,13 +88,25 @@ export default function SettingsPage() {
     async function fetchSettings() {
         setIsLoading(true);
         try {
-            const settings = await getSecuritySettings();
-            setGeminiApiKey(settings.geminiApiKey);
-            setReCaptchaSiteKey(settings.reCaptchaSiteKey);
-            setReCaptchaSecretKey(settings.reCaptchaSecretKey);
-            setIsCaptchaEnabled(settings.isCaptchaEnabled);
-            setIsMerchantCaptchaRequired(settings.isMerchantCaptchaRequired);
-            setIsAdmin2faEnabled(settings.isAdmin2faEnabled);
+            const [security, payment] = await Promise.all([
+                getSecuritySettings(),
+                getPaymentSettings()
+            ]);
+            
+            setGeminiApiKey(security.geminiApiKey);
+            setReCaptchaSiteKey(security.reCaptchaSiteKey);
+            setReCaptchaSecretKey(security.reCaptchaSecretKey);
+            setIsCaptchaEnabled(security.isCaptchaEnabled);
+            setIsMerchantCaptchaRequired(security.isMerchantCaptchaRequired);
+            setIsAdmin2faEnabled(security.isAdmin2faEnabled);
+            
+            setStripePk(payment.stripePk);
+            setStripeSk(payment.stripeSk);
+            setPaypalClientId(payment.paypalClientId);
+            setPaypalSecret(payment.paypalSecret);
+            setUsdtWallet(payment.usdtWallet);
+            setBtcWallet(payment.btcWallet);
+
         } catch (error) {
             console.error("Failed to fetch settings", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load settings.'})
@@ -101,10 +123,10 @@ export default function SettingsPage() {
 
   const handleSaveSecuritySettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSaving(true);
     if (!auth.currentUser) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save settings.'});
-        setIsLoading(false);
+        setIsSaving(false);
         return;
     }
     try {
@@ -124,10 +146,42 @@ export default function SettingsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save settings.",
+        description: "Failed to save API & Security settings.",
       });
     } finally {
-        setIsLoading(false);
+        setIsSaving(false);
+    }
+  };
+  
+   const handleSaveGateways = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    if (!auth.currentUser) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save settings.'});
+        setIsSaving(false);
+        return;
+    }
+    try {
+        await updatePaymentSettings(auth.currentUser.uid, {
+            stripePk,
+            stripeSk,
+            paypalClientId,
+            paypalSecret,
+            usdtWallet,
+            btcWallet,
+        });
+        toast({
+            title: "Success",
+            description: "Payment gateway settings saved successfully.",
+        });
+    } catch(error) {
+         toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save payment settings.",
+        });
+    } finally {
+        setIsSaving(false);
     }
   };
   
@@ -141,13 +195,6 @@ export default function SettingsPage() {
       reader.readAsDataURL(file);
     }
   };
-
-  const handleSaveGateways = () => {
-    toast({
-        title: "Settings Saved",
-        description: "Your gateway settings have been updated.",
-    });
-  }
 
 
   return (
@@ -303,7 +350,7 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button type="submit" disabled={isLoading}>{isLoading ? 'Saving...' : 'Save API & Security Settings'}</Button>
+                 <Button type="submit" disabled={isLoading || isSaving}>{isSaving ? 'Saving...' : 'Save API & Security Settings'}</Button>
               </CardFooter>
             </form>
           </Card>
@@ -316,6 +363,7 @@ export default function SettingsPage() {
                 Configure the payment gateways your platform uses to accept payments from customers.
               </CardDescription>
             </CardHeader>
+            <form onSubmit={handleSaveGateways}>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -352,9 +400,9 @@ export default function SettingsPage() {
                              {gateways.stripe && (
                                 <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
                                     <Label htmlFor="stripe-pk">Stripe Publishable Key</Label>
-                                    <Input id="stripe-pk" placeholder="pk_live_..."/>
+                                    <Input id="stripe-pk" placeholder="pk_live_..." value={stripePk} onChange={e => setStripePk(e.target.value)} disabled={isLoading}/>
                                     <Label htmlFor="stripe-sk">Stripe Secret Key</Label>
-                                    <Input id="stripe-sk" type="password" placeholder="sk_live_..."/>
+                                    <Input id="stripe-sk" type="password" placeholder="sk_live_..." value={stripeSk} onChange={e => setStripeSk(e.target.value)} disabled={isLoading}/>
                                 </div>
                             )}
 
@@ -367,9 +415,9 @@ export default function SettingsPage() {
                              {gateways.paypal && (
                                 <div className="space-y-2 pl-6 pb-2 border-l-2 ml-3">
                                     <Label htmlFor="paypal-client-id">PayPal Client ID</Label>
-                                    <Input id="paypal-client-id" placeholder="Enter PayPal Client ID"/>
+                                    <Input id="paypal-client-id" placeholder="Enter PayPal Client ID" value={paypalClientId} onChange={e => setPaypalClientId(e.target.value)} disabled={isLoading}/>
                                     <Label htmlFor="paypal-secret">PayPal Secret</Label>
-                                    <Input id="paypal-secret" type="password" placeholder="Enter PayPal Secret"/>
+                                    <Input id="paypal-secret" type="password" placeholder="Enter PayPal Secret" value={paypalSecret} onChange={e => setPaypalSecret(e.target.value)} disabled={isLoading}/>
                                 </div>
                             )}
                         </div>
@@ -393,7 +441,7 @@ export default function SettingsPage() {
                             {gateways.crypto_usdt && (
                                 <div className="space-y-2 pt-2">
                                     <Label htmlFor="usdt-wallet">Your USDT (TRC20) Wallet Address</Label>
-                                    <Input id="usdt-wallet" placeholder="T..."/>
+                                    <Input id="usdt-wallet" placeholder="T..." value={usdtWallet} onChange={e => setUsdtWallet(e.target.value)} disabled={isLoading}/>
                                 </div>
                             )}
                         </div>
@@ -408,7 +456,7 @@ export default function SettingsPage() {
                             {gateways.crypto_btc && (
                                 <div className="space-y-2 pt-2">
                                     <Label htmlFor="btc-wallet">Your Bitcoin (BTC) Wallet Address</Label>
-                                    <Input id="btc-wallet" placeholder="bc1..."/>
+                                    <Input id="btc-wallet" placeholder="bc1..." value={btcWallet} onChange={e => setBtcWallet(e.target.value)} disabled={isLoading}/>
                                 </div>
                             )}
                         </div>
@@ -416,8 +464,9 @@ export default function SettingsPage() {
                 </div>
             </CardContent>
             <CardFooter>
-                <Button onClick={handleSaveGateways}>Save Gateway Configuration</Button>
+                <Button type="submit" disabled={isLoading || isSaving}>{isSaving ? 'Saving...' : 'Save Gateway Configuration'}</Button>
             </CardFooter>
+            </form>
           </Card>
         </TabsContent>
       </Tabs>

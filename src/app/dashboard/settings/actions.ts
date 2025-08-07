@@ -137,3 +137,49 @@ export async function updateSecuritySettings(adminUid: string, data: {
     }
     return result;
 }
+
+export async function getPaymentSettings() {
+    const env = await readEnvFile();
+    return {
+        stripePk: env['STRIPE_PUBLISHABLE_KEY'] || '',
+        stripeSk: env['STRIPE_SECRET_KEY'] || '',
+        paypalClientId: env['PAYPAL_CLIENT_ID'] || '',
+        paypalSecret: env['PAYPAL_SECRET'] || '',
+        usdtWallet: env['USDT_TRC20_WALLET'] || '',
+        btcWallet: env['BTC_WALLET'] || '',
+    };
+}
+
+export async function updatePaymentSettings(adminUid: string, data: {
+    stripePk: string;
+    stripeSk: string;
+    paypalClientId: string;
+    paypalSecret: string;
+    usdtWallet: string;
+    btcWallet: string;
+}) {
+     const updates: Record<string, string> = {};
+    updates['STRIPE_PUBLISHABLE_KEY'] = data.stripePk;
+    updates['STRIPE_SECRET_KEY'] = data.stripeSk;
+    updates['PAYPAL_CLIENT_ID'] = data.paypalClientId;
+    updates['PAYPAL_SECRET'] = data.paypalSecret;
+    updates['USDT_TRC20_WALLET'] = data.usdtWallet;
+    updates['BTC_WALLET'] = data.btcWallet;
+
+    const result = await updateEnvFile(updates);
+
+    if (result.success) {
+        try {
+            const adminUser = await admin.auth().getUser(adminUid);
+            await db.collection('audit_logs').add({
+                type: 'PAYMENT_SETTINGS_UPDATED',
+                level: 'CRITICAL',
+                message: `Admin ${adminUser.email} (${adminUid}) updated payment gateway settings.`,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        } catch(e) {
+            console.error("Failed to write audit log for payment settings update.", e)
+        }
+    }
+    return result;
+}
