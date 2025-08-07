@@ -54,7 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot, getDocs } from "firebase/firestore";
 
 
 type Transaction = {
@@ -75,6 +75,7 @@ export default function Dashboard() {
   const [recentTransactionsData, setRecentTransactionsData] = useState<Transaction[]>([]);
   const [merchantName, setMerchantName] = useState("Merchant");
   const [chartData, setChartData] = useState<any[]>([]);
+  const [customerCount, setCustomerCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -133,6 +134,12 @@ export default function Dashboard() {
                 });
             });
 
+            // Fetch customer count
+            const customersCol = collection(db, "customers");
+            const customerQuery = query(customersCol, where("merchantId", "==", user.uid));
+            const customerSnapshot = await getDocs(customerQuery);
+            setCustomerCount(customerSnapshot.size);
+
             return () => unsubscribeTransactions(); // Cleanup listener
 
         } else {
@@ -177,6 +184,12 @@ export default function Dashboard() {
       .toFixed(2);
   }, [allTransactions]);
 
+  const successRate = useMemo(() => {
+      if (allTransactions.length === 0) return "0.0%";
+      const successfulTxns = allTransactions.filter(tx => tx.status === 'Success').length;
+      return `${((successfulTxns / allTransactions.length) * 100).toFixed(1)}%`;
+  }, [allTransactions]);
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -196,8 +209,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">${totalRevenue}</div>
               <p className="text-xs text-muted-foreground">
-                {/* This percentage change is still static - would need more historical data */}
-                +20.1% from last month
+                All-time successful payments
               </p>
             </CardContent>
           </Link>
@@ -211,10 +223,9 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{/* This is still static - need to fetch from Firestore */} +2350</div>
+              <div className="text-2xl font-bold">+{customerCount}</div>
               <p className="text-xs text-muted-foreground">
-                {/* This percentage change is still static */}
-                +180.1% from last month
+                Total customers who paid you
               </p>
             </CardContent>
           </Link>
@@ -228,8 +239,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{allTransactions.length}</div>
               <p className="text-xs text-muted-foreground">
-                {/* This percentage change is still static */}
-                +19% from last month
+                Total transactions attempted
               </p>
             </CardContent>
           </Link>
@@ -243,10 +253,9 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{/* This is still static */}98.2%</div>
+              <div className="text-2xl font-bold">{successRate}</div>
               <p className="text-xs text-muted-foreground">
-                {/* This percentage change is still static */}
-                +2% from last month
+                Of all attempted transactions
               </p>
             </CardContent>
           </Link>
@@ -311,11 +320,7 @@ export default function Dashboard() {
                 {recentTransactionsData.length > 0 ? recentTransactionsData.map((tx) => (
                     <TableRow key={tx.id} onClick={() => setSelectedTransaction(tx)} className="cursor-pointer">
                         <TableCell>
-                            <div className="font-medium">{tx.customerEmail}</div> {/* Use customerEmail */}
-                            {/* Assuming customer name is not stored directly on transaction */}
-                            {/* <div className="hidden text-sm text-muted-foreground md:inline">
-                                {tx.email}
-                            </div> */}
+                            <div className="font-medium">{tx.customerEmail}</div>
                         </TableCell>
                         <TableCell className="text-right">${tx.amount}</TableCell>
                     </TableRow>
@@ -349,12 +354,10 @@ export default function Dashboard() {
               </div>
               <Separator />
                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Customer Email:</span> {/* Use customerEmail */}
+                  <span className="text-muted-foreground">Customer Email:</span>
                   <div className="flex items-center gap-2">
                       <div className="text-right">
-                          {/* Assuming customer name is not stored directly */}
-                          {/* <p className="font-semibold">{selectedTransaction.name}</p> */}
-                          <p className="text-sm text-muted-foreground">{selectedTransaction.customerEmail}</p> {/* Use customerEmail */}
+                          <p className="text-sm text-muted-foreground">{selectedTransaction.customerEmail}</p>
                       </div>
                       <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
                   </div>
@@ -377,7 +380,7 @@ export default function Dashboard() {
                <Separator />
               <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Date:</span>
-                  <span className="font-semibold">{new Date(selectedTransaction.date).toLocaleString()}</span> {/* Format date */}
+                  <span className="font-semibold">{new Date(selectedTransaction.date).toLocaleString()}</span>
               </div>
             </div>
           )}
