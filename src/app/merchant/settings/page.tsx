@@ -97,7 +97,7 @@ const CheckoutPreview = ({ brandColor, logo, businessName, displayOptions, hideI
                     <div className="flex flex-col items-center space-y-4">
                         <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                             {hideIdentity ? (
-                                <Logo />
+                                <Globe className="w-10 h-10 text-primary" />
                             ) : logo ? (
                                 <Image src={logo} alt="Business Logo" width={80} height={80} className="object-cover" data-ai-hint="logo business" />
                             ) : (
