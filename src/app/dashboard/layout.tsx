@@ -50,6 +50,8 @@ import { auth, db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc } from "firebase/firestore";
 import { getNotifications, type Notification } from "@/lib/notificationsData";
+import { Separator } from "@/components/ui/separator";
+import LiveClock from "@/components/LiveClock";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
@@ -158,7 +160,7 @@ export default function AdminDashboardLayout({
             setLoading(false);
         });
         return () => unsubscribe();
-    }, []);
+    }, [router, toast]);
     
     const handleLogout = async () => {
         const { success, error } = await signOutUser();
@@ -182,10 +184,12 @@ export default function AdminDashboardLayout({
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-card md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <div className="flex h-14 shrink-0 items-center border-b px-4 lg:h-[60px] lg:px-6 gap-2">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo />
             </Link>
+            <Separator orientation="vertical" className="h-6" />
+            <LiveClock />
           </div>
           <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -222,12 +226,13 @@ export default function AdminDashboardLayout({
               <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
               <SheetDescription className="sr-only">A list of navigation links and actions for mobile view.</SheetDescription>
               <nav className="grid gap-2 text-lg font-medium">
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-2 text-lg font-semibold mb-4"
-                >
-                  <Logo />
-                </Link>
+                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 gap-2 -ml-6">
+                    <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                        <Logo />
+                    </Link>
+                    <Separator orientation="vertical" className="h-6" />
+                    <LiveClock />
+                </div>
                 {navItems.map((item) => (
                     <Link
                     key={item.label}
