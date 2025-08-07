@@ -60,7 +60,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc } from "firebase/firestore";
 import { getNotifications, type Notification } from "@/lib/notificationsData";
 import { Separator } from "@/components/ui/separator";
-import LiveClock from "@/components/LiveClock";
 
 const navItems = [
   { href: "/merchant/dashboard", icon: Home, label: "Dashboard" },
@@ -110,7 +109,6 @@ function DashboardSkeleton() {
         </div>
     );
 }
-
 
 export default function MerchantDashboardLayout({
   children,
@@ -187,7 +185,6 @@ export default function MerchantDashboardLayout({
         return <DashboardSkeleton />;
     }
 
-
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-card md:block">
@@ -196,8 +193,6 @@ export default function MerchantDashboardLayout({
             <Link href="/merchant/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo />
             </Link>
-            <Separator orientation="vertical" className="h-6" />
-            <LiveClock />
           </div>
           <div className="flex-1 overflow-y-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -254,7 +249,6 @@ export default function MerchantDashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            {/* Can add a search bar here if needed */}
           </div>
            <ThemeToggle />
            <DropdownMenu>

@@ -51,7 +51,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc } from "firebase/firestore";
 import { getNotifications, type Notification } from "@/lib/notificationsData";
 import { Separator } from "@/components/ui/separator";
-import LiveClock from "@/components/LiveClock";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
@@ -130,7 +129,6 @@ export default function AdminDashboardLayout({
 
     const handleReadNotifications = async () => {
         setHasUnread(false);
-        // Optionally fetch again to ensure freshness
         setNotifications(await getNotifications('admin'));
     }
     
@@ -188,8 +186,6 @@ export default function AdminDashboardLayout({
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
               <Logo />
             </Link>
-            <Separator orientation="vertical" className="h-6" />
-            <LiveClock />
           </div>
           <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -230,8 +226,6 @@ export default function AdminDashboardLayout({
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                         <Logo />
                     </Link>
-                    <Separator orientation="vertical" className="h-6" />
-                    <LiveClock />
                 </div>
                 {navItems.map((item) => (
                     <Link
@@ -249,7 +243,6 @@ export default function AdminDashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            {/* Can add a search bar here if needed */}
           </div>
            <ThemeToggle />
            <DropdownMenu>

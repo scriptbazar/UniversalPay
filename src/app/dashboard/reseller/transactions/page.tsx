@@ -28,10 +28,33 @@ import { ArrowLeft, Copy, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { type Transaction, getAllSubMerchantTransactions } from '@/lib/resellerData';
+import { Timestamp } from 'firebase/firestore';
+
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
 
 export default function SubMerchantTransactionsPage() {
     const { toast } = useToast();
-    const [allSubMerchantTransactions] = useState<Transaction[]>(getAllSubMerchantTransactions());
+    const [allSubMerchantTransactions, setAllSubMerchantTransactions] = useState<Transaction[]>([]);
+
+    useEffect(() => {
+        const fetchedTransactions = getAllSubMerchantTransactions().map(tx => ({
+            ...tx,
+            date: toDateSafe(tx.date)
+        }));
+        setAllSubMerchantTransactions(fetchedTransactions);
+    }, []);
+
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -140,7 +163,7 @@ export default function SubMerchantTransactionsPage() {
                                             <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                         </TableCell>
                                         <TableCell>{tx.method}</TableCell>
-                                        <TableCell>{tx.date}</TableCell>
+                                        <TableCell>{tx.date.toLocaleString()}</TableCell>
                                         <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
@@ -219,7 +242,7 @@ export default function SubMerchantTransactionsPage() {
                         <Separator />
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Date:</span>
-                            <span className="font-semibold">{selectedTransaction.date}</span>
+                            <span className="font-semibold">{selectedTransaction.date.toLocaleString()}</span>
                         </div>
                     </div>
                 )}

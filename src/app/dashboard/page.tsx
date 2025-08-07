@@ -46,10 +46,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
 
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
-type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; };
+type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; createdAt: any; };
+
+// Helper function to safely convert a Firestore timestamp or other date format to a Date object
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -60,7 +74,6 @@ export default function AdminDashboard() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [selectedSignup, setSelectedSignup] = useState<Signup | null>(null);
 
-  // State for mock data to avoid hydration errors
   const [chartData, setChartData] = useState<any[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [recentSignups, setRecentSignups] = useState<Signup[]>([]);
@@ -79,27 +92,30 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, []);
 
-
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Fetch transactions from Firestore
       const transactionsQuery = query(collection(db, "transactions"), orderBy("date", "desc"), limit(50));
       const transactionsSnapshot = await getDocs(transactionsQuery);
-      const fetchedTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+      const fetchedTransactions = transactionsSnapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(),
+          date: toDateSafe(doc.data().date)
+      } as Transaction));
       setAllTransactions(fetchedTransactions);
 
-      // Fetch flagged transactions for fraud alerts count
       const fraudQuery = query(collection(db, "transactions"), where("status", "==", "Flagged"));
       const fraudSnapshot = await getDocs(fraudQuery);
       setFraudAlertsCount(fraudSnapshot.size);
       
-      // Fetch recent signups from Firestore
       const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(4));
       const usersSnapshot = await getDocs(usersQuery);
-      const fetchedSignups = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Signup));
+      const fetchedSignups = usersSnapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(),
+          createdAt: toDateSafe(doc.data().createdAt) 
+      } as Signup));
       setRecentSignups(fetchedSignups);
 
-      // Process data for the chart
       const monthlyData: { [key: string]: { revenue: number, newUsers: number, totalTransactions: number, successfulTransactions: number }} = {};
       fetchedTransactions.forEach(tx => {
         const month = tx.date.toLocaleString('default', { month: 'short' });
@@ -113,7 +129,7 @@ export default function AdminDashboard() {
         }
       });
       fetchedSignups.forEach(signup => {
-        const month = (signup as any).createdAt.toDate().toLocaleString('default', { month: 'short' });
+        const month = signup.createdAt.toLocaleString('default', { month: 'short' });
          if (monthlyData[month]) {
           monthlyData[month].newUsers++;
         }
@@ -343,6 +359,7 @@ export default function AdminDashboard() {
                                 </TableCell>
                                 <TableCell className="text-right px-6 py-4">
                                     <Badge variant={signup.plan === 'Free' ? 'secondary' : 'default'} className="capitalize">{signup.plan}</Badge>
+
                                 </TableCell>
                             </TableRow>
                         )) : (

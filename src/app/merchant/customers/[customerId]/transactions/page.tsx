@@ -13,14 +13,28 @@ import { useParams } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Timestamp } from "firebase/firestore";
 
 type Transaction = {
     id: string;
     amount: string;
     status: 'Success' | 'Failed';
-    date: string;
+    date: Date;
     method: 'UPI' | 'Crypto' | 'Page' | 'Link';
 }
+
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
 
 const mockCustomer = {
     id: 'cust_1',
@@ -28,11 +42,11 @@ const mockCustomer = {
 };
 
 const mockTransactions: Transaction[] = [
-    { id: 'TXN101', amount: '50.00', status: 'Success', date: '2023-11-10', method: 'Page' },
-    { id: 'TXN102', amount: '25.50', status: 'Success', date: '2023-10-22', method: 'Link' },
-    { id: 'TXN103', amount: '100.00', status: 'Success', date: '2023-09-05', method: 'Page' },
-    { id: 'TXN104', amount: '14.50', status: 'Failed', date: '2023-08-18', method: 'UPI' },
-    { id: 'TXN105', amount: '60.00', status: 'Success', date: '2023-07-30', method: 'Crypto' },
+    { id: 'TXN101', amount: '50.00', status: 'Success', date: toDateSafe('2023-11-10'), method: 'Page' },
+    { id: 'TXN102', amount: '25.50', status: 'Success', date: toDateSafe('2023-10-22'), method: 'Link' },
+    { id: 'TXN103', amount: '100.00', status: 'Success', date: toDateSafe('2023-09-05'), method: 'Page' },
+    { id: 'TXN104', amount: '14.50', status: 'Failed', date: toDateSafe('2023-08-18'), method: 'UPI' },
+    { id: 'TXN105', amount: '60.00', status: 'Success', date: toDateSafe('2023-07-30'), method: 'Crypto' },
 ];
 
 const getStatusBadgeVariant = (status: string) => {
@@ -50,7 +64,6 @@ export default function CustomerTransactionsPage() {
     const itemsPerPage = 10;
 
     useEffect(() => {
-        // In a real app, you would fetch transactions for the given customerId
         setTransactions(mockTransactions);
     }, [customerId]);
 
@@ -97,7 +110,7 @@ export default function CustomerTransactionsPage() {
                              placeholder="Search transactions..."
                              className="pl-8 w-48"
                              value={searchTerm}
-                             onChange={(e) => setSearchTerm(e.target.value)}
+                             onChange={(e) => setSearchTerm(e.gantarget.value)}
                            />
                         </div>
                        <Button size="sm" variant="outline" className="h-9 gap-1">
@@ -121,7 +134,7 @@ export default function CustomerTransactionsPage() {
                             {paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedTransaction(tx)}>
                                     <TableCell className="font-medium">{tx.id}</TableCell>
-                                    <TableCell>{tx.date}</TableCell>
+                                    <TableCell>{tx.date.toLocaleDateString()}</TableCell>
                                     <TableCell>{tx.method}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>

@@ -39,19 +39,32 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useSearchParams } from 'next/navigation';
-import { auth, db } from '@/lib/firebase'; // Import db
+import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore'; // Import firestore functions
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 
-// Define the Transaction type according to your Firestore data structure
 type Transaction = {
     id: string;
     merchantId: string;
     customerEmail: string;
     status: string;
     method: string;
-    date: Timestamp; // Assuming date is stored as a Timestamp in Firestore
+    date: Date; // Changed to Date to reflect the transformed data
     amount: string;
+};
+
+// Helper function to safely convert a Firestore timestamp or other date format to a Date object
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
 };
 
 function PaymentsComponent() {
@@ -71,19 +84,19 @@ function PaymentsComponent() {
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
-                const merchantId = user.uid; // Get the authenticated user's ID
+                const merchantId = user.uid;
                 const transactionsCollectionRef = collection(db, "transactions");
                 const q = query(
                     transactionsCollectionRef,
-                    where("merchantId", "==", merchantId), // Filter by merchantId
-                    orderBy("date", "desc") // Order by date
+                    where("merchantId", "==", merchantId),
+                    orderBy("date", "desc")
                 );
 
                 const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     const fetchedTransactions = querySnapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data(),
-                        date: doc.data().date // Keep as Timestamp initially
+                        date: toDateSafe(doc.data().date) // Use the safe conversion function
                     } as Transaction));
                     setTransactions(fetchedTransactions);
                     setLoading(false);
@@ -97,14 +110,14 @@ function PaymentsComponent() {
                     setLoading(false);
                 });
 
-                return () => unsubscribeSnapshot(); // Cleanup snapshot listener
+                return () => unsubscribeSnapshot();
             } else {
-                setTransactions([]); // Clear transactions if not authenticated
+                setTransactions([]);
                 setLoading(false);
             }
         });
 
-        return () => unsubscribeAuth(); // Cleanup auth listener
+        return () => unsubscribeAuth();
     }, [toast]);
 
     useEffect(() => {
@@ -132,10 +145,10 @@ function PaymentsComponent() {
         }
 
         if (dateRange?.from) {
-            filtered = filtered.filter(tx => tx.date.toDate() >= dateRange.from!);
+            filtered = filtered.filter(tx => tx.date >= dateRange.from!);
         }
         if (dateRange?.to) {
-            filtered = filtered.filter(tx => tx.date.toDate() <= dateRange.to!);
+            filtered = filtered.filter(tx => tx.date <= dateRange.to!);
         }
 
         return filtered;
@@ -265,7 +278,7 @@ function PaymentsComponent() {
                                             <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                         </TableCell>
                                         <TableCell>{tx.method}</TableCell>
-                                        <TableCell>{tx.date.toDate().toLocaleString()}</TableCell>{/* Format date here */}
+                                        <TableCell>{tx.date.toLocaleString()}</TableCell>
                                         <TableCell className="text-right">${tx.amount}</TableCell>
                                     </TableRow>
                                 ))}

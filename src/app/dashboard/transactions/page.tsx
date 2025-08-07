@@ -39,18 +39,30 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-// Define the Transaction type according to your Firestore data structure
 type Transaction = {
     id: string;
     merchantId: string;
     customerEmail: string;
     status: string;
     method: string;
-    date: string; // Assuming date is stored as a string in Firestore
+    date: Date; 
     amount: string;
+};
+
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
 };
 
 export default function AllTransactionsPage() {
@@ -69,7 +81,8 @@ export default function AllTransactionsPage() {
             const querySnapshot = await getDocs(transactionsQuery);
             const fetchedTransactions = querySnapshot.docs.map(doc => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                date: toDateSafe(doc.data().date)
             } as Transaction));
             setTransactions(fetchedTransactions);
         };
@@ -98,10 +111,10 @@ export default function AllTransactionsPage() {
         }
 
         if (dateRange?.from) {
-            filtered = filtered.filter(tx => new Date(tx.date) >= dateRange.from!);
+            filtered = filtered.filter(tx => tx.date >= dateRange.from!);
         }
         if (dateRange?.to) {
-            filtered = filtered.filter(tx => new Date(tx.date) <= dateRange.to!);
+            filtered = filtered.filter(tx => tx.date <= dateRange.to!);
         }
 
         return filtered;
@@ -229,7 +242,7 @@ export default function AllTransactionsPage() {
                                             <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                         </TableCell>
                                         <TableCell>{tx.method}</TableCell>
-                                        <TableCell>{tx.date}</TableCell>
+                                        <TableCell>{tx.date.toLocaleString()}</TableCell>
                                         <TableCell className="text-right">${tx.amount}</TableCell>
                                     </TableRow>
                                 ))}
@@ -316,7 +329,7 @@ export default function AllTransactionsPage() {
                         <Separator />
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Date:</span>
-                            <span className="font-semibold">{selectedTransaction.date}</span>
+                            <span className="font-semibold">{selectedTransaction.date.toLocaleString()}</span>
                         </div>
                     </div>
                 )}

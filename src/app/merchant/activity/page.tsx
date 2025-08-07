@@ -38,7 +38,8 @@ export default function MerchantActivityPage() {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 const logsCollectionRef = collection(db, 'audit_logs');
-                const q = query(logsCollectionRef, where('details.targetUser', '==', user.uid), orderBy('timestamp', 'desc'));
+                // CORRECTED QUERY: Changed 'details.targetUser' to 'userId' to match Firestore security rules.
+                const q = query(logsCollectionRef, where('userId', '==', user.uid), orderBy('timestamp', 'desc'));
 
                 const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     const logsData: AuditLog[] = [];

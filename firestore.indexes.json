@@ -20,7 +20,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "details.targetUser",
+          "fieldPath": "userId",
           "order": "ASCENDING"
         },
         {
