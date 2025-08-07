@@ -66,6 +66,7 @@ const navItems = [
   { href: "/dashboard/support", icon: LifeBuoy, label: "Support Tickets" },
   { href: "/dashboard/fraud-detection", icon: ShieldCheck, label: "Fraud & Risk" },
   { href: "/dashboard/audit-logs", icon: History, label: "Audit Logs" },
+  { href: "/dashboard/error-logs", icon: ShieldAlert, label: "Error Logs" },
   { href: "/dashboard/developer", icon: Code, label: "Platform SDKs" },
   { href: "/dashboard/settings", icon: Settings, label: "Platform Settings" },
 ];
