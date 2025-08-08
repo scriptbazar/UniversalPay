@@ -29,7 +29,7 @@ export type Transaction = {
   status: 'Success' | 'Pending' | 'Failed';
   createdAt: any; 
   method: string;
-  date: Date; // Standardizing to Date object
+  date: any; // Storing as a server timestamp
 };
 
 // Function to get all transactions for a specific source (e.g., a payment link)
@@ -57,7 +57,7 @@ export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' 
   const transactionRef = await addDoc(collection(db, 'transactions'), {
     ...newTransactionData,
     createdAt: serverTimestamp(),
-    date: new Date(), // Storing as a standard Date object
+    date: serverTimestamp(), // CRITICAL FIX: Storing as a server timestamp
   });
 
   // Post-payment actions for successful transactions
