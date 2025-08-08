@@ -5,7 +5,8 @@ import { useState, useMemo, useEffect, Suspense } from 'react';
 import {
   File,
   Search,
-  Copy
+  Copy,
+  ListFilter
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,10 +27,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -53,6 +57,19 @@ type Transaction = {
     date: Date; // Changed to Date to reflect the transformed data
     amount: string;
 };
+
+const filterOptions = [
+    { value: 'all', label: 'All Transactions' },
+    { value: 'success', label: 'Success Transactions' },
+    { value: 'pending', label: 'Pending Transactions' },
+    { value: 'failed', label: 'Failed Transactions' },
+    { value: 'upi', label: 'UPI Transactions' },
+    { value: 'crypto', label: 'Crypto Transactions' },
+    { value: 'card', label: 'Card Transactions' },
+    { value: 'link', label: 'Link Transactions' },
+    { value: 'page', label: 'Page Transactions' },
+];
+
 
 // Helper function to safely convert a Firestore timestamp or other date format to a Date object
 const toDateSafe = (dateFieldValue: any): Date => {
@@ -187,149 +204,163 @@ function PaymentsComponent() {
         });
     };
 
+    const currentFilterLabel = filterOptions.find(f => f.value === filter)?.label || 'Filter by';
+
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">All Transactions</h1>
                 <p className="text-muted-foreground">Search, filter, and view all your transactions.</p>
             </div>
-            <Tabs value={filter} onValueChange={handleFilterChange}>
-                <div className="flex flex-wrap items-center gap-4">
-                    <TabsList className="flex-wrap h-auto">
-                        <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="success">Success</TabsTrigger>
-                        <TabsTrigger value="pending">Pending</TabsTrigger>
-                        <TabsTrigger value="failed">Failed</TabsTrigger>
-                        <TabsTrigger value="upi">UPI</TabsTrigger>
-                        <TabsTrigger value="crypto">Crypto</TabsTrigger>
-                        <TabsTrigger value="card">Card</TabsTrigger>
-                        <TabsTrigger value="link">Link</TabsTrigger>
-                        <TabsTrigger value="page">Page</TabsTrigger>
-                    </TabsList>
-                    <div className="flex-grow flex justify-end items-center gap-2">
-                        <div className="relative">
-                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                           <Input
-                             type="search"
-                             placeholder="Search ID or Email..."
-                             className="pl-8 w-48"
-                             value={searchTerm}
-                             onChange={(e) => setSearchTerm(e.target.value)}
-                           />
+            <Card>
+                <CardHeader>
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <CardTitle>Transaction History</CardTitle>
+                            <CardDescription>
+                                A complete list of all payments processed through your account.
+                            </CardDescription>
                         </div>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
-                                    <span>
-                                        {dateRange?.from ? (
-                                            dateRange.to ? (
-                                                <>
-                                                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                                                </>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                               <Input
+                                 type="search"
+                                 placeholder="Search ID or Email..."
+                                 className="pl-8 w-48"
+                                 value={searchTerm}
+                                 onChange={(e) => setSearchTerm(e.target.value)}
+                               />
+                            </div>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
+                                        <span>
+                                            {dateRange?.from ? (
+                                                dateRange.to ? (
+                                                    <>
+                                                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                                                    </>
+                                                ) : (
+                                                    format(dateRange.from, "LLL dd, y")
+                                                )
                                             ) : (
-                                                format(dateRange.from, "LLL dd, y")
-                                            )
-                                        ) : (
-                                            "Filter by date"
-                                        )}
+                                                "Filter by date"
+                                            )}
+                                        </span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                    <Calendar
+                                        initialFocus
+                                        mode="range"
+                                        defaultMonth={dateRange?.from}
+                                        selected={dateRange}
+                                        onSelect={setDateRange}
+                                        numberOfMonths={2}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="h-9 gap-1">
+                                    <ListFilter className="h-3.5 w-3.5" />
+                                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                        {currentFilterLabel}
                                     </span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={dateRange?.from}
-                                    selected={dateRange}
-                                    onSelect={setDateRange}
-                                    numberOfMonths={2}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        <Button size="sm" variant="outline" className="h-9 gap-1">
-                            <File className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
-                        </Button>
-                    </div>
-                </div>
-                <Card className='mt-4'>
-                    <CardHeader>
-                        <CardTitle>Transaction History</CardTitle>
-                        <CardDescription>
-                            A complete list of all payments processed through your account.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Transaction ID</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Method</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
-                                    Array.from({length: 5}).map((_, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                                            <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : paginatedTransactions.map(tx => (
-                                    <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
-                                        <TableCell className="font-medium">{tx.id}</TableCell>
-                                        <TableCell>{tx.customerEmail}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
-                                        </TableCell>
-                                        <TableCell>{tx.method}</TableCell>
-                                        <TableCell>{tx.date.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right">${tx.amount}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                         {!loading && filteredTransactions.length === 0 && (
-                            <div className="text-center p-8 text-muted-foreground">
-                                No transactions found for the selected filters.
-                            </div>
-                         )}
-                    </CardContent>
-                    <CardFooter>
-                         <div className="flex justify-between items-center w-full">
-                            <div className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}. Total {filteredTransactions.length} transactions.
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    Previous
-                                </Button>
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                </Button>
-                            </div>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                     {filterOptions.map(option => (
+                                         <DropdownMenuCheckboxItem
+                                            key={option.value}
+                                            checked={filter === option.value}
+                                            onCheckedChange={() => handleFilterChange(option.value)}
+                                        >
+                                            {option.label}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button size="sm" variant="outline" className="h-9 gap-1">
+                                <File className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                            </Button>
                         </div>
-                    </CardFooter>
-                </Card>
-            </Tabs>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Transaction ID</TableHead>
+                                <TableHead>Customer</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Method</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                Array.from({length: 5}).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : paginatedTransactions.map(tx => (
+                                <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
+                                    <TableCell className="font-medium">{tx.id}</TableCell>
+                                    <TableCell>{tx.customerEmail}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
+                                    </TableCell>
+                                    <TableCell>{tx.method}</TableCell>
+                                    <TableCell>{tx.date.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">${tx.amount}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                     {!loading && filteredTransactions.length === 0 && (
+                        <div className="text-center p-8 text-muted-foreground">
+                            No transactions found for the selected filters.
+                        </div>
+                     )}
+                </CardContent>
+                <CardFooter>
+                     <div className="flex justify-between items-center w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Page {currentPage} of {totalPages}. Total {filteredTransactions.length} transactions.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
+            </Card>
              <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
                 <DialogContent>
                 <DialogHeader>
