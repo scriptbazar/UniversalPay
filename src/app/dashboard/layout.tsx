@@ -57,6 +57,7 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
   { href: "/dashboard/analytics", icon: BarChart, label: "Analytics" },
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
+  { href: "/dashboard/reseller", icon: Briefcase, label: "Reseller" },
   { href: "/dashboard/handles", icon: AtSign, label: "Handle Links" },
   { href: "/dashboard/customers", icon: Users, label: "All Customers" },
   { href: "/dashboard/transactions", icon: CreditCard, label: "All Transactions" },

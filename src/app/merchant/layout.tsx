@@ -74,6 +74,7 @@ const navItems = [
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
   { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
   { href: "/merchant/activity", icon: Activity, label: "My Activity" },
+  { href: "/merchant/reseller", icon: Briefcase, label: "Reseller Mode" },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
