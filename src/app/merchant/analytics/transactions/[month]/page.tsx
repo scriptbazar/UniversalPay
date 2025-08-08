@@ -14,6 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 
 // Mock data generation function
 const generateMockTransactions = () => {
@@ -56,18 +59,42 @@ export default function MonthlyTransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedYear, setSelectedYear] = useState<string>('all');
+    const [availableYears, setAvailableYears] = useState<string[]>([]);
+    const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Generate data on the client side to avoid hydration issues
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                const currentYear = new Date().getFullYear();
+                let startYear = currentYear;
+
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    if (data.createdAt && data.createdAt instanceof Timestamp) {
+                        startYear = data.createdAt.toDate().getFullYear();
+                    }
+                }
+                
+                const years: string[] = [];
+                for (let y = startYear; y <= currentYear; y++) {
+                    years.push(y.toString());
+                }
+                setAvailableYears(years.reverse());
+                setSelectedYear(currentYear.toString());
+            }
+            setLoading(false);
+        });
+
+        // Generate mock data on mount
         setAllMockTransactions(generateMockTransactions());
+
+        return () => unsubscribe();
     }, []);
     
-    const availableYears = useMemo(() => {
-        const years = new Set(allMockTransactions.map(tx => new Date(tx.date).getFullYear().toString()));
-        return Array.from(years).sort((a,b) => parseInt(b) - parseInt(a));
-    }, [allMockTransactions]);
 
     const monthlyTransactions = useMemo(() => {
         let filtered = allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
@@ -137,10 +164,15 @@ export default function MonthlyTransactionsPage() {
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Years</SelectItem>
-                                {availableYears.map(year => (
-                                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                                ))}
+                                {availableYears.length > 0 ? (
+                                    availableYears.map(year => (
+                                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                                    ))
+                                ) : (
+                                     <SelectItem value={new Date().getFullYear().toString()} disabled>
+                                        {new Date().getFullYear()}
+                                    </SelectItem>
+                                )}
                             </SelectContent>
                         </Select>
                        <Button size="sm" variant="outline" className="h-9 gap-1">
@@ -162,19 +194,24 @@ export default function MonthlyTransactionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map(tx => (
-                                <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
-                                    <TableCell className="font-medium">{tx.id}</TableCell>
-                                    <TableCell>{tx.customerName}</TableCell>
-                                    <TableCell>{tx.method}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
-                                    </TableCell>
-                                    <TableCell>{tx.date}</TableCell>
-                                    <TableCell className="text-right">${tx.amount}</TableCell>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">Loading transactions...</TableCell>
                                 </TableRow>
-                            ))}
-                             {monthlyTransactions.length === 0 && (
+                            ) : paginatedTransactions.length > 0 ? (
+                                paginatedTransactions.map(tx => (
+                                    <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
+                                        <TableCell className="font-medium">{tx.id}</TableCell>
+                                        <TableCell>{tx.customerName}</TableCell>
+                                        <TableCell>{tx.method}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
+                                        </TableCell>
+                                        <TableCell>{tx.date}</TableCell>
+                                        <TableCell className="text-right">${tx.amount}</TableCell>
+                                    </TableRow>
+                                ))
+                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center h-24">
                                         No transactions found for this month or filter.
