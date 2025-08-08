@@ -29,6 +29,7 @@ export type Transaction = {
   status: 'Success' | 'Pending' | 'Failed';
   createdAt: any; 
   method: string;
+  date: Date; // Standardizing to Date object
 };
 
 // Function to get all transactions for a specific source (e.g., a payment link)
@@ -52,10 +53,11 @@ export const getTransactionById = async (id: string): Promise<Transaction | null
 };
 
 // Function to add a new transaction and trigger post-payment actions
-export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt'>): Promise<void> => {
+export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt' | 'date'>): Promise<void> => {
   const transactionRef = await addDoc(collection(db, 'transactions'), {
     ...newTransactionData,
     createdAt: serverTimestamp(),
+    date: new Date(), // Storing as a standard Date object
   });
 
   // Post-payment actions for successful transactions
@@ -103,5 +105,3 @@ export const updateTransaction = async (id: string, updates: Partial<Transaction
     const docRef = doc(db, 'transactions', id);
     await updateDoc(docRef, updates);
 };
-
-    

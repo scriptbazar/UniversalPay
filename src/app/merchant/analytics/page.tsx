@@ -34,20 +34,24 @@ type Customer = {
 
 // Helper function to safely convert Firestore Timestamp or string to a Date object
 const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
+  if (!dateFieldValue) return new Date();
+  // If it's already a Date object, return it.
+  if (dateFieldValue instanceof Date) {
+    return dateFieldValue;
+  }
+  // If it has a toDate method (like a Firestore Timestamp), call it.
+  if (typeof dateFieldValue.toDate === 'function') {
     return dateFieldValue.toDate();
   }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
+  // If it's a string or number, try creating a new Date from it.
+  if (typeof dateFieldValue === 'string' || typeof dateFieldValue === 'number') {
     const date = new Date(dateFieldValue);
     if (!isNaN(date.getTime())) {
-        return date;
+      return date;
     }
   }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
   // Return current date as a fallback if conversion fails
-  return new Date(); 
+  return new Date();
 };
 
 
@@ -125,7 +129,7 @@ export default function AnalyticsPage() {
             // Fetch top customers
             const customersRef = collection(db, "customers");
             const customerQuery = query(customersRef, where("merchantId", "==", user.uid), orderBy("totalSpent", "desc"), limit(5));
-            const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
+            const unsubscribeCustomers = onSnapshot(snapshot => {
                 const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
                 setTopCustomers(customers);
             });
