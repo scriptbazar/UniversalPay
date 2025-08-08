@@ -74,7 +74,7 @@ const navItems = [
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
   { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
   { href: "/merchant/activity", icon: Activity, label: "My Activity" },
-  { href: "/merchant/reseller", icon: Briefcase, label: "Reseller Mode" },
+  { href: "/merchant/reseller", icon: Briefcase, label: "Reseller Mode", role: 'reseller' },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
@@ -120,7 +120,7 @@ export default function MerchantDashboardLayout({
     const router = useRouter();
     const { toast } = useToast();
     const [user, setUser] = useState<User | null>(null);
-    const [userProfile, setUserProfile] = useState<{ fullName?: string; email?: string, avatar?: string } | null>(null);
+    const [userProfile, setUserProfile] = useState<{ fullName?: string; email?: string, avatar?: string, role?: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [hasUnread, setHasUnread] = useState(true);
@@ -147,9 +147,11 @@ export default function MerchantDashboardLayout({
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
                 
-                if (userDoc.exists() && userDoc.data().role === 'merchant') {
+                const userRole = userDoc.exists() ? userDoc.data().role : 'merchant';
+                
+                if (userRole === 'merchant' || userRole === 'reseller') {
                     setUser(user);
-                    setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string });
+                    setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string, role: string });
                 } else {
                     await signOutUser();
                      toast({
@@ -177,6 +179,17 @@ export default function MerchantDashboardLayout({
             toast({ variant: 'destructive', title: "Logout Failed", description: error });
         }
     };
+
+    const getResellerLink = () => {
+        return userProfile?.role === 'reseller' ? '/merchant/reseller' : '/merchant/reseller/apply';
+    }
+
+    const filteredNavItems = navItems.filter(item => {
+        if (item.role === 'reseller') {
+            return userProfile?.role === 'reseller';
+        }
+        return true;
+    });
     
     if (loading) {
         return <DashboardSkeleton />;
@@ -197,10 +210,10 @@ export default function MerchantDashboardLayout({
           </div>
           <div className="flex-1 overflow-y-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <Link
                   key={item.label}
-                  href={item.href}
+                  href={item.href === '/merchant/reseller' ? getResellerLink() : item.href}
                   className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
                       "bg-muted text-primary": pathname === item.href
                   })}
@@ -234,10 +247,10 @@ export default function MerchantDashboardLayout({
                 >
                   <Logo />
                 </Link>
-                {navItems.map((item) => (
+                {filteredNavItems.map((item) => (
                     <Link
                     key={item.label}
-                    href={item.href}
+                    href={item.href === '/merchant/reseller' ? getResellerLink() : item.href}
                     className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
                         "bg-muted text-foreground": pathname === item.href,
                     })}

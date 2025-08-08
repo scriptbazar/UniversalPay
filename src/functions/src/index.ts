@@ -303,3 +303,34 @@ exports.updateMerchantHandle = onCall(async (request) => {
 
     return { success: true, message: 'Handle updated successfully.' };
 });
+
+exports.handleResellerRequest = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can handle reseller requests.');
+    }
+
+    const { requestId, merchantId, action } = request.data;
+    if (!requestId || !merchantId || !['approve', 'reject'].includes(action)) {
+        throw new HttpsError('invalid-argument', 'Missing required parameters.');
+    }
+
+    const requestRef = db.collection('resellerRequests').doc(requestId);
+    const userRef = db.collection('users').doc(merchantId);
+
+    try {
+        const batch = db.batch();
+        if (action === 'approve') {
+            batch.update(userRef, { role: 'reseller' });
+            batch.update(requestRef, { status: 'approved' });
+        } else {
+            batch.update(requestRef, { status: 'rejected' });
+        }
+        
+        await batch.commit();
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error handling reseller request: ", error);
+        throw new HttpsError('internal', 'Could not process the request.');
+    }
+});

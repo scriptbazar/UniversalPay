@@ -1,8 +1,9 @@
 
 'use client';
 
-import { db } from './firebase';
-import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { db, app } from './firebase';
+import { collection, getDocs, query, where, orderBy, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export type SubMerchant = {
     id: string;
@@ -25,12 +26,22 @@ export type Transaction = {
     status: 'Success' | 'Pending' | 'Failed';
 };
 
+export type ResellerRequest = {
+    id: string;
+    merchantId: string;
+    merchantName: string;
+    merchantEmail: string;
+    status: 'pending' | 'approved' | 'rejected';
+    createdAt: Timestamp;
+};
+
+
 // In a real application, sub-merchants would be identified by a 'resellerId' field.
-// For this demo, we'll fetch all users who are not admins or the reseller themselves.
+// For this demo, we'll fetch all users with the 'reseller' role.
 export const getSubMerchants = async (resellerId?: string): Promise<SubMerchant[]> => {
     const usersRef = collection(db, "users");
     // This is a simplified query. A real-world scenario would be more complex.
-    const q = query(usersRef, where("role", "==", "merchant"));
+    const q = query(usersRef, where("role", "==", "reseller"));
     const querySnapshot = await getDocs(q);
     
     // In a real app, sales and commission would be calculated fields.
@@ -89,4 +100,41 @@ export const getAllSubMerchantTransactions = async (resellerId?: string): Promis
     });
 
     return transactions;
+};
+
+export const createResellerRequest = async (merchantId: string, merchantName: string, merchantEmail: string) => {
+    // Check if a pending request already exists
+    const requestsRef = collection(db, 'resellerRequests');
+    const q = query(requestsRef, where('merchantId', '==', merchantId), where('status', '==', 'pending'));
+    const existingRequests = await getDocs(q);
+    if (!existingRequests.empty) {
+        throw new Error('You already have a pending request.');
+    }
+
+    await addDoc(requestsRef, {
+        merchantId,
+        merchantName,
+        merchantEmail,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+    });
+};
+
+export const getResellerRequests = async (): Promise<ResellerRequest[]> => {
+    const requestsRef = collection(db, 'resellerRequests');
+    const q = query(requestsRef, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResellerRequest));
+};
+
+export const handleResellerRequest = async (requestId: string, merchantId: string, action: 'approve' | 'reject') => {
+    const functions = getFunctions(app);
+    const handleRequest = httpsCallable(functions, 'handleResellerRequest');
+    try {
+        await handleRequest({ requestId, merchantId, action });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error handling reseller request:", error);
+        return { success: false, error: error.message };
+    }
 };
