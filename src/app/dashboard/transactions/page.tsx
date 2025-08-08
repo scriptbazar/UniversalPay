@@ -94,7 +94,7 @@ export default function AllTransactionsPage() {
 
         const filterLower = filter.toLowerCase();
         const statusFilters = ['success', 'pending', 'failed'];
-        const methodFilters = ['upi', 'crypto', 'page', 'link'];
+        const methodFilters = ['upi', 'crypto', 'link', 'page', 'card'];
         
         if (statusFilters.includes(filterLower)) {
             filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
@@ -163,6 +163,7 @@ export default function AllTransactionsPage() {
                         <TabsTrigger value="failed">Failed</TabsTrigger>
                         <TabsTrigger value="upi">UPI</TabsTrigger>
                         <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                        <TabsTrigger value="card">Card</TabsTrigger>
                         <TabsTrigger value="link">Link</TabsTrigger>
                         <TabsTrigger value="page">Page</TabsTrigger>
                     </TabsList>

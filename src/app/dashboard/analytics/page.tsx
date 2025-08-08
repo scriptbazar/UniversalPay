@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy } from "lucide-react";
+import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Transaction = {
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
             const paymentMethodChartData = Object.keys(paymentMethods).map((name) => ({
                 name,
                 value: paymentMethods[name],
-                color: { UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042' }[name] || '#8884d8'
+                color: { UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042', Card: '#AF69EE' }[name] || '#8884d8'
             }));
             setPaymentMethodData(paymentMethodChartData);
 

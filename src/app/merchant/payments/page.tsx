@@ -129,7 +129,7 @@ function PaymentsComponent() {
 
         const filterLower = filter.toLowerCase();
         const statusFilters = ['success', 'pending', 'failed'];
-        const methodFilters = ['upi', 'crypto', 'link', 'page'];
+        const methodFilters = ['upi', 'crypto', 'link', 'page', 'card'];
         
         if (statusFilters.includes(filterLower)) {
             filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
@@ -197,6 +197,7 @@ function PaymentsComponent() {
                         <TabsTrigger value="failed">Failed</TabsTrigger>
                         <TabsTrigger value="upi">UPI</TabsTrigger>
                         <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                        <TabsTrigger value="card">Card</TabsTrigger>
                         <TabsTrigger value="link">Link</TabsTrigger>
                         <TabsTrigger value="page">Page</TabsTrigger>
                     </TabsList>

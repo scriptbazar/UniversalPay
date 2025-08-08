@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
                 const paymentMethodChartData = Object.keys(methodCounts).map(method => ({
                     name: method,
                     value: methodCounts[method],
-                    color: {UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042'}[method] || '#8884d8'
+                    color: {UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042', Card: '#AF69EE'}[method] || '#8884d8'
                 }));
                 setPaymentMethodData(paymentMethodChartData);
                 
