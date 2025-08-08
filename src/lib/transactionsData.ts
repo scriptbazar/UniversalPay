@@ -56,6 +56,7 @@ export const getTransactionById = async (id: string): Promise<Transaction | null
 export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt'>): Promise<void> => {
   const transactionRef = await addDoc(collection(db, 'transactions'), {
     ...newTransactionData,
+    date: serverTimestamp(), // CRITICAL FIX: Ensure date is saved
     createdAt: serverTimestamp(),
   });
 
