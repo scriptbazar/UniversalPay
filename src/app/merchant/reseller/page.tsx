@@ -27,7 +27,7 @@ export default function ResellerPage() {
   const totalSales = subMerchants.reduce((acc, m) => acc + parseFloat(m.sales), 0);
 
   const handleRowClick = (merchantId: string) => {
-    router.push(`/dashboard/users/${merchantId}`);
+    router.push(`/merchant/users/${merchantId}`);
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -46,7 +46,7 @@ export default function ResellerPage() {
       <Separator />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card onClick={() => router.push('/dashboard/users')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/merchant/users')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Sub-Merchants</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -56,7 +56,7 @@ export default function ResellerPage() {
             <p className="text-xs text-muted-foreground">+2 since last month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => router.push('/dashboard/reseller/transactions')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/merchant/reseller/transactions')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sub-Merchant Sales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -66,7 +66,7 @@ export default function ResellerPage() {
             <p className="text-xs text-muted-foreground">Total sales this month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => router.push('/dashboard/reseller/transactions')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/merchant/reseller/transactions')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Your Commission</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
@@ -76,7 +76,7 @@ export default function ResellerPage() {
             <p className="text-xs text-muted-foreground">Earned this month</p>
           </CardContent>
         </Card>
-        <Card onClick={() => router.push('/dashboard/reseller/commissions')} className="cursor-pointer hover:bg-muted/50">
+        <Card onClick={() => router.push('/merchant/reseller/commissions')} className="cursor-pointer hover:bg-muted/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg. Commission Rate</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />

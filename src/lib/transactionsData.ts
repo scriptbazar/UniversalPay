@@ -53,11 +53,10 @@ export const getTransactionById = async (id: string): Promise<Transaction | null
 };
 
 // Function to add a new transaction and trigger post-payment actions
-export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt' | 'date'>): Promise<void> => {
+export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt'>): Promise<void> => {
   const transactionRef = await addDoc(collection(db, 'transactions'), {
     ...newTransactionData,
     createdAt: serverTimestamp(),
-    date: serverTimestamp(), // CRITICAL FIX: Storing as a server timestamp
   });
 
   // Post-payment actions for successful transactions
