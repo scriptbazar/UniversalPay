@@ -27,6 +27,21 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   try {
     // 1. Set the custom claim for role-based access
     await admin.auth().setCustomUserClaims(user.uid, { role });
+
+    // Generate a unique handle from email/name
+    const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0,6)}`;
+    let handle = namePart.toLowerCase().replace(/[^a-z0-9]/g, '');
+    let handleExists = true;
+    let counter = 1;
+    while(handleExists) {
+        const handleQuery = await db.collection('users').where('handle', '==', handle).get();
+        if (handleQuery.empty) {
+            handleExists = false;
+        } else {
+            handle = `${namePart.toLowerCase().replace(/[^a-z0-9]/g, '')}${counter}`;
+            counter++;
+        }
+    }
     
     // 2. CRITICAL FIX: Create the user document in the 'users' collection
     const userDocRef = db.collection('users').doc(user.uid);
@@ -40,6 +55,9 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         plan: 'Free',
         kycStatus: "Not Started",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        handle: handle, // Add the unique handle
+        handleLastUpdatedAt: null,
+        handleEditCount: 0,
     });
 
     // 3. Create an audit log for the new user creation
@@ -153,15 +171,14 @@ exports.updateMerchantProfile = onCall(async (request) => {
      if (dataToUpdate.status) {
         delete dataToUpdate.status;
     }
+     if (dataToUpdate.handle) {
+        delete dataToUpdate.handle; // Handles must be updated via their own function
+    }
+
 
     try {
         const userDocRef = db.collection('users').doc(uid);
-
-        // **FIX:** Use `setDoc` with `merge: true` instead of `updateDoc`.
-        // This will create the document if it doesn't exist, or update it if it does.
-        // It prevents the "No document to update" error which can cause an "internal" error.
         await userDocRef.set(dataToUpdate, { merge: true });
-
 
         // Create an audit log for the profile update
         await db.collection('audit_logs').add({
@@ -233,4 +250,56 @@ exports.upgradeSubscriptionPlan = onCall(async (request) => {
         }
         throw new HttpsError('internal', 'An internal error occurred while upgrading the plan.');
     }
+});
+
+// Callable function for a merchant to update their handle
+exports.updateMerchantHandle = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in.');
+    }
+
+    const uid = request.auth.uid;
+    const { handle } = request.data;
+
+    if (!handle || handle.length < 3 || !/^[a-z0-9-]+$/.test(handle)) {
+        throw new HttpsError('invalid-argument', 'Handle must be at least 3 characters long and contain only lowercase letters, numbers, and hyphens.');
+    }
+
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (!userData) {
+        throw new HttpsError('not-found', 'User not found.');
+    }
+
+    // Check uniqueness
+    const handleQuery = await db.collection('users').where('handle', '==', handle).get();
+    if (!handleQuery.empty && handleQuery.docs[0].id !== uid) {
+        throw new HttpsError('already-exists', 'This handle is already taken.');
+    }
+    
+    // Check edit limits
+    const lastUpdated = userData.handleLastUpdatedAt?.toDate();
+    const editCount = userData.handleEditCount || 0;
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    let newEditCount = editCount;
+    if (lastUpdated && lastUpdated < threeMonthsAgo) {
+        newEditCount = 0; // Reset count if last update was more than 3 months ago
+    }
+    
+    if (newEditCount >= 3) {
+        throw new HttpsError('resource-exhausted', 'You have reached your handle edit limit for this period.');
+    }
+
+    // Update handle
+    await userRef.update({
+        handle: handle,
+        handleLastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        handleEditCount: newEditCount + 1
+    });
+
+    return { success: true, message: 'Handle updated successfully.' };
 });

@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit, Mail } from "lucide-react";
-import React, { useState, useEffect } from 'react';
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit, Mail, AtSign } from "lucide-react";
+import React, { useState, useEffect, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,11 +19,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
-import { doc, getDoc, Timestamp, updateDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp, updateDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db, app } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { debounce } from 'lodash';
 
 
 type PaymentMethodsState = {
@@ -71,6 +72,9 @@ interface UserProfile {
     hideIdentity?: boolean;
     paymentMethods?: PaymentMethodsState;
     notifications?: NotificationSettings;
+    handle?: string;
+    handleLastUpdatedAt?: Timestamp;
+    handleEditCount?: number;
 }
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -293,11 +297,15 @@ export default function SettingsPage() {
             whatsapp: true,
             telegram: false,
         },
+        handle: '',
     });
   const [loading, setLoading] = useState(true);
   
   const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
   const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
+
+  const [handle, setHandle] = useState('');
+  const [handleStatus, setHandleStatus] = useState<'available' | 'taken' | 'checking' | 'invalid' | null>(null);
   
   useEffect(() => {
     const fetchUserData = async () => {
@@ -325,7 +333,11 @@ export default function SettingsPage() {
                     hideIdentity: data.hideIdentity || false,
                     paymentMethods: data.paymentMethods || prev.paymentMethods,
                     notifications: data.notifications || prev.notifications,
+                    handle: data.handle || '',
+                    handleLastUpdatedAt: data.handleLastUpdatedAt,
+                    handleEditCount: data.handleEditCount || 0,
                 }));
+                 setHandle(data.handle || '');
             }
         }
         setLoading(false);
@@ -425,6 +437,44 @@ export default function SettingsPage() {
            toast({variant: "destructive", title: "Error", description: "Failed to update settings. " + error.message});
       }
   };
+
+    const checkHandleAvailability = useCallback(debounce(async (newHandle: string) => {
+        if (newHandle.length < 3) {
+            setHandleStatus('invalid');
+            return;
+        }
+        if (newHandle === profileData.handle) {
+            setHandleStatus(null);
+            return;
+        }
+        setHandleStatus('checking');
+        const q = query(collection(db, 'users'), where('handle', '==', newHandle));
+        const querySnapshot = await getDocs(q);
+        setHandleStatus(querySnapshot.empty ? 'available' : 'taken');
+    }, 500), [profileData.handle]);
+
+
+  const handleHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newHandle = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      setHandle(newHandle);
+      checkHandleAvailability(newHandle);
+  };
+  
+  const saveHandle = async () => {
+      if (handleStatus !== 'available') {
+          toast({ variant: 'destructive', title: 'Invalid Handle', description: 'Please choose an available handle.' });
+          return;
+      }
+      try {
+        const functions = getFunctions(app);
+        const updateHandleFn = httpsCallable(functions, 'updateMerchantHandle');
+        await updateHandleFn({ handle });
+        setProfileData(prev => ({...prev, handle}));
+        toast({ title: 'Success', description: 'Your handle has been updated.' });
+      } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Error', description: error.message });
+      }
+  };
    
    const getKycStatusVariant = (status: typeof kycStatus) => {
         switch (status) {
@@ -502,6 +552,23 @@ export default function SettingsPage() {
                             <Label htmlFor="mobile">Mobile Number</Label>
                             <Input id="mobile" type="tel" value={profileData.mobile || ''} onChange={handleProfileChange} />
                         </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="handle" className="flex items-center gap-2">
+                            <AtSign className="w-4 h-4"/> Handle Link
+                        </Label>
+                        <div className="flex items-center">
+                            <span className="text-sm px-3 py-2 bg-muted border border-r-0 rounded-l-md text-muted-foreground">
+                                UniversalPay.com/
+                            </span>
+                            <Input id="handle" className="rounded-l-none" value={handle} onChange={handleHandleChange} />
+                             <Button type="button" onClick={saveHandle} disabled={handleStatus !== 'available'} className="ml-2">Save Handle</Button>
+                        </div>
+                         {handleStatus === 'checking' && <p className="text-xs text-muted-foreground">Checking availability...</p>}
+                         {handleStatus === 'available' && <p className="text-xs text-green-600">This handle is available!</p>}
+                         {handleStatus === 'taken' && <p className="text-xs text-destructive">This handle is already taken.</p>}
+                         {handleStatus === 'invalid' && <p className="text-xs text-destructive">Handle must be at least 3 characters long and contain only letters, numbers, and hyphens.</p>}
+                         <p className="text-xs text-muted-foreground">This is your unique public page URL. You can change this up to 3 times every 3 months.</p>
                     </div>
                 </div>
               </div>
@@ -913,5 +980,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

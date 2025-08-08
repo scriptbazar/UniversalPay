@@ -25,6 +25,7 @@ import {
   AppWindow,
   History,
   ShieldAlert,
+  AtSign, // Added for Handle Links
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
   { href: "/dashboard/analytics", icon: BarChart, label: "Analytics" },
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
+  { href: "/dashboard/handles", icon: AtSign, label: "Handle Links" },
   { href: "/dashboard/customers", icon: Users, label: "All Customers" },
   { href: "/dashboard/transactions", icon: CreditCard, label: "All Transactions" },
   { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
