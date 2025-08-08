@@ -12,7 +12,8 @@ import {
     query, 
     where, 
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    Timestamp
 } from 'firebase/firestore';
 
 export type InvoiceItem = {
@@ -32,6 +33,22 @@ export type Invoice = {
   totalAmount: number;
   status: "Pending" | "Paid" | "Overdue";
   createdAt: any;
+};
+
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
 };
 
 // Helper function to check for overdue invoices.
@@ -57,7 +74,11 @@ export const getInvoices = async (merchantId?: string): Promise<Invoice[]> => {
         : query(invoicesCol, orderBy('createdAt', 'desc'));
     
     const invoiceSnapshot = await getDocs(q);
-    const invoiceList = invoiceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Invoice));
+    const invoiceList = invoiceSnapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        createdAt: toDateSafe(doc.data().createdAt)
+    } as Invoice));
     
     // Client-side check for overdue status for display purposes
     const processedInvoices = checkOverdueInvoices(invoiceList);
@@ -69,7 +90,7 @@ export const getInvoiceById = async (id: string): Promise<Invoice | null> => {
     const invoiceRef = doc(db, 'invoices', id);
     const invoiceSnap = await getDoc(invoiceRef);
     if (invoiceSnap.exists()) {
-        const invoice = { id: invoiceSnap.id, ...invoiceSnap.data() } as Invoice;
+        const invoice = { id: invoiceSnap.id, ...invoiceSnap.data(), createdAt: toDateSafe(invoiceSnap.data().createdAt) } as Invoice;
         const [processedInvoice] = checkOverdueInvoices([invoice]);
         return processedInvoice;
     } else {

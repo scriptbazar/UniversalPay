@@ -15,8 +15,24 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
 
 type Transaction = {
     id: string;
@@ -75,7 +91,11 @@ export default function AnalyticsPage() {
             ]);
 
             const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-            const allTransactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+            const allTransactions = transactionsSnapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data(),
+                date: toDateSafe(doc.data().date)
+            } as Transaction));
             
             // --- Process Stats ---
             const successfulTxns = allTransactions.filter(t => t.status === 'Successful');
@@ -90,7 +110,7 @@ export default function AnalyticsPage() {
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             
             allTransactions.forEach(tx => {
-                const date = tx.date?.toDate ? tx.date.toDate() : new Date(tx.date);
+                const date = toDateSafe(tx.date);
                 const month = monthNames[date.getMonth()];
                 if (!monthlyData[month]) {
                     monthlyData[month] = { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 };
@@ -102,7 +122,7 @@ export default function AnalyticsPage() {
                 }
             });
              allUsers.forEach(user => {
-                const date = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+                const date = toDateSafe(user.createdAt);
                 const month = monthNames[date.getMonth()];
                  if (monthlyData[month]) {
                     monthlyData[month].newUsers++;

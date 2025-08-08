@@ -35,18 +35,20 @@ export type Ticket = {
 };
 
 // Helper to safely convert Firestore Timestamps or date strings to JS Date objects
-const processTimestamp = (timestamp: any): Date => {
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate(); // It's a Firestore Timestamp
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
     }
-    if (typeof timestamp === 'string') {
-        const date = new Date(timestamp);
-        if (!isNaN(date.getTime())) {
-            return date; // It's a valid date string
-        }
-    }
-    // Fallback for null, undefined, or invalid formats
-    return new Date();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
 };
 
 
@@ -68,8 +70,8 @@ export const getTickets = async (merchantId?: string): Promise<Ticket[]> => {
             return {
                 id: doc.id,
                 ...data,
-                createdAt: processTimestamp(data.createdAt),
-                updatedAt: processTimestamp(data.updatedAt),
+                createdAt: toDateSafe(data.createdAt),
+                updatedAt: toDateSafe(data.updatedAt),
             } as Ticket;
         });
         console.log('Successfully fetched tickets (without ordering):', ticketList);
@@ -91,8 +93,8 @@ export const getTicketById = async (id: string): Promise<Ticket | null> => {
             const ticketData = {
                 id: ticketSnap.id,
                 ...data,
-                createdAt: processTimestamp(data.createdAt),
-                updatedAt: processTimestamp(data.updatedAt),
+                createdAt: toDateSafe(data.createdAt),
+                updatedAt: toDateSafe(data.updatedAt),
             } as Ticket;
             console.log('Successfully fetched ticket:', ticketData);
             return ticketData;

@@ -30,6 +30,23 @@ import { type Customer, getAllCustomers } from '@/lib/customersData';
 import { countries } from "@/lib/countries";
 import type { Withdrawal } from "@/lib/withdrawalsData";
 
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
+
+
 type Transaction = {
     id: string;
     amount: string;
@@ -145,7 +162,7 @@ export default function UserDetailPage() {
         const userData = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
         setMerchant(userData);
         if (userData.createdAt) {
-            setJoinedDate(userData.createdAt.toDate().toLocaleDateString());
+            setJoinedDate(toDateSafe(userData.createdAt).toLocaleDateString());
         }
 
         if (userData.role === 'admin') {
@@ -166,7 +183,7 @@ export default function UserDetailPage() {
             // Fetch data specific to the merchant
             const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId), orderBy('date', 'desc'));
             onSnapshot(txQuery, (snapshot) => {
-                setMerchantTransactions(snapshot.docs.map(d => ({...d.data(), id: d.id, date: d.data().date.toDate() } as Transaction)));
+                setMerchantTransactions(snapshot.docs.map(d => ({...d.data(), id: d.id, date: toDateSafe(d.data().date) } as Transaction)));
             });
             
             const custQuery = query(collection(db, "customers"), where("merchantId", "==", userId));
@@ -176,7 +193,7 @@ export default function UserDetailPage() {
 
             const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId), orderBy('createdAt', 'desc'));
              onSnapshot(wdQuery, (snapshot) => {
-                setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id, createdAt: d.data().createdAt.toDate() } as Withdrawal)));
+                setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id, createdAt: toDateSafe(d.data().createdAt) } as Withdrawal)));
             });
         }
         setLoading(false);

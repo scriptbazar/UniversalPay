@@ -2,11 +2,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import {
-  File,
-  Search,
-  Copy
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,32 +20,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
-import { collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-
-type Transaction = {
-    id: string;
-    merchantId: string;
-    customerEmail: string;
-    status: string;
-    method: string;
-    date: Date; 
-    amount: string;
-};
+import { ArrowLeft, Copy, Search } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { type Transaction, getAllSubMerchantTransactions } from '@/lib/resellerData';
+import { Timestamp } from 'firebase/firestore';
 
 const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue instanceof Timestamp) {
@@ -68,60 +46,41 @@ const toDateSafe = (dateFieldValue: any): Date => {
   return new Date(); 
 };
 
-export default function AllTransactionsPage() {
+export default function SubMerchantTransactionsPage() {
     const { toast } = useToast();
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [allSubMerchantTransactions, setAllSubMerchantTransactions] = useState<Transaction[]>([]);
+
+    useEffect(() => {
+        const fetchedTransactions = getAllSubMerchantTransactions().map(tx => ({
+            ...tx,
+            date: toDateSafe(tx.date)
+        }));
+        setAllSubMerchantTransactions(fetchedTransactions);
+    }, []);
+
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-
-    useEffect(() => {
-        const fetchTransactions = async () => {
-            const transactionsQuery = query(collection(db, "transactions"), orderBy("date", "desc"));
-            const querySnapshot = await getDocs(transactionsQuery);
-            const fetchedTransactions = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: toDateSafe(doc.data().date)
-            } as Transaction));
-            setTransactions(fetchedTransactions);
-        };
-        fetchTransactions();
-    }, []);
-
+    
     const filteredTransactions = useMemo(() => {
-        let filtered = transactions;
+        let filtered = allSubMerchantTransactions;
 
-        const filterLower = filter.toLowerCase();
-        const statusFilters = ['success', 'pending', 'failed'];
-        const methodFilters = ['upi', 'crypto', 'link', 'page', 'card'];
-        
-        if (statusFilters.includes(filterLower)) {
-            filtered = filtered.filter(tx => tx.status.toLowerCase() === filterLower);
-        } else if (methodFilters.includes(filterLower)) {
-            filtered = filtered.filter(tx => tx.method.toLowerCase() === filterLower);
+        if (filter !== 'all') {
+            filtered = filtered.filter(tx => tx.method.toLowerCase() === filter.toLowerCase());
         }
 
         if (searchTerm) {
             filtered = filtered.filter(tx =>
                 tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.merchantId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+                tx.merchantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.merchantEmail.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        if (dateRange?.from) {
-            filtered = filtered.filter(tx => tx.date >= dateRange.from!);
-        }
-        if (dateRange?.to) {
-            filtered = filtered.filter(tx => tx.date <= dateRange.to!);
-        }
-
         return filtered;
-    }, [transactions, filter, searchTerm, dateRange]);
+    }, [filter, searchTerm, allSubMerchantTransactions]);
     
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
     const paginatedTransactions = filteredTransactions.slice(
@@ -129,11 +88,6 @@ export default function AllTransactionsPage() {
       currentPage * itemsPerPage
     );
 
-    const handleFilterChange = (newFilter: string) => {
-        setFilter(newFilter);
-        setCurrentPage(1);
-    };
-    
     const getStatusBadgeVariant = (status: string) => {
         switch (status.toLowerCase()) {
             case 'success': return 'default';
@@ -150,25 +104,26 @@ export default function AllTransactionsPage() {
             description: `${text} has been copied to your clipboard.`,
         });
     };
+    
+    const handleFilterChange = (newFilter: string) => {
+        setFilter(newFilter);
+        setCurrentPage(1);
+    };
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">All Transactions</h1>
-                <p className="text-muted-foreground">Search, filter, and view all transactions across the platform.</p>
-            </div>
+            <Link href="/dashboard/reseller" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Reseller Dashboard
+            </Link>
             <Tabs value={filter} onValueChange={handleFilterChange}>
-                <div className="flex flex-wrap items-center gap-4">
+                 <div className="flex flex-wrap items-center gap-4">
                     <TabsList className="flex-wrap h-auto">
                         <TabsTrigger value="all">All</TabsTrigger>
-                        <TabsTrigger value="success">Success</TabsTrigger>
-                        <TabsTrigger value="pending">Pending</TabsTrigger>
-                        <TabsTrigger value="failed">Failed</TabsTrigger>
-                        <TabsTrigger value="upi">UPI</TabsTrigger>
-                        <TabsTrigger value="crypto">Crypto</TabsTrigger>
-                        <TabsTrigger value="card">Card</TabsTrigger>
-                        <TabsTrigger value="link">Link</TabsTrigger>
-                        <TabsTrigger value="page">Page</TabsTrigger>
+                        <TabsTrigger value="UPI">UPI</TabsTrigger>
+                        <TabsTrigger value="Crypto">Crypto</TabsTrigger>
+                        <TabsTrigger value="Link">Link</TabsTrigger>
+                        <TabsTrigger value="Page">Page</TabsTrigger>
                     </TabsList>
                     <div className="flex-grow flex justify-end items-center gap-2">
                         <div className="relative">
@@ -176,51 +131,18 @@ export default function AllTransactionsPage() {
                            <Input
                              type="search"
                              placeholder="Search ID, Merchant, Email..."
-                             className="pl-8 w-48"
+                             className="pl-8 w-64"
                              value={searchTerm}
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
                         </div>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-auto justify-start text-left font-normal">
-                                    <span>
-                                        {dateRange?.from ? (
-                                            dateRange.to ? (
-                                                <>
-                                                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                                                </>
-                                            ) : (
-                                                format(dateRange.from, "LLL dd, y")
-                                            )
-                                        ) : (
-                                            "Filter by date"
-                                        )}
-                                    </span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={dateRange?.from}
-                                    selected={dateRange}
-                                    onSelect={setDateRange}
-                                    numberOfMonths={2}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        <Button size="sm" variant="outline" className="h-9 gap-1">
-                            <File className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
-                        </Button>
                     </div>
                 </div>
                 <Card className='mt-4'>
                     <CardHeader>
-                        <CardTitle>Transaction History</CardTitle>
+                        <CardTitle>All Sub-Merchant Transactions</CardTitle>
                         <CardDescription>
-                            A complete list of all payments processed through the platform.
+                            A complete list of all payments processed through your sub-merchants.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -229,7 +151,6 @@ export default function AllTransactionsPage() {
                                 <TableRow>
                                     <TableHead>Transaction ID</TableHead>
                                     <TableHead>Merchant</TableHead>
-                                    <TableHead>Customer</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Method</TableHead>
                                     <TableHead>Date</TableHead>
@@ -240,14 +161,13 @@ export default function AllTransactionsPage() {
                                 {paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
-                                        <TableCell>{tx.merchantId}</TableCell>
-                                        <TableCell>{tx.customerEmail}</TableCell>
+                                        <TableCell>{tx.merchantName}</TableCell>
                                         <TableCell>
                                             <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                         </TableCell>
                                         <TableCell>{tx.method}</TableCell>
                                         <TableCell>{tx.date.toLocaleString()}</TableCell>
-                                        <TableCell className="text-right">${tx.amount}</TableCell>
+                                        <TableCell className="text-right">${tx.amount.toFixed(2)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -304,21 +224,13 @@ export default function AllTransactionsPage() {
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Merchant ID:</span>
-                            <span className="font-semibold">{selectedTransaction.merchantId}</span>
-                        </div>
-                        <Separator />
-                        <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Customer Email:</span>
-                            <div className="flex items-center gap-2">
-                                    <span className="font-semibold">{selectedTransaction.customerEmail}</span>
-                                    <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
-                                </div>
+                            <span className="text-muted-foreground">Merchant:</span>
+                            <span className="font-semibold">{selectedTransaction.merchantName}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Amount:</span>
-                            <span className="font-semibold">${selectedTransaction.amount}</span>
+                            <span className="font-semibold">${selectedTransaction.amount.toFixed(2)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center">

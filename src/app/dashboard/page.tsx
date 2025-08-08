@@ -57,11 +57,15 @@ const toDateSafe = (dateFieldValue: any): Date => {
     return dateFieldValue.toDate();
   }
   if (dateFieldValue && typeof dateFieldValue === 'string') {
-    return new Date(dateFieldValue);
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
   }
   if (dateFieldValue && typeof dateFieldValue === 'number') {
     return new Date(dateFieldValue);
   }
+  // Return current date as a fallback if conversion fails
   return new Date(); 
 };
 

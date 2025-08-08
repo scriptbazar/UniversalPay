@@ -9,7 +9,8 @@ import {
     query, 
     where, 
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    Timestamp
 } from 'firebase/firestore';
 
 export type Withdrawal = {
@@ -24,6 +25,22 @@ export type Withdrawal = {
   transactionId?: string; // Optional field for withdrawal transaction
 };
 
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
+
 const generateRandomId = (prefix: string) => {
     const randomNum = Math.floor(10000000 + Math.random() * 90000000);
     return `${prefix}${randomNum}`;
@@ -35,7 +52,7 @@ export const getWithdrawals = async (): Promise<Withdrawal[]> => {
   const querySnapshot = await getDocs(q);
   const withdrawals: Withdrawal[] = [];
   querySnapshot.forEach((doc) => {
-    withdrawals.push({ id: doc.id, ...doc.data() } as Withdrawal);
+    withdrawals.push({ id: doc.id, ...doc.data(), createdAt: toDateSafe(doc.data().createdAt) } as Withdrawal);
   });
   return withdrawals;
 };
@@ -46,7 +63,7 @@ export const getMerchantWithdrawals = async (merchantId: string): Promise<Withdr
     const querySnapshot = await getDocs(q);
     const withdrawals: Withdrawal[] = [];
     querySnapshot.forEach((doc) => {
-        withdrawals.push({ id: doc.id, ...doc.data() } as Withdrawal);
+        withdrawals.push({ id: doc.id, ...doc.data(), createdAt: toDateSafe(doc.data().createdAt) } as Withdrawal);
     });
     return withdrawals;
 };

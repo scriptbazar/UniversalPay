@@ -15,6 +15,22 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Timestamp } from "firebase/firestore";
 
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
+
 type Transaction = {
     id: string;
     amount: string;
@@ -22,19 +38,6 @@ type Transaction = {
     date: Date;
     method: 'UPI' | 'Crypto' | 'Page' | 'Link';
 }
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    return new Date(dateFieldValue);
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
-};
 
 const mockCustomer = {
     id: 'cust_1',
@@ -110,7 +113,7 @@ export default function CustomerTransactionsPage() {
                              placeholder="Search transactions..."
                              className="pl-8 w-48"
                              value={searchTerm}
-                             onChange={(e) => setSearchTerm(e.gantarget.value)}
+                             onChange={(e) => setSearchTerm(e.target.value)}
                            />
                         </div>
                        <Button size="sm" variant="outline" className="h-9 gap-1">
