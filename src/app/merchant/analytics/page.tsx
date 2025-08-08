@@ -21,7 +21,7 @@ type Transaction = {
     id: string;
     method: string;
     amount: string;
-    date: Timestamp;
+    date: Date; // Changed to Date
     status: 'Successful' | 'Failed' | 'Pending';
 };
 
@@ -53,7 +53,14 @@ export default function AnalyticsPage() {
             const q = query(transactionsRef, where("merchantId", "==", user.uid), orderBy("date", "desc"));
             
             const unsubscribeTransactions = onSnapshot(q, (querySnapshot) => {
-                const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+                const transactions = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return { 
+                        id: doc.id, 
+                        ...data,
+                        date: (data.date as Timestamp).toDate() // Correctly convert Timestamp to Date
+                    } as Transaction;
+                });
 
                 const successfulTxns = transactions.filter(t => t.status === 'Successful');
                 const totalRevenue = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount), 0);
@@ -68,7 +75,7 @@ export default function AnalyticsPage() {
                 // Process revenue data for chart
                 const monthlyRevenue: { [key: string]: number } = {};
                 successfulTxns.forEach(tx => {
-                    const date = tx.date instanceof Timestamp ? tx.date.toDate() : new Date();
+                    const date = tx.date; // Now it's a Date object
                     const month = date.toLocaleString('default', { month: 'short' });
                     if (!monthlyRevenue[month]) {
                         monthlyRevenue[month] = 0;
