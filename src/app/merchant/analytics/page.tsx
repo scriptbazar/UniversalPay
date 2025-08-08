@@ -72,7 +72,6 @@ export default function AnalyticsPage() {
 
       setLoading(true);
 
-      // Listener for Transactions
       const transactionsRef = collection(db, "transactions");
       const transQuery = query(transactionsRef, where("merchantId", "==", user.uid), orderBy("date", "desc"));
       
@@ -96,7 +95,6 @@ export default function AnalyticsPage() {
           successRate
         });
 
-        // Process revenue data for chart
         const monthlyRevenue: { [key: string]: number } = {};
         successfulTxns.forEach(tx => {
           const month = tx.date.toLocaleString('default', { month: 'short' });
@@ -105,7 +103,6 @@ export default function AnalyticsPage() {
         const revenueChartData = Object.keys(monthlyRevenue).map(month => ({ name: month, revenue: monthlyRevenue[month] }));
         setRevenueData(revenueChartData);
 
-        // Process payment method data
         const methodCounts: { [key: string]: number } = {};
         successfulTxns.forEach(tx => {
           methodCounts[tx.method] = (methodCounts[tx.method] || 0) + 1;
@@ -116,23 +113,21 @@ export default function AnalyticsPage() {
           color: { UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042', Card: '#AF69EE' }[method] || '#8884d8'
         }));
         setPaymentMethodData(paymentMethodChartData);
-
-        setLoading(false);
       }, (error) => {
           console.error("Error fetching transactions: ", error);
           toast({ variant: 'destructive', title: 'Error', description: 'Could not load transaction data.' });
-          setLoading(false);
       });
 
-      // Listener for Top Customers
       const customersRef = collection(db, "customers");
       const customerQuery = query(customersRef, where("merchantId", "==", user.uid), orderBy("totalSpent", "desc"), limit(5));
       const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
         const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
         setTopCustomers(customers);
+        setLoading(false); // Set loading to false after both fetches are initiated
       }, (error) => {
           console.error("Error fetching customers: ", error);
           toast({ variant: 'destructive', title: 'Error', description: 'Could not load customer data.' });
+          setLoading(false);
       });
       
       return () => {
@@ -193,7 +188,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>}
-            {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+20.1% from last month</p>}
+            {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">Total from successful transactions</p>}
           </CardContent>
         </Card>
         <Card onClick={() => router.push('/merchant/payments')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -203,7 +198,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">+{stats.totalTransactions}</div>}
-            {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+19% from last month</p>}
+            {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">All transaction attempts</p>}
           </CardContent>
         </Card>
         <Card onClick={() => router.push('/merchant/payments?filter=success')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -213,7 +208,7 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {loading ? <Skeleton className="h-8 w-3/4" /> : <div className="text-2xl font-bold">{stats.successRate.toFixed(1)}%</div>}
-            {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">+2.1% from last month</p>}
+            {loading ? <Skeleton className="h-4 w-1/2 mt-1" /> : <p className="text-xs text-muted-foreground">Based on all transaction attempts</p>}
           </CardContent>
         </Card>
          <Card onClick={() => handleStatCardClick('customers')} className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -232,7 +227,7 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Revenue Over Time</CardTitle>
-            <CardDescription>Click a bar to see transaction details for that month.</CardDescription>
+            <CardDescription>Click a bar to see transaction details for that month. Shows successful transactions only.</CardDescription>
           </CardHeader>
           <CardContent>
              {loading ? <Skeleton className="h-[350px] w-full" /> :
@@ -267,7 +262,7 @@ export default function AnalyticsPage() {
          <Card>
             <CardHeader>
                 <CardTitle>Payment Methods Breakdown</CardTitle>
-                <CardDescription>Distribution of transactions by type. Click a slice for details.</CardDescription>
+                <CardDescription>Distribution of successful transactions by type. Click a slice for details.</CardDescription>
             </CardHeader>
             <CardContent>
                  {loading ? <Skeleton className="h-[350px] w-full" /> :
@@ -348,3 +343,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
