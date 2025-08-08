@@ -54,7 +54,7 @@ export default function InvoicesPage() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Admin gets all invoices
+                // Admin gets all invoices, so no merchantId is passed.
                 const allInvoices = await getInvoices();
                 setInvoices(allInvoices);
             }
@@ -265,4 +265,5 @@ export default function InvoicesPage() {
         </Dialog>
     </div>
   );
+    
     

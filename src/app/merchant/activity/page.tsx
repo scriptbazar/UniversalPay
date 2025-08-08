@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { collection, query, orderBy, onSnapshot, Timestamp, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
-import { Activity, ShieldCheck, Repeat, FileText, Landmark, DollarSign } from 'lucide-react';
+import { Activity, ShieldCheck, Repeat, FileText, Landmark, DollarSign, CreditCard } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth';
 
 type AuditLog = {
@@ -21,6 +21,7 @@ type AuditLog = {
 
 const getEventIcon = (type: string) => {
     switch (type) {
+        case 'PAYMENT_RECEIVED': return <CreditCard className="h-4 w-4" />;
         case 'SUBSCRIPTION_CHANGE': return <Repeat className="h-4 w-4" />;
         case 'MERCHANT_PROFILE_UPDATE': return <FileText className="h-4 w-4" />;
         case 'FINANCIAL_ACTION': return <Landmark className="h-4 w-4" />;
@@ -38,8 +39,7 @@ export default function MerchantActivityPage() {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 const logsCollectionRef = collection(db, 'audit_logs');
-                // CORRECTED QUERY: Changed 'details.targetUser' to 'userId' to match Firestore security rules.
-                const q = query(logsCollectionRef, where('userId', '==', user.uid), orderBy('timestamp', 'desc'));
+                const q = query(logsCollectionRef, where('details.targetUser', '==', user.uid), orderBy('timestamp', 'desc'));
 
                 const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
                     const logsData: AuditLog[] = [];
@@ -122,3 +122,5 @@ export default function MerchantActivityPage() {
         </div>
     );
 }
+
+    

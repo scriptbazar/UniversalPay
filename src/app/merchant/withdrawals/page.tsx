@@ -82,7 +82,7 @@ export default function WithdrawalsPage() {
     }
 
     const newWithdrawal: Omit<Withdrawal, 'id' | 'createdAt'> = {
-        amount: numericAmount.toFixed(2),
+        amount: numericAmount,
         currency: method === "bank_inr" ? "INR" : "USDT",
         destination: method === "bank_inr" ? "Bank A/c ...5678" : "TPAeJ1pGoce3yYdHjC5yYwYJz5xQ8vYfBc",
         status: "Pending",
@@ -201,7 +201,7 @@ export default function WithdrawalsPage() {
                   ) : withdrawals.map((w) => (
                     <TableRow key={w.id} onClick={() => setSelectedWithdrawal(w)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium font-mono">{w.id.substring(0, 12)}...</TableCell>
-                      <TableCell>{new Date(w.createdAt?.toDate()).toLocaleDateString()}</TableCell>
+                      <TableCell>{w.createdAt.toDate().toLocaleDateString()}</TableCell>
                       <TableCell>{w.destination}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
@@ -267,3 +267,5 @@ export default function WithdrawalsPage() {
     </div>
   );
 }
+
+    
