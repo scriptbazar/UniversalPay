@@ -137,9 +137,9 @@ export default function MonthlyTransactionsPage() {
 
     return (
         <div className="space-y-6">
-            <Link href="/merchant/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/merchant/analytics/revenue" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
+                Back to Monthly Revenue
             </Link>
 
             <Card>
@@ -224,7 +224,7 @@ export default function MonthlyTransactionsPage() {
                  <CardFooter>
                     <div className="flex justify-between items-center w-full">
                         <div className="text-xs text-muted-foreground">
-                            Page {currentPage} of {totalPages}. Total {monthlyTransactions.length} transactions.
+                            Page ${currentPage} of ${totalPages}. Total ${monthlyTransactions.length} transactions.
                         </div>
                         <div className="flex items-center gap-2">
                             <Button 
@@ -253,7 +253,7 @@ export default function MonthlyTransactionsPage() {
                     <DialogHeader>
                         <DialogTitle>Transaction Details</DialogTitle>
                         <DialogDescription>
-                            Full details for transaction {selectedTransaction?.id}
+                            Full details for transaction ${selectedTransaction?.id}
                         </DialogDescription>
                     </DialogHeader>
                     {selectedTransaction && (
