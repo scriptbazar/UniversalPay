@@ -14,7 +14,6 @@ import {
     type User
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { logActivity } from './log'; // Import the logger
 
 interface UserData {
     fullName: string;
@@ -22,42 +21,26 @@ interface UserData {
     [key: string]: any; 
 }
 
-// This function now just writes to Firestore.
-// The Cloud Function will handle setting the custom claim.
+// This function now just creates the user in Firebase Auth.
+// The Cloud Function 'addDefaultRoleClaim' is responsible for creating the Firestore document.
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // The Cloud Function is responsible for setting the custom claim.
-        // The client-side code is responsible for creating the user document in Firestore.
-        await setDoc(doc(db, "users", user.uid), {
-            uid: user.uid,
-            email: user.email,
-            fullName: additionalData.fullName,
-            mobile: additionalData.mobile,
-            role: 'merchant', // All new users start as merchants
-            status: 'Active',
-            plan: 'Free',
-            createdAt: serverTimestamp(),
-            avatar: user.photoURL || `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`
-        });
-
-        // Log merchant creation activity
-        await logActivity({
-            action: 'MERCHANT_CREATED',
-            details: `New merchant account created for ${email}.`,
-            status: 'succeeded',
-            targetUser: user.uid,
-            ipAddress: 'N/A', // IP address is not available in this context
-            userRole: 'merchant',
-        });
-
+        
+        // We no longer write to Firestore from the client.
+        // The Cloud Function will detect the new user and create the document.
 
         return { success: true, userId: user.uid };
     } catch (error: any) {
         console.error("Error creating user:", error);
-        return { success: false, error: error.message };
+        let errorMessage = "An unknown error occurred during signup.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email address is already in use by another account.';
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage = 'The password is too weak. Please use at least 6 characters.';
+        }
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -85,23 +68,11 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         }
 
         // Security Check: Enforce that only merchants can log in via the merchant page.
-        if (loginType === 'merchant' && userRole !== 'merchant') {
+        if (loginType === 'merchant' && (userRole !== 'merchant' && userRole !== 'reseller')) {
             await signOut(auth);
             return { success: false, error: "Access denied. Please use the Admin Login page." };
         }
         
-        // Log successful login for merchants
-        if (loginType === 'merchant') {
-            await logActivity({
-                action: 'MERCHANT_LOGIN',
-                details: `Merchant ${user.email} logged in successfully via email/password.`,
-                status: 'succeeded',
-                targetUser: user.uid,
-                ipAddress: 'N/A',
-                userRole: 'merchant',
-            });
-        }
-
         return { success: true, user: { uid: user.uid, ...userDoc.data() } };
         
     } catch (error: any) {
@@ -138,20 +109,19 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
+        // The on-create Cloud Function handles document creation. We just wait for it here.
+        // In a more robust implementation, you might poll for the document or use a callable function.
         if (!userDoc.exists()) {
-            await setDoc(userDocRef, {
-                uid: user.uid,
-                email: user.email,
-                fullName: user.displayName || 'Social User',
-                avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
-                role: 'merchant',
-                status: 'Active',
-                plan: 'Free',
-                createdAt: serverTimestamp(),
-            });
+            // A small delay to allow the Cloud Function to create the document
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
         
         const finalUserDoc = await getDoc(userDocRef);
+        
+        if (!finalUserDoc.exists()) {
+             throw new Error("User document was not created in time. Please try again.");
+        }
+
         const userData = finalUserDoc.data();
 
         // Security check for social logins
@@ -159,16 +129,6 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
             await signOut(auth);
             return { success: false, error: 'Admin accounts cannot use social login.' };
         }
-
-        // Log successful social login
-        await logActivity({
-            action: 'MERCHANT_SOCIAL_LOGIN',
-            details: `Merchant ${user.email} logged in successfully via ${providerName}.`,
-            status: 'succeeded',
-            targetUser: user.uid,
-            ipAddress: 'N/A',
-            userRole: 'merchant',
-        });
 
         return { success: true, user: { uid: user.uid, ...userData } };
 
@@ -183,22 +143,6 @@ export async function signInWithSocial(providerName: 'google' | 'github' | 'face
 
 export async function signOutUser() {
     try {
-        const user = auth.currentUser;
-        if (user) {
-            // Log logout activity before signing out
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists() && userDoc.data()?.role === 'merchant') {
-                await logActivity({
-                    action: 'MERCHANT_LOGOUT',
-                    details: `Merchant ${user.email} logged out.`,
-                    status: 'succeeded',
-                    targetUser: user.uid,
-                    ipAddress: 'N/A',
-                    userRole: 'merchant'
-                });
-            }
-        }
         await signOut(auth);
         return { success: true };
     } catch (error: any) {
