@@ -75,6 +75,8 @@ interface UserProfile {
     handle?: string;
     handleLastUpdatedAt?: Timestamp;
     handleEditCount?: number;
+    kycStatus?: 'Verified' | 'Pending' | 'Not Started';
+    isKycRequestedByAdmin?: boolean;
 }
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -298,59 +300,48 @@ export default function SettingsPage() {
             telegram: false,
         },
         handle: '',
+        kycStatus: 'Not Started',
+        isKycRequestedByAdmin: false,
     });
   const [loading, setLoading] = useState(true);
-  
-  const [isKycRequestedByAdmin, setIsKycRequestedByAdmin] = useState(true);
-  const [kycStatus, setKycStatus] = useState<'Verified' | 'Pending' | 'Not Started'>("Not Started");
 
   const [handle, setHandle] = useState('');
   const [handleStatus, setHandleStatus] = useState<'available' | 'taken' | 'checking' | 'invalid' | null>(null);
   
-  useEffect(() => {
-    const fetchUserData = async () => {
-        setLoading(true);
-        const user = auth.currentUser;
-        if (user) {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if(userDoc.exists()) {
-                const data = userDoc.data();
-                setProfileData(prev => ({
-                    ...prev,
-                    id: user.uid,
-                    fullName: data.fullName || '',
-                    email: data.email || '',
-                    mobile: data.mobile || '',
-                    businessName: data.businessName || '',
-                    avatar: data.avatar || undefined,
-                    brandColor: data.brandColor || '#29ABE2',
-                    checkoutLogo: data.checkoutLogo || data.avatar || undefined,
-                    termsUrl: data.termsUrl || '',
-                    privacyUrl: data.privacyUrl || '',
-                    supportUrl: data.supportUrl || '',
-                    displayOptions: data.displayOptions || { upi: true, card: true, crypto: true, paypal: false },
-                    hideIdentity: data.hideIdentity || false,
-                    paymentMethods: data.paymentMethods || prev.paymentMethods,
-                    notifications: data.notifications || prev.notifications,
-                    handle: data.handle || '',
-                    handleLastUpdatedAt: data.handleLastUpdatedAt,
-                    handleEditCount: data.handleEditCount || 0,
-                }));
-                 setHandle(data.handle || '');
-            }
+  const fetchUserData = useCallback(async () => {
+    setLoading(true);
+    const user = auth.currentUser;
+    if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if(userDoc.exists()) {
+            const data = userDoc.data() as UserProfile;
+            setProfileData(prev => ({
+                ...prev,
+                ...data,
+                id: user.uid,
+                // Ensure nested objects have defaults if they don't exist in Firestore
+                displayOptions: data.displayOptions || { upi: true, card: true, crypto: true, paypal: false },
+                paymentMethods: data.paymentMethods || prev.paymentMethods,
+                notifications: data.notifications || prev.notifications,
+                checkoutLogo: data.checkoutLogo || data.avatar || undefined,
+            }));
+            setHandle(data.handle || '');
         }
-        setLoading(false);
-    };
-    
-    onAuthStateChanged(auth, (user) => {
+    }
+    setLoading(false);
+  }, []);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
             fetchUserData();
         } else {
             setLoading(false);
         }
     });
-  }, []);
+     return () => unsubscribe();
+  }, [fetchUserData]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { id, value } = e.target;
@@ -476,11 +467,12 @@ export default function SettingsPage() {
       }
   };
    
-   const getKycStatusVariant = (status: typeof kycStatus) => {
+   const getKycStatusVariant = (status?: typeof profileData.kycStatus) => {
         switch (status) {
             case 'Verified': return 'default';
             case 'Pending': return 'secondary';
             case 'Not Started': return 'destructive';
+            default: return 'destructive';
         }
     };
 
@@ -917,7 +909,7 @@ export default function SettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {isKycRequestedByAdmin && kycStatus !== 'Verified' && (
+                    {profileData.isKycRequestedByAdmin && profileData.kycStatus !== 'Verified' && (
                         <Alert variant="destructive">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertTitle>Action Required</AlertTitle>
@@ -931,9 +923,9 @@ export default function SettingsPage() {
                             <div className="flex-grow space-y-2">
                                 <h3 className="font-semibold text-lg">Current Verification Status</h3>
                                 <div className="flex items-center gap-4">
-                                     <Badge variant={getKycStatusVariant(kycStatus)} className="text-base px-3 py-1">{kycStatus}</Badge>
+                                     <Badge variant={getKycStatusVariant(profileData.kycStatus)} className="text-base px-3 py-1">{profileData.kycStatus}</Badge>
                                     <p className="text-sm text-muted-foreground">
-                                        {kycStatus === 'Verified' ? 'Your account is fully verified.' : kycStatus === 'Pending' ? 'Your documents are under review.' : 'Complete KYC to unlock all features.'}
+                                        {profileData.kycStatus === 'Verified' ? 'Your account is fully verified.' : profileData.kycStatus === 'Pending' ? 'Your documents are under review.' : 'Complete KYC to unlock all features.'}
                                     </p>
                                 </div>
                             </div>
@@ -942,10 +934,10 @@ export default function SettingsPage() {
                             <div className="flex-shrink-0 space-y-2">
                                 <h3 className="font-semibold text-lg">Complete Your KYC</h3>
                                 <p className="text-sm text-muted-foreground max-w-xs">Verify instantly using Aadhar & PAN OTP.</p>
-                                {kycStatus === 'Not Started' ? (
+                                {profileData.kycStatus === 'Not Started' ? (
                                     <KycVerificationDialog onKycSubmitted={() => {
-                                        setKycStatus('Pending');
-                                        setIsKycRequestedByAdmin(false); // Hide the alert after submission
+                                        saveUserData({ kycStatus: 'Pending', isKycRequestedByAdmin: false });
+                                        setProfileData(prev => ({ ...prev, kycStatus: 'Pending', isKycRequestedByAdmin: false }));
                                     }} />
                                 ) : (
                                      <Button disabled>KYC Submitted for Review</Button>

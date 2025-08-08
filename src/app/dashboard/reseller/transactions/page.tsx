@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -27,31 +28,20 @@ import { ArrowLeft, Copy, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { type Transaction, getAllSubMerchantTransactions } from '@/lib/resellerData';
-import { Timestamp } from 'firebase/firestore';
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    return new Date(dateFieldValue);
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
-};
 
 export default function SubMerchantTransactionsPage() {
     const { toast } = useToast();
     const [allSubMerchantTransactions, setAllSubMerchantTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchedTransactions = getAllSubMerchantTransactions().map(tx => ({
-            ...tx,
-            date: toDateSafe(tx.date)
-        }));
-        setAllSubMerchantTransactions(fetchedTransactions);
+        async function fetchData() {
+            setLoading(true);
+            const transactions = await getAllSubMerchantTransactions();
+            setAllSubMerchantTransactions(transactions);
+            setLoading(false);
+        }
+        fetchData();
     }, []);
 
     const [filter, setFilter] = useState('all');
@@ -154,7 +144,9 @@ export default function SubMerchantTransactionsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedTransactions.map(tx => (
+                                {loading ? (
+                                    <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading transactions...</TableCell></TableRow>
+                                ) : paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
                                         <TableCell>{tx.merchantName}</TableCell>
@@ -168,7 +160,7 @@ export default function SubMerchantTransactionsPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                         {filteredTransactions.length === 0 && (
+                         {!loading && filteredTransactions.length === 0 && (
                             <div className="text-center p-8 text-muted-foreground">
                                 No transactions found for the selected filters.
                             </div>

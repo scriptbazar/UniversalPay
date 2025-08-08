@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -12,22 +13,32 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import Image from "next/image";
 import { getSubMerchants, type SubMerchant } from "@/lib/resellerData";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function ResellerPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [subMerchants, setSubMerchants] = useState<SubMerchant[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you would fetch this from your database
-    // For now, it's an empty array since mock data is removed.
-    setSubMerchants(getSubMerchants());
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            setLoading(true);
+            const merchants = await getSubMerchants(user.uid);
+            setSubMerchants(merchants);
+            setLoading(false);
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const totalSales = subMerchants.reduce((acc, m) => acc + parseFloat(m.sales), 0);
 
   const handleRowClick = (merchantId: string) => {
-    router.push(`/merchant/users/${merchantId}`);
+    router.push(`/dashboard/users/${merchantId}`);
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -107,7 +118,9 @@ export default function ResellerPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {subMerchants.length > 0 ? subMerchants.map((merchant) => (
+              {loading ? (
+                <TableRow><TableCell colSpan={4} className="h-24 text-center">Loading merchants...</TableCell></TableRow>
+              ) : subMerchants.length > 0 ? subMerchants.map((merchant) => (
                 <TableRow key={merchant.id} onClick={() => handleRowClick(merchant.id)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell>
                     <div className="font-medium">{merchant.name}</div>

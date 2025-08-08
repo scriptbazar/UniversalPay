@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,15 +26,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-
-export type SubMerchant = {
-    id: string;
-    name: string;
-    email: string;
-    sales: string;
-    commission: string;
-    status: 'Active' | 'Inactive';
-};
+import { getSubMerchants, type SubMerchant } from '@/lib/resellerData';
 
 export default function CommissionsPage() {
     const { toast } = useToast();
@@ -41,11 +34,16 @@ export default function CommissionsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMerchant, setSelectedMerchant] = useState<SubMerchant | null>(null);
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
     
     useEffect(() => {
-        // In a real app, you would fetch this from your database
-        // For now, it's an empty array since mock data is removed.
-        setSubMerchants([]);
+        async function fetchData() {
+            setLoading(true);
+            const merchants = await getSubMerchants();
+            setSubMerchants(merchants);
+            setLoading(false);
+        }
+        fetchData();
     }, []);
 
     const totalPages = Math.ceil(subMerchants.length / itemsPerPage);
@@ -85,7 +83,9 @@ export default function CommissionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedMerchants.length > 0 ? paginatedMerchants.map(merchant => (
+                             {loading ? (
+                                <TableRow><TableCell colSpan={4} className="h-24 text-center">Loading merchants...</TableCell></TableRow>
+                            ) : paginatedMerchants.length > 0 ? paginatedMerchants.map(merchant => (
                                 <TableRow key={merchant.id} onClick={() => setSelectedMerchant(merchant)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell>
                                         <div className="font-medium">{merchant.name}</div>
