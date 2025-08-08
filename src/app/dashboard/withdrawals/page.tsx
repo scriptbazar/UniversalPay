@@ -127,7 +127,7 @@ export default function AdminWithdrawalsPage() {
                             placeholder="Search by name or user ID..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-64"
+                            className="w-40"
                         />
                     </div>
                      <Tabs value={filter} onValueChange={setFilter} className="mt-4">

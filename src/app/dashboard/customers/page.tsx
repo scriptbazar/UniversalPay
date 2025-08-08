@@ -99,7 +99,7 @@ export default function AllCustomersPage() {
                                <Input
                                  type="search"
                                  placeholder="Search by name, email, or merchant ID..."
-                                 className="pl-8 w-64"
+                                 className="pl-8 w-40"
                                  value={searchTerm}
                                  onChange={(e) => setSearchTerm(e.target.value)}
                                />

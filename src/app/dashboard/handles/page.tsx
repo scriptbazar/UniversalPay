@@ -85,7 +85,7 @@ export default function AdminHandleLinksPage() {
                 <Input
                     type="search"
                     placeholder="Search by name, email, or handle..."
-                    className="pl-8 w-64"
+                    className="pl-8 w-40"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />

@@ -235,7 +235,7 @@ export default function UsersPage() {
                                 <Input
                                     type="search"
                                     placeholder="Search by name or email..."
-                                    className="pl-8 w-48"
+                                    className="pl-8 w-40"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
