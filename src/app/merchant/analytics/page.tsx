@@ -21,7 +21,7 @@ type Transaction = {
     id: string;
     method: string;
     amount: string;
-    date: Date; // Changed to Date
+    date: Date;
     status: 'Successful' | 'Failed' | 'Pending';
 };
 
@@ -32,28 +32,22 @@ type Customer = {
     totalSpent: number;
 };
 
-// Helper function to safely convert Firestore Timestamp or string to a Date object
 const toDateSafe = (dateFieldValue: any): Date => {
   if (!dateFieldValue) return new Date();
-  // If it's already a Date object, return it.
   if (dateFieldValue instanceof Date) {
     return dateFieldValue;
   }
-  // If it has a toDate method (like a Firestore Timestamp), call it.
-  if (typeof dateFieldValue.toDate === 'function') {
+  if (dateFieldValue.toDate && typeof dateFieldValue.toDate === 'function') {
     return dateFieldValue.toDate();
   }
-  // If it's a string or number, try creating a new Date from it.
   if (typeof dateFieldValue === 'string' || typeof dateFieldValue === 'number') {
     const date = new Date(dateFieldValue);
     if (!isNaN(date.getTime())) {
       return date;
     }
   }
-  // Return current date as a fallback if conversion fails
   return new Date();
 };
-
 
 export default function AnalyticsPage() {
   const { toast } = useToast();
@@ -69,86 +63,91 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            setLoading(true);
-            const transactionsRef = collection(db, "transactions");
-            const q = query(transactionsRef, where("merchantId", "==", user.uid), orderBy("date", "desc"));
-            
-            const unsubscribeTransactions = onSnapshot(q, (querySnapshot) => {
-                const transactions = querySnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return { 
-                        id: doc.id, 
-                        ...data,
-                        date: toDateSafe(data.date) // Use the safe conversion function
-                    } as Transaction;
-                });
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setLoading(false);
+        router.push('/login');
+        return;
+      }
 
-                const successfulTxns = transactions.filter(t => t.status === 'Successful');
-                const totalRevenue = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount), 0);
-                const successRate = transactions.length > 0 ? (successfulTxns.length / transactions.length) * 100 : 0;
-                
-                setStats({
-                    totalRevenue,
-                    totalTransactions: transactions.length,
-                    successRate
-                });
+      setLoading(true);
 
-                // Process revenue data for chart
-                const monthlyRevenue: { [key: string]: number } = {};
-                successfulTxns.forEach(tx => {
-                    const date = tx.date; // Now it's a Date object
-                    const month = date.toLocaleString('default', { month: 'short' });
-                    if (!monthlyRevenue[month]) {
-                        monthlyRevenue[month] = 0;
-                    }
-                    monthlyRevenue[month] += parseFloat(tx.amount);
-                });
-                const revenueChartData = Object.keys(monthlyRevenue).map(month => ({ name: month, revenue: monthlyRevenue[month] }));
-                setRevenueData(revenueChartData);
+      // Listener for Transactions
+      const transactionsRef = collection(db, "transactions");
+      const transQuery = query(transactionsRef, where("merchantId", "==", user.uid), orderBy("date", "desc"));
+      
+      const unsubscribeTransactions = onSnapshot(transQuery, (querySnapshot) => {
+        const transactions = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date: toDateSafe(data.date)
+          } as Transaction;
+        });
 
-                // Process payment method data
-                const methodCounts: { [key: string]: number } = {};
-                successfulTxns.forEach(tx => {
-                    if(!methodCounts[tx.method]) {
-                        methodCounts[tx.method] = 0;
-                    }
-                    methodCounts[tx.method]++;
-                });
-                const paymentMethodChartData = Object.keys(methodCounts).map(method => ({
-                    name: method,
-                    value: methodCounts[method],
-                    color: {UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042', Card: '#AF69EE'}[method] || '#8884d8'
-                }));
-                setPaymentMethodData(paymentMethodChartData);
-                
-                 setLoading(false);
-            });
-            
-            // Fetch top customers
-            const customersRef = collection(db, "customers");
-            const customerQuery = query(customersRef, where("merchantId", "==", user.uid), orderBy("totalSpent", "desc"), limit(5));
-            const unsubscribeCustomers = onSnapshot(snapshot => {
-                const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
-                setTopCustomers(customers);
-            });
+        const successfulTxns = transactions.filter(t => t.status === 'Successful');
+        const totalRevenue = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount), 0);
+        const successRate = transactions.length > 0 ? (successfulTxns.length / transactions.length) * 100 : 0;
+        
+        setStats({
+          totalRevenue,
+          totalTransactions: transactions.length,
+          successRate
+        });
 
-            return () => {
-                unsubscribeTransactions();
-                unsubscribeCustomers();
-            }
-        }
+        // Process revenue data for chart
+        const monthlyRevenue: { [key: string]: number } = {};
+        successfulTxns.forEach(tx => {
+          const month = tx.date.toLocaleString('default', { month: 'short' });
+          monthlyRevenue[month] = (monthlyRevenue[month] || 0) + parseFloat(tx.amount);
+        });
+        const revenueChartData = Object.keys(monthlyRevenue).map(month => ({ name: month, revenue: monthlyRevenue[month] }));
+        setRevenueData(revenueChartData);
+
+        // Process payment method data
+        const methodCounts: { [key: string]: number } = {};
+        successfulTxns.forEach(tx => {
+          methodCounts[tx.method] = (methodCounts[tx.method] || 0) + 1;
+        });
+        const paymentMethodChartData = Object.keys(methodCounts).map((method) => ({
+          name: method,
+          value: methodCounts[method],
+          color: { UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042', Card: '#AF69EE' }[method] || '#8884d8'
+        }));
+        setPaymentMethodData(paymentMethodChartData);
+
+        setLoading(false);
+      }, (error) => {
+          console.error("Error fetching transactions: ", error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not load transaction data.' });
+          setLoading(false);
+      });
+
+      // Listener for Top Customers
+      const customersRef = collection(db, "customers");
+      const customerQuery = query(customersRef, where("merchantId", "==", user.uid), orderBy("totalSpent", "desc"), limit(5));
+      const unsubscribeCustomers = onSnapshot(customerQuery, (snapshot) => {
+        const customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+        setTopCustomers(customers);
+      }, (error) => {
+          console.error("Error fetching customers: ", error);
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not load customer data.' });
+      });
+      
+      return () => {
+        unsubscribeTransactions();
+        unsubscribeCustomers();
+      };
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribeAuth();
+  }, [router, toast]);
 
   const handleBarClick = (data: any) => {
     if (!data || !data.activePayload) return;
     const payload = data.activePayload[0].payload;
-    const monthName = payload.name;
-    const monthSlug = monthName.toLowerCase();
+    const monthSlug = payload.name.toLowerCase();
     router.push(`/merchant/analytics/transactions/${monthSlug}`);
   };
 
