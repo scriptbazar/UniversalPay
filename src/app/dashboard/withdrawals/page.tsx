@@ -35,7 +35,7 @@ export default function AdminWithdrawalsPage() {
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const idTokenResult = await user.getIdTokenResult(true);
                 const userIsAdmin = !!idTokenResult.claims.role && idTokenResult.claims.role === 'admin';
@@ -45,6 +45,7 @@ export default function AdminWithdrawalsPage() {
                     const withdrawalsCollectionRef = collection(db, "withdrawals");
                     const q = query(withdrawalsCollectionRef, orderBy('createdAt', 'desc'));
                     
+                    // Use onSnapshot for real-time updates
                     const unsubscribeSnapshots = onSnapshot(q, (querySnapshot) => {
                         const withdrawalsList: Withdrawal[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Withdrawal));
                         setWithdrawals(withdrawalsList);
@@ -58,22 +59,17 @@ export default function AdminWithdrawalsPage() {
                         });
                         setLoading(false);
                     });
-                    return unsubscribeSnapshots;
+                    return () => unsubscribeSnapshots(); // Return cleanup function for onSnapshot
                 } else {
                     setLoading(false);
                     setWithdrawals([]);
-                    toast({
-                        title: "Permission Denied",
-                        description: "You do not have administrative permissions to view all withdrawals.",
-                        variant: "destructive",
-                    });
                 }
             } else {
                 setLoading(false);
             }
         });
         
-        return () => unsubscribe();
+        return () => unsubscribeAuth(); // Cleanup auth listener
     }, [toast]);
 
 
