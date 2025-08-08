@@ -10,9 +10,22 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { getAllCustomers, type Customer } from '@/lib/customersData';
 import { onSnapshot, collection, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export type Customer = {
+    id: string;
+    merchantId: string;
+    merchantName: string;
+    email: string;
+    name: string;
+    avatar: string;
+    totalSpent: number;
+    transactions: number;
+    lastSeen: string;
+    joinedDate: string;
+};
 
 export default function AllCustomersPage() {
     const router = useRouter();
@@ -110,9 +123,14 @@ export default function AllCustomersPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">Loading customers...</TableCell>
-                                </TableRow>
+                                Array.from({length: 5}).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                    </TableRow>
+                                ))
                             ) : paginatedCustomers.map(customer => (
                                 <TableRow key={customer.id} onClick={() => handleRowClick(customer)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell>

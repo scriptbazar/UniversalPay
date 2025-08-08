@@ -39,8 +39,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
-import { collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Transaction = {
     id: string;
@@ -77,20 +78,28 @@ export default function AllTransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchTransactions = async () => {
-            const transactionsQuery = query(collection(db, "transactions"), orderBy("date", "desc"));
-            const querySnapshot = await getDocs(transactionsQuery);
+        setLoading(true);
+        const transactionsQuery = query(collection(db, "transactions"), orderBy("date", "desc"));
+        
+        const unsubscribe = onSnapshot(transactionsQuery, (querySnapshot) => {
             const fetchedTransactions = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 date: toDateSafe(doc.data().date)
             } as Transaction));
             setTransactions(fetchedTransactions);
-        };
-        fetchTransactions();
-    }, []);
+            setLoading(false);
+        }, (error) => {
+            console.error("Failed to fetch transactions:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load transaction data.' });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [toast]);
 
     const filteredTransactions = useMemo(() => {
         let filtered = transactions;
@@ -183,7 +192,7 @@ export default function AllTransactionsPage() {
                         </div>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-auto justify-start text-left font-normal">
+                                <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
                                     <span>
                                         {dateRange?.from ? (
                                             dateRange.to ? (
@@ -237,7 +246,19 @@ export default function AllTransactionsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedTransactions.map(tx => (
+                                {loading ? (
+                                    Array.from({length: 5}).map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
                                         <TableCell>{tx.merchantId}</TableCell>
@@ -252,7 +273,7 @@ export default function AllTransactionsPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                         {filteredTransactions.length === 0 && (
+                         {!loading && filteredTransactions.length === 0 && (
                             <div className="text-center p-8 text-muted-foreground">
                                 No transactions found for the selected filters.
                             </div>

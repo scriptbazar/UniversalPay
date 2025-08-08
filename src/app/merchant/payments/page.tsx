@@ -42,6 +42,7 @@ import { useSearchParams } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Transaction = {
     id: string;
@@ -59,7 +60,10 @@ const toDateSafe = (dateFieldValue: any): Date => {
     return dateFieldValue.toDate();
   }
   if (dateFieldValue && typeof dateFieldValue === 'string') {
-    return new Date(dateFieldValue);
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
   }
   if (dateFieldValue && typeof dateFieldValue === 'number') {
     return new Date(dateFieldValue);
@@ -84,6 +88,7 @@ function PaymentsComponent() {
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
+                setLoading(true);
                 const merchantId = user.uid;
                 const transactionsCollectionRef = collection(db, "transactions");
                 const q = query(
@@ -214,7 +219,7 @@ function PaymentsComponent() {
                         </div>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-auto justify-start text-left font-normal">
+                                <Button variant="outline" className="w-auto justify-start text-left font-normal h-9">
                                     <span>
                                         {dateRange?.from ? (
                                             dateRange.to ? (
@@ -268,9 +273,16 @@ function PaymentsComponent() {
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">Loading transactions...</TableCell>
-                                    </TableRow>
+                                    Array.from({length: 5}).map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                        </TableRow>
+                                    ))
                                 ) : paginatedTransactions.map(tx => (
                                     <TableRow key={tx.id} className="cursor-pointer" onClick={() => setSelectedTransaction(tx)}>
                                         <TableCell className="font-medium">{tx.id}</TableCell>
