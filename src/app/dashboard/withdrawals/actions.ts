@@ -1,6 +1,7 @@
+
 "use server"
 import { revalidatePath } from "next/cache";
-import { db, auth } from "@/lib/firebase";
+import { db, admin } from "@/lib/firebaseAdmin";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 // Define the Withdrawal type
@@ -11,7 +12,7 @@ export type Withdrawal = {
   accountNumber: string;
   accountName: string;
   status: 'Pending' | 'Completed' | 'Failed';
-  date: string;
+  createdAt: any;
   userId: string;
 };
 
@@ -20,12 +21,12 @@ export type Withdrawal = {
  * @param withdrawalData - The data for the new withdrawal.
  * @returns An object with the success status and the new withdrawal data or an error message.
  */
-export async function createWithdrawal(withdrawalData: Omit<Withdrawal, 'id' | 'date' | 'status'>) {
+export async function createWithdrawal(withdrawalData: Omit<Withdrawal, 'id' | 'createdAt' | 'status'>) {
   try {
     const newWithdrawal = {
       ...withdrawalData,
       status: 'Pending' as const,
-      date: serverTimestamp(),
+      createdAt: serverTimestamp(),
     };
     const docRef = await addDoc(collection(db, "withdrawals"), newWithdrawal);
     revalidatePath("/merchant/withdrawals");
@@ -37,14 +38,21 @@ export async function createWithdrawal(withdrawalData: Omit<Withdrawal, 'id' | '
 }
 
 /**
- * Processes a withdrawal request by updating its status.
+ * Processes a withdrawal request by updating its status. This should be a Cloud Function.
  * @param withdrawalId - The ID of the withdrawal to process.
  * @param newStatus - The new status of the withdrawal.
  * @returns An object with the success status or an error message.
  */
 export async function processWithdrawal(withdrawalId: string, newStatus: 'Completed' | 'Failed') {
+    if (!withdrawalId || !newStatus) {
+        return { success: false, error: 'Withdrawal ID and new status are required.' };
+    }
     try {
         const withdrawalRef = doc(db, "withdrawals", withdrawalId);
+        
+        // In a real app, you would have logic here to actually transfer the money
+        // before marking the withdrawal as complete. For now, we'll just update the status.
+
         await updateDoc(withdrawalRef, { status: newStatus });
         revalidatePath("/dashboard/withdrawals");
         return { success: true };

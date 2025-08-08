@@ -33,6 +33,7 @@ import { Copy, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/countries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 interface User {
@@ -139,7 +140,28 @@ export default function UsersPage() {
 
     const renderContent = () => {
         if (loading) {
-            return <div className="text-center p-8 text-muted-foreground">Loading users...</div>;
+            return (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Plan</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            );
         }
         
         if (error) {

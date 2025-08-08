@@ -36,6 +36,7 @@ import { logSubscriptionChange } from './actions';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 type Plan = {
@@ -328,9 +329,15 @@ export default function SubscriptionsPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">Loading subscribers...</TableCell>
+                                Array.from({ length: 3 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                                 </TableRow>
+                                ))
                             ) : subscribedMerchants.length > 0 ? (
                                 subscribedMerchants.map(merchant => (
                                     <TableRow key={merchant.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(merchant.id)}>

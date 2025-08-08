@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { collection, onSnapshot, query, where, doc, updateDoc, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Withdrawal } from "./actions";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { createWithdrawal } from "./actions";
+import { processWithdrawal } from "./actions";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from 'firebase/auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
     switch (status) {
@@ -57,10 +58,8 @@ export default function AdminWithdrawalsPage() {
                         });
                         setLoading(false);
                     });
-                     // Return the snapshot listener unsubscriber to be called on cleanup
                     return unsubscribeSnapshots;
                 } else {
-                    // If user is not an admin, stop loading and show permission error toast.
                     setLoading(false);
                     setWithdrawals([]);
                     toast({
@@ -70,29 +69,25 @@ export default function AdminWithdrawalsPage() {
                     });
                 }
             } else {
-                // If no user is logged in, stop loading.
                 setLoading(false);
             }
         });
         
-        // This is the cleanup function for the auth state listener
         return () => unsubscribe();
     }, [toast]);
 
 
     const handleProcessWithdrawal = async (id: string, newStatus: 'Completed' | 'Failed') => {
-        try {
-            const withdrawalRef = doc(db, "withdrawals", id);
-            await updateDoc(withdrawalRef, { status: newStatus });
+        const result = await processWithdrawal(id, newStatus);
+        if (result.success) {
             toast({
                 title: "Success",
                 description: `Withdrawal has been marked as ${newStatus}.`,
             });
-        } catch (error) {
-            console.error("Error processing withdrawal:", error);
-            toast({
+        } else {
+             toast({
                 title: "Error",
-                description: "Failed to process withdrawal.",
+                description: result.error || "Failed to process withdrawal.",
                 variant: "destructive",
             });
         }
@@ -115,11 +110,7 @@ export default function AdminWithdrawalsPage() {
         return filtered;
     }, [withdrawals, filter, searchTerm]);
 
-    if (loading) {
-        return <div className="text-center p-8">Loading withdrawals...</div>;
-    }
-
-    if (!isAdmin) {
+    if (!isAdmin && !loading) {
         return (
             <div className="text-center p-8 text-destructive">
                 You do not have the necessary permissions to view this page.
@@ -166,7 +157,19 @@ export default function AdminWithdrawalsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredWithdrawals.map(w => (
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-8 w-36" /></TableCell>
+                                </TableRow>
+                                ))
+                            ) : filteredWithdrawals.map(w => (
                                 <TableRow key={w.id}>
                                     <TableCell>{w.userId}</TableCell>
                                     <TableCell>{w.accountName}</TableCell>
@@ -188,7 +191,7 @@ export default function AdminWithdrawalsPage() {
                             ))}
                         </TableBody>
                     </Table>
-                    {filteredWithdrawals.length === 0 && (
+                    {!loading && filteredWithdrawals.length === 0 && (
                         <div className="text-center p-8 text-muted-foreground">
                             No withdrawals match your search criteria.
                         </div>
