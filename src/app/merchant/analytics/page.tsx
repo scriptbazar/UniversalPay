@@ -68,7 +68,8 @@ export default function AnalyticsPage() {
                 // Process revenue data for chart
                 const monthlyRevenue: { [key: string]: number } = {};
                 successfulTxns.forEach(tx => {
-                    const month = tx.date.toDate().toLocaleString('default', { month: 'short' });
+                    const date = tx.date instanceof Timestamp ? tx.date.toDate() : new Date();
+                    const month = date.toLocaleString('default', { month: 'short' });
                     if (!monthlyRevenue[month]) {
                         monthlyRevenue[month] = 0;
                     }
