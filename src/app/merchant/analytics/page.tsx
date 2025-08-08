@@ -32,6 +32,25 @@ type Customer = {
     totalSpent: number;
 };
 
+// Helper function to safely convert Firestore Timestamp or string to a Date object
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  // Return current date as a fallback if conversion fails
+  return new Date(); 
+};
+
+
 export default function AnalyticsPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -58,7 +77,7 @@ export default function AnalyticsPage() {
                     return { 
                         id: doc.id, 
                         ...data,
-                        date: (data.date as Timestamp).toDate() // Correctly convert Timestamp to Date
+                        date: toDateSafe(data.date) // Use the safe conversion function
                     } as Transaction;
                 });
 
