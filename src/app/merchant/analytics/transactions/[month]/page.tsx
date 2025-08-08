@@ -13,11 +13,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Mock data generation function
 const generateMockTransactions = () => {
     return Array.from({ length: 12 * 50 }, (_, i) => {
         const monthIndex = Math.floor(i / 50);
+        const year = 2023 - Math.floor(i / (12 * 10)); // Distribute across a few years
         const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
         const success = Math.random() > 0.1;
         const methods = ["UPI", "Crypto", "Page", "Link"];
@@ -26,7 +28,7 @@ const generateMockTransactions = () => {
             customerName: `Customer ${i + 1}`,
             customerEmail: `customer${i + 1}@example.com`,
             amount: (Math.random() * 500 + 10).toFixed(2),
-            date: new Date(2023, monthIndex, (i % 28) + 1).toISOString().split('T')[0],
+            date: new Date(year, monthIndex, (i % 28) + 1).toISOString().split('T')[0],
             month: months[monthIndex],
             status: success ? 'Success' : 'Failed',
             method: methods[i % 4],
@@ -54,16 +56,26 @@ export default function MonthlyTransactionsPage() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedYear, setSelectedYear] = useState<string>('all');
     const itemsPerPage = 10;
 
     useEffect(() => {
         // Generate data on the client side to avoid hydration issues
         setAllMockTransactions(generateMockTransactions());
     }, []);
+    
+    const availableYears = useMemo(() => {
+        const years = new Set(allMockTransactions.map(tx => new Date(tx.date).getFullYear().toString()));
+        return Array.from(years).sort((a,b) => parseInt(b) - parseInt(a));
+    }, [allMockTransactions]);
 
     const monthlyTransactions = useMemo(() => {
         let filtered = allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
         
+        if(selectedYear !== 'all') {
+            filtered = filtered.filter(tx => new Date(tx.date).getFullYear().toString() === selectedYear);
+        }
+
         if (searchTerm) {
             filtered = filtered.filter(tx => 
                 tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,13 +85,15 @@ export default function MonthlyTransactionsPage() {
         }
         
         return filtered;
-    }, [month, allMockTransactions, searchTerm]);
+    }, [month, allMockTransactions, searchTerm, selectedYear]);
 
     const totalPages = Math.ceil(monthlyTransactions.length / itemsPerPage);
     const paginatedTransactions = monthlyTransactions.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
     );
+
+    const pageTitle = `Transactions for ${month.charAt(0).toUpperCase() + month.slice(1)} ${selectedYear !== 'all' ? selectedYear : ''}`;
 
 
     const handleRowClick = (transaction: Transaction) => {
@@ -104,8 +118,8 @@ export default function MonthlyTransactionsPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center">
                    <div className="grid gap-2">
-                        <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
-                        <CardDescription>A list of all transactions for the selected month. Click a row for details.</CardDescription>
+                        <CardTitle className="text-2xl">{pageTitle}</CardTitle>
+                        <CardDescription>A list of all transactions for the selected period. Click a row for details.</CardDescription>
                    </div>
                    <div className="ml-auto flex items-center gap-2">
                         <div className="relative">
@@ -118,6 +132,17 @@ export default function MonthlyTransactionsPage() {
                              onChange={(e) => setSearchTerm(e.target.value)}
                            />
                         </div>
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                            <SelectTrigger className="w-[120px] h-9">
+                                <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Years</SelectItem>
+                                {availableYears.map(year => (
+                                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                        <Button size="sm" variant="outline" className="h-9 gap-1">
                           <File className="h-3.5 w-3.5" />
                           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
