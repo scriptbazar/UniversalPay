@@ -170,8 +170,8 @@ export default function SignupPage() {
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
-              <Link href="#" className="underline hover:text-primary">Terms of Service</Link> and{' '}
-              <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
+              <Link href="/terms" className="underline hover:text-primary">Terms of Service</Link> and{' '}
+              <Link href="/privacy" className="underline hover:text-primary">Privacy Policy</Link>.
             </p>
             <p className="text-sm text-center text-muted-foreground">
               Already have an account?{' '}
