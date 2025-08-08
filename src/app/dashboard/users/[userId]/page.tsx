@@ -148,13 +148,11 @@ export default function UserDetailPage() {
   useEffect(() => {
     if (!userId) return;
 
-    const fetchUserData = async () => {
-        setLoading(true);
-        const userDocRef = doc(db, "users", userId);
-        const userDocSnap = await getDoc(userDocRef);
-
+    const userDocRef = doc(db, "users", userId);
+    const unsubscribeUser = onSnapshot(userDocRef, (userDocSnap) => {
         if (!userDocSnap.exists()) {
             setMerchant(null);
+            setLoading(false);
             notFound();
             return;
         }
@@ -164,42 +162,51 @@ export default function UserDetailPage() {
         if (userData.createdAt) {
             setJoinedDate(toDateSafe(userData.createdAt).toLocaleDateString());
         }
-
-        if (userData.role === 'admin') {
-            // Fetch platform-wide data
-            const txQuery = query(collection(db, "transactions"), where("status", "==", "Success"));
-            const txSnap = await getDocs(txQuery);
-            const totalVolume = txSnap.docs.reduce((sum, doc) => sum + parseFloat(doc.data().amount), 0);
-            setPlatformTotalVolume(totalVolume);
-            setPlatformTotalTransactions(txSnap.size);
-
-            const custSnap = await getDocs(collection(db, "customers"));
-            setPlatformTotalCustomers(custSnap.size);
-
-            const merchantsQuery = query(collection(db, "users"), where("role", "==", "merchant"));
-            const merchantsSnapshot = await getDocs(merchantsQuery);
-            setPlatformMerchantCount(merchantsSnapshot.size);
-        } else {
-            // Fetch data specific to the merchant
-            const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId), orderBy('date', 'desc'));
-            onSnapshot(txQuery, (snapshot) => {
-                setMerchantTransactions(snapshot.docs.map(d => ({...d.data(), id: d.id, date: toDateSafe(d.data().date) } as Transaction)));
-            });
-            
-            const custQuery = query(collection(db, "customers"), where("merchantId", "==", userId));
-            onSnapshot(custQuery, (snapshot) => {
-                setMerchantCustomers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
-            });
-
-            const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId), orderBy('createdAt', 'desc'));
-             onSnapshot(wdQuery, (snapshot) => {
-                setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id, createdAt: toDateSafe(d.data().createdAt) } as Withdrawal)));
-            });
-        }
         setLoading(false);
+    });
+
+    // Fetch data specific to the merchant (or platform if admin)
+    const txQuery = query(collection(db, "transactions"), where("merchantId", "==", userId), orderBy('date', 'desc'));
+    const unsubscribeTransactions = onSnapshot(txQuery, (snapshot) => {
+        setMerchantTransactions(snapshot.docs.map(d => ({...d.data(), id: d.id, date: toDateSafe(d.data().date) } as Transaction)));
+    });
+    
+    const custQuery = query(collection(db, "customers"), where("merchantId", "==", userId));
+    const unsubscribeCustomers = onSnapshot(custQuery, (snapshot) => {
+        setMerchantCustomers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
+    });
+
+    const wdQuery = query(collection(db, "withdrawals"), where("merchantId", "==", userId), orderBy('createdAt', 'desc'));
+    const unsubscribeWithdrawals = onSnapshot(wdQuery, (snapshot) => {
+        setMerchantWithdrawals(snapshot.docs.map(d => ({...d.data(), id: d.id, createdAt: toDateSafe(d.data().createdAt) } as Withdrawal)));
+    });
+
+    // If the logged-in user is an admin, fetch platform-wide stats too
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+        if(user) {
+            const token = await user.getIdTokenResult();
+            if (token.claims.role === 'admin') {
+                const txSnap = await getDocs(query(collection(db, "transactions"), where("status", "==", "Success")));
+                setPlatformTotalVolume(txSnap.docs.reduce((sum, doc) => sum + parseFloat(doc.data().amount), 0));
+                setPlatformTotalTransactions(txSnap.size);
+
+                const custSnap = await getDocs(collection(db, "customers"));
+                setPlatformTotalCustomers(custSnap.size);
+
+                const merchantsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "merchant")));
+                setPlatformMerchantCount(merchantsSnap.size);
+            }
+        }
+    });
+
+    return () => {
+        unsubscribeUser();
+        unsubscribeTransactions();
+        unsubscribeCustomers();
+        unsubscribeWithdrawals();
+        unsubscribeAuth();
     };
 
-    fetchUserData();
   }, [userId]);
 
 
@@ -337,6 +344,14 @@ const txTotalPages = useMemo(() => {
                            {formattedUserId}
                            <Copy className="h-4 w-4 cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(formattedUserId, 'Merchant ID')} />
                         </div>
+                         <div className="text-sm text-muted-foreground font-mono flex items-center gap-2 mt-1">
+                           <AtSign className="h-4 w-4" />
+                           {merchant.handle ? (
+                                <a href={`/pay/${merchant.handle}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{merchant.handle}</a>
+                            ) : (
+                                <span>No handle set</span>
+                            )}
+                       </div>
                     </div>
                     <div className="flex gap-2">
                          <DropdownMenu>

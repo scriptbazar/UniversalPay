@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, where, Timestamp, onSnapshot } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const toDateSafe = (dateFieldValue: any): Date => {
@@ -38,7 +38,7 @@ type Transaction = {
     id: string;
     method: string;
     amount: string;
-    date: any; // Keep as any to handle both Timestamp and string
+    date: any; 
     status: 'Successful' | 'Failed' | 'Pending';
     customerEmail: string;
     merchantId: string;
@@ -47,7 +47,7 @@ type Transaction = {
 type User = {
     id: string;
     country?: string;
-    createdAt: any; // Keep as any to handle both Timestamp and string
+    createdAt: any; 
 };
 
 const getStatusBadgeVariant = (status: string) => {
@@ -74,34 +74,30 @@ export default function AnalyticsPage() {
       avgTransaction: 0
   });
 
-  // State for Geo Data pagination
   const [geoCurrentPage, setGeoCurrentPage] = useState(1);
   const geoItemsPerPage = 5;
 
   useEffect(() => {
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const usersQuery = query(collection(db, "users"));
-            const transactionsQuery = query(collection(db, "transactions"));
+    setLoading(true);
 
-            const [usersSnapshot, transactionsSnapshot] = await Promise.all([
-                getDocs(usersQuery),
-                getDocs(transactionsQuery),
-            ]);
+    const usersQuery = query(collection(db, "users"));
+    const transactionsQuery = query(collection(db, "transactions"));
 
-            const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    const unsubscribeUsers = onSnapshot(usersQuery, (usersSnapshot) => {
+        const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        
+        const unsubscribeTransactions = onSnapshot(transactionsQuery, (transactionsSnapshot) => {
             const allTransactions = transactionsSnapshot.docs.map(doc => ({ 
                 id: doc.id, 
                 ...doc.data(),
                 date: toDateSafe(doc.data().date)
             } as Transaction));
-            
+
             // --- Process Stats ---
             const successfulTxns = allTransactions.filter(t => t.status === 'Successful');
             const totalVolume = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount), 0);
             const successfulPayments = successfulTxns.length;
-            const newMerchants = allUsers.length; // Simplified: total users as new merchants
+            const newMerchants = allUsers.length;
             const avgTransaction = successfulPayments > 0 ? totalVolume / successfulPayments : 0;
             setStats({ totalVolume, successfulPayments, newMerchants, avgTransaction });
 
@@ -135,7 +131,6 @@ export default function AnalyticsPage() {
             }));
             setRevenueData(revenueChartData);
 
-
             // --- Process Payment Method Chart ---
             const paymentMethods: { [key: string]: number } = {};
             successfulTxns.forEach(tx => {
@@ -147,7 +142,6 @@ export default function AnalyticsPage() {
                 color: { UPI: '#0088FE', Crypto: '#00C49F', Page: '#FFBB28', Link: '#FF8042', Card: '#AF69EE' }[name] || '#8884d8'
             }));
             setPaymentMethodData(paymentMethodChartData);
-
 
             // --- Process Geo Data ---
             const geoDistribution: { [key: string]: { volume: number, transactions: number, merchants: number, flag: string } } = {};
@@ -173,14 +167,21 @@ export default function AnalyticsPage() {
             })).sort((a, b) => b.volume - a.volume);
             setGeoData(geoChartData);
 
-        } catch (error) {
-            console.error("Failed to fetch analytics data:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load platform analytics.' });
-        } finally {
             setLoading(false);
-        }
-    }
-    fetchData();
+        }, (error) => {
+            console.error("Failed to fetch transactions:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load platform transactions.' });
+            setLoading(false);
+        });
+
+        return () => unsubscribeTransactions();
+    }, (error) => {
+        console.error("Failed to fetch users:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load users data.' });
+        setLoading(false);
+    });
+
+    return () => unsubscribeUsers();
   }, [toast]);
 
     const geoTotalPages = Math.ceil(geoData.length / geoItemsPerPage);

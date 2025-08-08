@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { getAllCustomers, type Customer } from '@/lib/customersData';
+import { onSnapshot, collection, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function AllCustomersPage() {
     const router = useRouter();
@@ -22,22 +24,28 @@ export default function AllCustomersPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function fetchData() {
-            setLoading(true);
-            try {
-                const allCustomers = await getAllCustomers();
-                setCustomers(allCustomers);
-            } catch (error) {
-                console.error("Failed to fetch customers:", error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Error',
-                    description: 'Could not load customers data.'
-                });
-            }
+        setLoading(true);
+        const customersCollectionRef = collection(db, "customers");
+        const q = query(customersCollectionRef);
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const allCustomers: Customer[] = [];
+            querySnapshot.forEach((doc) => {
+                allCustomers.push({ id: doc.id, ...doc.data() } as Customer);
+            });
+            setCustomers(allCustomers);
             setLoading(false);
-        }
-        fetchData();
+        }, (error) => {
+             console.error("Failed to fetch customers:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not load customers data.'
+            });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [toast]);
     
     const filteredCustomers = useMemo(() => {
