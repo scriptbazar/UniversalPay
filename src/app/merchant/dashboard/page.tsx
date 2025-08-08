@@ -54,7 +54,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot, getDocs, Timestamp } from "firebase/firestore";
 
 
 type Transaction = {
@@ -63,9 +63,27 @@ type Transaction = {
     customerEmail: string;
     status: "Success" | "Failed" | "Pending";
     method: string;
-    date: string; // Assuming date is stored as a string in Firestore
+    date: Date;
     amount: string;
 };
+
+// Helper function to safely convert a Firestore timestamp or other date format to a Date object
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
+
 
 export default function Dashboard() {
   const router = useRouter();
@@ -98,7 +116,7 @@ export default function Dashboard() {
                 const fetchedTransactions = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
-                    date: doc.data().date || new Date().toISOString(), // Use the date string directly
+                    date: toDateSafe(doc.data().date),
                 } as Transaction));
                 setAllTransactions(fetchedTransactions);
                 setRecentTransactionsData(fetchedTransactions.slice(0, 5)); // Get top 5 recent transactions
@@ -106,7 +124,7 @@ export default function Dashboard() {
                 // Process data for the chart
                 const monthlyData: { [key: string]: { revenue: number }} = {};
                  fetchedTransactions.forEach(tx => {
-                    const month = new Date(tx.date).toLocaleString('default', { month: 'short' });
+                    const month = tx.date.toLocaleString('default', { month: 'short' });
                      if (!monthlyData[month]) {
                       monthlyData[month] = { revenue: 0 };
                     }
@@ -282,7 +300,7 @@ export default function Dashboard() {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${"$"}{value/1000}K`}
+                    tickFormatter={(value) => `$${value/1000}K`}
                     />
                     <Tooltip
                         contentStyle={{ 
@@ -380,7 +398,7 @@ export default function Dashboard() {
                <Separator />
               <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Date:</span>
-                  <span className="font-semibold">{new Date(selectedTransaction.date).toLocaleString()}</span>
+                  <span className="font-semibold">{selectedTransaction.date.toLocaleString()}</span>
               </div>
             </div>
           )}
