@@ -65,7 +65,9 @@ export default function RevenueDetailsPage() {
 
                 transactions.forEach(tx => {
                     const date = tx.date;
-                    const monthName = monthNames[date.getMonth()];
+                    const year = date.getFullYear();
+                    const monthName = `${monthNames[date.getMonth()]} ${year}`; // Key includes year
+                    
                     if (!monthlyStats[monthName]) {
                         monthlyStats[monthName] = { revenue: 0, total: 0, successful: 0 };
                     }
@@ -96,7 +98,9 @@ export default function RevenueDetailsPage() {
     }, []);
 
     const handleRowClick = (monthData: MonthRevenue) => {
-        router.push(`/merchant/analytics/transactions/${monthData.month.toLowerCase()}`);
+        // Pass only the month name to the next page, as it expects it
+        const monthSlug = monthData.month.split(' ')[0].toLowerCase();
+        router.push(`/merchant/analytics/transactions/${monthSlug}`);
     };
 
     return (
