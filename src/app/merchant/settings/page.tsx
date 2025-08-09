@@ -781,7 +781,7 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Payment &amp; Settlement Configuration</CardTitle>
               <CardDescription>
-                Configure how you accept payments and where you receive your funds.
+                Control how you accept payments from customers and where you receive your funds.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -789,11 +789,12 @@ export default function SettingsPage() {
                   <Wallet className="h-4 w-4" />
                   <AlertTitle>Unified Crypto Settlement</AlertTitle>
                   <AlertDescription>
-                    All payments, whether from UPI or global methods, will be automatically converted and settled into your chosen cryptocurrency wallet.
+                    All payments, whether from UPI or global methods, will be automatically converted and settled into one of your chosen cryptocurrency wallets below.
                   </AlertDescription>
                 </Alert>
                  <div>
                     <h4 className="font-semibold mb-4 text-base">1. Configure Your Settlement Wallets</h4>
+                    <p className="text-sm text-muted-foreground mb-4">Enter the wallet addresses where you want to receive funds. You can enable multiple options.</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                              <div className="flex items-center justify-between rounded-lg border p-4 h-full">
@@ -858,7 +859,7 @@ export default function SettingsPage() {
                 
                 <div>
                     <h4 className="font-semibold mb-4 text-base">2. Enable Customer Payment Methods</h4>
-                     <p className="text-sm text-muted-foreground mb-4">Select which payment options your customers will see on the checkout page.</p>
+                     <p className="text-sm text-muted-foreground mb-4">Select which payment options your customers will see. This is independent of your settlement wallet. To enable these, the platform admin must have them configured.</p>
                     
                     <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2"><IndianRupee className="w-5 h-5"/>Indian UPI Gateways</h5>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

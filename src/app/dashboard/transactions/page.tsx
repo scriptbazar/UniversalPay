@@ -6,7 +6,16 @@ import {
   File,
   Search,
   Copy,
-  ListFilter
+  ListFilter,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Landmark,
+  Globe,
+  CreditCard,
+  Link as LinkIcon,
+  AppWindow,
+  ArrowRightLeft
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,15 +83,15 @@ const toDateSafe = (dateFieldValue: any): Date => {
 };
 
 const filterOptions = [
-    { value: 'all', label: 'All Transactions' },
-    { value: 'success', label: 'Success Transactions' },
-    { value: 'pending', label: 'Pending Transactions' },
-    { value: 'failed', label: 'Failed Transactions' },
-    { value: 'upi', label: 'UPI Transactions' },
-    { value: 'crypto', label: 'Crypto Transactions' },
-    { value: 'card', label: 'Card Transactions' },
-    { value: 'link', label: 'Link Transactions' },
-    { value: 'page', label: 'Page Transactions' },
+    { value: 'all', label: 'All Transactions', icon: ArrowRightLeft },
+    { value: 'success', label: 'Success Transactions', icon: CheckCircle },
+    { value: 'pending', label: 'Pending Transactions', icon: Clock },
+    { value: 'failed', label: 'Failed Transactions', icon: XCircle },
+    { value: 'upi', label: 'UPI Transactions', icon: Landmark },
+    { value: 'crypto', label: 'Crypto Transactions', icon: Globe },
+    { value: 'card', label: 'Card Transactions', icon: CreditCard },
+    { value: 'link', label: 'Link Transactions', icon: LinkIcon },
+    { value: 'page', label: 'Page Transactions', icon: AppWindow },
 ];
 
 export default function AllTransactionsPage() {
@@ -251,6 +260,7 @@ export default function AllTransactionsPage() {
                                             checked={filter === option.value}
                                             onCheckedChange={() => handleFilterChange(option.value)}
                                         >
+                                            <option.icon className="mr-2 h-4 w-4"/>
                                             {option.label}
                                         </DropdownMenuCheckboxItem>
                                     ))}
