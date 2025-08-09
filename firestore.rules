@@ -1,93 +1,65 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // This rule allows any user to read and write to the 'users' collection
-    // but only if they are authenticated.
+
+    // Allow users to read and write their own documents
     match /users/{userId} {
-      allow read: if request.auth != null;
       allow create, update: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Rules for Payment Links
-    match /paymentLinks/{linkId} {
-      // Any authenticated user can read a payment link (to pay)
-      allow read: if request.auth != null;
-      // Only the owning merchant or an admin can create, update, or delete links
-      allow create, update, delete: if request.auth != null && (request.resource.data.merchantId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-    }
-
-    // Rules for Tickets
-    match /tickets/{ticketId} {
-      // A merchant can create their own ticket
-      allow create: if request.auth != null && request.resource.data.merchantId == request.auth.uid;
-      // A merchant can read their own ticket, an admin can read any ticket
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || resource.data.merchantId == request.auth.uid);
-      // A merchant can update their ticket (e.g., add a reply), an admin can update any ticket
-      allow update: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || resource.data.merchantId == request.auth.uid);
+      allow read, delete: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
-    // Rules for Transactions
-    match /transactions/{transactionId} {
-      // Admins can read all transactions, merchants can read their own.
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == resource.data.merchantId);
-      // Any authenticated user can create a transaction (e.g., a customer paying a link)
-      allow create: if request.auth != null;
-      // No one can update or delete transactions from the client-side for security.
-      allow update, delete: if false;
-    }
-
-    // Rules for Invoices
-    match /invoices/{invoiceId} {
-       // Admins can read all invoices, merchants can read their own.
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == resource.data.merchantId);
-       // Merchants can create invoices.
-      allow create: if request.auth != null && request.resource.data.merchantId == request.auth.uid;
-      allow update, delete: if false;
-    }
-    
-    // Rules for Withdrawals
-    match /withdrawals/{withdrawalId} {
-       // Admins can read all withdrawals, merchants can read their own.
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == resource.data.merchantId);
-       // Merchants can create withdrawal requests.
-      allow create: if request.auth != null && request.resource.data.merchantId == request.auth.uid;
-      allow update, delete: if false; // Updates must be done via a Cloud Function
-    }
-
-    // Rules for Customers
-    match /customers/{customerId} {
-      // Admins can read all customer profiles, merchants can read profiles of their own customers.
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == resource.data.merchantId);
-      // Customer profiles are created on the server after a successful transaction.
-      allow create, update, delete: if false; 
-    }
-
-    // Rules for Audit Logs - Only Admins can read them
+    // Allow admins to read all audit logs
     match /audit_logs/{logId} {
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow write: if false; // Logs are only created from the backend (Cloud Functions)
+        allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        allow create: if true; // Allow anyone to create audit logs
     }
 
-    // Rules for reseller requests
+    // Allow admins to handle reseller requests
     match /resellerRequests/{requestId} {
-        // Merchants can create their own request
-        allow create: if request.auth != null && request.resource.data.merchantId == request.auth.uid;
-        // Admins can read all requests
-        allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-        // Only backend can update (approve/reject)
-        allow update, delete: if false;
+        allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        allow create: if request.auth != null;
     }
     
-     // Rules for wallet load requests
-    match /walletLoadRequests/{requestId} {
-        // Merchants can create their own request
-        allow create: if request.auth != null && request.resource.data.merchantId == request.auth.uid;
-        // Admins can read all requests
-        allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-        // Only backend can update (approve/reject)
-        allow update, delete: if false;
+    // Allow merchants to read their own transactions and admins to read all
+    match /transactions/{transactionId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.merchantId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
+
+    match /paymentLinks/{linkId} {
+        allow read: if true; // Publicly readable for payment pages
+        allow create, update, delete: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == resource.data.merchantId);
+    }
+    
+    // Tickets can be read by the merchant who created them or an admin
+    match /tickets/{ticketId} {
+        allow read, update: if request.auth != null && (request.auth.uid == resource.data.merchantId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+        allow create: if request.auth != null;
+    }
+    
+     // Invoices can be read by the merchant who created them or an admin
+    match /invoices/{invoiceId} {
+        allow read: if request.auth != null && (request.auth.uid == resource.data.merchantId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+        allow create: if request.auth != null;
+    }
+    
+    // Customers can be read by the merchant they belong to or an admin
+    match /customers/{customerId} {
+        allow read: if request.auth != null && (request.auth.uid == resource.data.merchantId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+        allow create: if request.auth != null;
+    }
+
+    match /withdrawals/{withdrawalId} {
+        allow read: if request.auth != null && (request.auth.uid == resource.data.merchantId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+        allow create: if request.auth != null;
+        allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    match /walletLoadRequests/{requestId} {
+        allow read: if request.auth != null && (request.auth.uid == resource.data.merchantId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+        allow create: if request.auth != null;
+        allow update: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
   }
 }
