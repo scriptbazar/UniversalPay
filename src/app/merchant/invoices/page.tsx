@@ -160,6 +160,7 @@ export default function InvoicesPage() {
             if (user) {
                 fetchInvoices();
             } else {
+                setLoading(false);
                 router.push('/login');
             }
         });

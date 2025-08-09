@@ -43,24 +43,37 @@ export default function PaymentPagesPage() {
   const [collectPhone, setCollectPhone] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const fetchLinks = async (uid: string) => {
-    setLoading(true);
-    const merchantLinks = await getPaymentLinks(uid);
-    // Filter for pages only
-    setLinks(merchantLinks.filter(link => link.isPage));
-    setLoading(false);
+  const fetchLinks = (uid: string) => {
+    // No need to set loading here, onSnapshot will handle it.
+    const unsubscribe = getPaymentLinks(uid, true, (fetchedLinks, error) => {
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch payment pages.' });
+        } else {
+            setLinks(fetchedLinks);
+        }
+        setLoading(false); // Set loading to false after first data fetch or error
+    });
+    return unsubscribe;
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
+    let unsubscribe: (() => void) | undefined;
+    const unsubscribeAuth = onAuthStateChanged(auth, user => {
       if (user) {
-        fetchLinks(user.uid);
+        setLoading(true);
+        unsubscribe = fetchLinks(user.uid);
       } else {
+        setLoading(false);
         router.push('/login');
       }
     });
-    return () => unsubscribe();
-  }, [router]);
+    return () => {
+        unsubscribeAuth();
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
+  }, [router, toast]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,7 +123,7 @@ export default function PaymentPagesPage() {
       createdAt: Timestamp.now(), 
     });
     
-    await fetchLinks(user.uid);
+    // No need to call fetchLinks here, onSnapshot will handle it.
 
     setTitle('');
     setDescription('');
@@ -138,7 +151,7 @@ export default function PaymentPagesPage() {
 
   const handleToggleActive = async (link: PaymentLink) => {
     await updatePaymentLink(link.id, { isActive: !link.isActive });
-    await fetchLinks(auth.currentUser!.uid);
+    // No need to call fetchLinks here, onSnapshot will handle it.
     toast({
       title: `Page ${!link.isActive ? 'activated' : 'deactivated'}`,
     });
@@ -274,7 +287,7 @@ export default function PaymentPagesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
+                    <TableHead>Page Title</TableHead>
                     <TableHead>Payments</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -343,5 +356,3 @@ export default function PaymentPagesPage() {
     </div>
   );
 }
-
-    

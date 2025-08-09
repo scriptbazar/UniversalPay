@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, orderBy, onSnapshot, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
-import { type PaymentLink, updatePaymentLink } from '@/lib/paymentLinksData';
+import { type PaymentLink, updatePaymentLink, getPaymentLinks as fetchLinksFromDb } from '@/lib/paymentLinksData';
 
 export function PaymentLinksManager({ userType }: { userType: 'admin' | 'merchant' }) {
   const { toast } = useToast();
@@ -34,55 +34,43 @@ export function PaymentLinksManager({ userType }: { userType: 'admin' | 'merchan
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
 
-  const fetchLinks = (uid?: string) => {
-    setLoading(true);
-    const linksCollectionRef = collection(db, "paymentLinks");
-    let q;
-    
-    if (userType === 'admin') {
-      q = query(linksCollectionRef, where("isPage", "==", false), orderBy("createdAt", "desc"));
-    } else if (uid) {
-      q = query(
-        linksCollectionRef,
-        where("merchantId", "==", uid),
-        where("isPage", "==", false),
-        orderBy("createdAt", "desc")
-      );
-    } else {
-        setLoading(false);
-        return () => {};
-    }
-
-    const unsubscribeSnapshot = onSnapshot(q, (querySnapshot) => {
-      const fetchedLinks = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data() as any,
-        }) as PaymentLink);
-      setLinks(fetchedLinks);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching payment links:", error);
-      toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch payment links.",
-      });
-      setLoading(false);
-    });
-
-    return unsubscribeSnapshot;
-  }
-
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
     const unsubscribeAuth = onAuthStateChanged(auth, user => {
-      if (user || userType === 'admin') {
-        fetchLinks(user?.uid);
-      } else if (userType === 'merchant') {
-        router.push('/login');
-      }
+        if (userType === 'admin') {
+            setLoading(true);
+            unsubscribe = fetchLinksFromDb(undefined, false, (fetchedLinks, error) => {
+                if (error) {
+                    toast({ variant: "destructive", title: "Error", description: "Failed to fetch payment links." });
+                } else {
+                    setLinks(fetchedLinks);
+                }
+                setLoading(false);
+            });
+        } else if (user) {
+            setLoading(true);
+            unsubscribe = fetchLinksFromDb(user.uid, false, (fetchedLinks, error) => {
+                if (error) {
+                    toast({ variant: "destructive", title: "Error", description: "Failed to fetch your payment links." });
+                } else {
+                    setLinks(fetchedLinks);
+                }
+                setLoading(false);
+            });
+        } else if (userType === 'merchant') {
+            setLoading(false);
+            router.push('/login');
+        }
     });
-    return () => unsubscribeAuth && unsubscribeAuth();
-  }, [router, toast, userType]);
+
+    return () => {
+        unsubscribeAuth();
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
+}, [router, toast, userType]);
+
 
   const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +85,7 @@ export function PaymentLinksManager({ userType }: { userType: 'admin' | 'merchan
       return;
     }
 
-    const slug = title.toLowerCase().replace(/s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
     try {
         await addDoc(collection(db, "paymentLinks"), {

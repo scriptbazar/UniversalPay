@@ -12,7 +12,8 @@ import {
     query, 
     where, 
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    onSnapshot
 } from 'firebase/firestore';
 
 export type PaymentLink = {
@@ -34,15 +35,34 @@ export type PaymentLink = {
 };
 
 // Function to get all links (for admin) or links for a specific merchant
-export const getPaymentLinks = async (merchantId?: string): Promise<PaymentLink[]> => {
+export const getPaymentLinks = (
+    merchantId?: string, 
+    isPage: boolean = false, 
+    callback?: (links: PaymentLink[], error?: Error) => void
+): (() => void) => {
     const linksCol = collection(db, 'paymentLinks');
-    const q = merchantId 
-        ? query(linksCol, where('merchantId', '==', merchantId), orderBy('createdAt', 'desc'))
-        : query(linksCol, orderBy('createdAt', 'desc'));
+    let q;
+
+    if (merchantId) {
+        q = query(linksCol, where('merchantId', '==', merchantId), where('isPage', '==', isPage), orderBy('createdAt', 'desc'));
+    } else {
+        // Admin view
+        q = query(linksCol, where('isPage', '==', isPage), orderBy('createdAt', 'desc'));
+    }
     
-    const linkSnapshot = await getDocs(q);
-    const linkList = linkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentLink));
-    return linkList;
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const linkList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentLink));
+        if (callback) {
+            callback(linkList);
+        }
+    }, (error) => {
+        console.error("Error fetching payment links:", error);
+        if (callback) {
+            callback([], error);
+        }
+    });
+
+    return unsubscribe;
 };
 
 export const getPaymentLinkBySlug = async (slug: string): Promise<PaymentLink | null> => {
