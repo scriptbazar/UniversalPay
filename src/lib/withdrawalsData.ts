@@ -17,7 +17,7 @@ export type Withdrawal = {
   id: string;
   merchantName: string;
   merchantId: string;
-  amount: string;
+  amount: number;
   currency: string;
   destination: string;
   status: "Pending" | "Completed" | "Failed";
@@ -72,7 +72,6 @@ export const getMerchantWithdrawals = async (merchantId: string): Promise<Withdr
 export const addWithdrawal = async (newWithdrawalData: Omit<Withdrawal, 'id' | 'createdAt'>): Promise<void> => {
   await addDoc(collection(db, 'withdrawals'), {
     ...newWithdrawalData,
-    id: generateRandomId("UVRLWDREQ"),
     createdAt: serverTimestamp(),
   });
 };

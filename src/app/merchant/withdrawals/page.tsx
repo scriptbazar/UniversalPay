@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
@@ -197,8 +198,13 @@ export default function WithdrawalsPage() {
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading history...</TableCell></TableRow>
-                  ) : withdrawals.map((w) => (
+                     <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                            <Skeleton className="w-full h-10" />
+                        </TableCell>
+                    </TableRow>
+                  ) : withdrawals.length > 0 ? (
+                    withdrawals.map((w) => (
                     <TableRow key={w.id} onClick={() => setSelectedWithdrawal(w)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium font-mono">{w.id.substring(0, 12)}...</TableCell>
                       <TableCell>{w.createdAt.toDate().toLocaleDateString()}</TableCell>
@@ -208,9 +214,13 @@ export default function WithdrawalsPage() {
                       </TableCell>
                       <TableCell className="text-right">${w.amount} {w.currency}</TableCell>
                     </TableRow>
-                  ))}
-                  {!loading && withdrawals.length === 0 && (
-                      <TableRow><TableCell colSpan={5} className="h-24 text-center">No withdrawal requests found.</TableCell></TableRow>
+                  ))
+                  ) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                            No withdrawal requests found.
+                        </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -267,5 +277,3 @@ export default function WithdrawalsPage() {
     </div>
   );
 }
-
-    
