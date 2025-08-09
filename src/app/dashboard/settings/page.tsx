@@ -8,14 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign, RefreshCw } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { updateSecuritySettings, getSecuritySettings, updatePaymentSettings, getPaymentSettings } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { auth } from "@/lib/firebase";
+import { auth, app } from "@/lib/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -50,6 +51,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   
   // Security settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -195,6 +197,33 @@ export default function SettingsPage() {
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleSyncUsers = async () => {
+    setIsSyncing(true);
+    try {
+        const functions = getFunctions(app);
+        const syncFunction = httpsCallable(functions, 'syncAuthToFirestore');
+        const result = await syncFunction();
+        const data = result.data as { success: boolean, message: string, created: number, checked: number };
+        if (data.success) {
+            toast({
+                title: "User Sync Successful",
+                description: `${data.message} Checked ${data.checked} users, created ${data.created} new profiles.`,
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error: any) {
+        console.error("Error syncing users:", error);
+        toast({
+            variant: "destructive",
+            title: "Sync Failed",
+            description: error.message || "Could not sync user data.",
+        });
+    } finally {
+        setIsSyncing(false);
+    }
+  };
 
 
   return (
@@ -278,7 +307,7 @@ export default function SettingsPage() {
               <CardDescription>Manage global API keys and security settings.</CardDescription>
             </CardHeader>
             <form onSubmit={handleSaveSecuritySettings}>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <h3 className="font-medium text-lg flex items-center gap-2"><KeyRound className="w-5 h-5" /> Third-Party API Keys</h3>
@@ -345,6 +374,21 @@ export default function SettingsPage() {
                                 </div>
                                 <Switch checked={isAdmin2faEnabled} onCheckedChange={setIsAdmin2faEnabled} disabled={isLoading} />
                             </div>
+                        </div>
+                    </div>
+                </div>
+                 <Separator />
+                <div>
+                     <h3 className="font-medium text-lg flex items-center gap-2"><RefreshCw className="w-5 h-5" /> User Data Synchronization</h3>
+                    <div className="rounded-lg border p-4 mt-2">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h4 className="font-medium">Sync Auth Users to Firestore</h4>
+                                <p className="text-sm text-muted-foreground mt-1">If some users appear in Firebase Authentication but not in your Firestore database, this tool will create the missing profiles.</p>
+                            </div>
+                             <Button onClick={handleSyncUsers} disabled={isSyncing}>
+                                {isSyncing ? 'Syncing...' : 'Sync Users'}
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -473,5 +517,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
