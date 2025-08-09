@@ -6,16 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import type { Withdrawal } from "./actions";
+import { processWithdrawal } from "./actions";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { processWithdrawal } from "./actions";
-import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from 'firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Search } from 'lucide-react';
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
     switch (status) {
@@ -26,6 +26,16 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
     }
 };
 
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
+
 export default function AdminWithdrawalsPage() {
     const { toast } = useToast();
     const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
@@ -33,6 +43,8 @@ export default function AdminWithdrawalsPage() {
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -45,9 +57,12 @@ export default function AdminWithdrawalsPage() {
                     const withdrawalsCollectionRef = collection(db, "withdrawals");
                     const q = query(withdrawalsCollectionRef, orderBy('createdAt', 'desc'));
                     
-                    // Use onSnapshot for real-time updates
                     const unsubscribeSnapshots = onSnapshot(q, (querySnapshot) => {
-                        const withdrawalsList: Withdrawal[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Withdrawal));
+                        const withdrawalsList: Withdrawal[] = querySnapshot.docs.map(doc => ({ 
+                            id: doc.id, 
+                            ...doc.data(),
+                            createdAt: toDateSafe(doc.data().createdAt)
+                         } as Withdrawal));
                         setWithdrawals(withdrawalsList);
                         setLoading(false);
                     }, (error) => {
@@ -59,7 +74,7 @@ export default function AdminWithdrawalsPage() {
                         });
                         setLoading(false);
                     });
-                    return () => unsubscribeSnapshots(); // Return cleanup function for onSnapshot
+                    return () => unsubscribeSnapshots();
                 } else {
                     setLoading(false);
                     setWithdrawals([]);
@@ -69,12 +84,20 @@ export default function AdminWithdrawalsPage() {
             }
         });
         
-        return () => unsubscribeAuth(); // Cleanup auth listener
+        return () => unsubscribeAuth();
     }, [toast]);
 
 
     const handleProcessWithdrawal = async (id: string, newStatus: 'Completed' | 'Failed') => {
-        const result = await processWithdrawal(id, newStatus);
+        setIsProcessing(id);
+        const adminUser = auth.currentUser;
+        if (!adminUser) {
+            toast({ variant: 'destructive', title: 'Authentication Error', description: 'Admin user not found.' });
+            setIsProcessing(null);
+            return;
+        }
+
+        const result = await processWithdrawal(id, newStatus, adminUser.uid);
         if (result.success) {
             toast({
                 title: "Success",
@@ -87,6 +110,7 @@ export default function AdminWithdrawalsPage() {
                 variant: "destructive",
             });
         }
+        setIsProcessing(null);
     };
     
     const filteredWithdrawals = useMemo(() => {
@@ -98,8 +122,8 @@ export default function AdminWithdrawalsPage() {
 
         if (searchTerm) {
             filtered = filtered.filter(w => 
-                w.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                w.userId.toLowerCase().includes(searchTerm.toLowerCase())
+                w.accountName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                w.userId?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -123,12 +147,16 @@ export default function AdminWithdrawalsPage() {
                             <CardTitle>Withdrawal Requests</CardTitle>
                             <CardDescription>Review and process all merchant withdrawal requests.</CardDescription>
                         </div>
-                        <Input 
-                            placeholder="Search by name or user ID..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-40"
-                        />
+                         <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Search by name or user ID..."
+                                className="pl-8 w-64"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
                      <Tabs value={filter} onValueChange={setFilter} className="mt-4">
                         <TabsList>
@@ -178,8 +206,12 @@ export default function AdminWithdrawalsPage() {
                                     <TableCell>
                                         {w.status === 'Pending' && (
                                             <div className="flex gap-2">
-                                                <Button size="sm" onClick={() => handleProcessWithdrawal(w.id, 'Completed')}>Approve</Button>
-                                                <Button size="sm" variant="destructive" onClick={() => handleProcessWithdrawal(w.id, 'Failed')}>Decline</Button>
+                                                <Button size="sm" onClick={() => handleProcessWithdrawal(w.id, 'Completed')} disabled={isProcessing === w.id}>
+                                                    {isProcessing === w.id ? 'Processing...' : 'Approve'}
+                                                </Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleProcessWithdrawal(w.id, 'Failed')} disabled={isProcessing === w.id}>
+                                                     {isProcessing === w.id ? 'Processing...' : 'Decline'}
+                                                </Button>
                                             </div>
                                         )}
                                     </TableCell>

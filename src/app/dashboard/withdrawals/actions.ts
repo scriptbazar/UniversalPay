@@ -2,7 +2,7 @@
 "use server"
 import { revalidatePath } from "next/cache";
 import { db, admin } from "@/lib/firebaseAdmin";
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch } from "firebase/firestore";
 
 // Define the Withdrawal type
 export type Withdrawal = {
@@ -38,23 +38,56 @@ export async function createWithdrawal(withdrawalData: Omit<Withdrawal, 'id' | '
 }
 
 /**
- * Processes a withdrawal request by updating its status. This should be a Cloud Function.
+ * Processes a withdrawal request by updating its status and logging the action.
  * @param withdrawalId - The ID of the withdrawal to process.
- * @param newStatus - The new status of the withdrawal.
+ * @param newStatus - The new status of the withdrawal ('Completed' or 'Failed').
+ * @param adminUid - The UID of the admin performing the action.
  * @returns An object with the success status or an error message.
  */
-export async function processWithdrawal(withdrawalId: string, newStatus: 'Completed' | 'Failed') {
-    if (!withdrawalId || !newStatus) {
-        return { success: false, error: 'Withdrawal ID and new status are required.' };
+export async function processWithdrawal(withdrawalId: string, newStatus: 'Completed' | 'Failed', adminUid: string) {
+    if (!withdrawalId || !newStatus || !adminUid) {
+        return { success: false, error: 'Withdrawal ID, new status, and admin UID are required.' };
     }
+    
+    const withdrawalRef = doc(db, "withdrawals", withdrawalId);
+    
     try {
-        const withdrawalRef = doc(db, "withdrawals", withdrawalId);
-        
-        // In a real app, you would have logic here to actually transfer the money
-        // before marking the withdrawal as complete. For now, we'll just update the status.
+        const adminUser = await admin.auth().getUser(adminUid);
+        const withdrawalDoc = await withdrawalRef.get();
 
-        await updateDoc(withdrawalRef, { status: newStatus });
-        revalidatePath("/dashboard/withdrawals");
+        if (!withdrawalDoc.exists()) {
+            return { success: false, error: 'Withdrawal request not found.' };
+        }
+        
+        const withdrawalData = withdrawalDoc.data();
+        const targetUser = await admin.auth().getUser(withdrawalData.merchantId);
+        
+        const batch = writeBatch(db);
+
+        // 1. Update the withdrawal status
+        batch.update(withdrawalRef, { status: newStatus });
+
+        // In a real app, if the withdrawal is successful, you'd perform the actual fund transfer here.
+        // If it fails, you might credit the amount back to the user's wallet.
+
+        // 2. Create an audit log
+        const auditLogRef = doc(collection(db, 'audit_logs'));
+        batch.set(auditLogRef, {
+            type: 'FINANCIAL_ACTION',
+            level: 'CRITICAL',
+            message: `Admin ${adminUser.email} (${adminUid}) ${newStatus.toLowerCase()} withdrawal of $${withdrawalData.amount} for user ${targetUser.email} (${withdrawalData.merchantId}).`,
+            timestamp: serverTimestamp(),
+            details: {
+                withdrawalId: withdrawalId,
+                targetUser: withdrawalData.merchantId,
+                amount: withdrawalData.amount,
+                newStatus: newStatus
+            }
+        });
+
+        await batch.commit();
+
+        revalidatePath("/dashboard/withdrawals"); // Revalidate the path to update caches
         return { success: true };
     } catch (error) {
         console.error("Error processing withdrawal:", error);

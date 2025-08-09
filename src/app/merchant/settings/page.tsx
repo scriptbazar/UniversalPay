@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit, Mail, AtSign } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit, Mail, AtSign, CircleHelp } from "lucide-react";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { debounce } from 'lodash';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type PaymentMethodsState = {
@@ -32,12 +33,10 @@ type PaymentMethodsState = {
     phonepe: boolean;
     gpay: boolean;
     btc_wallet: boolean;
+    eth_wallet: boolean; // Added ETH
+    sol_wallet: boolean; // Added SOL
     usdt_wallet: boolean;
     usd_card: boolean;
-    eur_sepa: boolean;
-    gbp_bacs: boolean;
-    aud_becs: boolean;
-    cad_eft: boolean;
     paypal: boolean;
 };
 
@@ -272,6 +271,19 @@ function KycVerificationDialog({ onKycSubmitted }: { onKycSubmitted: () => void 
     );
 }
 
+const EthereumIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
+        <path d="M11.944 17.97L4.58 13.62l7.364-1.848.001 6.198zM12 3.03l7.419 7.82-7.42 2.722-7.42-2.722L12 3.03zm.056 17.97l7.365-6.198-7.364 1.848V21z"/>
+    </svg>
+);
+
+const SolanaIcon = (props: React.SVGProps<SVGSVGElement>) => (
+   <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
+    <path d="M4.238 6.452L13.06.333a2.238 2.238 0 012.879 1.43l3.824 13.98a2.238 2.238 0 01-2.071 2.923l-1.117.15c-1.22.164-2.313-.67-2.6-1.895l-3.3-13.886a2.238 2.238 0 00-2.88-1.43L4.24 8.783c-1.22.37-2.43-.372-2.8-1.595a2.238 2.238 0 01.798-2.736zm14.72 9.07l-8.82-3.178a2.238 2.238 0 01-1.43-2.88l3.824-13.98a2.238 2.238 0 012.923-2.07l.012.002c1.22.37 1.96 1.583 1.595 2.804l-3.565 13.886a2.238 2.238 0 001.43 2.88l8.822 3.178c1.22.438 1.96 1.65 1.595 2.87a2.238 2.238 0 01-2.736.798z"/>
+  </svg>
+);
+
+
 export default function SettingsPage() {
   const { toast } = useToast();
   
@@ -289,9 +301,8 @@ export default function SettingsPage() {
         displayOptions: { upi: true, card: true, crypto: true, paypal: false },
         hideIdentity: false,
         paymentMethods: {
-            paytm: true, phonepe: true, gpay: false, btc_wallet: true, usdt_wallet: true,
-            usd_card: true, eur_sepa: false, gbp_bacs: false, aud_becs: false,
-            cad_eft: false, paypal: true,
+            paytm: true, phonepe: true, gpay: false, btc_wallet: true, usdt_wallet: true, eth_wallet: true, sol_wallet: false,
+            usd_card: true, paypal: true,
         },
         notifications: {
             email: true,
@@ -781,29 +792,13 @@ export default function SettingsPage() {
                     All payments, whether from UPI or global methods, will be automatically converted and settled into your chosen cryptocurrency wallet.
                   </AlertDescription>
                 </Alert>
-
-                <div className="p-4 rounded-lg border bg-card-foreground/5 space-y-2">
-                    <Label htmlFor="settlement-crypto" className="text-base font-semibold">1. Choose Your Settlement Cryptocurrency</Label>
-                     <p className="text-sm text-muted-foreground">Select the primary crypto wallet where all your payments will be deposited.</p>
-                    <Select defaultValue="usdt">
-                        <SelectTrigger id="settlement-crypto" className="mt-2">
-                            <SelectValue placeholder="Select crypto for settlement" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="usdt">USDT (TRC20)</SelectItem>
-                            <SelectItem value="btc">Bitcoin (BTC)</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div>
-                    <h4 className="font-semibold mb-4 text-base">2. Configure Your Settlement Wallets</h4>
+                 <div>
+                    <h4 className="font-semibold mb-4 text-base">1. Configure Your Settlement Wallets</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                              <div className="flex items-center justify-between rounded-lg border p-4 h-full">
                                 <div>
-                                    <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
-                                    <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in Tether.</p>
+                                    <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20)</Label>
                                 </div>
                                 <Switch id="usdt-switch" checked={profileData.paymentMethods?.usdt_wallet} onCheckedChange={() => handlePaymentMethodToggle('usdt_wallet')} />
                             </div>
@@ -817,8 +812,7 @@ export default function SettingsPage() {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between rounded-lg border p-4 h-full">
                                 <div>
-                                    <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
-                                    <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
+                                    <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC)</Label>
                                 </div>
                                 <Switch id="btc-switch" checked={profileData.paymentMethods?.btc_wallet} onCheckedChange={() => handlePaymentMethodToggle('btc_wallet')} />
                             </div>
@@ -829,14 +823,42 @@ export default function SettingsPage() {
                                 </div>
                             )}
                         </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between rounded-lg border p-4 h-full">
+                                <div>
+                                    <Label htmlFor="eth-switch" className="font-medium flex items-center gap-2"><EthereumIcon className="w-4 h-4"/>Ethereum (ETH)</Label>
+                                </div>
+                                <Switch id="eth-switch" checked={profileData.paymentMethods?.eth_wallet} onCheckedChange={() => handlePaymentMethodToggle('eth_wallet')} />
+                            </div>
+                            {profileData.paymentMethods?.eth_wallet && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="eth-wallet">Your Ethereum (ERC20) Wallet Address</Label>
+                                    <Input id="eth-wallet" placeholder="0x..."/>
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between rounded-lg border p-4 h-full">
+                                <div>
+                                    <Label htmlFor="sol-switch" className="font-medium flex items-center gap-2"><SolanaIcon className="w-4 h-4"/>Solana (SOL)</Label>
+                                </div>
+                                <Switch id="sol-switch" checked={profileData.paymentMethods?.sol_wallet} onCheckedChange={() => handlePaymentMethodToggle('sol_wallet')} />
+                            </div>
+                            {profileData.paymentMethods?.sol_wallet && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="sol-wallet">Your Solana (SOL) Wallet Address</Label>
+                                    <Input id="sol-wallet" placeholder="So..."/>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 <Separator />
                 
                 <div>
-                    <h4 className="font-semibold mb-4 text-base">3. Enable Customer Payment Methods</h4>
-                     <p className="text-sm text-muted-foreground mb-4">Select which payment options your customers will see.</p>
+                    <h4 className="font-semibold mb-4 text-base">2. Enable Customer Payment Methods</h4>
+                     <p className="text-sm text-muted-foreground mb-4">Select which payment options your customers will see on the checkout page.</p>
                     
                     <h5 className="font-semibold mb-2 mt-4 flex items-center gap-2"><IndianRupee className="w-5 h-5"/>Indian UPI Gateways</h5>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -855,7 +877,7 @@ export default function SettingsPage() {
                     </div>
                 
                     <h5 className="font-semibold mb-2 mt-6 flex items-center gap-2"><Globe className="w-5 h-5" /> Global Payment Methods</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
                                 <Label htmlFor="paypal-switch" className="font-medium flex items-center gap-2">
@@ -866,33 +888,11 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div>
-                                <Label htmlFor="usd-card-switch" className="font-medium">Credit/Debit Card (USD)</Label>
+                                <Label htmlFor="usd-card-switch" className="font-medium flex items-center gap-2">
+                                <CreditCard className="w-4 h-4"/> Credit/Debit Card
+                                </Label>
                             </div>
                             <Switch id="usd-card-switch" checked={profileData.paymentMethods?.usd_card} onCheckedChange={() => handlePaymentMethodToggle('usd_card')} />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                                <Label htmlFor="eur-sepa-switch" className="font-medium">SEPA Transfer (EUR)</Label>
-                            </div>
-                            <Switch id="eur-sepa-switch" checked={profileData.paymentMethods?.eur_sepa} onCheckedChange={() => handlePaymentMethodToggle('eur_sepa')} />
-                        </div>
-                         <div className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                                <Label htmlFor="gbp-bacs-switch" className="font-medium">BACS Debit (GBP)</Label>
-                            </div>
-                            <Switch id="gbp-bacs-switch" checked={profileData.paymentMethods?.gbp_bacs} onCheckedChange={() => handlePaymentMethodToggle('gbp_bacs')} />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                                <Label htmlFor="aud-becs-switch" className="font-medium">BECS Debit (AUD)</Label>
-                            </div>
-                            <Switch id="aud-becs-switch" checked={profileData.paymentMethods?.aud_becs} onCheckedChange={() => handlePaymentMethodToggle('aud_becs')} />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                                <Label htmlFor="cad-eft-switch" className="font-medium">EFT Debit (CAD)</Label>
-                            </div>
-                            <Switch id="cad-eft-switch" checked={profileData.paymentMethods?.cad_eft} onCheckedChange={() => handlePaymentMethodToggle('cad_eft')} />
                         </div>
                     </div>
                 </div>
