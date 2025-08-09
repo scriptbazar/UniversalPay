@@ -63,7 +63,12 @@ export const getMerchantWithdrawals = async (merchantId: string): Promise<Withdr
     const querySnapshot = await getDocs(q);
     const withdrawals: Withdrawal[] = [];
     querySnapshot.forEach((doc) => {
-        withdrawals.push({ id: doc.id, ...doc.data(), createdAt: toDateSafe(doc.data().createdAt) } as Withdrawal);
+        const data = doc.data();
+        withdrawals.push({ 
+            id: doc.id, 
+            ...data,
+            createdAt: toDateSafe(data.createdAt) 
+        } as Withdrawal);
     });
     return withdrawals;
 };

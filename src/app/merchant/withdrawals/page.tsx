@@ -223,7 +223,7 @@ export default function WithdrawalsPage() {
                     <TableRow key={w.id} onClick={() => setSelectedWithdrawal(w)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium font-mono">{w.id.substring(0, 12)}...</TableCell>
                       <TableCell>{w.createdAt.toDate().toLocaleDateString()}</TableCell>
-                      <TableCell>{w.destination}</TableCell>
+                      <TableCell className="truncate max-w-[150px]">{w.destination}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(w.status)}>{w.status}</Badge>
                       </TableCell>
