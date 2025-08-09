@@ -42,9 +42,15 @@ export default function WithdrawalsPage() {
   const processingFee = 0.50;
   const [merchantName, setMerchantName] = useState('Your Business');
   const [loading, setLoading] = useState(true);
+  const [currentBalance, setCurrentBalance] = useState(0);
 
-  const fetchMerchantWithdrawals = async (merchantId: string) => {
+  const fetchMerchantData = async (merchantId: string) => {
     setLoading(true);
+    const userDoc = await getDoc(doc(db, 'users', merchantId));
+    if (userDoc.exists()) {
+        setMerchantName(userDoc.data().fullName || 'Your Business');
+        setCurrentBalance(userDoc.data().walletBalance || 0);
+    }
     const data = await getMerchantWithdrawals(merchantId);
     setWithdrawals(data);
     setLoading(false);
@@ -53,11 +59,7 @@ export default function WithdrawalsPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-                setMerchantName(userDoc.data().fullName || 'Your Business');
-            }
-            fetchMerchantWithdrawals(user.uid);
+            fetchMerchantData(user.uid);
         }
     });
 
@@ -81,6 +83,15 @@ export default function WithdrawalsPage() {
       });
       return;
     }
+    
+    if (numericAmount > currentBalance) {
+        toast({
+            variant: "destructive",
+            title: "Insufficient Balance",
+            description: "You cannot withdraw more than your available balance.",
+        });
+        return;
+    }
 
     const newWithdrawal: Omit<Withdrawal, 'id' | 'createdAt'> = {
         amount: numericAmount,
@@ -92,7 +103,7 @@ export default function WithdrawalsPage() {
     };
 
     await addWithdrawal(newWithdrawal);
-    await fetchMerchantWithdrawals(user.uid); // Re-fetch to show the new request
+    await fetchMerchantData(user.uid); // Re-fetch to show the new request and updated balance
 
     setAmount("");
     setMethod("");
@@ -131,8 +142,12 @@ export default function WithdrawalsPage() {
                     <Label>Available Balance</Label>
                     <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
                         <DollarSign className="w-6 h-6 text-muted-foreground"/>
-                        <span className="text-2xl font-bold">5,430.50</span>
-                        <span className="text-muted-foreground">USD</span>
+                        {loading ? <Skeleton className="h-8 w-32" /> : (
+                            <>
+                                <span className="text-2xl font-bold">${currentBalance.toFixed(2)}</span>
+                                <span className="text-muted-foreground">USD</span>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="space-y-2">

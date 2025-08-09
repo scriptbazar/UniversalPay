@@ -58,6 +58,7 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         handle: handle, // Add the unique handle
         handleLastUpdatedAt: null,
         handleEditCount: 0,
+        walletBalance: 0, // Initialize wallet balance
     });
 
     // 3. Create an audit log for the new user creation
