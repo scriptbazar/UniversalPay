@@ -74,7 +74,6 @@ const navItems = [
   { href: "/merchant/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
   { href: "/merchant/support", icon: LifeBuoy, label: "Support" },
   { href: "/merchant/activity", icon: Activity, label: "My Activity" },
-  { href: "/merchant/reseller", icon: Briefcase, label: "Reseller Mode", role: 'reseller' },
   { href: "/merchant/developer", icon: Code, label: "Developer" },
   { href: "/merchant/settings", icon: Settings, label: "Settings" },
 ];
@@ -149,7 +148,7 @@ export default function MerchantDashboardLayout({
                 
                 const userRole = userDoc.exists() ? userDoc.data().role : 'merchant';
                 
-                if (userRole === 'merchant' || userRole === 'reseller') {
+                if (userRole === 'merchant') {
                     setUser(user);
                     setUserProfile(userDoc.data() as { fullName: string; email: string, avatar: string, role: string });
                 } else {
@@ -179,17 +178,6 @@ export default function MerchantDashboardLayout({
             toast({ variant: 'destructive', title: "Logout Failed", description: error });
         }
     };
-
-    const getResellerLink = () => {
-        return userProfile?.role === 'reseller' ? '/merchant/reseller' : '/merchant/reseller/apply';
-    }
-
-    const filteredNavItems = navItems.filter(item => {
-        if (item.role === 'reseller') {
-            return userProfile?.role === 'reseller';
-        }
-        return true;
-    });
     
     if (loading) {
         return <DashboardSkeleton />;
@@ -210,10 +198,10 @@ export default function MerchantDashboardLayout({
           </div>
           <div className="flex-1 overflow-y-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              {filteredNavItems.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.label}
-                  href={item.href === '/merchant/reseller' ? getResellerLink() : item.href}
+                  href={item.href}
                   className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
                       "bg-muted text-primary": pathname === item.href
                   })}
@@ -247,10 +235,10 @@ export default function MerchantDashboardLayout({
                 >
                   <Logo />
                 </Link>
-                {filteredNavItems.map((item) => (
+                {navItems.map((item) => (
                     <Link
                     key={item.label}
-                    href={item.href === '/merchant/reseller' ? getResellerLink() : item.href}
+                    href={item.href}
                     className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
                         "bg-muted text-foreground": pathname === item.href,
                     })}

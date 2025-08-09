@@ -10,7 +10,7 @@
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
 // This check prevents the app from being initialized multiple times, which causes an error.
 if (!admin.apps.length) {
@@ -18,22 +18,16 @@ if (!admin.apps.length) {
 }
 const db = getFirestore();
 
-
-// This function now not only assigns a default role but also creates the user document in Firestore.
-// This is the CRITICAL FIX to prevent permission errors when listing users.
-exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
-  const role = "merchant"; // Default role for all new users
-
-  try {
-    // 1. Set the custom claim for role-based access
-    await admin.auth().setCustomUserClaims(user.uid, { role });
-
-    // Generate a unique handle from email/name
-    const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0,6)}`;
+// Helper function to create a user document
+const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord) => {
+    const role = "merchant"; // Default role
+    const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`;
     let handle = namePart.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Ensure handle is unique
     let handleExists = true;
     let counter = 1;
-    while(handleExists) {
+    while (handleExists) {
         const handleQuery = await db.collection('users').where('handle', '==', handle).get();
         if (handleQuery.empty) {
             handleExists = false;
@@ -42,10 +36,9 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
             counter++;
         }
     }
-    
-    // 2. CRITICAL FIX: Create the user document in the 'users' collection
+
     const userDocRef = db.collection('users').doc(user.uid);
-    await userDocRef.set({
+    batch.set(userDocRef, {
         uid: user.uid,
         email: user.email,
         fullName: user.displayName || 'New User',
@@ -55,23 +48,38 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         plan: 'Free',
         kycStatus: "Not Started",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        handle: handle, // Add the unique handle
+        handle: handle,
         handleLastUpdatedAt: null,
         handleEditCount: 0,
+        walletBalance: 0,
     });
+    
+    // Set custom claim
+    await admin.auth().setCustomUserClaims(user.uid, { role });
+};
 
-    // 3. Create an audit log for the new user creation
-    await db.collection('audit_logs').add({
+
+// This function now not only assigns a default role but also creates the user document in Firestore.
+// This is the CRITICAL FIX to prevent permission errors when listing users.
+exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
+  const batch = db.batch();
+  try {
+    await createUserDocument(batch, user);
+    
+    // Create an audit log for the new user creation
+    const auditLogRef = db.collection('audit_logs').doc();
+    batch.set(auditLogRef, {
         type: 'USER_CREATED',
         message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: 'merchant'.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         level: 'INFO',
-        details: { // Add details object for potential future use
+        details: {
             targetUser: user.uid,
         }
     });
 
-    console.log(`Custom claim '${role}' and Firestore document created for user: ${user.uid}`);
+    await batch.commit();
+    console.log(`Firestore document and custom claim created for user: ${user.uid}`);
   } catch (error) {
     console.error(`Error processing new user: ${user.uid}`, error);
   }
@@ -304,33 +312,49 @@ exports.updateMerchantHandle = onCall(async (request) => {
     return { success: true, message: 'Handle updated successfully.' };
 });
 
-exports.handleResellerRequest = onCall(async (request) => {
+
+// New callable function to sync Auth users to Firestore
+exports.syncAuthToFirestore = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError('permission-denied', 'Only admins can handle reseller requests.');
+        throw new HttpsError('permission-denied', 'Only admins can perform this action.');
     }
-
-    const { requestId, merchantId, action } = request.data;
-    if (!requestId || !merchantId || !['approve', 'reject'].includes(action)) {
-        throw new HttpsError('invalid-argument', 'Missing required parameters.');
-    }
-
-    const requestRef = db.collection('resellerRequests').doc(requestId);
-    const userRef = db.collection('users').doc(merchantId);
 
     try {
-        const batch = db.batch();
-        if (action === 'approve') {
-            batch.update(userRef, { role: 'reseller' });
-            batch.update(requestRef, { status: 'approved' });
-        } else {
-            batch.update(requestRef, { status: 'rejected' });
+        const listUsersResult = await admin.auth().listUsers(1000);
+        const allUsers = listUsersResult.users;
+        const allUserIds = allUsers.map(user => user.uid);
+
+        if (allUserIds.length === 0) {
+            return { success: true, message: "No users found in Authentication.", created: 0, checked: 0 };
         }
+
+        const usersCollection = db.collection('users');
+        const firestoreUserDocs = await usersCollection.where(admin.firestore.FieldPath.documentId(), 'in', allUserIds).get();
+        const firestoreUserIds = new Set(firestoreUserDocs.docs.map(doc => doc.id));
+
+        const missingUserIds = allUserIds.filter(uid => !firestoreUserIds.has(uid));
         
+        if (missingUserIds.length === 0) {
+            return { success: true, message: "All users are already in sync.", created: 0, checked: allUsers.length };
+        }
+
+        const batch = db.batch();
+        let createdCount = 0;
+
+        for (const uid of missingUserIds) {
+            const userRecord = allUsers.find(u => u.uid === uid);
+            if (userRecord) {
+                await createUserDocument(batch, userRecord);
+                createdCount++;
+            }
+        }
+
         await batch.commit();
 
-        return { success: true };
+        return { success: true, message: `Successfully synced users.`, created: createdCount, checked: allUsers.length };
+
     } catch (error) {
-        console.error("Error handling reseller request: ", error);
-        throw new HttpsError('internal', 'Could not process the request.');
+        console.error("Error syncing Auth to Firestore:", error);
+        throw new HttpsError('internal', 'An error occurred while syncing users.');
     }
 });

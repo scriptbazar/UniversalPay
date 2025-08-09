@@ -51,12 +51,31 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const user = userCredential.user;
         
         // Always fetch the user role from Firestore for reliability.
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        let userDocRef = doc(db, "users", user.uid);
+        let userDoc = await getDoc(userDocRef);
 
+        // FIX: If the user exists in Auth but not Firestore, create their document now.
         if (!userDoc.exists()) {
-            await signOut(auth);
-            return { success: false, error: "User data not found in database. Please contact support." };
+            console.warn(`User ${user.uid} exists in Auth but not Firestore. Creating document now.`);
+            // This is a simplified version of the logic in the Cloud Function.
+            // It ensures that any user who logs in has a Firestore document.
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                email: user.email,
+                fullName: user.displayName || 'New User',
+                avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
+                role: 'merchant', // Default role for users created this way
+                status: 'Active',
+                plan: 'Free',
+                kycStatus: "Not Started",
+                createdAt: serverTimestamp(),
+                handle: (user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`).toLowerCase().replace(/[^a-z0-9]/g, ''),
+                handleLastUpdatedAt: null,
+                handleEditCount: 0,
+                walletBalance: 0,
+            });
+            // Re-fetch the document after creating it
+            userDoc = await getDoc(userDocRef);
         }
         
         const userRole = userDoc.data()?.role;
@@ -68,7 +87,7 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         }
 
         // Security Check: Enforce that only merchants can log in via the merchant page.
-        if (loginType === 'merchant' && (userRole !== 'merchant' && userRole !== 'reseller')) {
+        if (loginType === 'merchant' && userRole !== 'merchant') {
             await signOut(auth);
             return { success: false, error: "Access denied. Please use the Admin Login page." };
         }

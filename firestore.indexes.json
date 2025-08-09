@@ -100,20 +100,6 @@
       ]
     },
     {
-      "collectionGroup": "payments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "resellerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "subscriptions",
       "queryScope": "COLLECTION",
       "fields": [
@@ -151,48 +137,6 @@
         },
         {
           "fieldPath": "date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "resellerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "withdrawals",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "merchantId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "requestedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "walletLoadRequests",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "merchantId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
