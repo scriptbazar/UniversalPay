@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useOptimistic } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, PlusCircle, Trash2, Users, FileText } from "lucide-react";
+import { Edit, PlusCircle, Trash2, Users, FileText, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -32,26 +32,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
-import { logSubscriptionChange } from './actions';
+import { getSubscriptionPlans, createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan } from './actions';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
-
-type Plan = {
+export type Plan = {
+    id?: string;
     name: string;
     price: string;
     transactions: string;
     features: string;
     api_quota: string;
 };
-
-const initialSubscriptionPlans: Plan[] = [
-    { name: "Free", price: "$0/mo", transactions: "100/mo", features: "Basic UPI", api_quota: "1000 calls/mo" },
-    { name: "Pro", price: "$49/mo", transactions: "1000/mo", features: "UPI & Crypto", api_quota: "10,000 calls/mo" },
-    { name: "Premium", price: "$99/mo", transactions: "Unlimited", features: "White-Label", api_quota: "Unlimited" },
-];
 
 type SubscribedMerchant = {
   id: string;
@@ -65,6 +59,7 @@ type SubscribedMerchant = {
 
 function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Plan) => void; }) {
     const [open, setOpen] = React.useState(false);
+    const [isSaving, setIsSaving] = React.useState(false);
     const [formData, setFormData] = React.useState(plan);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,10 +69,9 @@ function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Pl
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
-        if (auth.currentUser) {
-          await logSubscriptionChange(auth.currentUser.uid, 'updated', formData.name, formData);
-        }
+        setIsSaving(true);
+        await onSave(formData);
+        setIsSaving(false);
         setOpen(false);
     };
 
@@ -115,7 +109,10 @@ function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Pl
                     </div>
                     <DialogFooter>
                         <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
-                        <Button type="submit">Save Changes</Button>
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Save Changes
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -125,14 +122,23 @@ function EditPlanDialog({ plan, onSave }: { plan: Plan; onSave: (updatedPlan: Pl
 
 export default function SubscriptionsPage() {
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
-  const [plans, setPlans] = React.useState<Plan[]>(initialSubscriptionPlans);
+  const [plans, setPlans] = React.useState<Plan[]>([]);
   const { toast } = useToast();
   const router = useRouter();
   const [subscribedMerchants, setSubscribedMerchants] = useState<SubscribedMerchant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const fetchPlans = async () => {
+      setLoading(true);
+      const fetchedPlans = await getSubscriptionPlans();
+      setPlans(fetchedPlans);
+      setLoading(false);
+  }
 
-   useEffect(() => {
-    setLoading(true);
+  useEffect(() => {
+    fetchPlans();
+    
     // Fetch users with Pro or Premium plans
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("plan", "in", ["Pro", "Premium"]));
@@ -143,23 +149,17 @@ export default function SubscriptionsPage() {
             ...doc.data()
         } as SubscribedMerchant));
         setSubscribedMerchants(merchants);
-        setLoading(false);
     }, (error) => {
         console.error("Error fetching subscribed merchants:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not fetch subscribed merchants."
-        });
-        setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
 
 
   const handleCreatePlan = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setIsSubmitting(true);
       const formData = new FormData(e.currentTarget);
       const newPlan: Plan = {
           name: formData.get('plan-name-create') as string,
@@ -168,31 +168,42 @@ export default function SubscriptionsPage() {
           features: formData.get('plan-features-create') as string,
           api_quota: formData.get('plan-api-quota-create') as string,
       };
-      setPlans(prev => [newPlan, ...prev]);
-      if (auth.currentUser) {
-          await logSubscriptionChange(auth.currentUser.uid, 'created', newPlan.name, newPlan);
+      
+      const result = await createSubscriptionPlan(newPlan);
+      if (result.success) {
+          await fetchPlans();
+          toast({ title: 'Plan Created!', description: `${newPlan.name} has been added.`});
+          setIsCreateOpen(false);
+      } else {
+          toast({ variant: 'destructive', title: 'Error', description: result.error });
       }
-      toast({ title: 'Plan Created!', description: `${newPlan.name} has been added.`});
-      setIsCreateOpen(false);
+      setIsSubmitting(false);
   }
 
-  const handleSavePlan = (updatedPlan: Plan) => {
-      setPlans(prev => prev.map(p => p.name === updatedPlan.name ? updatedPlan : p));
-      toast({ title: 'Plan Updated!', description: `${updatedPlan.name} has been saved.`});
+  const handleSavePlan = async (updatedPlan: Plan) => {
+      const result = await updateSubscriptionPlan(updatedPlan);
+       if (result.success) {
+          await fetchPlans();
+          toast({ title: 'Plan Updated!', description: `${updatedPlan.name} has been saved.`});
+      } else {
+          toast({ variant: 'destructive', title: 'Error', description: result.error });
+      }
   }
 
-  const handleDeletePlan = async (planName: string) => {
-    setPlans(prev => prev.filter(p => p.name !== planName));
-    if (auth.currentUser) {
-        await logSubscriptionChange(auth.currentUser.uid, 'deleted', planName);
+  const handleDeletePlan = async (planId?: string) => {
+    if (!planId) return;
+    const result = await deleteSubscriptionPlan(planId);
+    if (result.success) {
+        await fetchPlans();
+        toast({ variant: 'destructive', title: 'Plan Deleted!'});
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-    toast({ variant: 'destructive', title: 'Plan Deleted!', description: `${planName} has been removed.`});
   }
 
   const handleRowClick = (merchantId: string) => {
     router.push(`/dashboard/users/${merchantId}`);
   }
-
 
   return (
     <div className="space-y-6">
@@ -252,8 +263,11 @@ export default function SubscriptionsPage() {
                             </div>
                             </div>
                             <DialogFooter>
-                            <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                            <Button type="submit">Create Plan</Button>
+                                <Button variant="outline" type="button" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Create Plan
+                                </Button>
                             </DialogFooter>
                         </form>
                       </DialogContent>
@@ -272,9 +286,15 @@ export default function SubscriptionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {plans.map(plan => (
-                                <TableRow key={plan.name}>
-                                    <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' ? 'default' : plan.name === 'Premium' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
+                            {loading ? (
+                                Array.from({ length: 3 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
+                                </TableRow>
+                                ))
+                            ) : plans.map(plan => (
+                                <TableRow key={plan.id}>
+                                    <TableCell className="font-medium"><Badge variant={plan.name === 'Pro' || plan.name === 'Premium' ? 'default' : 'secondary'}>{plan.name}</Badge></TableCell>
                                     <TableCell>{plan.price}</TableCell>
                                     <TableCell>{plan.transactions}</TableCell>
                                     <TableCell>{plan.features}</TableCell>
@@ -294,7 +314,7 @@ export default function SubscriptionsPage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                              <AlertDialogAction onClick={() => handleDeletePlan(plan.name)}>Delete Plan</AlertDialogAction>
+                                              <AlertDialogAction onClick={() => handleDeletePlan(plan.id)}>Delete Plan</AlertDialogAction>
                                             </AlertDialogFooter>
                                           </AlertDialogContent>
                                         </AlertDialog>
@@ -303,6 +323,9 @@ export default function SubscriptionsPage() {
                             ))}
                         </TableBody>
                     </Table>
+                     {!loading && plans.length === 0 && (
+                        <p className="text-center p-8 text-muted-foreground">No subscription plans found. Create one to get started.</p>
+                     )}
                 </CardContent>
             </Card>
         </TabsContent>
@@ -346,7 +369,7 @@ export default function SubscriptionsPage() {
                                             <div className="text-sm text-muted-foreground">{merchant.email}</div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={merchant.plan === 'Pro' ? 'default' : merchant.plan === 'Premium' ? 'default' : 'secondary'}>
+                                            <Badge variant={merchant.plan === 'Pro' || merchant.plan === 'Premium' ? 'default' : 'secondary'}>
                                                 {merchant.plan}
                                             </Badge>
                                         </TableCell>

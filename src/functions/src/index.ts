@@ -407,30 +407,45 @@ exports.updatePaymentSettings = onCall(async (request) => {
     return { success: true };
 });
 
-// New Cloud Function to log subscription changes
-exports.logSubscriptionChange = onCall(async (request) => {
-  if (!request.auth || request.auth.token.role !== 'admin') {
-    throw new HttpsError('permission-denied', 'Only admins can log subscription changes.');
-  }
 
-  const { adminUid, action, planName, details } = request.data;
+// ===== Subscription Plan Management Functions =====
 
-  if (!adminUid || !action || !planName) {
-    throw new HttpsError('invalid-argument', 'Missing required data for logging.');
-  }
-  
-  try {
-    const adminUser = await admin.auth().getUser(adminUid);
-    await db.collection('audit_logs').add({
-        type: 'SUBSCRIPTION_PLAN_CHANGE',
-        level: 'MAJOR',
-        message: `Admin ${adminUser.email} (${adminUid}) ${action} the '${planName}' subscription plan.`,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        details: details || {}
-    });
+const plansCollection = db.collection('subscriptionPlans');
+
+exports.getSubscriptionPlans = onCall(async (request) => {
+    const snapshot = await plansCollection.orderBy('price').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+});
+
+exports.createSubscriptionPlan = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can create plans.');
+    }
+    const planData = request.data;
+    await plansCollection.add(planData);
     return { success: true };
-  } catch (error: any) {
-    console.error("Error logging subscription change:", error);
-    throw new HttpsError('internal', 'Failed to create audit log.');
-  }
+});
+
+exports.updateSubscriptionPlan = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update plans.');
+    }
+    const { id, ...planData } = request.data;
+    if (!id) {
+        throw new HttpsError('invalid-argument', 'Plan ID is required for updates.');
+    }
+    await plansCollection.doc(id).update(planData);
+    return { success: true };
+});
+
+exports.deleteSubscriptionPlan = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can delete plans.');
+    }
+    const { id } = request.data;
+     if (!id) {
+        throw new HttpsError('invalid-argument', 'Plan ID is required for deletion.');
+    }
+    await plansCollection.doc(id).delete();
+    return { success: true };
 });
