@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign, RefreshCw } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign, RefreshCw, Database } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { updateSecuritySettings, getSecuritySettings, updatePaymentSettings, getPaymentSettings } from './actions';
@@ -52,6 +52,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   
   // Security settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -225,6 +226,33 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSeedDatabase = async () => {
+    setIsSeeding(true);
+    try {
+        const functions = getFunctions(app);
+        const seedFunction = httpsCallable(functions, 'seedDatabase');
+        const result = await seedFunction();
+        const data = result.data as { success: boolean, message: string };
+        if (data.success) {
+            toast({
+                title: "Database Seeding",
+                description: data.message,
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error: any) {
+        console.error("Error seeding database:", error);
+        toast({
+            variant: "destructive",
+            title: "Seeding Failed",
+            description: error.message || "Could not seed the database.",
+        });
+    } finally {
+        setIsSeeding(false);
+    }
+    };
+
 
   return (
     <div className="space-y-6">
@@ -257,7 +285,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
                         {logo ? (
-                                <Image src={logo} alt="Business Logo" width={40} height={40} className="object-cover"/>
+                                <Image src={logo} alt="Business Logo" width={40} height={40} className="object-cover" data-ai-hint="logo business"/>
                             ) : (
                                 <Upload className="w-5 h-5 text-muted-foreground" />
                             )}
@@ -378,9 +406,9 @@ export default function SettingsPage() {
                     </div>
                 </div>
                  <Separator />
-                <div>
+                <div className="space-y-4">
                      <h3 className="font-medium text-lg flex items-center gap-2"><RefreshCw className="w-5 h-5" /> User Data Synchronization</h3>
-                    <div className="rounded-lg border p-4 mt-2">
+                    <div className="rounded-lg border p-4">
                         <div className="flex items-start justify-between">
                             <div>
                                 <h4 className="font-medium">Sync Auth Users to Firestore</h4>
@@ -388,6 +416,21 @@ export default function SettingsPage() {
                             </div>
                              <Button onClick={handleSyncUsers} disabled={isSyncing}>
                                 {isSyncing ? 'Syncing...' : 'Sync Users'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                <Separator />
+                <div className="space-y-4">
+                     <h3 className="font-medium text-lg flex items-center gap-2"><Database className="w-5 h-5" /> Database Seeding</h3>
+                    <div className="rounded-lg border p-4">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h4 className="font-medium">Seed Database with Initial Data</h4>
+                                <p className="text-sm text-muted-foreground mt-1">Populate your Firestore with sample customers, transactions, and other data for demonstration purposes. This will only run if the collections are empty.</p>
+                            </div>
+                             <Button onClick={handleSeedDatabase} disabled={isSeeding}>
+                                {isSeeding ? 'Seeding...' : 'Seed Database'}
                             </Button>
                         </div>
                     </div>

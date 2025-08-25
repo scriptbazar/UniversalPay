@@ -23,9 +23,9 @@ export type CustomerTransaction = {
     method: 'UPI' | 'Crypto' | 'Page' | 'Link';
 }
 
-export const getAllCustomers = async (): Promise<Customer[]> => {
+export const getAllCustomers = async (merchantId?: string): Promise<Customer[]> => {
     const customersRef = collection(db, 'customers');
-    const q = query(customersRef);
+    const q = merchantId ? query(customersRef, where("merchantId", "==", merchantId)) : query(customersRef);
     const querySnapshot = await getDocs(q);
     const customers = querySnapshot.docs.map(doc => ({
         id: doc.id,
