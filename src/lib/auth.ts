@@ -50,8 +50,7 @@ export async function signInUser(email: string, password: string, loginType: 'ad
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // Always fetch the user role from Firestore for reliability.
-        let userDocRef = doc(db, "users", user.uid);
+        const userDocRef = doc(db, "users", user.uid);
         let userDoc = await getDoc(userDocRef);
 
         // FIX: If the user exists in Auth but not Firestore, create their document now.
@@ -122,19 +121,35 @@ export async function signInWithSocial(providerName: 'google') {
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
-        // The on-create Cloud Function handles document creation. We just wait for it here.
-        // In a more robust implementation, you might poll for the document or use a callable function.
+        // If the user document doesn't exist, it means this is their first login.
+        // We create their document on the client-side to avoid race conditions with Cloud Functions.
         if (!userDoc.exists()) {
-            console.log("User document doesn't exist, waiting for Cloud Function...");
-            // A small delay to allow the Cloud Function to create the document
-            await new Promise(resolve => setTimeout(resolve, 2500));
+             const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`;
+             let handle = namePart.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                email: user.email,
+                fullName: user.displayName || 'New User',
+                avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
+                role: 'merchant', // Social signup users are always merchants
+                status: 'Active',
+                plan: 'Free',
+                kycStatus: "Not Started",
+                createdAt: serverTimestamp(),
+                handle: handle,
+                handleLastUpdatedAt: null,
+                handleEditCount: 0,
+                walletBalance: 0,
+            });
+            await auth.currentUser?.getIdToken(true);
         }
         
         const finalUserDoc = await getDoc(userDocRef);
         
         if (!finalUserDoc.exists()) {
              // If it still doesn't exist, it's a real issue.
-             throw new Error("User document was not created in time. Please try again.");
+             throw new Error("User document was not created. Please try again.");
         }
 
         const userData = finalUserDoc.data();
@@ -150,7 +165,7 @@ export async function signInWithSocial(providerName: 'google') {
     } catch (error: any) {
         console.error(`Error with ${providerName} sign-in:`, error);
         if (error.code === 'auth/account-exists-with-different-credential') {
-            return { success: false, error: 'An account already exists with the same email address but different sign-in credentials.' };
+            return { success: false, error: 'An account already exists with this email address. Please log in using the original method.' };
         }
         if (error.code === 'auth/unauthorized-domain') {
             return { success: false, error: 'This domain is not authorized for login. Please contact support.' };
