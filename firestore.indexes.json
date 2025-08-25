@@ -206,8 +206,15 @@
         { "fieldPath": "details.targetUser", "order": "ASCENDING" },
         { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "paymentLinks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isPage", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
 }
-

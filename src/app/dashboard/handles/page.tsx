@@ -11,14 +11,13 @@ import { Search, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Handle {
     id: string;
     fullName: string;
     email: string;
     handle: string;
-    totalPayments: number;
-    totalVolume: number;
     status: 'Active' | 'Suspended';
 }
 
@@ -38,18 +37,21 @@ export default function AdminHandleLinksPage() {
         const fetchedHandles: Handle[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            // In a real app, totalPayments and totalVolume would be aggregated fields.
-            fetchedHandles.push({ 
-                id: doc.id, 
-                fullName: data.fullName,
-                email: data.email,
-                handle: data.handle || '',
-                status: data.status || 'Active',
-                totalPayments: Math.floor(Math.random() * 100), // Placeholder
-                totalVolume: Math.random() * 5000, // Placeholder
-            });
+            // We only need handles that are actually set.
+            if (data.handle) {
+                 fetchedHandles.push({ 
+                    id: doc.id, 
+                    fullName: data.fullName,
+                    email: data.email,
+                    handle: data.handle,
+                    status: data.status || 'Active',
+                });
+            }
         });
         setHandles(fetchedHandles);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching handles: ", error);
         setLoading(false);
     });
 
@@ -85,7 +87,7 @@ export default function AdminHandleLinksPage() {
                 <Input
                     type="search"
                     placeholder="Search by name, email, or handle..."
-                    className="pl-8 w-40"
+                    className="pl-8 w-64"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -98,16 +100,18 @@ export default function AdminHandleLinksPage() {
               <TableRow>
                 <TableHead>Merchant</TableHead>
                 <TableHead>Handle Link</TableHead>
-                <TableHead>Total Payments</TableHead>
-                <TableHead>Total Volume</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                 <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">Loading handles...</TableCell>
-                </TableRow>
+                 Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                    </TableRow>
+                 ))
               ) : paginatedHandles.map((handle) => (
                 <TableRow key={handle.id} className="hover:bg-muted/50">
                   <TableCell>
@@ -120,8 +124,6 @@ export default function AdminHandleLinksPage() {
                           <ExternalLink className="h-3 w-3" />
                       </a>
                   </TableCell>
-                  <TableCell>{handle.totalPayments}</TableCell>
-                  <TableCell>${handle.totalVolume.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={handle.status === 'Active' ? 'default' : 'secondary'}>
                       {handle.status}
@@ -131,7 +133,7 @@ export default function AdminHandleLinksPage() {
               ))}
                {!loading && filteredHandles.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">
+                    <TableCell colSpan={3} className="text-center h-24">
                         No handles found.
                     </TableCell>
                 </TableRow>
@@ -142,7 +144,7 @@ export default function AdminHandleLinksPage() {
         <CardFooter>
             <div className="flex justify-between items-center w-full">
                 <div className="text-xs text-muted-foreground">
-                    Page {currentPage} of {totalPages}
+                    Page {currentPage} of {totalPages}. Total {filteredHandles.length} handles.
                 </div>
                 <div className="flex items-center gap-2">
                     <Button 
