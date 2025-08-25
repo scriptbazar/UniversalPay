@@ -13,7 +13,6 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { auth, app } from "@/lib/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getSecuritySettings, updateSecuritySettings, getPaymentSettings, updatePaymentSettings } from "./actions";
@@ -109,9 +108,9 @@ export default function SettingsPage() {
             setUsdtWallet(payment.usdtWallet);
             setBtcWallet(payment.btcWallet);
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch settings", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load settings.'})
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not load settings.'})
         } finally {
             setIsLoading(false);
         }
@@ -144,11 +143,11 @@ export default function SettingsPage() {
         title: "Success",
         description: "API & Security settings saved successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save API & Security settings.",
+        description: error.message || "Failed to save API & Security settings.",
       });
     } finally {
         setIsSaving(false);
@@ -176,11 +175,11 @@ export default function SettingsPage() {
             title: "Success",
             description: "Payment gateway settings saved successfully.",
         });
-    } catch(error) {
+    } catch(error: any) {
          toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to save payment settings.",
+            description: error.message || "Failed to save payment settings.",
         });
     } finally {
         setIsSaving(false);

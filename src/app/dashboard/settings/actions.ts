@@ -1,10 +1,7 @@
 
 'use server';
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { db } from '@/lib/firebase';
-import admin from 'firebase-admin';
+import { db, admin } from '@/lib/firebaseAdmin';
 
 // This is a simplified check. In a real app, you'd initialize admin only once.
 if (!admin.apps.length) {
@@ -15,88 +12,54 @@ if (!admin.apps.length) {
   }
 }
 
+const settingsDocRef = db.collection('platform_settings').doc('global');
 
-async function readEnvFile(): Promise<Record<string, string>> {
-  const envPath = path.resolve(process.cwd(), '.env');
-  const envVars: Record<string, string> = {};
-  
-  try {
-    const envContent = await fs.readFile(envPath, 'utf-8');
-    const lines = envContent.split('\n');
-
-    for (const line of lines) {
-      if (line.trim() && !line.startsWith('#')) {
-        const eqIndex = line.indexOf('=');
-        if (eqIndex !== -1) {
-          const key = line.substring(0, eqIndex).trim();
-          const value = line.substring(eqIndex + 1).trim();
-          envVars[key] = value;
+/**
+ * Retrieves a specific group of settings from the Firestore database.
+ * @param settingsGroup - The key for the settings object (e.g., 'security', 'payment').
+ * @returns The settings object or an empty object if not found.
+ */
+async function getSettingsGroup(settingsGroup: string): Promise<any> {
+    try {
+        const doc = await settingsDocRef.get();
+        if (doc.exists) {
+            const data = doc.data();
+            return data?.[settingsGroup] || {};
         }
-      }
+        return {};
+    } catch (error) {
+        console.error(`Failed to read ${settingsGroup} settings:`, error);
+        throw new Error(`Could not read ${settingsGroup} settings from the database.`);
     }
-  } catch (error: any) {
-    if (error.code !== 'ENOENT') {
-      console.error('Failed to read .env file:', error);
-      throw new Error('Could not read the .env file.');
-    }
-    // File doesn't exist, return empty object. It will be created on write.
-  }
-  return envVars;
 }
 
-
-async function updateEnvFile(updates: Record<string, string>) {
-  const envPath = path.resolve(process.cwd(), '.env');
-  
-  try {
-    const currentEnv = await readEnvFile();
-    
-    // Create a new object with all keys, then apply updates.
-    // This ensures that even if a key was previously undefined, it gets added.
-    const newEnv = { ...currentEnv, ...updates };
-
-    // Handle keys that might be missing in the update but exist in currentEnv
-    const allKeys = [...Object.keys(currentEnv), ...Object.keys(updates)];
-    const uniqueKeys = [...new Set(allKeys)];
-
-    for (const key of uniqueKeys) {
-        if (updates.hasOwnProperty(key)) {
-            newEnv[key] = updates[key];
-        } else {
-            // This preserves existing keys that are not part of this specific update
-            // newEnv[key] = currentEnv[key]; 
-        }
+/**
+ * Updates a specific group of settings in the Firestore database.
+ * @param settingsGroup - The key for the settings object (e.g., 'security', 'payment').
+ * @param updates - The data to update.
+ */
+async function updateSettingsGroup(settingsGroup: string, updates: Record<string, any>) {
+    try {
+        await settingsDocRef.set({
+            [settingsGroup]: updates
+        }, { merge: true });
+        return { success: true };
+    } catch (error) {
+        console.error(`Failed to write ${settingsGroup} settings to database:`, error);
+        throw new Error(`Could not update ${settingsGroup} settings in the database.`);
     }
-    
-    // Only save non-empty values, except for the boolean flags
-    const newEnvContent = Object.entries(newEnv)
-      .filter(([key, value]) => {
-          if (key.startsWith('NEXT_PUBLIC_ENABLE_')) {
-              return true;
-          }
-          return value !== '' && value !== undefined && value !== null;
-      })
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
-
-    await fs.writeFile(envPath, newEnvContent + '\n', { encoding: 'utf-8' });
-    console.log('.env file updated successfully with:', Object.keys(updates));
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to write to .env file:', error);
-    throw new Error('Could not update the .env file.');
-  }
 }
+
 
 export async function getSecuritySettings() {
-    const env = await readEnvFile();
+    const securitySettings = await getSettingsGroup('security');
     return {
-        geminiApiKey: env['GEMINI_API_KEY'] || '',
-        reCaptchaSiteKey: env['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] || '',
-        reCaptchaSecretKey: env['RECAPTCHA_SECRET_KEY'] || '',
-        isCaptchaEnabled: env['NEXT_PUBLIC_ENABLE_ADMIN_CAPTCHA'] !== 'false', // default to true
-        isMerchantCaptchaRequired: env['NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA'] !== 'false', // default to true
-        isAdmin2faEnabled: env['NEXT_PUBLIC_ENABLE_ADMIN_2FA'] !== 'false', // default to true
+        geminiApiKey: securitySettings.geminiApiKey || '',
+        reCaptchaSiteKey: securitySettings.reCaptchaSiteKey || '',
+        reCaptchaSecretKey: securitySettings.reCaptchaSecretKey || '',
+        isCaptchaEnabled: securitySettings.isCaptchaEnabled !== false, // default to true
+        isMerchantCaptchaRequired: securitySettings.isMerchantCaptchaRequired !== false, // default to true
+        isAdmin2faEnabled: securitySettings.isAdmin2faEnabled !== false, // default to true
     };
 }
 
@@ -109,17 +72,7 @@ export async function updateSecuritySettings(adminUid: string, data: {
     isMerchantCaptchaRequired: boolean;
     isAdmin2faEnabled: boolean;
 }) {
-    const updates: Record<string, string> = {};
-
-    updates['GEMINI_API_KEY'] = data.geminiApiKey || '';
-    updates['NEXT_PUBLIC_RECAPTCHA_SITE_KEY'] = data.reCaptchaSiteKey || '';
-    updates['RECAPTCHA_SECRET_KEY'] = data.reCaptchaSecretKey || '';
-    
-    updates['NEXT_PUBLIC_ENABLE_ADMIN_CAPTCHA'] = String(data.isCaptchaEnabled);
-    updates['NEXT_PUBLIC_ENABLE_MERCHANT_CAPTCHA'] = String(data.isMerchantCaptchaRequired);
-    updates['NEXT_PUBLIC_ENABLE_ADMIN_2FA'] = String(data.isAdmin2faEnabled);
-
-    const result = await updateEnvFile(updates);
+    const result = await updateSettingsGroup('security', data);
 
     if (result.success) {
         try {
@@ -129,7 +82,12 @@ export async function updateSecuritySettings(adminUid: string, data: {
                 level: 'CRITICAL',
                 message: `Admin ${adminUser.email} (${adminUid}) updated global security settings.`,
                 timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                details: data
+                details: {
+                    // Avoid logging sensitive keys
+                    isCaptchaEnabled: data.isCaptchaEnabled,
+                    isMerchantCaptchaRequired: data.isMerchantCaptchaRequired,
+                    isAdmin2faEnabled: data.isAdmin2faEnabled,
+                }
             });
         } catch(e) {
             console.error("Failed to write audit log for security update.", e)
@@ -139,14 +97,14 @@ export async function updateSecuritySettings(adminUid: string, data: {
 }
 
 export async function getPaymentSettings() {
-    const env = await readEnvFile();
+    const paymentSettings = await getSettingsGroup('payment');
     return {
-        stripePk: env['STRIPE_PUBLISHABLE_KEY'] || '',
-        stripeSk: env['STRIPE_SECRET_KEY'] || '',
-        paypalClientId: env['PAYPAL_CLIENT_ID'] || '',
-        paypalSecret: env['PAYPAL_SECRET'] || '',
-        usdtWallet: env['USDT_TRC20_WALLET'] || '',
-        btcWallet: env['BTC_WALLET'] || '',
+        stripePk: paymentSettings.stripePk || '',
+        stripeSk: paymentSettings.stripeSk || '',
+        paypalClientId: paymentSettings.paypalClientId || '',
+        paypalSecret: paymentSettings.paypalSecret || '',
+        usdtWallet: paymentSettings.usdtWallet || '',
+        btcWallet: paymentSettings.btcWallet || '',
     };
 }
 
@@ -158,15 +116,7 @@ export async function updatePaymentSettings(adminUid: string, data: {
     usdtWallet: string;
     btcWallet: string;
 }) {
-     const updates: Record<string, string> = {};
-    updates['STRIPE_PUBLISHABLE_KEY'] = data.stripePk;
-    updates['STRIPE_SECRET_KEY'] = data.stripeSk;
-    updates['PAYPAL_CLIENT_ID'] = data.paypalClientId;
-    updates['PAYPAL_SECRET'] = data.paypalSecret;
-    updates['USDT_TRC20_WALLET'] = data.usdtWallet;
-    updates['BTC_WALLET'] = data.btcWallet;
-
-    const result = await updateEnvFile(updates);
+    const result = await updateSettingsGroup('payment', data);
 
     if (result.success) {
         try {

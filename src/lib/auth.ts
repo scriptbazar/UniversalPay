@@ -28,6 +28,8 @@ export async function createUser(email: string, password: string, additionalData
         
         // We no longer write to Firestore from the client.
         // The Cloud Function will detect the new user and create the document.
+        // We just need to wait a bit for the function to trigger and create the doc.
+         await new Promise(resolve => setTimeout(resolve, 2000));
 
         return { success: true, userId: user.uid };
     } catch (error: any) {
@@ -123,13 +125,15 @@ export async function signInWithSocial(providerName: 'google') {
         // The on-create Cloud Function handles document creation. We just wait for it here.
         // In a more robust implementation, you might poll for the document or use a callable function.
         if (!userDoc.exists()) {
+            console.log("User document doesn't exist, waiting for Cloud Function...");
             // A small delay to allow the Cloud Function to create the document
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 2500));
         }
         
         const finalUserDoc = await getDoc(userDocRef);
         
         if (!finalUserDoc.exists()) {
+             // If it still doesn't exist, it's a real issue.
              throw new Error("User document was not created in time. Please try again.");
         }
 
@@ -147,6 +151,9 @@ export async function signInWithSocial(providerName: 'google') {
         console.error(`Error with ${providerName} sign-in:`, error);
         if (error.code === 'auth/account-exists-with-different-credential') {
             return { success: false, error: 'An account already exists with the same email address but different sign-in credentials.' };
+        }
+        if (error.code === 'auth/unauthorized-domain') {
+            return { success: false, error: 'This domain is not authorized for login. Please contact support.' };
         }
         return { success: false, error: error.message };
     }
