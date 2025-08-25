@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings, ArrowRight, Users as UsersIcon } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Download, Hash, Landmark, MoreVertical, Percent, Shield, User, UserCheck, UserX, Wallet, Copy, MinusCircle, PlusCircle, Briefcase, Mail, Phone, Calendar, ShieldCheck as ShieldIcon, LogIn, LayoutGrid, KeyRound, Trash2, Settings, ArrowRight, Users as UsersIcon, AtSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateUserRole, updateUserStatus, adjustWalletBalance } from './actions';
 import { auth, db } from "@/lib/firebase";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, Timestamp, collection, query, where, getDocs, onSnapshot, orderBy } from "firebase/firestore";
 import { type Customer, getAllCustomers } from '@/lib/customersData';
 import { countries } from "@/lib/countries";
@@ -91,6 +92,7 @@ interface UserProfile {
     kycStatus?: "Verified" | "Pending Approval" | "Not Started";
     createdAt?: Timestamp;
     country?: string;
+    handle?: string;
 }
 
 export default function UserDetailPage() {
@@ -213,7 +215,7 @@ export default function UserDetailPage() {
   const handleToggleSuspend = async () => {
     if (!merchant || !auth.currentUser) return;
     const newStatus = merchant.status === 'Active' ? 'Suspended' : 'Active';
-    const result = await updateUserStatus(merchant.id, newStatus, auth.currentUser.uid);
+    const result = await updateUserStatus(merchant.id, newStatus);
 
     if (result.success) {
         setMerchant(prev => prev ? { ...prev, status: newStatus } : null);
@@ -228,7 +230,7 @@ export default function UserDetailPage() {
   
   const handleRoleChange = async (newRole: 'admin' | 'merchant') => {
       if (!merchant || !auth.currentUser) return;
-      const result = await updateUserRole(merchant.id, newRole, auth.currentUser.uid);
+      const result = await updateUserRole(merchant.id, newRole);
       
       if (result.success) {
         setMerchant(prev => prev ? { ...prev, role: newRole } : null);
@@ -295,7 +297,7 @@ const txTotalPages = useMemo(() => {
           return;
       }
 
-      const result = await adjustWalletBalance(merchant.id, amount, walletAdjustment.type as 'credit' | 'debit', auth.currentUser.uid);
+      const result = await adjustWalletBalance(merchant.id, amount, walletAdjustment.type as 'credit' | 'debit');
       if (result.success) {
           toast({ title: 'Wallet Adjusted', description: `Successfully performed a ${walletAdjustment.type} of $${amount}.` });
           setWalletAdjustment({ amount: '', type: 'credit' });
