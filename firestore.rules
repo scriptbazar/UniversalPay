@@ -1,139 +1,100 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper functions
-    function isAdmin() {
-      return request.auth.token.role == 'admin';
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
     
-    function isMerchant() {
-        return request.auth.token.role == 'merchant';
-    }
-
-    // Users Collection
-    // - Admins can read/write any user document.
-    // - Authenticated users can read their own document.
-    // - Authenticated users can update their own document, but not change role/status.
-    // - Users can create their own document (handled by cloud function on signup).
+    // User Profiles
     match /users/{userId} {
-      allow read: if isAdmin() || isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isAdmin() || (isOwner(userId) && !('role' in request.resource.data) && !('status' in request.resource.data));
-      allow delete: if isAdmin();
+      // Admins can read/write any user document
+      allow read, write: if request.auth.token.role == 'admin';
+      // Authenticated users can read their own document
+      allow get: if request.auth.uid == userId;
+      // Authenticated users can update their own document, but not change role/status
+      allow update: if request.auth.uid == userId && !('role' in request.resource.data) && !('status'in request.resource.data);
     }
-
-    // Transactions Collection
-    // - Admins can read any transaction.
-    // - Merchants can read their own transactions.
-    // - Public can create transactions (e.g., via a payment page).
+    
+    // Transactions
     match /transactions/{transactionId} {
-      allow read: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow create: if request.auth != null; // Allow any authenticated entity (client or server) to create
-      allow update, delete: if isAdmin();
+      // Admins can read any transaction
+      allow read: if request.auth.token.role == 'admin';
+      // Merchants can read their own transactions
+      allow get, list: if request.auth.uid == resource.data.merchantId;
+      // Anyone can create a transaction (e.g., via a payment page)
+      allow create: if true;
     }
-
-    // Customers Collection
-    // - Admins can read any customer.
-    // - Merchants can read their own customers.
-    // - Transactions can create new customers.
+    
+    // Customers
     match /customers/{customerId} {
-      allow read: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow create: if request.auth != null; // Let the transaction function create it
-      allow update, delete: if isAdmin();
+      // Admins can read any customer
+      allow read: if request.auth.token.role == 'admin';
+      // Merchants can read their own customers
+      allow get, list: if request.auth.uid == resource.data.merchantId;
+      // Transactions function can create/update customers
+      allow write: if true;
     }
 
-    // PaymentLinks Collection
-    // - Public can read active links/pages.
-    // - Merchants can create/read/update their own links/pages.
-    // - Admins can manage all links/pages.
+    // Payment Links & Pages
     match /paymentLinks/{linkId} {
-      allow read: if resource.data.isActive == true || isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow create: if isMerchant();
-      allow update: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow delete: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-    }
-    
-    // Invoices Collection
-    // - Merchants can read their own invoices.
-    // - Admins can read all invoices.
-    // - Transactions can create invoices.
-    match /invoices/{invoiceId} {
-      allow read: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow create: if request.auth != null;
-      allow update, delete: if isAdmin();
+        // Admins can manage all links/pages
+        allow read, write: if request.auth.token.role == 'admin';
+        // Merchants can manage their own links/pages
+        allow get, list, create, update, delete: if request.auth.uid == resource.data.merchantId;
+        // Public can read a single link/page to pay
+        allow get: if request.auth == null || request.auth.uid != null;
     }
 
-    // Tickets Collection
-    // - Admins can read/update all tickets.
-    // - Merchants can create tickets and read/update their own tickets.
-    match /tickets/{ticketId} {
-      allow read, update: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow create: if isMerchant();
-      allow delete: if isAdmin();
-    }
-
-    // Withdrawals Collection
-    // - Admins can read/update all withdrawal requests.
-    // - Merchants can create and read their own withdrawal requests.
-    match /withdrawals/{withdrawalId} {
-      allow read: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-      allow create: if isMerchant();
-      allow update, delete: if isAdmin();
-    }
-
-    // Notifications Collection
-    // - Admins can read all notifications.
-    // - Merchants can read their own notifications.
-    // - Server (admin) can create notifications.
-    match /notifications/{notificationId} {
-       allow read: if isAdmin() || (isMerchant() && resource.data.userId == request.auth.uid);
-       allow create, update, delete: if isAdmin(); // Only admin/server can create notifications
-    }
-    
-    // Audit Logs Collection
-    // - Only admins can read audit logs.
-    // - Only the server (authenticated with admin privileges) can write logs.
+    // Audit Logs (Only readable by admins)
     match /audit_logs/{logId} {
-      allow read, write, create, delete: if isAdmin();
+        allow read: if request.auth.token.role == 'admin';
+        // Deny all client-side writes; logs should be created by Cloud Functions
+        allow write: if false; 
     }
     
-    // Platform Settings Collection
-    // - Only admins can read and write platform settings.
+    // Invoices
+    match /invoices/{invoiceId} {
+        allow read: if request.auth.token.role == 'admin' || request.auth.uid == resource.data.merchantId;
+        allow create, update: if request.auth.uid == resource.data.merchantId;
+    }
+    
+    // Support Tickets
+    match /tickets/{ticketId} {
+        allow read, update: if request.auth.token.role == 'admin' || request.auth.uid == resource.data.merchantId;
+        allow create: if request.auth.uid != null;
+    }
+
+    // Withdrawals
+    match /withdrawals/{withdrawalId} {
+        // Admins can read/update any withdrawal
+        allow read, update: if request.auth.token.role == 'admin';
+        // Merchants can read/create their own withdrawals
+        allow get, list, create: if request.auth.uid == resource.data.merchantId;
+    }
+
+    // Platform Settings (Admin only)
     match /platform_settings/{docId} {
-       allow read, write, create, delete: if isAdmin();
+        allow read, write: if request.auth.token.role == 'admin';
     }
     
-    // KYC Documents Collection
-    // - Admins can read all KYC documents.
-    // - Users can only create/read their own KYC documents.
-    match /kyc_documents/{docId} {
-        allow read, update: if isAdmin() || (isOwner(resource.data.userId));
-        allow create: if isOwner(request.resource.data.userId);
-        allow delete: if isAdmin();
+    // Notifications
+    match /notifications/{notificationId} {
+        // Admins can see all notifications. Merchants can only see theirs.
+        allow read: if request.auth.token.role == 'admin' || request.auth.uid == resource.data.userId;
     }
     
-    // Reseller Requests Collection
-    // - Admin can manage all.
-    // - Merchants can create their own request.
-    match /resellerRequests/{requestId} {
-        allow read, update, delete: if isAdmin();
-        allow create: if isMerchant();
-    }
-    
-     // Wallet Load Requests Collection
-    // - Admins can manage all.
-    // - Merchants can create and read their own.
+    // Wallet Load Requests
     match /walletLoadRequests/{requestId} {
-        allow read: if isAdmin() || (isMerchant() && resource.data.merchantId == request.auth.uid);
-        allow create: if isMerchant();
-        allow update, delete: if isAdmin();
+        // Merchants can create and read their own requests
+        allow create, get, list: if request.auth.uid == request.resource.data.merchantId;
+        // Admins can read and update any request
+        allow read, update: if request.auth.token.role == 'admin';
+    }
+    
+    // Reseller Requests
+    match /resellerRequests/{requestId} {
+        // Admins and merchants can create/read requests
+        allow read, create: if request.auth.uid != null;
+        // Only admins can update (approve/reject)
+        allow update: if request.auth.token.role == 'admin';
     }
   }
 }
