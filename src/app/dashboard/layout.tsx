@@ -52,6 +52,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc } from "firebase/firestore";
 import { getNotifications, type Notification } from "@/lib/notificationsData";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
