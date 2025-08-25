@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,8 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { signInUser } from "@/lib/auth";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, ShieldCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 export default function LoginPage() {
@@ -65,6 +65,13 @@ export default function LoginPage() {
             </CardHeader>
             <form onSubmit={handleCredentialSubmit}>
             <CardContent className="space-y-4">
+                 <Alert>
+                  <ShieldCheck className="h-4 w-4" />
+                  <AlertTitle>Secure Access</AlertTitle>
+                  <AlertDescription>
+                    This login page is for authorized merchants only.
+                  </AlertDescription>
+                </Alert>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>

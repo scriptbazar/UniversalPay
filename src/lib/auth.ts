@@ -7,6 +7,7 @@ import {
     signInWithEmailAndPassword,
     signOut,
     sendPasswordResetEmail,
+    updateProfile,
     type User
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -17,16 +18,21 @@ interface UserData {
     [key: string]: any; 
 }
 
-// This function now just creates the user in Firebase Auth.
-// The Cloud Function 'addDefaultRoleClaim' is responsible for creating the Firestore document.
 export async function createUser(email: string, password: string, additionalData: UserData) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
-        // We no longer write to Firestore from the client.
-        // The Cloud Function will detect the new user and create the document.
-         await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Update the user's profile in Firebase Auth immediately.
+        // The Cloud Function will use this information.
+        await updateProfile(user, {
+            displayName: additionalData.fullName
+        });
+
+        // The Cloud Function `addDefaultRoleClaim` will now reliably trigger and
+        // create the Firestore document. No need to write from client.
+        // A small delay to allow the function to trigger before redirection.
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         return { success: true, userId: user.uid };
     } catch (error: any) {
@@ -41,40 +47,14 @@ export async function createUser(email: string, password: string, additionalData
     }
 }
 
-// **IMPROVED AND MORE SECURE LOGIN LOGIC**
 export async function signInUser(email: string, password: string, loginType: 'admin' | 'merchant') {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        const userDocRef = doc(db, "users", user.uid);
-        let userDoc = await getDoc(userDocRef);
-
-        // FIX: If the user exists in Auth but not Firestore, create their document now.
-        if (!userDoc.exists()) {
-            console.warn(`User ${user.uid} exists in Auth but not Firestore. Creating document now.`);
-            // This is a simplified version of the logic in the Cloud Function.
-            // It ensures that any user who logs in has a Firestore document.
-            await setDoc(userDocRef, {
-                uid: user.uid,
-                email: user.email,
-                fullName: user.displayName || 'New User',
-                avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
-                role: 'merchant', // Default role for users created this way
-                status: 'Active',
-                plan: 'Free',
-                kycStatus: "Not Started",
-                createdAt: serverTimestamp(),
-                handle: (user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`).toLowerCase().replace(/[^a-z0-9]/g, ''),
-                handleLastUpdatedAt: null,
-                handleEditCount: 0,
-                walletBalance: 0,
-            });
-            // Re-fetch the document after creating it
-            userDoc = await getDoc(userDocRef);
-        }
-        
-        const userRole = userDoc.data()?.role;
+        // Let's ensure the claims are up-to-date before checking them.
+        const idTokenResult = await user.getIdTokenResult(true);
+        const userRole = idTokenResult.claims.role;
 
         // Security Check: Enforce that only admins can log in via the admin page.
         if (loginType === 'admin' && userRole !== 'admin') {
@@ -88,6 +68,9 @@ export async function signInUser(email: string, password: string, loginType: 'ad
             return { success: false, error: "Access denied. Please use the Admin Login page." };
         }
         
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
         return { success: true, user: { uid: user.uid, ...userDoc.data() } };
         
     } catch (error: any) {

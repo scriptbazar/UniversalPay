@@ -53,9 +53,6 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
         handleEditCount: 0,
         walletBalance: 0,
     });
-    
-    // Set custom claim
-    await admin.auth().setCustomUserClaims(user.uid, { role });
 };
 
 
@@ -76,7 +73,11 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         }
     });
 
-    await batch.commit();
+    await batch.commit(); // Commit the batch transaction
+    
+    // Set custom claim AFTER the document is successfully created
+    await admin.auth().setCustomUserClaims(user.uid, { role: 'merchant' });
+
     console.log(`Firestore document and custom claim created for user: ${user.uid}`);
   } catch (error) {
     console.error(`Error processing new user: ${user.uid}`, error);
@@ -116,6 +117,35 @@ exports.setAdminRole = onCall(async (request) => {
     console.error(`Error setting role for user ${targetUid}:`, error);
     throw new HttpsError('internal', 'An internal error occurred.');
   }
+});
+
+// Callable function to update a user's status
+exports.updateUserStatus = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update user status.');
+    }
+    const { uid: targetUid, status: newStatus } = request.data;
+     if (!targetUid || !newStatus || !['Active', 'Suspended'].includes(newStatus)) {
+        throw new HttpsError('invalid-argument', 'Valid "uid" and "status" are required.');
+    }
+    try {
+        await db.collection('users').doc(targetUid).update({ status: newStatus });
+        await admin.auth().updateUser(targetUid, { disabled: newStatus === 'Suspended' });
+
+        const callingUserEmail = request.auth.token.email || 'Unknown';
+        const targetUser = await admin.auth().getUser(targetUid);
+        await db.collection('audit_logs').add({
+            type: 'STATUS_CHANGE',
+            message: `Admin ${callingUserEmail} updated status of ${targetUser.email} to ${newStatus}.`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            level: 'CRITICAL',
+            details: { targetUser: targetUid, changedBy: request.auth.uid, newStatus }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error(`Error updating status for user ${targetUid}:`, error);
+        throw new HttpsError('internal', 'An internal error occurred.');
+    }
 });
 
 
@@ -336,15 +366,6 @@ exports.updateUserRole = onCall(async (request) => {
     return { success: true };
 });
 
-// Corrected updateUserStatus to also be callable
-exports.updateUserStatus = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update status.');
-    const { uid, status } = request.data;
-    await db.collection('users').doc(uid).update({ status });
-    await admin.auth().updateUser(uid, { disabled: status === 'Suspended' });
-     // Audit log can be added here
-    return { success: true };
-});
 
 exports.adjustWalletBalance = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can adjust wallets.');
