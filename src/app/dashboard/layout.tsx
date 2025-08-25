@@ -26,6 +26,7 @@ import {
   History,
   ShieldAlert,
   AtSign, // Added for Handle Links
+  Menu, // Added for Mobile Toggle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -216,15 +217,13 @@ export default function AdminDashboardLayout({
                 size="icon"
                 className="shrink-0 md:hidden"
               >
-                <Package2 className="h-5 w-5" />
+                <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
-              <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-              <SheetDescription className="sr-only">A list of navigation links and actions for mobile view.</SheetDescription>
               <nav className="grid gap-2 text-lg font-medium">
-                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 gap-2 -ml-6">
+                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 gap-2 -ml-4">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                         <Logo />
                     </Link>
