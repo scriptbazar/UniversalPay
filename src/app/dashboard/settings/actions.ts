@@ -31,7 +31,7 @@ export async function getSecuritySettings() {
         const functions = getFunctions(app);
         const getSettings = httpsCallable(functions, 'getSecuritySettings');
         const result = await getSettings();
-        return result.data;
+        return result.data as any;
     } catch (error: any) {
         console.error("Error getting security settings:", error);
         // Return a default object structure on error to prevent UI crashes
@@ -52,7 +52,7 @@ export async function getPaymentSettings() {
         const functions = getFunctions(app);
         const getSettings = httpsCallable(functions, 'getPaymentSettings');
         const result = await getSettings();
-        return result.data;
+        return result.data as any;
     } catch (error: any) {
         console.error("Error getting payment settings:", error);
          // Return a default object structure on error
@@ -105,5 +105,3 @@ export async function updatePaymentSettings(adminUid: string, data: {
         return { success: false, error: error.message };
     }
 }
-
-    

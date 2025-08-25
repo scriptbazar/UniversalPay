@@ -407,4 +407,30 @@ exports.updatePaymentSettings = onCall(async (request) => {
     return { success: true };
 });
 
-    
+// New Cloud Function to log subscription changes
+exports.logSubscriptionChange = onCall(async (request) => {
+  if (!request.auth || request.auth.token.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Only admins can log subscription changes.');
+  }
+
+  const { adminUid, action, planName, details } = request.data;
+
+  if (!adminUid || !action || !planName) {
+    throw new HttpsError('invalid-argument', 'Missing required data for logging.');
+  }
+  
+  try {
+    const adminUser = await admin.auth().getUser(adminUid);
+    await db.collection('audit_logs').add({
+        type: 'SUBSCRIPTION_PLAN_CHANGE',
+        level: 'MAJOR',
+        message: `Admin ${adminUser.email} (${adminUid}) ${action} the '${planName}' subscription plan.`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: details || {}
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error logging subscription change:", error);
+    throw new HttpsError('internal', 'Failed to create audit log.');
+  }
+});
