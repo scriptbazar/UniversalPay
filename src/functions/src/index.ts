@@ -53,9 +53,6 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
         handleEditCount: 0,
         walletBalance: 0,
     });
-    
-    // Set custom claim
-    await admin.auth().setCustomUserClaims(user.uid, { role });
 };
 
 
@@ -63,8 +60,10 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   const batch = db.batch();
   try {
+    // 1. Prepare the user document creation in the batch
     await createUserDocument(batch, user);
     
+    // 2. Prepare the audit log creation in the batch
     const auditLogRef = db.collection('audit_logs').doc();
     batch.set(auditLogRef, {
         type: 'USER_CREATED',
@@ -76,7 +75,12 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         }
     });
 
+    // 3. Set the custom claim (this is an auth operation, not a DB one)
+    await admin.auth().setCustomUserClaims(user.uid, { role: 'merchant' });
+
+    // 4. Commit all database operations (user doc and audit log) at once
     await batch.commit();
+
     console.log(`Firestore document and custom claim created for user: ${user.uid}`);
   } catch (error) {
     console.error(`Error processing new user: ${user.uid}`, error);
