@@ -315,13 +315,13 @@ export default function MerchantDashboardLayout({
                 </nav>
               </div>
                 <div className="mt-auto border-t p-4">
-                    <div className="flex flex-col gap-2">
-                        <Button variant="ghost" className="w-full justify-start" asChild>
+                    <div className="flex gap-2">
+                        <Button variant="ghost" className="w-full justify-center" asChild>
                             <Link href="/merchant/profile">
                                 <UserIcon className="mr-2 h-4 w-4"/> Profile
                             </Link>
                         </Button>
-                        <Button variant="destructive" className="w-full justify-start" onClick={handleLogout}>
+                        <Button variant="destructive" className="w-full justify-center" onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4"/> Logout
                         </Button>
                     </div>

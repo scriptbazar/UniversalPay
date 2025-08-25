@@ -191,7 +191,7 @@ export default function AdminDashboardLayout({
               <Logo />
             </Link>
           </div>
-          <div className="flex-1 overflow-auto py-2">
+          <div className="flex-1 overflow-y-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navItems.map((item) => (
                 <Link
@@ -309,13 +309,13 @@ export default function AdminDashboardLayout({
                 </nav>
               </div>
               <div className="mt-auto border-t p-4">
-                <div className="flex flex-col gap-2">
-                     <Button variant="ghost" className="w-full justify-start" asChild>
+                <div className="flex gap-2">
+                     <Button variant="ghost" className="w-full justify-center" asChild>
                         <Link href={`/dashboard/users/${user.uid}`}>
                             <UserIcon className="mr-2 h-4 w-4"/> Profile
                         </Link>
                      </Button>
-                     <Button variant="destructive" className="w-full justify-start" onClick={handleLogout}>
+                     <Button variant="destructive" className="w-full justify-center" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4"/> Logout
                      </Button>
                  </div>
