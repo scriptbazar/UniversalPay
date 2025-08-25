@@ -7,12 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRightLeft, Bot, Repeat, Banknote, Bitcoin } from 'lucide-react';
+import { ArrowRightLeft, Repeat, Banknote, Bitcoin } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { currencies } from '@/lib/currencies';
-import { getCurrencyInfo } from '@/ai/flows/currencyInfoFlow';
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -119,9 +117,6 @@ export default function CurrencyConverterPage() {
   const [fromCrypto, setFromCrypto] = useState<Currency>({ code: 'BTC', name: 'Bitcoin (Crypto)' });
   const [toCrypto, setToCrypto] = useState<Currency>({ code: 'USD', name: 'United States Dollar' });
 
-  const [aiQuery, setAiQuery] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   useEffect(() => {
@@ -166,32 +161,11 @@ export default function CurrencyConverterPage() {
       setToCrypto(temp);
   }
   
-  const handleAiQuery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiQuery) return;
-    setIsLoading(true);
-    setAiResponse('');
-    try {
-      const { explanation } = await getCurrencyInfo({ currency: aiQuery });
-      setAiResponse(explanation);
-    } catch (error) {
-      console.error("AI query failed:", error);
-      toast({
-        variant: "destructive",
-        title: "AI Error",
-        description: "Could not get information about the currency.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Currency Tools</h1>
-        <p className="text-muted-foreground">Convert currencies, check crypto rates, and ask our AI assistant.</p>
+        <p className="text-muted-foreground">Convert currencies and check crypto rates.</p>
       </div>
       <Separator />
 
@@ -293,41 +267,6 @@ export default function CurrencyConverterPage() {
           </CardContent>
         </Card>
       </div>
-
-       <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot /> AI Currency Assistant
-            </CardTitle>
-            <CardDescription>
-              Can't find a currency? Ask our AI about it.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAiQuery} className="flex gap-2 mb-4">
-              <Input
-                placeholder="e.g., 'Gold Pressed Latinum', 'DogeCoin', '100 JPY to INR'"
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-              />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Asking...' : 'Ask AI'}
-              </Button>
-            </form>
-
-            {isLoading && <p>Thinking...</p>}
-            
-            {aiResponse && (
-                <Alert>
-                    <Bot className="h-4 w-4"/>
-                    <AlertTitle>AI Response</AlertTitle>
-                    <AlertDescription>
-                        {aiResponse}
-                    </AlertDescription>
-                </Alert>
-            )}
-          </CardContent>
-        </Card>
     </div>
   );
 }
