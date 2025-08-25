@@ -26,7 +26,6 @@ export async function createUser(email: string, password: string, additionalData
         
         // We no longer write to Firestore from the client.
         // The Cloud Function will detect the new user and create the document.
-        // We just need to wait a bit for the function to trigger and create the doc.
          await new Promise(resolve => setTimeout(resolve, 2000));
 
         return { success: true, userId: user.uid };
