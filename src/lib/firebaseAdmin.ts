@@ -3,9 +3,11 @@ import admin from 'firebase-admin';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { App } from 'firebase-admin/app';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 
-// Ensure environment variables are loaded for server-side code.
-dotenv.config();
+// Load environment variables from the root .env file
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 let app: App | undefined;
 let db: Firestore | undefined;
@@ -13,19 +15,37 @@ let db: Firestore | undefined;
 function initialize() {
   if (admin.apps.length === 0) {
     try {
-      // When running on Firebase/Google Cloud, the SDK automatically finds the credentials.
-      // For local development, you need to set the GOOGLE_APPLICATION_CREDENTIALS
-      // environment variable to point to your service account key file.
+      const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+      if (!serviceAccountPath) {
+        throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
+      }
+      if (!projectId) {
+        throw new Error('NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable is not set.');
+      }
+
+      const absoluteServiceAccountPath = path.resolve(process.cwd(), serviceAccountPath);
+      
+      if (!fs.existsSync(absoluteServiceAccountPath)) {
+        throw new Error(`Service account file not found at: ${absoluteServiceAccountPath}`);
+      }
+
+      const serviceAccount = JSON.parse(fs.readFileSync(absoluteServiceAccountPath, 'utf8'));
+      
       app = admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
+        credential: admin.credential.cert(serviceAccount),
+        projectId: projectId,
       });
+
       db = getFirestore(app);
-      console.log('Firebase Admin SDK initialized.');
-    } catch (error) {
-      console.error('Firebase admin initialization error:', error);
+      console.log('Firebase Admin SDK initialized successfully.');
+
+    } catch (error: any) {
+      console.error('Firebase admin initialization error:', error.message);
       // We throw an error here to make it clear that the initialization failed.
       // This prevents subsequent calls from failing silently.
-      throw new Error('Could not initialize Firebase Admin SDK. Please check your credentials.');
+      throw new Error('Could not initialize Firebase Admin SDK. Please check your credentials and .env file.');
     }
   } else {
     app = admin.apps[0]!;
@@ -34,6 +54,8 @@ function initialize() {
   return { admin, db };
 }
 
+// Export a function that returns the initialized instances.
+// This ensures that initialization is attempted only when needed.
 export function getFirebaseAdmin() {
     if (!app || !db) {
         return initialize();

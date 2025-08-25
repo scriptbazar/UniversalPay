@@ -12,10 +12,9 @@ import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
-// This check prevents the app from being initialized multiple times, which causes an error.
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
+// Initialize the app once
+admin.initializeApp();
+
 const db = getFirestore();
 
 // Helper function to create a user document
