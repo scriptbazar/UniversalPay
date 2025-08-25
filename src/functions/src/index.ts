@@ -12,7 +12,8 @@ import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
-// This check prevents the app from being initialized multiple times, which causes an error.
+// When deployed to Firebase, the SDK is automatically initialized.
+// This check prevents re-initialization errors.
 if (!admin.apps.length) {
     admin.initializeApp();
 }

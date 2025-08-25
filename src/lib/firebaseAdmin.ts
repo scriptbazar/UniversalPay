@@ -25,10 +25,6 @@ function initialize() {
         }
         
         app = admin.initializeApp({
-            // Using applicationDefault will automatically use the credentials
-            // from the GOOGLE_APPLICATION_CREDENTIALS environment variable
-            // when running locally, and the service account associated with the
-            // App Hosting backend when deployed. This is the most robust method.
             credential: admin.credential.applicationDefault(),
             projectId: projectId,
         });
@@ -38,11 +34,10 @@ function initialize() {
 
     } catch (error: any) {
         console.error('Firebase admin initialization error:', error.message);
-        // Provide a more helpful error message for the user.
         let helpfulError = 'Could not initialize Firebase Admin SDK. Please check your credentials.';
         if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
             helpfulError += ' The GOOGLE_APPLICATION_CREDENTIALS environment variable is missing.';
-        } else if (error.message.includes('ENOENT')) { // File not found error
+        } else if (error.message.includes('ENOENT') || error.message.includes('not found')) {
              helpfulError += ` The service account file specified in GOOGLE_APPLICATION_CREDENTIALS was not found at path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`;
         }
         throw new Error(helpfulError);
@@ -52,7 +47,6 @@ function initialize() {
 }
 
 export function getFirebaseAdmin() {
-    // This pattern ensures that initialization happens only once.
     if (!app || !db) {
         return initialize();
     }
