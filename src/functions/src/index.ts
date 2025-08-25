@@ -312,6 +312,7 @@ exports.updateMerchantHandle = onCall(async (request) => {
     return { success: true, message: 'Handle updated successfully.' };
 });
 
+
 // New callable function to sync Auth users to Firestore
 exports.syncAuthToFirestore = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') {

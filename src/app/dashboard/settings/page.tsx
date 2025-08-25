@@ -256,7 +256,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
                         {logo ? (
-                                <Image src={logo} alt="Business Logo" width={40} height={40} className="object-cover" data-ai-hint="logo business"/>
+                                <Image src={logo} alt="Business Logo" width={40} height={40} className="object-cover" data-ai-hint="logo business" />
                             ) : (
                                 <Upload className="w-5 h-5 text-muted-foreground" />
                             )}
@@ -377,12 +377,12 @@ export default function SettingsPage() {
                  <Separator />
                  <div className="rounded-lg border p-4 flex items-center justify-between">
                     <div>
-                        <h4 className="font-medium flex items-center gap-2"><Database className="w-4 h-4" /> Database Tools</h4>
-                        <p className="text-sm text-muted-foreground mt-1">Run maintenance tasks on your Firestore database.</p>
+                        <h4 className="font-medium flex items-center gap-2"><Database className="w-4 h-4" /> User Data Synchronization</h4>
+                        <p className="text-sm text-muted-foreground mt-1">If users exist in Authentication but not in the database, this tool will sync them.</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button onClick={handleSyncUsers} disabled={isSyncing} variant="outline">
-                            <RefreshCw className="mr-2 h-4 w-4"/> {isSyncing ? 'Syncing...' : 'Sync Auth Users'}
+                            <RefreshCw className="mr-2 h-4 w-4"/> {isSyncing ? 'Syncing...' : 'Sync Users'}
                         </Button>
                     </div>
                 </div>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                         <div className="space-y-4">
                              <div className="flex items-center justify-between rounded-lg border p-3 h-full">
                                 <div>
-                                    <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20) Wallet</Label>
+                                    <Label htmlFor="usdt-switch" className="font-medium flex items-center gap-2"><DollarSign className="w-4 h-4"/>USDT (TRC20)</Label>
                                     <p className="text-sm text-muted-foreground pl-6">Low-fee stablecoin settlement.</p>
                                 </div>
                                 <Switch id="usdt-switch" checked={gateways.crypto_usdt} onCheckedChange={() => handleGatewayToggle('crypto_usdt')} />
@@ -486,7 +486,7 @@ export default function SettingsPage() {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between rounded-lg border p-3 h-full">
                                 <div>
-                                    <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC) Wallet</Label>
+                                    <Label htmlFor="btc-switch" className="font-medium flex items-center gap-2"><Bitcoin className="w-4 h-4"/>Bitcoin (BTC)</Label>
                                     <p className="text-sm text-muted-foreground pl-6">Enable to receive settlements in BTC.</p>
                                 </div>
                                 <Switch id="btc-switch" checked={gateways.crypto_btc} onCheckedChange={() => handleGatewayToggle('crypto_btc')} />

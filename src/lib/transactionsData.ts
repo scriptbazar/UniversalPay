@@ -15,6 +15,7 @@ import {
     serverTimestamp,
     runTransaction,
     increment,
+    Timestamp
 } from 'firebase/firestore';
 import { addInvoice } from './invoicesData';
 import { addDoc as addAuditLogDoc } from 'firebase/firestore';
@@ -34,13 +35,39 @@ export type Transaction = {
   date: any; // Storing as a server timestamp
 };
 
+// Helper function to safely convert a Firestore timestamp or other date format to a Date object
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
+
+
 // Function to get all transactions for a specific source (e.g., a payment link)
 export const getTransactionsBySource = async (sourceId: string): Promise<Transaction[]> => {
     const transactionsCol = collection(db, 'transactions');
     const q = query(transactionsCol, where('sourceId', '==', sourceId), orderBy('createdAt', 'desc'));
     
     const transactionSnapshot = await getDocs(q);
-    const transactionList = transactionSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+    const transactionList = transactionSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            ...data, 
+            date: toDateSafe(data.date),
+            amount: data.amount.toString() // Ensure amount is a string as expected by some components
+        } as Transaction;
+    });
     return transactionList;
 };
 
@@ -49,7 +76,12 @@ export const getTransactionById = async (id: string): Promise<Transaction | null
     const docRef = doc(db, 'transactions', id);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Transaction;
+        const data = docSnap.data();
+        return { 
+            id: docSnap.id, 
+            ...data, 
+            date: toDateSafe(data.date) 
+        } as Transaction;
     }
     return null;
 };
@@ -58,6 +90,7 @@ export const getTransactionById = async (id: string): Promise<Transaction | null
 export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt'>): Promise<void> => {
   const transactionRef = await addDoc(collection(db, 'transactions'), {
     ...newTransactionData,
+    amount: Number(newTransactionData.amount), // Ensure amount is stored as a number
     date: serverTimestamp(), // CRITICAL FIX: Ensure date is saved
     createdAt: serverTimestamp(),
   });
@@ -121,11 +154,10 @@ export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' 
         timestamp: serverTimestamp(),
     });
 
-    // 4. TODO: Update merchant's wallet balance
-    // This should ideally be a Cloud Function triggered by the creation of a new transaction document
-    // to ensure security and transactional integrity.
-    // For now, this is a placeholder for the logic.
-    console.log(`Wallet update needed for merchant ${newTransactionData.merchantId} for amount ${newTransactionData.amount}`);
+    // 4. Update merchant's wallet balance
+    await updateDoc(merchantDocRef, {
+        walletBalance: increment(Number(newTransactionData.amount)),
+    });
   }
 };
 
