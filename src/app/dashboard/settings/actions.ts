@@ -25,6 +25,48 @@ export async function setAdminRole(uid: string, email: string) {
     }
 }
 
+// Function to get security settings by calling a Cloud Function
+export async function getSecuritySettings() {
+    try {
+        const functions = getFunctions(app);
+        const getSettings = httpsCallable(functions, 'getSecuritySettings');
+        const result = await getSettings();
+        return result.data;
+    } catch (error: any) {
+        console.error("Error getting security settings:", error);
+        // Return a default object structure on error to prevent UI crashes
+        return {
+            geminiApiKey: '',
+            reCaptchaSiteKey: '',
+            reCaptchaSecretKey: '',
+            isCaptchaEnabled: true,
+            isMerchantCaptchaRequired: true,
+            isAdmin2faEnabled: true,
+        };
+    }
+}
+
+// Function to get payment settings by calling a Cloud Function
+export async function getPaymentSettings() {
+    try {
+        const functions = getFunctions(app);
+        const getSettings = httpsCallable(functions, 'getPaymentSettings');
+        const result = await getSettings();
+        return result.data;
+    } catch (error: any) {
+        console.error("Error getting payment settings:", error);
+         // Return a default object structure on error
+        return {
+            stripePk: '',
+            stripeSk: '',
+            paypalClientId: '',
+            paypalSecret: '',
+            usdtWallet: '',
+            btcWallet: '',
+        };
+    }
+}
+
 
 export async function updateSecuritySettings(adminUid: string, data: {
     geminiApiKey?: string;
@@ -34,11 +76,15 @@ export async function updateSecuritySettings(adminUid: string, data: {
     isMerchantCaptchaRequired: boolean;
     isAdmin2faEnabled: boolean;
 }) {
-    // This logic needs to be moved to a callable Cloud Function
-    // for proper security and execution context.
-    console.warn("updateSecuritySettings is not fully implemented as a Cloud Function yet.");
-    // For now, return a success message to the UI to unblock.
-    return { success: true, message: "Settings will be saved upon implementing the backend function." };
+    try {
+        const functions = getFunctions(app);
+        const updateSettings = httpsCallable(functions, 'updateSecuritySettings');
+        await updateSettings(data);
+        return { success: true };
+    } catch(error: any) {
+        console.error("Error updating security settings:", error);
+        return { success: false, error: error.message };
+    }
 }
 
 export async function updatePaymentSettings(adminUid: string, data: {
@@ -49,7 +95,15 @@ export async function updatePaymentSettings(adminUid: string, data: {
     usdtWallet: string;
     btcWallet: string;
 }) {
-     // This logic needs to be moved to a callable Cloud Function
-    console.warn("updatePaymentSettings is not fully implemented as a Cloud Function yet.");
-    return { success: true, message: "Settings will be saved upon implementing the backend function." };
+     try {
+        const functions = getFunctions(app);
+        const updateSettings = httpsCallable(functions, 'updatePaymentSettings');
+        await updateSettings(data);
+        return { success: true };
+    } catch(error: any) {
+        console.error("Error updating payment settings:", error);
+        return { success: false, error: error.message };
+    }
 }
+
+    

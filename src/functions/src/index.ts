@@ -367,3 +367,44 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         throw new HttpsError('internal', 'An error occurred while syncing users.');
     }
 });
+
+
+// ===== Settings Functions =====
+
+const settingsDocRef = db.collection('platform').doc('settings');
+
+exports.getSecuritySettings = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can view settings.');
+    }
+    const doc = await settingsDocRef.get();
+    const data = doc.data()?.security || {};
+    return data;
+});
+
+exports.getPaymentSettings = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can view settings.');
+    }
+    const doc = await settingsDocRef.get();
+    const data = doc.data()?.payment || {};
+    return data;
+});
+
+exports.updateSecuritySettings = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update settings.');
+    }
+    await settingsDocRef.set({ security: request.data }, { merge: true });
+    return { success: true };
+});
+
+exports.updatePaymentSettings = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update settings.');
+    }
+    await settingsDocRef.set({ payment: request.data }, { merge: true });
+    return { success: true };
+});
+
+    
