@@ -46,7 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -297,6 +297,8 @@ export default function MerchantDashboardLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="flex flex-col p-0">
+                 <SheetTitle className="sr-only">Merchant Navigation Menu</SheetTitle>
+                 <SheetDescription className="sr-only">A list of navigation links for the merchant dashboard.</SheetDescription>
                  <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 gap-2">
                     <Link href="/merchant/dashboard" className="flex items-center gap-2 font-semibold">
                         <Logo />
