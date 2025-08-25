@@ -10,7 +10,7 @@
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
-import { getFirestore, WriteBatch } from "firebase-admin/firestore";
+import { getFirestore } from "firebase-admin/firestore";
 
 // This check prevents the app from being initialized multiple times, which causes an error.
 if (!admin.apps.length) {
@@ -18,13 +18,15 @@ if (!admin.apps.length) {
 }
 const db = getFirestore();
 
-// Helper function to create a user document
-const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord) => {
-    const role = "merchant"; // Default role
+// This function is triggered when a new user is created in Firebase Authentication.
+exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
+  try {
     const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`;
     let handle = namePart.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    // Ensure handle is unique
+    // --- CRITICAL FIX ---
+    // 1. Perform database reads (checking for handle uniqueness) OUTSIDE of the transaction.
+    // Transactions do not allow `get()` or `where()` queries inside them.
     let handleExists = true;
     let counter = 1;
     while (handleExists) {
@@ -37,13 +39,17 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
         }
     }
 
+    // 2. Now, create a batch to perform all writes atomically.
+    const batch = db.batch();
     const userDocRef = db.collection('users').doc(user.uid);
+    
+    // Set the user document in the batch
     batch.set(userDocRef, {
         uid: user.uid,
         email: user.email,
         fullName: user.displayName || 'New User',
         avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
-        role: role,
+        role: "merchant", // Default role
         status: 'Active',
         plan: 'Free',
         kycStatus: "Not Started",
@@ -53,15 +59,8 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
         handleEditCount: 0,
         walletBalance: 0,
     });
-};
-
-
-// This function now not only assigns a default role but also creates the user document in Firestore.
-exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
-  const batch = db.batch();
-  try {
-    await createUserDocument(batch, user);
     
+    // Set the audit log in the batch
     const auditLogRef = db.collection('audit_logs').doc();
     batch.set(auditLogRef, {
         type: 'USER_CREATED',
@@ -73,14 +72,15 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         }
     });
 
-    await batch.commit(); // Commit the batch transaction
+    // 3. Commit the transaction. This will save both the user and the audit log.
+    await batch.commit();
     
-    // Set custom claim AFTER the document is successfully created
+    // 4. Set custom claims only after the database operations are successful.
     await admin.auth().setCustomUserClaims(user.uid, { role: 'merchant' });
 
-    console.log(`Firestore document and custom claim created for user: ${user.uid}`);
+    console.log(`Firestore document and custom claim created successfully for user: ${user.uid}`);
   } catch (error) {
-    console.error(`Error processing new user: ${user.uid}`, error);
+    console.error(`FATAL: Error processing new user ${user.uid}:`, error);
   }
 });
 
@@ -273,16 +273,33 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         }
         const missingUserIds = allUserIds.filter(uid => !firestoreUserIds.has(uid));
         if (missingUserIds.length === 0) return { success: true, message: "All users are in sync.", created: 0, checked: allUsers.length };
-        const batch = db.batch();
+        
+        // Cannot use a transaction here as it would require reads inside.
+        // We will loop and create documents.
         let createdCount = 0;
         for (const uid of missingUserIds) {
             const userRecord = allUsers.find(u => u.uid === uid);
             if (userRecord) {
-                await createUserDocument(batch, userRecord);
+                 await db.collection('users').doc(userRecord.uid).set({
+                    uid: userRecord.uid,
+                    email: userRecord.email,
+                    fullName: userRecord.displayName || 'New User',
+                    avatar: userRecord.photoURL || `https://placehold.co/96x96.png?text=${(userRecord.displayName || 'U').charAt(0)}`,
+                    role: "merchant",
+                    status: 'Active',
+                    plan: 'Free',
+                    kycStatus: "Not Started",
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    handle: (userRecord.displayName || userRecord.email?.split('@')[0] || `user${userRecord.uid.substring(0, 6)}`).toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now(),
+                    handleLastUpdatedAt: null,
+                    handleEditCount: 0,
+                    walletBalance: 0,
+                });
+                await admin.auth().setCustomUserClaims(userRecord.uid, { role: 'merchant' });
                 createdCount++;
             }
         }
-        await batch.commit();
+        
         return { success: true, message: `Sync complete.`, created: createdCount, checked: allUsers.length };
     } catch (error) {
         console.error("Error syncing Auth to Firestore:", error);
@@ -365,7 +382,6 @@ exports.updateUserRole = onCall(async (request) => {
     // Audit log can be added here
     return { success: true };
 });
-
 
 exports.adjustWalletBalance = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can adjust wallets.');

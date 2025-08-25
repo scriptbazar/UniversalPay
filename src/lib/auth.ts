@@ -10,7 +10,7 @@ import {
     updateProfile,
     type User
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 interface UserData {
     fullName: string;
@@ -23,15 +23,14 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Update the user's profile in Firebase Auth immediately.
-        // The Cloud Function will use this information.
+        // The Cloud Function `addDefaultRoleClaim` will trigger on user creation.
+        // We can pass the display name to it via the user object.
         await updateProfile(user, {
             displayName: additionalData.fullName
         });
-
-        // The Cloud Function `addDefaultRoleClaim` will now reliably trigger and
-        // create the Firestore document. No need to write from client.
-        // A small delay to allow the function to trigger before redirection.
+        
+        // Give a moment for the Cloud Function to process before redirecting.
+        // This helps ensure claims and data are available upon redirect.
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         return { success: true, userId: user.uid };
