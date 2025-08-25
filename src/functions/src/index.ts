@@ -60,13 +60,11 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
 
 
 // This function now not only assigns a default role but also creates the user document in Firestore.
-// This is the CRITICAL FIX to prevent permission errors when listing users.
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   const batch = db.batch();
   try {
     await createUserDocument(batch, user);
     
-    // Create an audit log for the new user creation
     const auditLogRef = db.collection('audit_logs').doc();
     batch.set(auditLogRef, {
         type: 'USER_CREATED',
@@ -86,140 +84,110 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
 });
 
 
-// New callable function to set a user's role to admin
+// Callable function to set a user's role to admin
 exports.setAdminRole = onCall(async (request) => {
-  // Check if the user is authenticated
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'The function must be called while authenticated.');
+  if (!request.auth || request.auth.token.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Only admins can set user roles.');
   }
 
   const callingUserUid = request.auth.uid;
   const callingUserEmail = request.auth.token.email || 'Unknown';
+  const { uid: targetUid, role: newRole } = request.data;
 
-
-  // SECURITY FIX: Enforce that only existing admins can call this function.
-  if (request.auth.token.role !== 'admin') {
-     await db.collection('audit_logs').add({
-        type: 'SECURITY_ALERT',
-        message: `Non-admin user ${callingUserEmail} (${callingUserUid}) attempted to set an admin role.`,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        level: 'SECURITY_ALERT',
-    });
-    throw new HttpsError(
-      'permission-denied',
-      'Only admins can set user roles.'
-    );
-  }
-
-  const targetUid = request.data.uid;
-  const targetEmail = request.data.email; // Assuming target email is passed for logging
-
-  if (!targetUid || !targetEmail) {
-    throw new HttpsError('invalid-argument', 'The function must be called with "uid" and "email" arguments.');
+  if (!targetUid || !newRole || !['admin', 'merchant'].includes(newRole)) {
+    throw new HttpsError('invalid-argument', 'Valid "uid" and "role" are required.');
   }
 
   try {
-    // Set custom claim in Firebase Auth
-    await admin.auth().setCustomUserClaims(targetUid, { role: 'admin' });
-
-    // Also update the role in Firestore user document (optional, but good for consistency)
-    const userRef = db.collection('users').doc(targetUid);
-    await userRef.update({ role: 'admin' });
+    const targetUser = await admin.auth().getUser(targetUid);
+    await admin.auth().setCustomUserClaims(targetUid, { role: newRole });
+    await db.collection('users').doc(targetUid).update({ role: newRole });
     
-    // Create an audit log entry
     await db.collection('audit_logs').add({
         type: 'ROLE_CHANGE',
-        message: `Admin ${callingUserEmail} (${callingUserUid}) promoted ${targetEmail} (${targetUid}) to admin.`,
+        message: `Admin ${callingUserEmail} (${callingUserUid}) changed role of ${targetUser.email} (${targetUid}) to ${newRole}.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         level: 'CRITICAL',
-        details: {
-            targetUser: targetUid,
-            changedBy: callingUserUid,
-        }
+        details: { targetUser: targetUid, changedBy: callingUserUid, newRole }
     });
 
-
-    console.log(`User ${targetUid} has been assigned the 'admin' role.`);
     return { success: true };
   } catch (error) {
-    console.error(`Error setting admin role for user ${targetUid}:`, error);
-    // Log failure as well
-     await db.collection('audit_logs').add({
-        type: 'ERROR',
-        message: `Admin ${callingUserEmail} (${callingUserUid}) failed to promote ${targetEmail} (${targetUid}) to admin.`,
-        error: (error as Error).message,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        level: 'ERROR',
-    });
-    throw new HttpsError('internal', 'An internal error occurred while setting the admin role.');
+    console.error(`Error setting role for user ${targetUid}:`, error);
+    throw new HttpsError('internal', 'An internal error occurred.');
   }
+});
+
+// Callable function to update a user's status
+exports.updateUserStatus = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update user status.');
+    }
+    const { uid: targetUid, status: newStatus } = request.data;
+     if (!targetUid || !newStatus || !['Active', 'Suspended'].includes(newStatus)) {
+        throw new HttpsError('invalid-argument', 'Valid "uid" and "status" are required.');
+    }
+    try {
+        await db.collection('users').doc(targetUid).update({ status: newStatus });
+        await admin.auth().updateUser(targetUid, { disabled: newStatus === 'Suspended' });
+
+        const callingUserEmail = request.auth.token.email || 'Unknown';
+        const targetUser = await admin.auth().getUser(targetUid);
+        await db.collection('audit_logs').add({
+            type: 'STATUS_CHANGE',
+            message: `Admin ${callingUserEmail} updated status of ${targetUser.email} to ${newStatus}.`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            level: 'CRITICAL',
+            details: { targetUser: targetUid, changedBy: request.auth.uid, newStatus }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error(`Error updating status for user ${targetUid}:`, error);
+        throw new HttpsError('internal', 'An internal error occurred.');
+    }
 });
 
 
 // Callable function for a merchant to update their own profile
 exports.updateMerchantProfile = onCall(async (request) => {
-    // 1. Authentication Check
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'You must be logged in to update your profile.');
     }
-
     const uid = request.auth.uid;
-    const userEmail = request.auth.token.email || 'Unknown';
     const dataToUpdate = request.data;
-
-    // 2. Data Validation (simple check)
     if (!dataToUpdate || Object.keys(dataToUpdate).length === 0) {
         throw new HttpsError('invalid-argument', 'No update data provided.');
     }
     
-    // 3. Security Check: Prevent users from changing their own role or status
-    if (dataToUpdate.role) {
-        delete dataToUpdate.role;
-    }
-     if (dataToUpdate.status) {
-        delete dataToUpdate.status;
-    }
-     if (dataToUpdate.handle) {
-        delete dataToUpdate.handle; // Handles must be updated via their own function
-    }
-
+    // Prevent self-elevation or changing critical fields
+    delete dataToUpdate.role;
+    delete dataToUpdate.status;
+    delete dataToUpdate.handle;
+    delete dataToUpdate.walletBalance;
 
     try {
-        const userDocRef = db.collection('users').doc(uid);
-        await userDocRef.set(dataToUpdate, { merge: true });
-
-        // Create an audit log for the profile update
+        await db.collection('users').doc(uid).set(dataToUpdate, { merge: true });
         await db.collection('audit_logs').add({
             type: 'MERCHANT_PROFILE_UPDATE',
             level: 'INFO',
-            message: `Merchant ${userEmail} (${uid}) updated their profile.`,
-            details: {
-                ...dataToUpdate,
-                targetUser: uid,
-            }, 
+            message: `Merchant ${request.auth.token.email} (${uid}) updated their profile.`,
+            details: { targetUser: uid }, 
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-        return { success: true, message: 'Profile updated successfully.' };
-
+        return { success: true };
     } catch (error) {
         console.error(`Error updating profile for user ${uid}:`, error);
-        throw new HttpsError('internal', 'An internal error occurred while updating the profile.');
+        throw new HttpsError('internal', 'An internal error occurred.');
     }
 });
 
 // Callable function for a merchant to upgrade their subscription plan
 exports.upgradeSubscriptionPlan = onCall(async (request) => {
-    // 1. Authentication Check
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'You must be logged in to upgrade your plan.');
     }
-
     const uid = request.auth.uid;
-    const userEmail = request.auth.token.email || 'Unknown';
     const { planName } = request.data;
-
-    // 2. Data Validation
     if (!planName || !['Free', 'Pro', 'Premium'].includes(planName)) {
         throw new HttpsError('invalid-argument', 'A valid plan name is required.');
     }
@@ -228,128 +196,84 @@ exports.upgradeSubscriptionPlan = onCall(async (request) => {
         const userDocRef = db.collection('users').doc(uid);
         const userDoc = await userDocRef.get();
         const currentPlan = userDoc.data()?.plan || 'Free';
-        
         if (currentPlan === planName) {
              throw new HttpsError('failed-precondition', 'You are already on this plan.');
         }
-
-        // Update the user's plan in Firestore
         await userDocRef.update({ plan: planName });
-
-        // Create an audit log for the subscription change
         await db.collection('audit_logs').add({
             type: 'SUBSCRIPTION_CHANGE',
             level: 'MAJOR',
-            message: `Merchant ${userEmail} (${uid}) upgraded their plan from ${currentPlan} to ${planName}.`,
-            details: {
-                from: currentPlan,
-                to: planName,
-                targetUser: uid, // Add the targetUser field
-            },
+            message: `Merchant ${request.auth.token.email} (${uid}) upgraded from ${currentPlan} to ${planName}.`,
+            details: { from: currentPlan, to: planName, targetUser: uid },
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-        return { success: true, message: 'Plan upgraded successfully.' };
-
+        return { success: true };
     } catch (error: any) {
-        console.error(`Error upgrading plan for user ${uid}:`, error);
-        if (error instanceof HttpsError) {
-            throw error;
-        }
-        throw new HttpsError('internal', 'An internal error occurred while upgrading the plan.');
+        if (error instanceof HttpsError) throw error;
+        throw new HttpsError('internal', 'An internal error occurred.');
     }
 });
 
 // Callable function for a merchant to update their handle
 exports.updateMerchantHandle = onCall(async (request) => {
-    if (!request.auth) {
-        throw new HttpsError('unauthenticated', 'You must be logged in.');
-    }
-
+    if (!request.auth) throw new HttpsError('unauthenticated', 'You must be logged in.');
     const uid = request.auth.uid;
     const { handle } = request.data;
-
     if (!handle || handle.length < 3 || !/^[a-z0-9-]+$/.test(handle)) {
-        throw new HttpsError('invalid-argument', 'Handle must be at least 3 characters long and contain only lowercase letters, numbers, and hyphens.');
+        throw new HttpsError('invalid-argument', 'Handle must be 3+ chars, lowercase letters, numbers, hyphens.');
     }
 
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
     const userData = userDoc.data();
+    if (!userData) throw new HttpsError('not-found', 'User not found.');
 
-    if (!userData) {
-        throw new HttpsError('not-found', 'User not found.');
-    }
-
-    // Check uniqueness
     const handleQuery = await db.collection('users').where('handle', '==', handle).get();
     if (!handleQuery.empty && handleQuery.docs[0].id !== uid) {
         throw new HttpsError('already-exists', 'This handle is already taken.');
     }
-    
-    // Check edit limits
+
     const lastUpdated = userData.handleLastUpdatedAt?.toDate();
     const editCount = userData.handleEditCount || 0;
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-    let newEditCount = editCount;
-    if (lastUpdated && lastUpdated < threeMonthsAgo) {
-        newEditCount = 0; // Reset count if last update was more than 3 months ago
-    }
-    
+    let newEditCount = lastUpdated && lastUpdated < threeMonthsAgo ? 0 : editCount;
     if (newEditCount >= 3) {
-        throw new HttpsError('resource-exhausted', 'You have reached your handle edit limit for this period.');
+        throw new HttpsError('resource-exhausted', 'You have reached your handle edit limit.');
     }
 
-    // Update handle
     await userRef.update({
         handle: handle,
         handleLastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
         handleEditCount: newEditCount + 1
     });
 
-    return { success: true, message: 'Handle updated successfully.' };
+    return { success: true };
 });
 
-
-// New callable function to sync Auth users to Firestore
+// Callable function to sync Auth users to Firestore
 exports.syncAuthToFirestore = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') {
         throw new HttpsError('permission-denied', 'Only admins can perform this action.');
     }
-
     try {
         const listUsersResult = await admin.auth().listUsers(1000);
         const allUsers = listUsersResult.users;
         const allUserIds = allUsers.map(user => user.uid);
-
-        if (allUserIds.length === 0) {
-            return { success: true, message: "No users found in Authentication.", created: 0, checked: 0 };
-        }
-
+        if (allUserIds.length === 0) return { success: true, message: "No users in Auth.", created: 0, checked: 0 };
         const usersCollection = db.collection('users');
         const firestoreUserIds = new Set<string>();
-
-        // Firestore 'in' queries are limited to 30 items. We need to batch the requests.
-        const batchSize = 30;
-        for (let i = 0; i < allUserIds.length; i += batchSize) {
-            const batchIds = allUserIds.slice(i, i + batchSize);
+        for (let i = 0; i < allUserIds.length; i += 30) {
+            const batchIds = allUserIds.slice(i, i + 30);
             if (batchIds.length > 0) {
                 const firestoreUserDocs = await usersCollection.where(admin.firestore.FieldPath.documentId(), 'in', batchIds).get();
                 firestoreUserDocs.docs.forEach(doc => firestoreUserIds.add(doc.id));
             }
         }
-
         const missingUserIds = allUserIds.filter(uid => !firestoreUserIds.has(uid));
-        
-        if (missingUserIds.length === 0) {
-            return { success: true, message: "All users are already in sync.", created: 0, checked: allUsers.length };
-        }
-
+        if (missingUserIds.length === 0) return { success: true, message: "All users are in sync.", created: 0, checked: allUsers.length };
         const batch = db.batch();
         let createdCount = 0;
-
         for (const uid of missingUserIds) {
             const userRecord = allUsers.find(u => u.uid === uid);
             if (userRecord) {
@@ -357,11 +281,8 @@ exports.syncAuthToFirestore = onCall(async (request) => {
                 createdCount++;
             }
         }
-
         await batch.commit();
-
-        return { success: true, message: `Successfully synced users.`, created: createdCount, checked: allUsers.length };
-
+        return { success: true, message: `Sync complete.`, created: createdCount, checked: allUsers.length };
     } catch (error) {
         console.error("Error syncing Auth to Firestore:", error);
         throw new HttpsError('internal', 'An error occurred while syncing users.');
@@ -378,8 +299,7 @@ exports.getSecuritySettings = onCall(async (request) => {
         throw new HttpsError('permission-denied', 'Only admins can view settings.');
     }
     const doc = await settingsDocRef.get();
-    const data = doc.data()?.security || {};
-    return data;
+    return doc.data()?.security || {};
 });
 
 exports.getPaymentSettings = onCall(async (request) => {
@@ -387,8 +307,7 @@ exports.getPaymentSettings = onCall(async (request) => {
         throw new HttpsError('permission-denied', 'Only admins can view settings.');
     }
     const doc = await settingsDocRef.get();
-    const data = doc.data()?.payment || {};
-    return data;
+    return doc.data()?.payment || {};
 });
 
 exports.updateSecuritySettings = onCall(async (request) => {
@@ -407,45 +326,65 @@ exports.updatePaymentSettings = onCall(async (request) => {
     return { success: true };
 });
 
-
 // ===== Subscription Plan Management Functions =====
 
-const plansCollection = db.collection('subscriptionPlans');
-
-exports.getSubscriptionPlans = onCall(async (request) => {
-    const snapshot = await plansCollection.orderBy('price').get();
+exports.getSubscriptionPlans = onCall(async () => {
+    const snapshot = await db.collection('subscriptionPlans').orderBy('price').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 });
 
 exports.createSubscriptionPlan = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError('permission-denied', 'Only admins can create plans.');
-    }
-    const planData = request.data;
-    await plansCollection.add(planData);
+    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Admin only.');
+    await db.collection('subscriptionPlans').add(request.data);
     return { success: true };
 });
 
 exports.updateSubscriptionPlan = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError('permission-denied', 'Only admins can update plans.');
-    }
+    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Admin only.');
     const { id, ...planData } = request.data;
-    if (!id) {
-        throw new HttpsError('invalid-argument', 'Plan ID is required for updates.');
-    }
-    await plansCollection.doc(id).update(planData);
+    if (!id) throw new HttpsError('invalid-argument', 'Plan ID is required.');
+    await db.collection('subscriptionPlans').doc(id).update(planData);
     return { success: true };
 });
 
 exports.deleteSubscriptionPlan = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError('permission-denied', 'Only admins can delete plans.');
-    }
+    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Admin only.');
     const { id } = request.data;
-     if (!id) {
-        throw new HttpsError('invalid-argument', 'Plan ID is required for deletion.');
-    }
-    await plansCollection.doc(id).delete();
+    if (!id) throw new HttpsError('invalid-argument', 'Plan ID is required.');
+    await db.collection('subscriptionPlans').doc(id).delete();
+    return { success: true };
+});
+
+// ===== New User Management Functions =====
+exports.updateUserRole = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update roles.');
+    const { uid, role } = request.data;
+    await admin.auth().setCustomUserClaims(uid, { role });
+    await db.collection('users').doc(uid).update({ role });
+    // Audit log can be added here
+    return { success: true };
+});
+
+exports.updateUserStatus = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update status.');
+    const { uid, status } = request.data;
+    await db.collection('users').doc(uid).update({ status });
+    await admin.auth().updateUser(uid, { disabled: status === 'Suspended' });
+     // Audit log can be added here
+    return { success: true };
+});
+
+exports.adjustWalletBalance = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can adjust wallets.');
+    const { uid, adjustmentAmount, type } = request.data;
+    // In a real app, this would be a transactional update to a wallet document.
+    // For this demo, we are just logging the action.
+    await db.collection('audit_logs').add({
+        type: 'WALLET_ADJUSTMENT',
+        level: 'CRITICAL',
+        message: `Admin manually performed a ${type} of $${adjustmentAmount} for user ${uid}.`,
+        details: { targetUser: uid, amount: adjustmentAmount, type },
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
     return { success: true };
 });

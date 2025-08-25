@@ -27,6 +27,7 @@ import {
   ShieldAlert,
   AtSign, // Added for Handle Links
   Menu, // Added for Mobile Toggle
+  User as UserIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -210,41 +211,40 @@ export default function AdminDashboardLayout({
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
-          <div className="w-full flex-1 md:hidden">
-             {/* Placeholder for left-aligned items on mobile if needed */}
-          </div>
-           <div className="md:w-full md:flex-1">
+          <div className="w-full flex-1">
              {/* You can add a search bar here if needed in the future */}
           </div>
            <ThemeToggle />
-           <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-8 w-8 relative" onClick={handleReadNotifications}>
-                        <Bell className="h-4 w-4" />
-                        {hasUnread && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span></span>}
-                        <span className="sr-only">Toggle notifications</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {notifications.length > 0 ? (
-                        notifications.map(notif => (
-                            <DropdownMenuItem key={notif.id} className="flex items-start gap-2">
-                                <div className="flex-shrink-0 mt-1">
-                                    <notif.icon className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium">{notif.title}</p>
-                                    <p className="text-xs text-muted-foreground">{notif.description}</p>
-                                </div>
-                            </DropdownMenuItem>
-                        ))
-                    ) : (
-                        <DropdownMenuItem>No new notifications</DropdownMenuItem>
-                    )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="hidden md:flex">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-8 w-8 relative" onClick={handleReadNotifications}>
+                            <Bell className="h-4 w-4" />
+                            {hasUnread && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span></span>}
+                            <span className="sr-only">Toggle notifications</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80">
+                        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {notifications.length > 0 ? (
+                            notifications.map(notif => (
+                                <DropdownMenuItem key={notif.id} className="flex items-start gap-2">
+                                    <div className="flex-shrink-0 mt-1">
+                                        <notif.icon className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">{notif.title}</p>
+                                        <p className="text-xs text-muted-foreground">{notif.description}</p>
+                                    </div>
+                                </DropdownMenuItem>
+                            ))
+                        ) : (
+                            <DropdownMenuItem>No new notifications</DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
@@ -293,7 +293,7 @@ export default function AdminDashboardLayout({
                     </Link>
                 </div>
               <div className="flex-1 overflow-y-auto">
-                <nav className="grid gap-2 text-lg font-medium p-4">
+                <nav className="grid gap-2 text-base font-medium p-4">
                     {navItems.map((item) => (
                         <Link
                         key={item.label}
@@ -307,6 +307,18 @@ export default function AdminDashboardLayout({
                         </Link>
                     ))}
                 </nav>
+              </div>
+              <div className="mt-auto border-t p-4">
+                <div className="flex flex-col gap-2">
+                     <Button variant="ghost" className="w-full justify-start" asChild>
+                        <Link href={`/dashboard/users/${user.uid}`}>
+                            <UserIcon className="mr-2 h-4 w-4"/> Profile
+                        </Link>
+                     </Button>
+                     <Button variant="destructive" className="w-full justify-start" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4"/> Logout
+                     </Button>
+                 </div>
               </div>
             </SheetContent>
           </Sheet>
