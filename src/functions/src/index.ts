@@ -12,8 +12,7 @@ import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
-// When deployed to Firebase, the SDK is automatically initialized.
-// This check prevents re-initialization errors.
+// This check prevents the app from being initialized multiple times, which causes an error.
 if (!admin.apps.length) {
     admin.initializeApp();
 }
@@ -328,10 +327,17 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         if (allUserIds.length === 0) {
             return { success: true, message: "No users found in Authentication.", created: 0, checked: 0 };
         }
-
+        
         const usersCollection = db.collection('users');
-        const firestoreUserDocs = await usersCollection.where(admin.firestore.FieldPath.documentId(), 'in', allUserIds).get();
-        const firestoreUserIds = new Set(firestoreUserDocs.docs.map(doc => doc.id));
+        const firestoreUserIds = new Set<string>();
+
+        // Firestore 'in' queries are limited to 30 items. We need to batch the requests.
+        const batchSize = 30;
+        for (let i = 0; i < allUserIds.length; i += batchSize) {
+            const batchIds = allUserIds.slice(i, i + batchSize);
+            const firestoreUserDocs = await usersCollection.where(admin.firestore.FieldPath.documentId(), 'in', batchIds).get();
+            firestoreUserDocs.docs.forEach(doc => firestoreUserIds.add(doc.id));
+        }
 
         const missingUserIds = allUserIds.filter(uid => !firestoreUserIds.has(uid));
         
