@@ -10,8 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { signInUser, signInWithSocial } from "@/lib/auth";
-import { GoogleIcon } from "@/components/icons";
+import { signInUser } from "@/lib/auth";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
 
@@ -51,32 +50,6 @@ export default function LoginPage() {
         setIsLoading(false);
     }
   };
-
-  const handleSocialLogin = async (provider: 'google') => {
-    setIsLoading(true);
-    try {
-        const { success, user, error } = await signInWithSocial(provider);
-        if (success && user) {
-            toast({ title: "Login Successful", description: `Welcome back, ${user.fullName}!` });
-            router.push('/merchant/dashboard');
-        } else {
-            toast({
-                variant: "destructive",
-                title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
-                description: error,
-            });
-        }
-    } catch (error: any) {
-        toast({
-            variant: "destructive",
-            title: "Login Error",
-            description: error.message || "An unexpected error occurred.",
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
 
   return (
     <div className="flex-grow flex items-center justify-center bg-background p-4">
@@ -140,19 +113,6 @@ export default function LoginPage() {
                 <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
                     {isLoading ? 'Logging in...' : 'Log In'}
                 </Button>
-                <div className="relative w-full">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                    </div>
-                </div>
-                <div className="flex justify-center gap-2 w-full">
-                    <Button variant="outline" className="w-full" onClick={() => handleSocialLogin('google')} disabled={isLoading}>
-                        <GoogleIcon className="h-5 w-5 mr-2" /> Google
-                    </Button>
-                </div>
                 <p className="text-sm text-center text-muted-foreground mt-4">
                 Don't have an account?{' '}
                 <Link href="/signup" className="font-semibold text-primary hover:underline">

@@ -6,12 +6,10 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
     signOut,
-    GoogleAuthProvider,
-    signInWithPopup,
     sendPasswordResetEmail,
     type User
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface UserData {
     fullName: string;
@@ -103,76 +101,6 @@ export async function signInUser(email: string, password: string, loginType: 'ad
     }
 }
 
-
-export async function signInWithSocial(providerName: 'google') {
-    let provider;
-    switch (providerName) {
-        case 'google':
-            provider = new GoogleAuthProvider();
-            break;
-        default:
-            return { success: false, error: 'Invalid social provider.' };
-    }
-
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        // If the user document doesn't exist, it means this is their first login.
-        // We create their document on the client-side to avoid race conditions with Cloud Functions.
-        if (!userDoc.exists()) {
-             const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`;
-             let handle = namePart.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-            await setDoc(userDocRef, {
-                uid: user.uid,
-                email: user.email,
-                fullName: user.displayName || 'New User',
-                avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
-                role: 'merchant', // Social signup users are always merchants
-                status: 'Active',
-                plan: 'Free',
-                kycStatus: "Not Started",
-                createdAt: serverTimestamp(),
-                handle: handle,
-                handleLastUpdatedAt: null,
-                handleEditCount: 0,
-                walletBalance: 0,
-            });
-            await auth.currentUser?.getIdToken(true);
-        }
-        
-        const finalUserDoc = await getDoc(userDocRef);
-        
-        if (!finalUserDoc.exists()) {
-             // If it still doesn't exist, it's a real issue.
-             throw new Error("User document was not created. Please try again.");
-        }
-
-        const userData = finalUserDoc.data();
-
-        // Security check for social logins
-        if (userData?.role === 'admin') {
-            await signOut(auth);
-            return { success: false, error: 'Admin accounts cannot use social login.' };
-        }
-
-        return { success: true, user: { uid: user.uid, ...userData } };
-
-    } catch (error: any) {
-        console.error(`Error with ${providerName} sign-in:`, error);
-        if (error.code === 'auth/account-exists-with-different-credential') {
-            return { success: false, error: 'An account already exists with this email address. Please log in using the original method.' };
-        }
-        if (error.code === 'auth/unauthorized-domain') {
-            return { success: false, error: 'This domain is not authorized for login. Please contact support.' };
-        }
-        return { success: false, error: error.message };
-    }
-}
 
 export async function signOutUser() {
     try {

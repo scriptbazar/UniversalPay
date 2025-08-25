@@ -60,10 +60,9 @@ const createUserDocument = async (batch: WriteBatch, user: admin.auth.UserRecord
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   const batch = db.batch();
   try {
-    // 1. Prepare the user document creation in the batch
+    // 1. Prepare the user document and audit log in the batch
     await createUserDocument(batch, user);
     
-    // 2. Prepare the audit log creation in the batch
     const auditLogRef = db.collection('audit_logs').doc();
     batch.set(auditLogRef, {
         type: 'USER_CREATED',
@@ -75,13 +74,15 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         }
     });
 
-    // 3. Set the custom claim (this is an auth operation, not a DB one)
-    await admin.auth().setCustomUserClaims(user.uid, { role: 'merchant' });
-
-    // 4. Commit all database operations (user doc and audit log) at once
+    // 2. Commit the batched writes to Firestore FIRST.
     await batch.commit();
+    console.log(`Firestore document created for user: ${user.uid}`);
 
-    console.log(`Firestore document and custom claim created for user: ${user.uid}`);
+    // 3. AFTER Firestore operations are successful, set the custom claim.
+    // This is a separate, asynchronous operation on the Auth service.
+    await admin.auth().setCustomUserClaims(user.uid, { role: 'merchant' });
+    console.log(`Custom claim set for user: ${user.uid}`);
+
   } catch (error) {
     console.error(`Error processing new user: ${user.uid}`, error);
   }
@@ -369,6 +370,7 @@ exports.updateUserRole = onCall(async (request) => {
     return { success: true };
 });
 
+// Corrected updateUserStatus to also be callable
 exports.updateUserStatus = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update status.');
     const { uid, status } = request.data;

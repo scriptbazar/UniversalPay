@@ -1,13 +1,6 @@
 
 import React from 'react';
 
-export const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <title>Google</title>
-        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.3 1.84-4.24 1.84-5.18 0-9.4-4.22-9.4-9.4s4.22-9.4 9.4-9.4c2.6 0 4.52.98 5.96 2.32l2.44-2.44C19.42 1.62 16.2.5 12.48.5 5.82.5.5 5.82.5 12.5s5.32 12 11.98 12c3.24 0 5.96-1.08 7.94-3.02 2.06-2.06 2.62-5.12 2.62-8.32 0-.66-.06-1.3-.18-1.92h-10.8z"/>
-    </svg>
-);
-
 export const GitHubIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
         <title>GitHub</title>

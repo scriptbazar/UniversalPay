@@ -10,8 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { createUser, signInWithSocial } from "@/lib/auth";
-import { GoogleIcon } from "@/components/icons";
+import { createUser } from "@/lib/auth";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 
 
@@ -57,31 +56,6 @@ export default function SignupPage() {
         }
     } catch (error: any) {
          toast({
-            variant: "destructive",
-            title: "Signup Error",
-            description: error.message || "An unexpected error occurred.",
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  };
-  
-  const handleSocialSignup = async (provider: 'google') => {
-    setIsLoading(true);
-    try {
-        const { success, user, error } = await signInWithSocial(provider);
-        if (success && user) {
-            toast({ title: "Account Created", description: `Welcome to UniversalPay, ${user.fullName}!` });
-            router.push('/merchant/dashboard');
-        } else {
-            toast({
-                variant: "destructive",
-                title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Signup Failed`,
-                description: error,
-            });
-        }
-    } catch (error: any) {
-        toast({
             variant: "destructive",
             title: "Signup Error",
             description: error.message || "An unexpected error occurred.",
@@ -149,19 +123,6 @@ export default function SignupPage() {
             <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" type="submit" disabled={isLoading}>
                 {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
-            <div className="relative w-full">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
-                </div>
-            </div>
-            <div className="flex justify-center gap-2 w-full">
-                <Button variant="outline" className="w-full" onClick={() => handleSocialSignup('google')} type="button" disabled={isLoading}>
-                    <GoogleIcon className="h-5 w-5 mr-2" /> Google
-                </Button>
-            </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">
               By creating an account, you agree to our{' '}
               <Link href="/terms" className="underline hover:text-primary">Terms of Service</Link> and{' '}
