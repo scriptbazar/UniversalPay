@@ -50,7 +50,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(isSyncing);
   
   // Security settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -510,3 +510,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
