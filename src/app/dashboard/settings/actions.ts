@@ -1,16 +1,11 @@
 
 'use server';
 
-import { db, admin } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 // This is a simplified check. In a real app, you'd initialize admin only once.
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp();
-  } catch (e) {
-    console.error('Firebase admin initialization error', e);
-  }
-}
+const { db, admin } = getFirebaseAdmin();
+
 
 const settingsDocRef = db.collection('platform_settings').doc('global');
 

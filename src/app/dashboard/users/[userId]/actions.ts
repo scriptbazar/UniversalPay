@@ -1,9 +1,11 @@
 
 'use server';
 
-import { db, admin } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { doc, updateDoc, writeBatch, collection } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
+
+const { db, admin } = getFirebaseAdmin();
 
 /**
  * Updates a user's role in Firestore and their custom claim in Firebase Auth.

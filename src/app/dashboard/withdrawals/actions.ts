@@ -1,8 +1,10 @@
 
 "use server"
 import { revalidatePath } from "next/cache";
-import { db, admin } from "@/lib/firebaseAdmin";
+import { getFirebaseAdmin } from "@/lib/firebaseAdmin";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch } from "firebase/firestore";
+
+const { db, admin } = getFirebaseAdmin();
 
 // Define the Withdrawal type
 export type Withdrawal = {

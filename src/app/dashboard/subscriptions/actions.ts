@@ -1,7 +1,8 @@
 
 'use server';
 
-import { db, admin } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+const { db, admin } = getFirebaseAdmin();
 
 export async function logSubscriptionChange(adminUid: string, action: 'created' | 'updated' | 'deleted', planName: string, details?: any) {
     if (!adminUid) {
