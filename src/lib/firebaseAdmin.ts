@@ -45,7 +45,7 @@ function initialize() {
       console.error('Firebase admin initialization error:', error.message);
       // We throw an error here to make it clear that the initialization failed.
       // This prevents subsequent calls from failing silently.
-      throw new Error('Could not initialize Firebase Admin SDK. Please check your credentials and .env file.');
+      throw new Error('Could not initialize Firebase Admin SDK. Please check your credentials.');
     }
   } else {
     app = admin.apps[0]!;
