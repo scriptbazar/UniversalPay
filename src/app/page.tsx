@@ -19,19 +19,9 @@ const features = [
     description: "Accept payments in Indian UPI (Paytm, PhonePe) and International Cryptocurrencies (USDT, BTC, ETH).",
   },
   {
-    icon: <ShieldCheck className="w-8 h-8 text-primary" />,
-    title: "AI Fraud Prevention",
-    description: "Our smart fraud prevention system flags suspicious activity and maintains user/merchant risk scores.",
-  },
-  {
     icon: <Code className="w-8 h-8 text-primary" />,
     title: "Developer Friendly",
     description: "Integrate easily with our SDKs for PHP, Node.js, Flutter, React, and a JS Embedded Checkout Widget.",
-  },
-  {
-    icon: <Globe className="w-8 h-8 text-primary" />,
-    title: "Global Payment Methods",
-    description: "Enable local payment methods for customers worldwide. They pay locally, you get settled globally in crypto.",
   },
   {
     icon: <Zap className="w-8 h-8 text-primary" />,
@@ -49,19 +39,9 @@ const features = [
     description: "Customers pay in their native currency, and our system automatically converts it to your chosen crypto.",
   },
    {
-    icon: <AppWindow className="w-8 h-8 text-primary" />,
-    title: "White-Label Solution",
-    description: "Use your own domain and branding. Resellers can manage client merchants under their own brand.",
-  },
-   {
     icon: <FileText className="w-8 h-8 text-primary" />,
     title: "Invoicing System",
     description: "Create and send professional online invoices with payment links directly from your dashboard.",
-  },
-   {
-    icon: <Briefcase className="w-8 h-8 text-primary" />,
-    title: "Reseller Program",
-    description: "Run your own payment gateway business. Onboard clients, manage their sales, and earn a commission.",
   },
   {
     icon: <LinkIcon className="w-8 h-8 text-primary" />,
