@@ -2,6 +2,10 @@
 import admin from 'firebase-admin';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { App } from 'firebase-admin/app';
+import * as dotenv from 'dotenv';
+
+// Ensure environment variables are loaded for server-side code.
+dotenv.config();
 
 let app: App | undefined;
 let db: Firestore | undefined;
