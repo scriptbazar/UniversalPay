@@ -25,8 +25,8 @@ import {
   AppWindow,
   History,
   ShieldAlert,
-  AtSign, // Added for Handle Links
-  Menu, // Added for Mobile Toggle
+  AtSign,
+  Menu,
   User as UserIcon
 } from "lucide-react";
 
@@ -52,7 +52,6 @@ import { auth, db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc } from "firebase/firestore";
 import { getNotifications, type Notification } from "@/lib/notificationsData";
-import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
@@ -211,6 +210,10 @@ export default function AdminDashboardLayout({
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
+          <Link href="/dashboard" className="md:hidden">
+            <Logo />
+            <span className="sr-only">Home</span>
+          </Link>
           <div className="w-full flex-1" />
            <ThemeToggle />
             <div className="hidden md:flex">
@@ -309,7 +312,7 @@ export default function AdminDashboardLayout({
                 </nav>
               </div>
               <div className="mt-auto border-t p-4">
-                <div className="flex gap-2">
+                 <div className="flex gap-2">
                      <Button variant="ghost" className="w-full justify-center" asChild>
                         <Link href={`/dashboard/users/${user.uid}`}>
                             <UserIcon className="mr-2 h-4 w-4"/> Profile

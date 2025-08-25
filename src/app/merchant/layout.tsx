@@ -217,6 +217,10 @@ export default function MerchantDashboardLayout({
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
+          <Link href="/merchant/dashboard" className="md:hidden">
+            <Logo />
+            <span className="sr-only">Home</span>
+          </Link>
           <div className="w-full flex-1" />
            <ThemeToggle />
            <div className="hidden md:flex">
