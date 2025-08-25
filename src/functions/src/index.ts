@@ -12,10 +12,8 @@ import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
-// This check prevents the app from being initialized multiple times, which causes an error.
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
+// Initialize the SDK only once
+admin.initializeApp();
 const db = getFirestore();
 
 // Helper function to create a user document
@@ -364,4 +362,37 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         console.error("Error syncing Auth to Firestore:", error);
         throw new HttpsError('internal', 'An error occurred while syncing users.');
     }
+});
+
+// Callable function to handle reseller requests
+exports.handleResellerRequest = onCall(async (request) => {
+  if (!request.auth || request.auth.token.role !== 'admin') {
+    throw new HttpsError('permission-denied', 'Only admins can perform this action.');
+  }
+
+  const { requestId, merchantId, action } = request.data;
+  if (!requestId || !merchantId || !action || !['approve', 'reject'].includes(action)) {
+    throw new HttpsError('invalid-argument', 'Missing required arguments.');
+  }
+
+  const requestRef = db.collection('resellerRequests').doc(requestId);
+  const userRef = db.collection('users').doc(merchantId);
+
+  try {
+    const batch = db.batch();
+    
+    if (action === 'approve') {
+      batch.update(userRef, { role: 'reseller' });
+      batch.update(requestRef, { status: 'approved' });
+      await admin.auth().setCustomUserClaims(merchantId, { role: 'reseller' });
+    } else { // reject
+      batch.update(requestRef, { status: 'rejected' });
+    }
+
+    await batch.commit();
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error handling reseller request:", error);
+    throw new HttpsError('internal', 'Failed to handle reseller request.');
+  }
 });

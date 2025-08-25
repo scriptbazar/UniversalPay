@@ -2,53 +2,32 @@
 import admin from 'firebase-admin';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { App } from 'firebase-admin/app';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
 
-// This ensures that .env variables are loaded when this module is imported.
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+let app: App;
+let db: Firestore;
 
-let app: App | undefined;
-let db: Firestore | undefined;
-
-function initialize() {
+try {
     if (admin.apps.length > 0) {
         app = admin.app();
         db = getFirestore(app);
-        return { admin, db };
-    }
+    } else {
+         const serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY!);
 
-    try {
-        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-        if (!projectId) {
-            throw new Error('NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable is not set.');
-        }
-        
         app = admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            projectId: projectId,
+            credential: admin.credential.cert(serviceAccount),
+            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         });
-
         db = getFirestore(app);
-        console.log('Firebase Admin SDK initialized successfully.');
-
-    } catch (error: any) {
-        console.error('Firebase admin initialization error:', error.message);
-        let helpfulError = 'Could not initialize Firebase Admin SDK. Please check your credentials.';
-        if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            helpfulError += ' The GOOGLE_APPLICATION_CREDENTIALS environment variable is missing.';
-        } else if (error.message.includes('ENOENT') || error.message.includes('not found')) {
-             helpfulError += ` The service account file specified in GOOGLE_APPLICATION_CREDENTIALS was not found at path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`;
-        }
-        throw new Error(helpfulError);
     }
-    
-    return { admin, db };
+} catch (error: any) {
+    console.error('Firebase Admin SDK Initialization Error:', error.message);
+    // We don't throw an error here to prevent crashing the server on failed import,
+    // but subsequent calls will fail if 'db' is not initialized.
 }
 
-export function getFirebaseAdmin() {
-    if (!app || !db) {
-        return initialize();
+export const getFirebaseAdmin = () => {
+    if (!db) {
+        throw new Error('Firebase Admin SDK is not initialized. Check server logs for the original error.');
     }
     return { admin, db };
-}
+};
