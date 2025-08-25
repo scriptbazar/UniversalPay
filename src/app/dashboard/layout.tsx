@@ -65,7 +65,7 @@ const navItems = [
   { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
   { href: "/dashboard/payment-pages", icon: AppWindow, label: "Payment Pages" },
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
-  { href: "/dashboard/subscriptions", icon: Replace, label: "Subscriptions" },
+  { href: "/dashboard/subscriptions", icon: Repeat, label: "Subscriptions" },
   { href: "/dashboard/invoices", icon: FileText, label: "All Invoices" },
   { href: "/dashboard/currency-converter", icon: ArrowRightLeft, label: "Currency Converter" },
   { href: "/dashboard/support", icon: LifeBuoy, label: "Support Tickets" },
@@ -211,9 +211,7 @@ export default function AdminDashboardLayout({
       </div>
       <div className="flex flex-col">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
-          <div className="w-full flex-1">
-             {/* You can add a search bar here if needed in the future */}
-          </div>
+          <div className="w-full flex-1" />
            <ThemeToggle />
             <div className="hidden md:flex">
                 <DropdownMenu>
@@ -245,36 +243,38 @@ export default function AdminDashboardLayout({
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-                <Image
-                  src={userProfile?.avatar || "https://placehold.co/36x36.png"}
-                  width={36}
-                  height={36}
-                  alt="Avatar"
-                  className="rounded-full"
-                  data-ai-hint="administrator avatar"
-                />
-                <span className="sr-only">Toggle user menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{userProfile?.fullName || 'Admin'}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/users/${user.uid}`}>Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <div className="hidden md:flex">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="icon" className="rounded-full">
+                        <Image
+                        src={userProfile?.avatar || "https://placehold.co/36x36.png"}
+                        width={36}
+                        height={36}
+                        alt="Avatar"
+                        className="rounded-full"
+                        data-ai-hint="administrator avatar"
+                        />
+                        <span className="sr-only">Toggle user menu</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>{userProfile?.fullName || 'Admin'}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/users/${user.uid}`}>Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/settings">Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Logout</span>
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
           <Sheet>
             <SheetTrigger asChild>
               <Button
