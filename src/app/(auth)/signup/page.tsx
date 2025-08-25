@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { createUser, signInWithSocial } from "@/lib/auth";
-import { GoogleIcon, GitHubIcon, FacebookIcon } from "@/components/icons";
+import { GoogleIcon } from "@/components/icons";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 
 
@@ -66,7 +66,7 @@ export default function SignupPage() {
     }
   };
   
-  const handleSocialSignup = async (provider: 'google' | 'github' | 'facebook') => {
+  const handleSocialSignup = async (provider: 'google') => {
     setIsLoading(true);
     try {
         const { success, user, error } = await signInWithSocial(provider);
@@ -158,14 +158,8 @@ export default function SignupPage() {
                 </div>
             </div>
             <div className="flex justify-center gap-2 w-full">
-                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('google')} type="button" disabled={isLoading}>
-                    <GoogleIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">Google</span>
-                </Button>
-                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('github')} type="button" disabled={isLoading}>
-                    <GitHubIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">GitHub</span>
-                </Button>
-                <Button variant="outline" className="flex-grow" onClick={() => handleSocialSignup('facebook')} type="button" disabled={isLoading}>
-                    <FacebookIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">Facebook</span>
+                <Button variant="outline" className="w-full" onClick={() => handleSocialSignup('google')} type="button" disabled={isLoading}>
+                    <GoogleIcon className="h-5 w-5 mr-2" /> Google
                 </Button>
             </div>
              <p className="text-xs text-center text-muted-foreground px-4 pt-4">

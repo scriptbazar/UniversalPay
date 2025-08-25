@@ -12,7 +12,9 @@ import {
     query, 
     where, 
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction,
+    increment,
 } from 'firebase/firestore';
 import { addInvoice } from './invoicesData';
 import { addDoc as addAuditLogDoc } from 'firebase/firestore';
@@ -62,9 +64,10 @@ export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' 
 
   // Post-payment actions for successful transactions
   if (newTransactionData.status === 'Success') {
-    const merchantDoc = await getDoc(doc(db, 'users', newTransactionData.merchantId));
-    const merchantName = merchantDoc.exists() ? merchantDoc.data().fullName : 'Your Merchant';
-    
+    const merchantDocRef = doc(db, 'users', newTransactionData.merchantId);
+    const merchantDocSnap = await getDoc(merchantDocRef);
+    const merchantName = merchantDocSnap.exists() ? merchantDocSnap.data().fullName : 'Your Merchant';
+
     // 1. Create an invoice
     await addInvoice({
       merchantId: newTransactionData.merchantId,
@@ -77,7 +80,34 @@ export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' 
       status: 'Paid',
     });
 
-    // 2. Create an audit log entry for the merchant
+    // 2. Create or update customer record
+    const customerQuery = query(collection(db, 'customers'), where('email', '==', newTransactionData.customerEmail), where('merchantId', '==', newTransactionData.merchantId));
+    const customerSnapshot = await getDocs(customerQuery);
+    
+    if (customerSnapshot.empty) {
+        // Create new customer
+        await addDoc(collection(db, 'customers'), {
+            merchantId: newTransactionData.merchantId,
+            merchantName: merchantName,
+            email: newTransactionData.customerEmail,
+            name: newTransactionData.customerName || 'New Customer',
+            avatar: `https://placehold.co/40x40.png?text=${(newTransactionData.customerName || 'N').charAt(0)}`,
+            totalSpent: Number(newTransactionData.amount),
+            transactions: 1,
+            lastSeen: new Date().toLocaleDateString(),
+            joinedDate: new Date().toISOString().split("T")[0]
+        });
+    } else {
+        // Update existing customer
+        const customerDocRef = customerSnapshot.docs[0].ref;
+        await updateDoc(customerDocRef, {
+            totalSpent: increment(Number(newTransactionData.amount)),
+            transactions: increment(1),
+            lastSeen: new Date().toLocaleDateString()
+        });
+    }
+
+    // 3. Create an audit log entry for the merchant
     await addAuditLogDoc(collection(db, 'audit_logs'), {
         type: 'PAYMENT_RECEIVED',
         level: 'INFO',
@@ -91,7 +121,7 @@ export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' 
         timestamp: serverTimestamp(),
     });
 
-    // 3. TODO: Update merchant's wallet balance
+    // 4. TODO: Update merchant's wallet balance
     // This should ideally be a Cloud Function triggered by the creation of a new transaction document
     // to ensure security and transactional integrity.
     // For now, this is a placeholder for the logic.

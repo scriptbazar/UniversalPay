@@ -3,6 +3,8 @@ import * as admin from "firebase-admin";
 
 const toTimestamp = (dateString: string) => admin.firestore.Timestamp.fromDate(new Date(dateString));
 
+// This file is no longer used to seed data directly but can be kept for reference
+// or used for testing environments. The application now uses live Firestore data.
 const customers = [
     {
         merchantId: 'user_1',

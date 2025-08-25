@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Copy, Search, File } from "lucide-react"; // Import Search and File
+import { ArrowLeft, Copy, Search, File } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
@@ -12,26 +12,29 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input"; // Import Input
+import { Input } from "@/components/ui/input";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 
-// Mock data generation function - in a real app, this would be an API call
-const generateMockTransactions = () => {
-    return Array.from({ length: 150 }, (_, i) => {
-        const methods = ["UPI", "Crypto", "Page", "Link"];
-        const success = Math.random() > 0.1;
-        const day = 28 - Math.floor(i / 6);
-        return {
-            id: `UVRLP${987654321 - i}`,
-            customerEmail: `customer${i + 1}@example.com`,
-            amount: (Math.random() * 500 + 10).toFixed(2),
-            date: new Date(2023, 10, day).toISOString().split('T')[0],
-            method: methods[i % 4],
-            status: success ? 'Success' : 'Failed'
-        }
-    });
+type Transaction = {
+    id: string;
+    customerEmail: string;
+    amount: string;
+    date: Date;
+    method: string;
+    status: 'Success' | 'Failed' | 'Pending';
 };
 
-type Transaction = ReturnType<typeof generateMockTransactions>[0];
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -44,23 +47,53 @@ const getStatusBadgeVariant = (status: string) => {
 export default function TransactionsByMethodPage() {
     const params = useParams();
     const { toast } = useToast();
-    const method = params.method as string;
+    const method = (params.method as string).toUpperCase();
 
-    const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-
+    
     useEffect(() => {
-        // Generate data on the client side to avoid hydration issues
-        setAllMockTransactions(generateMockTransactions());
-    }, []);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setLoading(true);
+                const transQuery = query(
+                    collection(db, "transactions"), 
+                    where("merchantId", "==", user.uid),
+                    where("method", "==", method),
+                    orderBy("date", "desc")
+                );
 
-    const pageTitle = method ? `${method.charAt(0).toUpperCase() + method.slice(1)} Transactions` : 'Transactions';
+                const unsubscribeSnapshot = onSnapshot(transQuery, (snapshot) => {
+                    const fetched = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        date: toDateSafe(doc.data().date)
+                    } as Transaction));
+                    setTransactions(fetched);
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error fetching transactions by method:", error);
+                    toast({ variant: 'destructive', title: 'Error', description: 'Could not load transaction data.' });
+                    setLoading(false);
+                });
+
+                return () => unsubscribeSnapshot();
+            } else {
+                setLoading(false);
+            }
+        });
+        return () => unsubscribe();
+    }, [method, toast]);
+
+
+    const pageTitle = method ? `${method.charAt(0).toUpperCase() + method.slice(1).toLowerCase()} Transactions` : 'Transactions';
 
     const filteredTransactions = useMemo(() => {
-        let filtered = allMockTransactions.filter(tx => tx.method.toLowerCase() === method.toLowerCase());
+        let filtered = transactions;
 
         if (searchTerm) {
             filtered = filtered.filter(tx =>
@@ -70,7 +103,7 @@ export default function TransactionsByMethodPage() {
         }
         
         return filtered;
-    }, [method, allMockTransactions, searchTerm]);
+    }, [transactions, searchTerm]);
 
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
     const paginatedTransactions = filteredTransactions.slice(
@@ -132,21 +165,23 @@ export default function TransactionsByMethodPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map(tx => (
+                            {loading ? (
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading transactions...</TableCell></TableRow>
+                            ) : paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.id}</TableCell>
                                     <TableCell>{tx.customerEmail}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                     </TableCell>
-                                    <TableCell>{tx.date}</TableCell>
+                                    <TableCell>{tx.date.toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">${tx.amount}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                    {filteredTransactions.length === 0 && (
-                        <p className="text-center text-muted-foreground py-8">No transactions found for the selected filters.</p>
+                    {!loading && filteredTransactions.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No transactions found for this method.</p>
                     )}
                 </CardContent>
                  <CardFooter>

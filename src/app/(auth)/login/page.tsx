@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { signInUser, signInWithSocial } from "@/lib/auth";
-import { GoogleIcon, GitHubIcon, FacebookIcon } from "@/components/icons";
+import { GoogleIcon } from "@/components/icons";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'github' | 'facebook') => {
+  const handleSocialLogin = async (provider: 'google') => {
     setIsLoading(true);
     try {
         const { success, user, error } = await signInWithSocial(provider);
@@ -149,14 +149,8 @@ export default function LoginPage() {
                     </div>
                 </div>
                 <div className="flex justify-center gap-2 w-full">
-                    <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('google')} disabled={isLoading}>
-                        <GoogleIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">Google</span>
-                    </Button>
-                    <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('github')} disabled={isLoading}>
-                        <GitHubIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">GitHub</span>
-                    </Button>
-                    <Button variant="outline" className="flex-grow" onClick={() => handleSocialLogin('facebook')} disabled={isLoading}>
-                        <FacebookIcon className="h-5 w-5 sm:mr-2" /> <span className="hidden sm:inline">Facebook</span>
+                    <Button variant="outline" className="w-full" onClick={() => handleSocialLogin('google')} disabled={isLoading}>
+                        <GoogleIcon className="h-5 w-5 mr-2" /> Google
                     </Button>
                 </div>
                 <p className="text-sm text-center text-muted-foreground mt-4">

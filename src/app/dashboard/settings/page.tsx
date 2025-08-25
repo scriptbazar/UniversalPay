@@ -11,12 +11,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign, RefreshCw, Database } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { updateSecuritySettings, getSecuritySettings, updatePaymentSettings, getPaymentSettings } from './actions';
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { auth, app } from "@/lib/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { getSecuritySettings, updateSecuritySettings, getPaymentSettings, updatePaymentSettings } from "./actions";
 
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -52,7 +52,6 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
   
   // Security settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -226,34 +225,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSeedDatabase = async () => {
-    setIsSeeding(true);
-    try {
-        const functions = getFunctions(app);
-        const seedFunction = httpsCallable(functions, 'seedDatabase');
-        const result = await seedFunction();
-        const data = result.data as { success: boolean, message: string };
-        if (data.success) {
-            toast({
-                title: "Database Seeding",
-                description: data.message,
-            });
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error: any) {
-        console.error("Error seeding database:", error);
-        toast({
-            variant: "destructive",
-            title: "Seeding Failed",
-            description: error.message || "Could not seed the database.",
-        });
-    } finally {
-        setIsSeeding(false);
-    }
-    };
-
-
   return (
     <div className="space-y-6">
       <div>
@@ -312,9 +283,7 @@ export default function SettingsPage() {
                     </Select>
                 </div>
               </div>
-
-               <Separator />
-              
+              <Separator />
                <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
                   <h4 className="font-medium">Platform Maintenance Mode</h4>
@@ -406,33 +375,15 @@ export default function SettingsPage() {
                     </div>
                 </div>
                  <Separator />
-                <div className="space-y-4">
-                     <h3 className="font-medium text-lg flex items-center gap-2"><RefreshCw className="w-5 h-5" /> User Data Synchronization</h3>
-                    <div className="rounded-lg border p-4">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h4 className="font-medium">Sync Auth Users to Firestore</h4>
-                                <p className="text-sm text-muted-foreground mt-1">If some users appear in Firebase Authentication but not in your Firestore database, this tool will create the missing profiles.</p>
-                            </div>
-                             <Button onClick={handleSyncUsers} disabled={isSyncing}>
-                                {isSyncing ? 'Syncing...' : 'Sync Users'}
-                            </Button>
-                        </div>
+                 <div className="rounded-lg border p-4 flex items-center justify-between">
+                    <div>
+                        <h4 className="font-medium flex items-center gap-2"><Database className="w-4 h-4" /> Database Tools</h4>
+                        <p className="text-sm text-muted-foreground mt-1">Run maintenance tasks on your Firestore database.</p>
                     </div>
-                </div>
-                <Separator />
-                <div className="space-y-4">
-                     <h3 className="font-medium text-lg flex items-center gap-2"><Database className="w-5 h-5" /> Database Seeding</h3>
-                    <div className="rounded-lg border p-4">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h4 className="font-medium">Seed Database with Initial Data</h4>
-                                <p className="text-sm text-muted-foreground mt-1">Populate your Firestore with sample customers, transactions, and other data for demonstration purposes. This will only run if the collections are empty.</p>
-                            </div>
-                             <Button onClick={handleSeedDatabase} disabled={isSeeding}>
-                                {isSeeding ? 'Seeding...' : 'Seed Database'}
-                            </Button>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <Button onClick={handleSyncUsers} disabled={isSyncing} variant="outline">
+                            <RefreshCw className="mr-2 h-4 w-4"/> {isSyncing ? 'Syncing...' : 'Sync Auth Users'}
+                        </Button>
                     </div>
                 </div>
               </CardContent>

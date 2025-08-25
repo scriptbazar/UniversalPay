@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,7 +17,19 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { type Transaction, getSuspiciousTransactions } from "@/lib/fraudData";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+type Transaction = {
+  id: string;
+  user: string;
+  ip: string;
+  amount: number;
+  riskScore: number;
+  reason: string;
+  status: "Flagged" | "Blocked" | "Held" | "KYC Requested" | "Approved";
+  timestamp: string;
+};
 
 
 const getRiskBadgeVariant = (score: number) => {
@@ -27,7 +39,7 @@ const getRiskBadgeVariant = (score: number) => {
 }
 
 const getStatusBadgeVariant = (status: Transaction["status"]) => {
-    if (status === "Blocked") return "destructive";
+    if (status === "Blocked" || status === "Flagged") return "destructive";
     if (status === "Held") return "secondary";
     if (status === "KYC Requested") return "default";
     return "outline"
@@ -36,8 +48,30 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
 
 export default function FraudDetectionPage() {
   const { toast } = useToast();
-  const [transactions, setTransactions] = useState<Transaction[]>(getSuspiciousTransactions());
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    const q = query(collection(db, "transactions"), where("status", "in", ["Flagged", "Blocked", "Held", "KYC Requested"]));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedTransactions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        // Mock data for fields not in transaction schema for now
+        user: doc.data().merchantId, // or customerId
+        ip: "192.168.1.1",
+        riskScore: Math.floor(Math.random() * 40) + 60, // 60-100
+        reason: "High frequency transactions",
+        timestamp: new Date(doc.data().date?.toDate()).toLocaleString(),
+      } as Transaction));
+      setTransactions(fetchedTransactions);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleAction = (action: string, txId: string) => {
     if (action === "Requested KYC") {
@@ -91,7 +125,11 @@ export default function FraudDetectionPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((tx) => (
+              {loading ? (
+                <TableRow><TableCell colSpan={7} className="h-24 text-center">Loading suspicious transactions...</TableCell></TableRow>
+              ) : transactions.length === 0 ? (
+                <TableRow><TableCell colSpan={7} className="h-24 text-center">No suspicious transactions found.</TableCell></TableRow>
+              ) : (transactions.map((tx) => (
                 <TableRow key={tx.id} onClick={() => setSelectedTx(tx)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{tx.id}</TableCell>
                   <TableCell>{tx.user} <br/> <span className="text-muted-foreground text-xs">{tx.ip}</span></TableCell>
@@ -105,7 +143,7 @@ export default function FraudDetectionPage() {
                   </TableCell>
                   <TableCell>{tx.timestamp}</TableCell>
                 </TableRow>
-              ))}
+              )))}
             </TableBody>
           </Table>
         </CardContent>

@@ -7,8 +7,6 @@ import {
     signInWithEmailAndPassword,
     signOut,
     GoogleAuthProvider,
-    GithubAuthProvider,
-    FacebookAuthProvider,
     signInWithPopup,
     sendPasswordResetEmail,
     type User
@@ -105,17 +103,11 @@ export async function signInUser(email: string, password: string, loginType: 'ad
 }
 
 
-export async function signInWithSocial(providerName: 'google' | 'github' | 'facebook') {
+export async function signInWithSocial(providerName: 'google') {
     let provider;
     switch (providerName) {
         case 'google':
             provider = new GoogleAuthProvider();
-            break;
-        case 'github':
-            provider = new GithubAuthProvider();
-            break;
-        case 'facebook':
-            provider = new FacebookAuthProvider();
             break;
         default:
             return { success: false, error: 'Invalid social provider.' };

@@ -11,7 +11,6 @@ import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
 import { getFirestore, WriteBatch } from "firebase-admin/firestore";
-import { initialData } from "./initialData";
 
 // This check prevents the app from being initialized multiple times, which causes an error.
 if (!admin.apps.length) {
@@ -313,38 +312,6 @@ exports.updateMerchantHandle = onCall(async (request) => {
     return { success: true, message: 'Handle updated successfully.' };
 });
 
-exports.handleResellerRequest = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError('permission-denied', 'Only admins can handle reseller requests.');
-    }
-
-    const { requestId, merchantId, action } = request.data;
-    if (!requestId || !merchantId || !['approve', 'reject'].includes(action)) {
-        throw new HttpsError('invalid-argument', 'Missing required parameters.');
-    }
-
-    const requestRef = db.collection('resellerRequests').doc(requestId);
-    const userRef = db.collection('users').doc(merchantId);
-
-    try {
-        const batch = db.batch();
-        if (action === 'approve') {
-            batch.update(userRef, { role: 'reseller' });
-            batch.update(requestRef, { status: 'approved' });
-        } else {
-            batch.update(requestRef, { status: 'rejected' });
-        }
-        
-        await batch.commit();
-
-        return { success: true };
-    } catch (error) {
-        console.error("Error handling reseller request: ", error);
-        throw new HttpsError('internal', 'Could not process the request.');
-    }
-});
-
-
 // New callable function to sync Auth users to Firestore
 exports.syncAuthToFirestore = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') {
@@ -390,53 +357,3 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         throw new HttpsError('internal', 'An error occurred while syncing users.');
     }
 });
-
-
-// New callable function to seed database with initial data
-exports.seedDatabase = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError('permission-denied', 'Only admins can perform this action.');
-    }
-
-    const { customers, transactions, invoices, paymentLinks, tickets, withdrawals, walletLoadRequests } = initialData;
-
-    try {
-        const batch = db.batch();
-        
-        // Helper to add documents to a collection if it's empty
-        const seedCollection = async (collectionName: string, data: any[]) => {
-            const snapshot = await db.collection(collectionName).limit(1).get();
-            if (snapshot.empty) {
-                console.log(`Seeding ${collectionName}...`);
-                data.forEach((item) => {
-                    const docRef = db.collection(collectionName).doc();
-                    batch.set(docRef, item);
-                });
-                return data.length;
-            }
-            return 0;
-        };
-
-        let totalSeeded = 0;
-        totalSeeded += await seedCollection('customers', customers);
-        totalSeeded += await seedCollection('transactions', transactions);
-        totalSeeded += await seedCollection('invoices', invoices);
-        totalSeeded += await seedCollection('paymentLinks', paymentLinks);
-        totalSeeded += await seedCollection('tickets', tickets);
-        totalSeeded += await seedCollection('withdrawals', withdrawals);
-        totalSeeded += await seedCollection('walletLoadRequests', walletLoadRequests);
-
-        await batch.commit();
-        
-        if (totalSeeded > 0) {
-            return { success: true, message: `Database seeded successfully with ${totalSeeded} documents.` };
-        } else {
-            return { success: true, message: "Database already contains data. No new data was added." };
-        }
-
-    } catch (error) {
-        console.error("Error seeding database:", error);
-        throw new HttpsError('internal', 'An error occurred while seeding the database.');
-    }
-});
-
