@@ -18,7 +18,7 @@ import {
   Link2,
   ArrowRightLeft,
   FileText,
-  Replace,
+  Repeat,
   LifeBuoy,
   PlusCircle,
   LogOut,
