@@ -376,14 +376,12 @@ export default function SettingsPage() {
                  <Separator />
                  <div className="rounded-lg border p-4 flex items-center justify-between">
                     <div>
-                        <h4 className="font-medium flex items-center gap-2"><Database className="w-4 h-4" /> User Data Synchronization</h4>
-                        <p className="text-sm text-muted-foreground mt-1">If users exist in Authentication but not in the database, this tool will sync them.</p>
+                        <h4 className="font-medium flex items-center gap-2"><Database className="w-4 h-4" /> User Data Tools</h4>
+                        <p className="text-sm text-muted-foreground mt-1">Synchronize users from Authentication to Firestore if they are missing.</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button onClick={handleSyncUsers} disabled={isSyncing} variant="outline">
-                            <RefreshCw className="mr-2 h-4 w-4"/> {isSyncing ? 'Syncing...' : 'Sync Users'}
-                        </Button>
-                    </div>
+                    <Button onClick={handleSyncUsers} disabled={isSyncing} variant="outline">
+                        <RefreshCw className="mr-2 h-4 w-4"/> {isSyncing ? 'Syncing...' : 'Sync Users'}
+                    </Button>
                 </div>
               </CardContent>
               <CardFooter>
