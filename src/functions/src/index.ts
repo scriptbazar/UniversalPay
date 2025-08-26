@@ -9,8 +9,8 @@
  */
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { getFirestore } from "firebase-admin/firestore";
+import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
+import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
 // This check prevents the app from being initialized multiple times, which causes an error.
 if (!admin.apps.length) {
@@ -26,6 +26,7 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   
   // 1. Create the user document in Firestore
   const userDocRef = db.collection('users').doc(user.uid);
+  // Create a more unique handle to prevent collisions
   const handle = `${(user.displayName || user.email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}-${user.uid.substring(0, 6)}`;
   
   batch.set(userDocRef, {

@@ -26,7 +26,8 @@ export async function createUser(email: string, password: string, additionalData
         // IMPORTANT: We no longer write to Firestore from the client.
         // The `addDefaultRoleClaim` Cloud Function will be the single source of truth
         // for creating the user document. This is more secure and reliable.
-        // We only update the Auth display name here.
+        
+        // We can still update the Auth display name here.
         await updateProfile(user, { displayName: additionalData.fullName });
 
         // We add a small delay to allow the Cloud Function to trigger and set the custom claim.
