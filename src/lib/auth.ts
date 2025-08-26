@@ -23,14 +23,15 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function `addDefaultRoleClaim` will trigger on user creation.
-        // We can pass the display name to it via the user object.
+        // The Cloud Function `addDefaultRoleClaim` will be triggered by this user creation event.
+        // It needs the `displayName` to create the initial user document in Firestore.
+        // We will pass it via the user object.
         await updateProfile(user, {
             displayName: additionalData.fullName
         });
         
         // Give a moment for the Cloud Function to process before redirecting.
-        // This helps ensure claims and data are available upon redirect.
+        // This helps ensure the user document and claims are available upon redirect.
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         return { success: true, userId: user.uid };

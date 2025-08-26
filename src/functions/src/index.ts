@@ -10,7 +10,7 @@
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
 // This check prevents the app from being initialized multiple times, which causes an error.
 if (!admin.apps.length) {
@@ -19,37 +19,25 @@ if (!admin.apps.length) {
 const db = getFirestore();
 
 // This function is triggered when a new user is created in Firebase Authentication.
+// It creates a corresponding user document in Firestore and sets a default role.
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
   try {
-    const namePart = user.displayName || user.email?.split('@')[0] || `user${user.uid.substring(0, 6)}`;
-    let handle = namePart.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    // --- CRITICAL FIX ---
-    // 1. Perform database reads (checking for handle uniqueness) OUTSIDE of the transaction.
-    // Transactions do not allow `get()` or `where()` queries inside them.
-    let handleExists = true;
-    let counter = 1;
-    while (handleExists) {
-        const handleQuery = await db.collection('users').where('handle', '==', handle).get();
-        if (handleQuery.empty) {
-            handleExists = false;
-        } else {
-            handle = `${namePart.toLowerCase().replace(/[^a-z0-9]/g, '')}${counter}`;
-            counter++;
-        }
-    }
-
-    // 2. Now, create a batch to perform all writes atomically.
     const batch = db.batch();
     const userDocRef = db.collection('users').doc(user.uid);
-    
-    // Set the user document in the batch
+    const auditLogRef = db.collection('audit_logs').doc();
+
+    const namePart = user.displayName || user.email?.split('@')[0] || 'user';
+    // A more reliable way to generate a unique handle without reads inside a transaction.
+    const handle = `${namePart.toLowerCase().replace(/[^a-z0-9]/g, '')}-${user.uid.substring(0, 6)}`;
+    const role = "merchant"; // Default role
+
+    // 1. Create the user document in Firestore
     batch.set(userDocRef, {
         uid: user.uid,
         email: user.email,
         fullName: user.displayName || 'New User',
         avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
-        role: "merchant", // Default role
+        role: role,
         status: 'Active',
         plan: 'Free',
         kycStatus: "Not Started",
@@ -60,11 +48,10 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         walletBalance: 0,
     });
     
-    // Set the audit log in the batch
-    const auditLogRef = db.collection('audit_logs').doc();
+    // 2. Create an audit log for the user creation
     batch.set(auditLogRef, {
         type: 'USER_CREATED',
-        message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: 'merchant'.`,
+        message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: '${role}'.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         level: 'INFO',
         details: {
@@ -72,15 +59,16 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         }
     });
 
-    // 3. Commit the transaction. This will save both the user and the audit log.
+    // 3. Commit the batch to save both documents atomically
     await batch.commit();
     
-    // 4. Set custom claims only after the database operations are successful.
-    await admin.auth().setCustomUserClaims(user.uid, { role: 'merchant' });
+    // 4. Set custom claims for the user role. This happens after the DB write is confirmed.
+    await admin.auth().setCustomUserClaims(user.uid, { role });
 
-    console.log(`Firestore document and custom claim created successfully for user: ${user.uid}`);
+    console.log(`Firestore document, audit log, and custom claim created successfully for user: ${user.uid}`);
   } catch (error) {
     console.error(`FATAL: Error processing new user ${user.uid}:`, error);
+    // You might want to add more robust error handling here, like sending an alert.
   }
 });
 
@@ -274,12 +262,12 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         const missingUserIds = allUserIds.filter(uid => !firestoreUserIds.has(uid));
         if (missingUserIds.length === 0) return { success: true, message: "All users are in sync.", created: 0, checked: allUsers.length };
         
-        // Cannot use a transaction here as it would require reads inside.
-        // We will loop and create documents.
         let createdCount = 0;
         for (const uid of missingUserIds) {
             const userRecord = allUsers.find(u => u.uid === uid);
             if (userRecord) {
+                 const namePart = userRecord.displayName || userRecord.email?.split('@')[0] || 'user';
+                 const handle = `${namePart.toLowerCase().replace(/[^a-z0-9]/g, '')}-${userRecord.uid.substring(0, 6)}`;
                  await db.collection('users').doc(userRecord.uid).set({
                     uid: userRecord.uid,
                     email: userRecord.email,
@@ -290,7 +278,7 @@ exports.syncAuthToFirestore = onCall(async (request) => {
                     plan: 'Free',
                     kycStatus: "Not Started",
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                    handle: (userRecord.displayName || userRecord.email?.split('@')[0] || `user${userRecord.uid.substring(0, 6)}`).toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now(),
+                    handle: handle,
                     handleLastUpdatedAt: null,
                     handleEditCount: 0,
                     walletBalance: 0,
