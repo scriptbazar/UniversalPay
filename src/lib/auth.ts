@@ -22,12 +22,6 @@ export async function createUser(email: string, password: string, additionalData
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // Update the user's profile in Firebase Auth
-        await updateProfile(user, {
-            displayName: additionalData.fullName,
-            photoURL: `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`
-        });
         
         // --- Create user document directly in Firestore from the client ---
         const userDocRef = doc(db, 'users', user.uid);
@@ -37,8 +31,8 @@ export async function createUser(email: string, password: string, additionalData
             uid: user.uid,
             email: user.email,
             fullName: additionalData.fullName,
-            mobile: additionalData.mobile, // Now we save the mobile number
-            avatar: user.photoURL,
+            mobile: additionalData.mobile,
+            avatar: `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`,
             role: 'merchant', // Default role
             status: 'Active',
             plan: 'Free',
