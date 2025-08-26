@@ -9,7 +9,7 @@
  */
 import { auth } from "firebase-functions";
 import * as admin from "firebase-admin";
-import { onCall, HttpsError } from "firebase-functions/v2/https"; // onCall import added
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, WriteBatch } from "firebase-admin/firestore";
 
 // This check prevents the app from being initialized multiple times, which causes an error.
@@ -19,37 +19,14 @@ if (!admin.apps.length) {
 const db = getFirestore();
 
 // This function is triggered when a new user is created in Firebase Authentication.
-// It creates a corresponding user document in Firestore and sets a default role.
+// Its SOLE responsibility is to set the default role claim and create an audit log.
+// The user document is now created on the client-side.
 exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
+  const role = "merchant"; // Default role
   try {
-    const batch = db.batch();
-    const userDocRef = db.collection('users').doc(user.uid);
-    const auditLogRef = db.collection('audit_logs').doc();
-
-    const namePart = user.displayName || user.email?.split('@')[0] || 'user';
-    // A more reliable way to generate a unique handle without reads inside a transaction.
-    const handle = `${namePart.toLowerCase().replace(/[^a-z0-9]/g, '')}-${user.uid.substring(0, 6)}`;
-    const role = "merchant"; // Default role
-
-    // 1. Create the user document in Firestore
-    batch.set(userDocRef, {
-        uid: user.uid,
-        email: user.email,
-        fullName: user.displayName || 'New User',
-        avatar: user.photoURL || `https://placehold.co/96x96.png?text=${(user.displayName || 'U').charAt(0)}`,
-        role: role,
-        status: 'Active',
-        plan: 'Free',
-        kycStatus: "Not Started",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        handle: handle,
-        handleLastUpdatedAt: null,
-        handleEditCount: 0,
-        walletBalance: 0,
-    });
+    await admin.auth().setCustomUserClaims(user.uid, { role });
     
-    // 2. Create an audit log for the user creation
-    batch.set(auditLogRef, {
+    await db.collection('audit_logs').add({
         type: 'USER_CREATED',
         message: `New user signed up: ${user.email} (uid: ${user.uid}). Assigned default role: '${role}'.`,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -59,16 +36,9 @@ exports.addDefaultRoleClaim = auth.user().onCreate(async (user) => {
         }
     });
 
-    // 3. Commit the batch to save both documents atomically
-    await batch.commit();
-    
-    // 4. Set custom claims for the user role. This happens after the DB write is confirmed.
-    await admin.auth().setCustomUserClaims(user.uid, { role });
-
-    console.log(`Firestore document, audit log, and custom claim created successfully for user: ${user.uid}`);
+    console.log(`Custom claim created successfully for user: ${user.uid}`);
   } catch (error) {
-    console.error(`FATAL: Error processing new user ${user.uid}:`, error);
-    // You might want to add more robust error handling here, like sending an alert.
+    console.error(`FATAL: Error setting custom claim for user ${user.uid}:`, error);
   }
 });
 
@@ -241,6 +211,7 @@ exports.updateMerchantHandle = onCall(async (request) => {
 });
 
 // Callable function to sync Auth users to Firestore
+// NOTE: This will likely not be needed with the client-side write approach, but keeping it for admins.
 exports.syncAuthToFirestore = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') {
         throw new HttpsError('permission-denied', 'Only admins can perform this action.');
@@ -266,8 +237,7 @@ exports.syncAuthToFirestore = onCall(async (request) => {
         for (const uid of missingUserIds) {
             const userRecord = allUsers.find(u => u.uid === uid);
             if (userRecord) {
-                 const namePart = userRecord.displayName || userRecord.email?.split('@')[0] || 'user';
-                 const handle = `${namePart.toLowerCase().replace(/[^a-z0-9]/g, '')}-${userRecord.uid.substring(0, 6)}`;
+                 const handle = `${(userRecord.email?.split('@')[0] || `user`).toLowerCase().replace(/[^a-z0-9]/g, '')}-${userRecord.uid.substring(0, 6)}`;
                  await db.collection('users').doc(userRecord.uid).set({
                     uid: userRecord.uid,
                     email: userRecord.email,

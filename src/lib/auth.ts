@@ -10,7 +10,7 @@ import {
     updateProfile,
     type User
 } from 'firebase/auth';
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface UserData {
     fullName: string;
@@ -23,15 +23,35 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // The Cloud Function `addDefaultRoleClaim` will be triggered by this user creation event.
-        // It needs the `displayName` to create the initial user document in Firestore.
-        // We will pass it via the user object.
+        // Update the user's profile in Firebase Auth
         await updateProfile(user, {
-            displayName: additionalData.fullName
+            displayName: additionalData.fullName,
+            photoURL: `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`
         });
         
-        // Give a moment for the Cloud Function to process before redirecting.
-        // This helps ensure the user document and claims are available upon redirect.
+        // --- Create user document directly in Firestore from the client ---
+        const userDocRef = doc(db, 'users', user.uid);
+        const handle = `${additionalData.fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${user.uid.substring(0, 6)}`;
+        
+        await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            fullName: additionalData.fullName,
+            mobile: additionalData.mobile, // Now we save the mobile number
+            avatar: user.photoURL,
+            role: 'merchant', // Default role
+            status: 'Active',
+            plan: 'Free',
+            kycStatus: 'Not Started',
+            createdAt: serverTimestamp(),
+            handle: handle,
+            handleLastUpdatedAt: null,
+            handleEditCount: 0,
+            walletBalance: 0,
+        });
+
+        // The Cloud Function will now ONLY handle setting the custom claim.
+        // We add a small delay to allow the claim to be set before redirecting.
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         return { success: true, userId: user.uid };
