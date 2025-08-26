@@ -23,30 +23,15 @@ export async function createUser(email: string, password: string, additionalData
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // --- Create user document directly in Firestore from the client ---
-        const userDocRef = doc(db, 'users', user.uid);
-        const handle = `${additionalData.fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}-${user.uid.substring(0, 6)}`;
-        
-        await setDoc(userDocRef, {
-            uid: user.uid,
-            email: user.email,
-            fullName: additionalData.fullName,
-            mobile: additionalData.mobile,
-            avatar: `https://placehold.co/96x96.png?text=${additionalData.fullName.charAt(0)}`,
-            role: 'merchant', // Default role
-            status: 'Active',
-            plan: 'Free',
-            kycStatus: 'Not Started',
-            createdAt: serverTimestamp(),
-            handle: handle,
-            handleLastUpdatedAt: null,
-            handleEditCount: 0,
-            walletBalance: 0,
-        });
+        // IMPORTANT: We no longer write to Firestore from the client.
+        // The `addDefaultRoleClaim` Cloud Function will be the single source of truth
+        // for creating the user document. This is more secure and reliable.
+        // We only update the Auth display name here.
+        await updateProfile(user, { displayName: additionalData.fullName });
 
-        // The Cloud Function will now ONLY handle setting the custom claim.
-        // We add a small delay to allow the claim to be set before redirecting.
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // We add a small delay to allow the Cloud Function to trigger and set the custom claim.
+        // This helps ensure the user has the correct role when they are redirected.
+        await new Promise(resolve => setTimeout(resolve, 2500));
 
         return { success: true, userId: user.uid };
     } catch (error: any) {
