@@ -62,7 +62,6 @@ const navItems = [
   { href: "/dashboard/customers", icon: Users, label: "All Customers" },
   { href: "/dashboard/transactions", icon: CreditCard, label: "All Transactions" },
   { href: "/dashboard/payment-links", icon: Link2, label: "Payment Links" },
-  { href: "/dashboard/payment-pages", icon: AppWindow, label: "Payment Pages" },
   { href: "/dashboard/withdrawals", icon: Landmark, label: "Withdrawals" },
   { href: "/dashboard/subscriptions", icon: Repeat, label: "Subscriptions" },
   { href: "/dashboard/invoices", icon: FileText, label: "All Invoices" },
