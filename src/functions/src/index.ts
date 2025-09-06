@@ -118,6 +118,36 @@ exports.setAdminRole = onCall(async (request) => {
   }
 });
 
+// Callable function to update a user's status
+exports.updateUserStatus = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update user status.');
+    }
+    const { uid: targetUid, status: newStatus } = request.data;
+     if (!targetUid || !newStatus || !['Active', 'Suspended'].includes(newStatus)) {
+        throw new HttpsError('invalid-argument', 'Valid "uid" and "status" are required.');
+    }
+    try {
+        await db.collection('users').doc(targetUid).update({ status: newStatus });
+        await admin.auth().updateUser(targetUid, { disabled: newStatus === 'Suspended' });
+
+        const callingUserEmail = request.auth.token.email || 'Unknown';
+        const targetUser = await admin.auth().getUser(targetUid);
+        await db.collection('audit_logs').add({
+            type: 'STATUS_CHANGE',
+            message: `Admin ${callingUserEmail} updated status of ${targetUser.email} to ${newStatus}.`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            level: 'CRITICAL',
+            details: { targetUser: targetUid, changedBy: request.auth.uid, newStatus }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error(`Error updating status for user ${targetUid}:`, error);
+        throw new HttpsError('internal', 'An internal error occurred.');
+    }
+});
+
+
 // Callable function for a merchant to update their own profile
 exports.updateMerchantProfile = onCall(async (request) => {
     if (!request.auth) {
@@ -332,16 +362,6 @@ exports.updateUserRole = onCall(async (request) => {
     await admin.auth().setCustomUserClaims(uid, { role });
     await db.collection('users').doc(uid).update({ role });
     // Audit log can be added here
-    return { success: true };
-});
-
-// Corrected updateUserStatus to also be callable
-exports.updateUserStatus = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update status.');
-    const { uid, status } = request.data;
-    await db.collection('users').doc(uid).update({ status });
-    await admin.auth().updateUser(uid, { disabled: status === 'Suspended' });
-     // Audit log can be added here
     return { success: true };
 });
 
