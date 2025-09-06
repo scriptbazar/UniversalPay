@@ -31,6 +31,12 @@ const toDateSafe = (dateFieldValue: any): Date => {
     return dateFieldValue.toDate();
   }
   if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
     return new Date(dateFieldValue);
   }
   return new Date(); 

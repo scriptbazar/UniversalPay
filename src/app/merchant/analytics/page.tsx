@@ -33,20 +33,19 @@ type Customer = {
 };
 
 const toDateSafe = (dateFieldValue: any): Date => {
-  if (!dateFieldValue) return new Date();
-  if (dateFieldValue instanceof Date) {
-    return dateFieldValue;
-  }
-  if (dateFieldValue.toDate && typeof dateFieldValue.toDate === 'function') {
+  if (dateFieldValue instanceof Timestamp) {
     return dateFieldValue.toDate();
   }
-  if (typeof dateFieldValue === 'string' || typeof dateFieldValue === 'number') {
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
     const date = new Date(dateFieldValue);
     if (!isNaN(date.getTime())) {
-      return date;
+        return date;
     }
   }
-  return new Date();
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
 };
 
 export default function AnalyticsPage() {
@@ -343,4 +342,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-

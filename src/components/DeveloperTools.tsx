@@ -247,24 +247,29 @@ export function DeveloperTools() {
                                     <h3 className="font-semibold text-lg mb-2">Node.js Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Node.js library to get started.</p>
                                     <CodeSnippet code="npm install universalpay-node" />
-                                    <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Processing a Payment</h4>
                                     <CodeSnippet code={`
 const universalpay = require('universalpay-node')('YOUR_SECRET_KEY');
 
-async function createPayment() {
+async function processPayment(paymentData) {
   try {
-    const payment = await universalpay.payments.create({
-      amount: 1000, // amount in smallest currency unit
-      currency: 'INR',
-      receipt: 'receipt_order_7432',
-    });
-    console.log('Payment created:', payment.id);
-    // Redirect customer to payment.checkout_url
+    const result = await universalpay.payments.process(paymentData);
+    console.log('Payment processed:', result.transactionId);
+    // Return result to your client
+    return result;
   } catch (error) {
     console.error('Error:', error);
+    throw error;
   }
 }
-createPayment();
+
+// Example usage:
+processPayment({
+    amount: 10.00,
+    currency: 'USD',
+    method: 'Card',
+    customerId: 'cust_12345'
+});
                                     `} />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
                                     <CodeSnippet code={`
@@ -296,22 +301,21 @@ app.post('/webhook', express.json({type: 'application/json'}), (req, res) => {
                                     <h3 className="font-semibold text-lg mb-2">PHP Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Use Composer to install our PHP library.</p>
                                     <CodeSnippet code="composer require universalpay/universalpay-php" />
-                                    <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Processing a Payment</h4>
                                     <CodeSnippet code={`
 require_once('vendor/autoload.php');
 use UniversalPay\\Api;
 
 $api = new Api('YOUR_SECRET_KEY');
 
-$payment = $api->payment->create([
-    'amount' => 1000,
-    'currency' => 'INR',
-    'receipt' => 'receipt_order_7432'
+$result = $api->payment->process([
+    'amount' => 10.00,
+    'currency' => 'USD',
+    'method' => 'Card',
+    'customerId' => 'cust_12345'
 ]);
 
-$paymentId = $payment->id;
-$checkoutUrl = $payment->checkout_url;
-// Redirect customer to $checkoutUrl
+$transactionId = $result->transactionId;
                                     `} />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
                                     <CodeSnippet code={`
@@ -336,19 +340,19 @@ try {
                                     <h3 className="font-semibold text-lg mb-2">Python Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Python library using pip.</p>
                                     <CodeSnippet code="pip install universalpay-python" />
-                                    <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Processing a Payment</h4>
                                     <CodeSnippet code={`
 import universalpay
 client = universalpay.Client(api_key="YOUR_SECRET_KEY")
 
-payment = client.payment.create({
-  "amount": 1000,
-  "currency": "INR",
-  "receipt": "receipt_order_7432"
+result = client.payment.process({
+  "amount": 10.00,
+  "currency": "USD",
+  "method": "Card",
+  "customerId": "cust_12345"
 })
 
-print(payment['id'])
-# Redirect customer to payment['checkout_url']
+print(result['transactionId'])
                                     `} />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
                                     <CodeSnippet code={`
@@ -382,14 +386,14 @@ def verify_signature(payload_body, signature, secret):
 require 'universalpay'
 UniversalPay.api_key = 'YOUR_SECRET_KEY'
 
-payment = UniversalPay::Payment.create(
-  amount: 1000,
-  currency: 'INR',
-  receipt: 'receipt_order_7432'
+result = UniversalPay::Payment.process(
+  amount: 10.00,
+  currency: 'USD',
+  method: 'Card',
+  customer_id: 'cust_12345'
 )
 
-puts payment.id
-# Redirect customer to payment.checkout_url
+puts result.transaction_id
                                     `} />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
                                     <CodeSnippet code={`
@@ -415,7 +419,7 @@ end
                                     <h3 className="font-semibold text-lg mb-2">Go Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Go module.</p>
                                     <CodeSnippet code="go get github.com/universalpay/universalpay-go" />
-                                    <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Processing a Payment</h4>
                                     <CodeSnippet code={`
 package main
 
@@ -428,17 +432,17 @@ func main() {
     client := universalpay.NewClient("YOUR_SECRET_KEY", "")
     
     params := &universalpay.PaymentParams{
-        Amount:   universalpay.Int(1000),
-        Currency: universalpay.String("INR"),
-        Receipt:  universalpay.String("receipt_order_7432"),
+        Amount:   universalpay.Float64(10.00),
+        Currency: universalpay.String("USD"),
+        Method:   universalpay.String("Card"),
+        CustomerID: universalpay.String("cust_12345"),
     }
 
-    payment, err := client.Payment.Create(params)
+    result, err := client.Payment.Process(params)
     if err != nil {
         panic(err)
     }
-    fmt.Println(payment.ID)
-    // Redirect customer to payment.CheckoutURL
+    fmt.Println(result.TransactionID)
 }
                                     `} />
                                      <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
@@ -474,22 +478,22 @@ func verifySignature(payloadBody, signature, secret string) bool {
   <version>1.0.0</version>
 </dependency>
                                     `} />
-                                    <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Processing a Payment</h4>
                                     <CodeSnippet code={`
 import com.universalpay.api.UniversalPayClient;
-import com.universalpay.model.Payment;
+import com.universalpay.model.PaymentResult;
 import org.json.JSONObject;
 
 UniversalPayClient client = new UniversalPayClient("YOUR_SECRET_KEY");
 
 JSONObject paymentParams = new JSONObject();
-paymentParams.put("amount", 1000);
-paymentParams.put("currency", "INR");
-paymentParams.put("receipt", "receipt_order_7432");
+paymentParams.put("amount", 10.00);
+paymentParams.put("currency", "USD");
+paymentParams.put("method", "Card");
+paymentParams.put("customerId", "cust_12345");
 
-Payment payment = client.payment.create(paymentParams);
-System.out.println(payment.get("id"));
-// Redirect to payment.get("checkout_url");
+PaymentResult result = client.payment.process(paymentParams);
+System.out.println(result.get("transactionId"));
                                     `} />
                                      <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>
                                     <CodeSnippet code={`
