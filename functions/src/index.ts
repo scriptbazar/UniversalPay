@@ -365,16 +365,6 @@ exports.updateUserRole = onCall(async (request) => {
     return { success: true };
 });
 
-// Corrected updateUserStatus to also be callable
-exports.updateUserStatus = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update status.');
-    const { uid, status } = request.data;
-    await db.collection('users').doc(uid).update({ status });
-    await admin.auth().updateUser(uid, { disabled: status === 'Suspended' });
-     // Audit log can be added here
-    return { success: true };
-});
-
 exports.adjustWalletBalance = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can adjust wallets.');
     const { uid, adjustmentAmount, type } = request.data;
