@@ -17,22 +17,7 @@ import { Timestamp, collection, query, where, onSnapshot, orderBy, doc, getDoc }
 import { db } from "@/lib/firebase";
 import type { Customer, CustomerTransaction } from '@/lib/customersData';
 import { Skeleton } from "@/components/ui/skeleton";
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue.toDate === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue.toDate === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
-};
+import { toDateSafe } from "@/lib/utils";
 
 
 const getStatusBadgeVariant = (status: string) => {

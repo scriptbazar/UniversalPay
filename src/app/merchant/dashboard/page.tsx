@@ -55,6 +55,7 @@ import { useRouter } from "next/navigation";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot, getDocs, Timestamp } from "firebase/firestore";
+import { toDateSafe } from "@/lib/utils";
 
 
 type Transaction = {
@@ -65,23 +66,6 @@ type Transaction = {
     method: string;
     date: Date;
     amount: string;
-};
-
-// Helper function to safely convert a Firestore timestamp or other date format to a Date object
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 

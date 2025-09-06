@@ -623,7 +623,7 @@ export class CheckoutComponent {
                                  <TabsContent value="flutter" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">Flutter Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Add our package to your \`pubspec.yaml\` file.</p>
-                                    <CodeSnippet code="dependencies:\\n  universalpay_flutter: ^1.0.0" />
+                                    <CodeSnippet code="dependencies:\n  universalpay_flutter: ^1.0.0" />
                                     <h4 className="font-semibold mt-4 mb-2">Example: Initiating a Payment</h4>
                                      <CodeSnippet code={`
 import 'package:universalpay_flutter/universalpay_flutter.dart';

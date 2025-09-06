@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { addInvoice } from './invoicesData';
 import { addDoc as addAuditLogDoc } from 'firebase/firestore';
+import { toDateSafe } from './utils';
 
 
 export type Transaction = {
@@ -33,25 +34,6 @@ export type Transaction = {
   createdAt: any; 
   method: string;
   date: any; // Storing as a server timestamp
-};
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 

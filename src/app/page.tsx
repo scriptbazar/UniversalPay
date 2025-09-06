@@ -400,7 +400,7 @@ export default function Home() {
                 <div className="overflow-hidden">
                     <div className="flex animate-marquee space-x-4">
                         {[...testimonialsRow1, ...testimonialsRow1].map((testimonial, index) => (
-                          <Card key={`r1-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
+                          <Card key={`testimonial-row1-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
                             <CardContent className="p-6 space-y-4">
                                 <Quote className="w-8 h-8 text-primary/30" />
                                 <p className="text-sm text-muted-foreground">"{testimonial.quote}"</p>
@@ -419,7 +419,7 @@ export default function Home() {
                  <div className="overflow-hidden">
                     <div className="flex animate-marquee-reverse space-x-4">
                         {[...testimonialsRow2, ...testimonialsRow2].map((testimonial, index) => (
-                           <Card key={`r2-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
+                           <Card key={`testimonial-row2-${index}`} className="flex-shrink-0" style={{width: '320px'}}>
                              <CardContent className="p-6 space-y-4">
                                 <Quote className="w-8 h-8 text-primary/30" />
                                 <p className="text-sm text-muted-foreground">"{testimonial.quote}"</p>
@@ -460,8 +460,8 @@ export default function Home() {
                           <span className="text-muted-foreground">{tier.freq}</span>
                         </div>
                         <ul className="space-y-4 flex-grow">
-                          {tier.features.map((feature) => (
-                            <li key={feature} className="flex items-start">
+                          {tier.features.map((feature, index) => (
+                            <li key={`${tier.name}-feature-${index}`} className="flex items-start">
                               <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
                               <span className="text-muted-foreground">{feature}</span>
                             </li>
@@ -485,7 +485,7 @@ export default function Home() {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <Accordion type="single" collapsible className="w-full">
                         {firstHalfFaqs.map((item, index) => (
-                            <AccordionItem value={`item-1-${index}`} key={index}>
+                            <AccordionItem value={`item-1-${index}`} key={`faq-1-${index}`}>
                                 <AccordionTrigger className="text-lg font-medium text-left">{item.question}</AccordionTrigger>
                                 <AccordionContent className="text-base text-muted-foreground">
                                     {item.answer}
@@ -495,7 +495,7 @@ export default function Home() {
                     </Accordion>
                     <Accordion type="single" collapsible className="w-full">
                         {secondHalfFaqs.map((item, index) => (
-                            <AccordionItem value={`item-2-${index}`} key={index}>
+                            <AccordionItem value={`item-2-${index}`} key={`faq-2-${index}`}>
                                 <AccordionTrigger className="text-lg font-medium text-left">{item.question}</AccordionTrigger>
                                 <AccordionContent className="text-base text-muted-foreground">
                                     {item.answer}

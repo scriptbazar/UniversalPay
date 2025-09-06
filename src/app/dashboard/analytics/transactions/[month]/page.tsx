@@ -16,22 +16,7 @@ import { Input } from "@/components/ui/input";
 import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from "@/components/ui/skeleton";
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
-};
+import { toDateSafe } from "@/lib/utils";
 
 type Transaction = {
     id: string;

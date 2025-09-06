@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { onAuthStateChanged } from 'firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
+import { toDateSafe } from '@/lib/utils';
 
 const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
     switch (status) {
@@ -24,25 +25,6 @@ const getStatusBadgeVariant = (status: Withdrawal["status"]) => {
         case 'Failed': return 'destructive';
         default: return 'outline';
     }
-};
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 export default function AdminWithdrawalsPage() {

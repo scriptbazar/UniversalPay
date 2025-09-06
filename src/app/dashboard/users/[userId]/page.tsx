@@ -30,22 +30,7 @@ import { doc, getDoc, Timestamp, collection, query, where, getDocs, onSnapshot, 
 import { type Customer, getAllCustomers } from '@/lib/customersData';
 import { countries } from "@/lib/countries";
 import type { Withdrawal } from "@/lib/withdrawalsData";
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
-};
+import { toDateSafe } from "@/lib/utils";
 
 
 type Transaction = {

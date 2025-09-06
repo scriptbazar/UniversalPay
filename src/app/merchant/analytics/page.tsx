@@ -16,6 +16,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, onSnapshot, Timestamp, limit } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toDateSafe } from "@/lib/utils";
 
 type Transaction = {
     id: string;
@@ -30,22 +31,6 @@ type Customer = {
     email: string;
     name: string;
     totalSpent: number;
-};
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 export default function AnalyticsPage() {

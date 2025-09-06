@@ -12,6 +12,7 @@ import {
     serverTimestamp,
     Timestamp
 } from 'firebase/firestore';
+import { toDateSafe } from './utils';
 
 export type Withdrawal = {
   id: string;
@@ -23,25 +24,6 @@ export type Withdrawal = {
   status: "Pending" | "Completed" | "Failed";
   createdAt: any; // Can be a Date or Firestore Timestamp
   transactionId?: string; // Optional field for withdrawal transaction
-};
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 const generateRandomId = (prefix: string) => {

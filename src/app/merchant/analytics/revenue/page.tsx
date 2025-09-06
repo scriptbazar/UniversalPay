@@ -11,6 +11,7 @@ import { useState, useEffect, useMemo } from "react";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { toDateSafe } from "@/lib/utils";
 
 type Transaction = {
     amount: string;
@@ -24,22 +25,6 @@ type MonthRevenue = {
   transactions: number;
   successRate: string;
   avgTransaction: string;
-};
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 export default function RevenueDetailsPage() {

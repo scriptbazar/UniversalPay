@@ -56,6 +56,7 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toDateSafe } from '@/lib/utils';
 
 type Transaction = {
     id: string;
@@ -79,23 +80,6 @@ const filterOptions = [
     { value: 'page', label: 'Page Transactions', icon: AppWindow },
 ];
 
-
-// Helper function to safely convert a Firestore timestamp or other date format to a Date object
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
-};
 
 function PaymentsComponent() {
     const searchParams = useSearchParams();

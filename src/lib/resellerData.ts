@@ -4,6 +4,7 @@
 import { db, app } from './firebase';
 import { collection, getDocs, query, where, orderBy, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { toDateSafe } from './utils';
 
 export type SubMerchant = {
     id: string;
@@ -56,26 +57,6 @@ export const getSubMerchants = async (resellerId?: string): Promise<SubMerchant[
     
     // If resellerId is provided, filter out the reseller themselves.
     return resellerId ? merchants.filter(m => m.id !== resellerId) : merchants;
-};
-
-
-const toDateSafe = (dateFieldValue: any): Date => {
-  if (dateFieldValue instanceof Timestamp) {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
-    return dateFieldValue.toDate();
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
-    const date = new Date(dateFieldValue);
-    if (!isNaN(date.getTime())) {
-        return date;
-    }
-  }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
-    return new Date(dateFieldValue);
-  }
-  return new Date(); 
 };
 
 
