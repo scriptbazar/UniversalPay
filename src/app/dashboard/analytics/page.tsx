@@ -369,121 +369,119 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-       <Card>
-          <CardHeader>
-              <CardTitle>Geographical Revenue</CardTitle>
-              <CardDescription>An overview of your revenue distribution across the world.</CardDescription>
-          </CardHeader>
-          <CardContent>
-              {loading ? (
-                  <Skeleton className="w-full h-[450px]" />
-              ) : (
-                  <TooltipProvider>
-                  <ComposableMap
-                      projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }}
-                      style={{ width: "100%", height: "auto" }}
-                   >
-                      <Geographies geography={GEO_URL}>
-                          {({ geographies }) =>
-                              geographies.map((geo) => {
-                                  const d = geoData.find((s) => s.iso === geo.properties.ISO_A3);
-                                  const countryName = geo.properties.NAME;
-                                  const tooltipText = d ? `${countryName} - $${d.volume.toLocaleString()}` : `${countryName} - No data`;
-                                  return (
-                                      <ChartTooltip key={geo.rsmKey}>
-                                          <TooltipTrigger asChild>
-                                               <Geography
-                                                  geography={geo}
-                                                  style={{
-                                                      default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
-                                                      hover: { fill: "#F53", outline: "none", cursor: 'pointer' },
-                                                      pressed: { fill: "#E42", outline: "none" },
-                                                  }}
-                                              />
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                              <p>{tooltipText}</p>
-                                          </TooltipContent>
-                                      </ChartTooltip>
-                                  );
-                              })
-                          }
-                      </Geographies>
-                  </ComposableMap>
-                  </TooltipProvider>
-              )}
-          </CardContent>
-      </Card>
-
-
-      <Card>
-        <CardHeader>
-            <CardTitle>Geographical Performance</CardTitle>
-            <CardDescription>Top countries by transaction volume.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {loading ? <Skeleton className="h-48 w-full" /> : 
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Country</TableHead>
-                        <TableHead>Volume (USD)</TableHead>
-                        <TableHead>Transactions</TableHead>
-                        <TableHead>Merchants</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {paginatedGeoData.length > 0 ? paginatedGeoData.map(geo => (
-                        <TableRow key={geo.country}>
-                            <TableCell className="font-medium flex items-center gap-2">
-                                <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} data-ai-hint="country flag" />
-                                {geo.country}
-                            </TableCell>
-                            <TableCell>${geo.volume.toLocaleString()}</TableCell>
-                            <TableCell>{geo.transactions.toLocaleString()}</TableCell>
-                            <TableCell>{geo.merchants.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="outline" size="sm" onClick={() => handleCountryClick(geo)}>View Merchants</Button>
-                            </TableCell>
-                        </TableRow>
-                    )) : (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center">No geographical data available.</TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-            }
-        </CardContent>
-        { !loading && geoData.length > 0 &&
-        <CardFooter>
-            <div className="flex justify-between items-center w-full">
-                <div className="text-xs text-muted-foreground">
-                    Page {geoCurrentPage} of {geoTotalPages}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setGeoCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={geoCurrentPage === 1}
-                    >
-                        Previous
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setGeoCurrentPage(prev => Math.min(prev + 1, geoTotalPages))}
-                        disabled={geoCurrentPage === geoTotalPages}
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        </CardFooter>
-        }
-      </Card>
+       <div className="grid gap-8 lg:grid-cols-2">
+           <Card className="lg:col-span-1">
+              <CardHeader>
+                  <CardTitle>Geographical Revenue</CardTitle>
+                  <CardDescription>An overview of your revenue distribution across the world.</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[400px]">
+                  {loading ? (
+                      <Skeleton className="w-full h-full" />
+                  ) : (
+                      <TooltipProvider>
+                      <ComposableMap
+                          projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }}
+                          style={{ width: "100%", height: "100%" }}
+                       >
+                          <Geographies geography={GEO_URL}>
+                              {({ geographies }) =>
+                                  geographies.map((geo) => {
+                                      const d = geoData.find((s) => s.iso === geo.properties.ISO_A3);
+                                      const countryName = geo.properties.NAME;
+                                      const tooltipText = d ? `${countryName} - $${d.volume.toLocaleString()}` : `${countryName} - No data`;
+                                      return (
+                                          <ChartTooltip key={geo.rsmKey}>
+                                              <TooltipTrigger asChild>
+                                                   <Geography
+                                                      geography={geo}
+                                                      style={{
+                                                          default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
+                                                          hover: { fill: "#F53", outline: "none", cursor: 'pointer' },
+                                                          pressed: { fill: "#E42", outline: "none" },
+                                                      }}
+                                                  />
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                  <p>{tooltipText}</p>
+                                              </TooltipContent>
+                                          </ChartTooltip>
+                                      );
+                                  })
+                              }
+                          </Geographies>
+                      </ComposableMap>
+                      </TooltipProvider>
+                  )}
+              </CardContent>
+            </Card>
+            <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Geographical Performance</CardTitle>
+                    <CardDescription>Top countries by transaction volume.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? <Skeleton className="h-48 w-full" /> : 
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Country</TableHead>
+                                <TableHead>Volume (USD)</TableHead>
+                                <TableHead>Transactions</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paginatedGeoData.length > 0 ? paginatedGeoData.map(geo => (
+                                <TableRow key={geo.country}>
+                                    <TableCell className="font-medium flex items-center gap-2">
+                                        <Image src={`https://flagcdn.com/w40/${geo.flag.toLowerCase()}.png`} alt={`${geo.country} flag`} width={24} height={16} data-ai-hint="country flag" />
+                                        {geo.country}
+                                    </TableCell>
+                                    <TableCell>${geo.volume.toLocaleString()}</TableCell>
+                                    <TableCell>{geo.transactions.toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="outline" size="sm" onClick={() => handleCountryClick(geo)}>View Merchants</Button>
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center">No geographical data available.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                    }
+                </CardContent>
+                { !loading && geoData.length > geoItemsPerPage &&
+                <CardFooter>
+                    <div className="flex justify-between items-center w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Page {geoCurrentPage} of {geoTotalPages}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setGeoCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={geoCurrentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setGeoCurrentPage(prev => Math.min(prev + 1, geoTotalPages))}
+                                disabled={geoCurrentPage === geoTotalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </CardFooter>
+                }
+            </Card>
+      </div>
       
        <Dialog open={!!dialogContent} onOpenChange={() => setDialogContent(null)}>
         <DialogContent className={dialogContent?.type === 'month' ? 'max-w-md' : 'max-w-xl'}>
