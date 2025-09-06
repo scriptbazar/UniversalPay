@@ -51,9 +51,11 @@ import { doc, getDoc, collection, getDocs, query, orderBy, limit, where, Timesta
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
 type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; createdAt: any; };
 
-// Helper function to safely convert a Firestore timestamp or other date format to a Date object
 const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
     return dateFieldValue.toDate();
   }
   if (dateFieldValue && typeof dateFieldValue === 'string') {
@@ -65,7 +67,6 @@ const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue && typeof dateFieldValue === 'number') {
     return new Date(dateFieldValue);
   }
-  // Return current date as a fallback if conversion fails
   return new Date(); 
 };
 

@@ -35,9 +35,11 @@ export type Transaction = {
   date: any; // Storing as a server timestamp
 };
 
-// Helper function to safely convert a Firestore timestamp or other date format to a Date object
 const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
     return dateFieldValue.toDate();
   }
   if (dateFieldValue && typeof dateFieldValue === 'string') {

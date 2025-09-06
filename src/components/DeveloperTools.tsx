@@ -251,9 +251,10 @@ export function DeveloperTools() {
                                     <CodeSnippet code={`
 const universalpay = require('universalpay-node')('YOUR_SECRET_KEY');
 
-async function processPayment(paymentData) {
+async function handlePayment(paymentData) {
   try {
-    const result = await universalpay.payments.process(paymentData);
+    // This now matches your Genkit flow name 'processPayment'
+    const result = await universalpay.flows.processPayment(paymentData);
     console.log('Payment processed:', result.transactionId);
     // Return result to your client
     return result;
@@ -264,7 +265,7 @@ async function processPayment(paymentData) {
 }
 
 // Example usage:
-processPayment({
+handlePayment({
     amount: 10.00,
     currency: 'USD',
     method: 'Card',
@@ -308,7 +309,8 @@ use UniversalPay\\Api;
 
 $api = new Api('YOUR_SECRET_KEY');
 
-$result = $api->payment->process([
+// This now matches your Genkit flow name 'processPayment'
+$result = $api->flow->processPayment([
     'amount' => 10.00,
     'currency' => 'USD',
     'method' => 'Card',
@@ -345,7 +347,8 @@ try {
 import universalpay
 client = universalpay.Client(api_key="YOUR_SECRET_KEY")
 
-result = client.payment.process({
+# This now matches your Genkit flow name 'processPayment'
+result = client.flow.process_payment({
   "amount": 10.00,
   "currency": "USD",
   "method": "Card",
@@ -381,12 +384,12 @@ def verify_signature(payload_body, signature, secret):
                                     <h3 className="font-semibold text-lg mb-2">Ruby Integration</h3>
                                     <p className="text-sm text-muted-foreground mb-4">Install our Ruby gem.</p>
                                     <CodeSnippet code="gem install universalpay" />
-                                    <h4 className="font-semibold mt-4 mb-2">Example: Creating a Payment</h4>
+                                    <h4 className="font-semibold mt-4 mb-2">Example: Processing a Payment</h4>
                                     <CodeSnippet code={`
 require 'universalpay'
 UniversalPay.api_key = 'YOUR_SECRET_KEY'
 
-result = UniversalPay::Payment.process(
+result = UniversalPay::Flow.process_payment(
   amount: 10.00,
   currency: 'USD',
   method: 'Card',
@@ -431,14 +434,14 @@ import (
 func main() {
     client := universalpay.NewClient("YOUR_SECRET_KEY", "")
     
-    params := &universalpay.PaymentParams{
-        Amount:   universalpay.Float64(10.00),
-        Currency: universalpay.String("USD"),
-        Method:   universalpay.String("Card"),
+    params := &universalpay.FlowProcessPaymentParams{
+        Amount:     universalpay.Float64(10.00),
+        Currency:   universalpay.String("USD"),
+        Method:     universalpay.String("Card"),
         CustomerID: universalpay.String("cust_12345"),
     }
 
-    result, err := client.Payment.Process(params)
+    result, err := client.Flow.ProcessPayment(params)
     if err != nil {
         panic(err)
     }
@@ -492,7 +495,7 @@ paymentParams.put("currency", "USD");
 paymentParams.put("method", "Card");
 paymentParams.put("customerId", "cust_12345");
 
-PaymentResult result = client.payment.process(paymentParams);
+PaymentResult result = client.flow.processPayment(paymentParams);
 System.out.println(result.get("transactionId"));
                                     `} />
                                      <h4 className="font-semibold mt-4 mb-2">Example: Verifying Webhook Signature</h4>

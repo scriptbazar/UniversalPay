@@ -22,6 +22,9 @@ const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue instanceof Timestamp) {
     return dateFieldValue.toDate();
   }
+  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
+    return dateFieldValue.toDate();
+  }
   if (dateFieldValue && typeof dateFieldValue === 'string') {
     const date = new Date(dateFieldValue);
     if (!isNaN(date.getTime())) {

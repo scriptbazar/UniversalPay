@@ -34,9 +34,11 @@ export type Ticket = {
   replies: TicketReply[];
 };
 
-// Helper to safely convert Firestore Timestamps or date strings to JS Date objects
 const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue.toDate === 'function') {
     return dateFieldValue.toDate();
   }
   if (dateFieldValue && typeof dateFieldValue === 'string') {
