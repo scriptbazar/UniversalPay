@@ -226,8 +226,8 @@ exports.updateMerchantHandle = onCall(async (request) => {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     let newEditCount = lastUpdated && lastUpdated < threeMonthsAgo ? 0 : editCount;
-    if (newEditCount >= 3) {
-        throw new HttpsError('resource-exhausted', 'You have reached your handle edit limit.');
+    if (newEditCount >= 1) {
+        throw new HttpsError('resource-exhausted', 'You can only change your handle once every 3 months.');
     }
 
     await userRef.update({

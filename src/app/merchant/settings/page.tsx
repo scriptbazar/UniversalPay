@@ -571,7 +571,7 @@ export default function SettingsPage() {
                          {handleStatus === 'available' && <p className="text-xs text-green-600">This handle is available!</p>}
                          {handleStatus === 'taken' && <p className="text-xs text-destructive">This handle is already taken.</p>}
                          {handleStatus === 'invalid' && <p className="text-xs text-destructive">Handle must be at least 3 characters long and contain only letters, numbers, and hyphens.</p>}
-                         <p className="text-xs text-muted-foreground">This is your unique public page URL. You can change this up to 3 times every 3 months.</p>
+                         <p className="text-xs text-muted-foreground">This is your unique public page URL. You can change this once every 3 months.</p>
                     </div>
                 </div>
               </div>
