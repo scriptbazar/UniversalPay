@@ -238,8 +238,8 @@ exports.updateMerchantHandle = onCall(async (request) => {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     let newEditCount = lastUpdated && lastUpdated < threeMonthsAgo ? 0 : editCount;
-    if (newEditCount >= 3) {
-        throw new HttpsError('resource-exhausted', 'You have reached your handle edit limit.');
+    if (newEditCount >= 1) {
+        throw new HttpsError('resource-exhausted', 'You can only change your handle once every 3 months.');
     }
 
     await userRef.update({
@@ -352,16 +352,6 @@ exports.deleteSubscriptionPlan = onCall(async (request) => {
     const { id } = request.data;
     if (!id) throw new HttpsError('invalid-argument', 'Plan ID is required.');
     await db.collection('subscriptionPlans').doc(id).delete();
-    return { success: true };
-});
-
-// ===== New User Management Functions =====
-exports.updateUserRole = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update roles.');
-    const { uid, role } = request.data;
-    await admin.auth().setCustomUserClaims(uid, { role });
-    await db.collection('users').doc(uid).update({ role });
-    // Audit log can be added here
     return { success: true };
 });
 
