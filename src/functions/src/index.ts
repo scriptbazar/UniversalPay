@@ -328,7 +328,11 @@ exports.updatePaymentSettings = onCall(async (request) => {
 
 // ===== Subscription Plan Management Functions =====
 
-exports.getSubscriptionPlans = onCall(async () => {
+exports.getSubscriptionPlans = onCall(async (request) => {
+    // FIX: Add authentication check. Only logged-in users should see plans.
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in to view subscription plans.');
+    }
     const snapshot = await db.collection('subscriptionPlans').orderBy('price').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 });
@@ -369,5 +373,3 @@ exports.adjustWalletBalance = onCall(async (request) => {
     });
     return { success: true };
 });
-
-    
