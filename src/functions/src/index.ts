@@ -355,16 +355,6 @@ exports.deleteSubscriptionPlan = onCall(async (request) => {
     return { success: true };
 });
 
-// ===== New User Management Functions =====
-exports.updateUserRole = onCall(async (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can update roles.');
-    const { uid, role } = request.data;
-    await admin.auth().setCustomUserClaims(uid, { role });
-    await db.collection('users').doc(uid).update({ role });
-    // Audit log can be added here
-    return { success: true };
-});
-
 exports.adjustWalletBalance = onCall(async (request) => {
     if (!request.auth || request.auth.token.role !== 'admin') throw new HttpsError('permission-denied', 'Only admins can adjust wallets.');
     const { uid, adjustmentAmount, type } = request.data;
