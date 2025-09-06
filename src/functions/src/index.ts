@@ -166,7 +166,7 @@ exports.updateMerchantProfile = onCall(async (request) => {
     delete dataToUpdate.walletBalance;
 
     try {
-        await db.collection('users').doc(uid).set(dataToUpdate, { merge: true });
+        await db.collection('users').doc(uid).update(dataToUpdate);
         await db.collection('audit_logs').add({
             type: 'MERCHANT_PROFILE_UPDATE',
             level: 'INFO',
@@ -369,3 +369,5 @@ exports.adjustWalletBalance = onCall(async (request) => {
     });
     return { success: true };
 });
+
+    
