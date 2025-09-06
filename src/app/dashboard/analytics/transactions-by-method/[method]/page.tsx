@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Copy, Search, File } from "lucide-react"; // Import Search and File
+import { ArrowLeft, Copy, Search, File } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
@@ -12,32 +12,40 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input"; // Import Input
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
-import { Calendar } from "@/components/ui/calendar"; // Import Calendar
-import { DateRange } from "react-day-picker"; // Import DateRange
-import { format } from "date-fns"; // Import format
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { onSnapshot, collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data generation function - in a real app, this would be an API call
-const generateMockTransactions = () => {
-    return Array.from({ length: 150 }, (_, i) => {
-        const methods = ["UPI", "Crypto", "Page", "Link"];
-        const success = Math.random() > 0.1;
-        const day = 28 - Math.floor(i / 6);
-        return {
-            id: `UVRLP${987654321 - i}`,
-            merchant: `Merchant ${i % 4 + 1}`,
-            merchantId: `user_${(i%4)+1}`,
-            customerEmail: `customer${i + 1}@example.com`,
-            amount: (Math.random() * 500 + 10).toFixed(2),
-            date: new Date(2023, 10, day).toISOString().split('T')[0],
-            method: methods[i % 4],
-            status: success ? 'Success' : 'Failed'
-        }
-    });
+type Transaction = {
+    id: string;
+    merchantId: string;
+    customerEmail: string;
+    status: string;
+    method: string;
+    date: Date;
+    amount: string;
 };
 
-type Transaction = ReturnType<typeof generateMockTransactions>[0];
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
+};
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -52,27 +60,48 @@ export default function TransactionsByMethodPage() {
     const { toast } = useToast();
     const method = params.method as string;
 
-    const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
+    const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Generate data on the client side to avoid hydration issues
-        setAllMockTransactions(generateMockTransactions());
-    }, []);
+        setLoading(true);
+        const transQuery = query(
+            collection(db, "transactions"), 
+            where("method", "==", method.toUpperCase()), 
+            orderBy("date", "desc")
+        );
+
+        const unsubscribe = onSnapshot(transQuery, (snapshot) => {
+            const fetched = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: toDateSafe(doc.data().date)
+            } as Transaction));
+            setAllTransactions(fetched);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching transactions by method:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load transaction data.' });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [method, toast]);
 
     const pageTitle = method ? `${method.charAt(0).toUpperCase() + method.slice(1)} Transactions` : 'Transactions';
 
     const filteredTransactions = useMemo(() => {
-        let filtered = allMockTransactions.filter(tx => tx.method.toLowerCase() === method.toLowerCase());
+        let filtered = allTransactions;
 
         if (searchTerm) {
             filtered = filtered.filter(tx =>
                 tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.merchantId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
@@ -85,7 +114,7 @@ export default function TransactionsByMethodPage() {
         }
         
         return filtered;
-    }, [method, allMockTransactions, searchTerm, dateRange]);
+    }, [allTransactions, searchTerm, dateRange]);
 
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
     const paginatedTransactions = filteredTransactions.slice(
@@ -177,21 +206,32 @@ export default function TransactionsByMethodPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map(tx => (
+                            {loading ? (
+                                Array.from({length: 5}).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.id}</TableCell>
-                                    <TableCell>{tx.merchant}</TableCell>
+                                    <TableCell>{tx.merchantId}</TableCell>
                                     <TableCell>{tx.customerEmail}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                     </TableCell>
-                                    <TableCell>{tx.date}</TableCell>
+                                    <TableCell>{tx.date.toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">${tx.amount}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                    {filteredTransactions.length === 0 && (
+                    {!loading && filteredTransactions.length === 0 && (
                         <p className="text-center text-muted-foreground py-8">No transactions found for the selected filters.</p>
                     )}
                 </CardContent>
@@ -242,7 +282,7 @@ export default function TransactionsByMethodPage() {
                             <Separator />
                             <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Merchant:</span>
-                                <span className="font-semibold">{selectedTransaction.merchant}</span>
+                                <span className="font-semibold">{selectedTransaction.merchantId}</span>
                             </div>
                             <Separator />
                             <div className="flex justify-between items-center">

@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, Repeat, Star } from "lucide-react";
+import { Check, Repeat, Star, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -13,59 +13,19 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getSubscriptionPlans as fetchPlansFromDb } from '@/app/dashboard/subscriptions/actions';
+
 
 type Plan = {
+    id: string;
     name: string;
     price: string;
-    freq: string;
     description: string;
-    features: string[];
-    cta: string;
+    features: string; // Stored as a comma-separated string
+    cta?: string;
+    api_quota: string;
+    transactions: string;
 };
-
-const subscriptionPlans: Plan[] = [
-    {
-        name: "Free",
-        price: "$0",
-        freq: "/month",
-        description: "Perfect for getting started.",
-        features: [
-            "Up to 100 transactions/month",
-            "Basic UPI Gateway Support",
-            "Standard Fraud Detection",
-            "Email Support",
-        ],
-        cta: "Your Current Plan",
-    },
-    {
-        name: "Pro",
-        price: "$49",
-        freq: "/month",
-        description: "For growing businesses.",
-        features: [
-            "Up to 1,000 transactions/month",
-            "UPI & Crypto Support",
-            "AI-Powered Fraud Detection",
-            "Developer API & SDK Access",
-            "Priority Email Support",
-        ],
-        cta: "Upgrade to Pro",
-    },
-    {
-        name: "Premium",
-        price: "$99",
-        freq: "/month",
-        description: "For established businesses.",
-        features: [
-            "Unlimited transactions",
-            "White-Label & Reseller Mode",
-            "Advanced Fraud Controls",
-            "All Country-Specific Methods",
-            "24/7 Dedicated Support",
-        ],
-        cta: "Upgrade to Premium",
-    },
-];
 
 type CurrentPlanState = {
     name: string;
@@ -137,10 +97,25 @@ const CurrentPlanDetails = ({ plan, loading }: { plan: CurrentPlanState; loading
 
 export default function SubscriptionPage() {
     const { toast } = useToast();
-    const [currentPlanName, setCurrentPlanName] = useState('Free'); // Default to Free
+    const [currentPlanName, setCurrentPlanName] = useState('Free');
+    const [subscriptionPlans, setSubscriptionPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
+    const [upgrading, setUpgrading] = useState<string | null>(null);
 
     useEffect(() => {
+        async function fetchPlans() {
+            setLoading(true);
+            const plansFromDb = await fetchPlansFromDb();
+            setSubscriptionPlans(plansFromDb.map(p => ({
+                ...p,
+                freq: "/month", // Assuming all plans are monthly for now
+                description: "Plan description from DB",
+                cta: "Upgrade",
+            })));
+        }
+        
+        fetchPlans();
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userDocRef = doc(db, 'users', user.uid);
@@ -161,7 +136,7 @@ export default function SubscriptionPage() {
             return;
         }
 
-        setLoading(true);
+        setUpgrading(planName);
         try {
             const functions = getFunctions(app);
             const upgradeSubscriptionPlan = httpsCallable(functions, 'upgradeSubscriptionPlan');
@@ -180,22 +155,20 @@ export default function SubscriptionPage() {
             console.error("Error upgrading plan: ", error);
             toast({ variant: 'destructive', title: 'Upgrade Failed', description: error.message || 'Could not update your subscription.' });
         } finally {
-            setLoading(false);
+            setUpgrading(null);
         }
     };
     
-    // Find the full details of the current plan
-    const currentPlanDetails = subscriptionPlans.find(p => p.name === currentPlanName) || subscriptionPlans[0];
+    const currentPlanDetails = subscriptionPlans.find(p => p.name === currentPlanName);
     
-    // Placeholder data for the current plan details card, now using the correct plan details
     const planDetailsCardData: CurrentPlanState = {
-        name: currentPlanDetails.name,
-        price: currentPlanDetails.price,
-        freq: currentPlanDetails.freq,
+        name: currentPlanDetails?.name || 'Free',
+        price: currentPlanDetails?.price ? `$${currentPlanDetails.price}` : '$0',
+        freq: "/month",
         status: 'Active',
-        purchasedOn: 'October 15, 2023', // This can be fetched from user data in a real app
-        renewsOn: 'November 15, 2023', // This can be calculated in a real app
-        transactionUsage: '542 / 1,000', // This would come from usage stats
+        purchasedOn: 'October 15, 2023',
+        renewsOn: 'November 15, 2023',
+        transactionUsage: '542 / 1,000',
     };
 
     return (
@@ -217,35 +190,50 @@ export default function SubscriptionPage() {
                             <CardDescription>Choose a plan that fits your business needs.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {subscriptionPlans.map((plan) => {
+                            {loading ? (
+                                <>
+                                    <Skeleton className="h-[400px] w-full" />
+                                    <Skeleton className="h-[400px] w-full" />
+                                </>
+                            ) : (
+                                subscriptionPlans.map((plan) => {
                                 const isCurrent = plan.name === currentPlanName;
                                 return (
                                     <Card key={plan.name} className={`flex flex-col ${isCurrent ? 'border-primary' : ''}`}>
                                         <CardHeader className="text-center">
                                             <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+                                             <CardDescription>{plan.description}</CardDescription>
                                             <div className="text-center my-4">
-                                                <span className="text-4xl font-bold">{plan.price}</span>
+                                                <span className="text-4xl font-bold">${plan.price}</span>
                                                 <span className="text-muted-foreground">{plan.freq}</span>
                                             </div>
                                         </CardHeader>
                                         <CardContent className="flex-grow">
                                             <ul className="space-y-3">
-                                                {plan.features.map((feature) => (
+                                                {(plan.features || '').split(',').map((feature) => (
                                                     <li key={feature} className="flex items-start">
                                                         <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
-                                                        <span className="text-sm text-muted-foreground">{feature}</span>
+                                                        <span className="text-sm text-muted-foreground">{feature.trim()}</span>
                                                     </li>
                                                 ))}
+                                                <li className="flex items-start">
+                                                    <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                                                    <span className="text-sm text-muted-foreground">{plan.transactions} transactions/month</span>
+                                                </li>
+                                                 <li className="flex items-start">
+                                                    <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
+                                                    <span className="text-sm text-muted-foreground">{plan.api_quota} API calls/month</span>
+                                                </li>
                                             </ul>
                                         </CardContent>
                                         <div className="p-6 pt-0">
-                                            <Button className="w-full" onClick={() => handleUpgrade(plan.name)} disabled={isCurrent || loading}>
-                                                {loading && !isCurrent ? 'Processing...' : isCurrent ? 'Your Current Plan' : <><Star className="mr-2 h-4 w-4"/> {plan.cta}</>}
+                                            <Button className="w-full" onClick={() => handleUpgrade(plan.name)} disabled={isCurrent || !!upgrading}>
+                                                {upgrading === plan.name ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : (isCurrent ? 'Your Current Plan' : <><Star className="mr-2 h-4 w-4"/> Upgrade</>)}
                                             </Button>
                                         </div>
                                     </Card>
                                 );
-                            })}
+                            }))}
                         </CardContent>
                     </Card>
                 </div>

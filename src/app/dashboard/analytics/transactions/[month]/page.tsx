@@ -13,28 +13,35 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data generation function
-const generateMockTransactions = () => {
-    return Array.from({ length: 12 * 50 }, (_, i) => {
-        const monthIndex = Math.floor(i / 50);
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const success = Math.random() > 0.1;
-        return {
-            id: `UVRLP${123456789 + i}`,
-            merchant: `Merchant ${i % 4 + 1}`,
-            merchantId: `user_${(i%4)+1}`,
-            customerName: `Customer ${i + 1}`,
-            customerEmail: `customer${i + 1}@example.com`,
-            amount: (Math.random() * 500 + 10).toFixed(2),
-            date: new Date(2023, monthIndex, (i % 28) + 1).toISOString().split('T')[0],
-            month: months[monthIndex],
-            status: success ? 'Success' : 'Failed'
-        }
-    });
+const toDateSafe = (dateFieldValue: any): Date => {
+  if (dateFieldValue instanceof Timestamp) {
+    return dateFieldValue.toDate();
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'string') {
+    const date = new Date(dateFieldValue);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+  }
+  if (dateFieldValue && typeof dateFieldValue === 'number') {
+    return new Date(dateFieldValue);
+  }
+  return new Date(); 
 };
 
-type Transaction = ReturnType<typeof generateMockTransactions>[0];
+type Transaction = {
+    id: string;
+    merchantId: string;
+    customerEmail: string;
+    status: string;
+    method: string;
+    date: Date;
+    amount: string;
+};
 
 const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -48,36 +55,51 @@ export default function MonthlyTransactionsPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const month = params.month as string;
+    const monthSlug = params.month as string;
 
-    const [allMockTransactions, setAllMockTransactions] = useState<Transaction[]>([]);
+    const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Generate data on the client side to avoid hydration issues
-        setAllMockTransactions(generateMockTransactions());
-    }, []);
+        setLoading(true);
+        const transQuery = query(collection(db, "transactions"), orderBy("date", "desc"));
+        const unsubscribe = onSnapshot(transQuery, (snapshot) => {
+            const fetched = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: toDateSafe(doc.data().date)
+            } as Transaction));
 
-    const monthlyTransactions = useMemo(() => {
-        let filtered = allMockTransactions.filter(tx => tx.month.toLowerCase() === month.toLowerCase());
+            const monthIndex = new Date(Date.parse(monthSlug + " 1, 2023")).getMonth();
+            const monthly = fetched.filter(tx => tx.date.getMonth() === monthIndex);
+            
+            setAllTransactions(monthly);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching transactions: ", error);
+            setLoading(false);
+        });
+        
+        return () => unsubscribe();
+    }, [monthSlug]);
 
-        if (searchTerm) {
-            filtered = filtered.filter(tx =>
-                tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+    const filteredTransactions = useMemo(() => {
+        if (!searchTerm) {
+            return allTransactions;
         }
+        return allTransactions.filter(tx =>
+            tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            tx.merchantId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            tx.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [allTransactions, searchTerm]);
 
-        return filtered;
-    }, [month, allMockTransactions, searchTerm]);
-
-    const totalPages = Math.ceil(monthlyTransactions.length / itemsPerPage);
-    const paginatedTransactions = monthlyTransactions.slice(
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const paginatedTransactions = filteredTransactions.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
     );
@@ -94,17 +116,19 @@ export default function MonthlyTransactionsPage() {
         });
     };
 
+    const monthName = monthSlug ? monthSlug.charAt(0).toUpperCase() + monthSlug.slice(1) : 'Details';
+
     return (
         <div className="space-y-6">
-            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard/analytics" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
+                Back to Analytics
             </Link>
 
             <Card>
                 <CardHeader className="flex flex-row items-center">
                     <div className="grid gap-2">
-                        <CardTitle className="text-2xl">Transactions for {month.charAt(0).toUpperCase() + month.slice(1)}</CardTitle>
+                        <CardTitle className="text-2xl">Transactions for {monthName}</CardTitle>
                         <CardDescription>A list of all transactions for the selected month. Click a row for details.</CardDescription>
                     </div>
                     <div className="ml-auto flex items-center gap-2">
@@ -137,28 +161,39 @@ export default function MonthlyTransactionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map(tx => (
+                            {loading ? (
+                                Array.from({length: 5}).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} onClick={() => handleRowClick(tx)} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.id}</TableCell>
-                                    <TableCell>{tx.merchant}</TableCell>
-                                    <TableCell>{tx.customerName}</TableCell>
+                                    <TableCell>{tx.merchantId}</TableCell>
+                                    <TableCell>{tx.customerEmail}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
                                     </TableCell>
-                                    <TableCell>{tx.date}</TableCell>
+                                    <TableCell>{tx.date.toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">${tx.amount}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                    {paginatedTransactions.length === 0 && (
+                    {!loading && paginatedTransactions.length === 0 && (
                         <p className="text-center text-muted-foreground py-8">No transactions found for the selected month.</p>
                     )}
                 </CardContent>
                 <CardFooter>
                     <div className="flex justify-between items-center w-full">
                         <div className="text-xs text-muted-foreground">
-                            Page {currentPage} of {totalPages}. Total {monthlyTransactions.length} transactions.
+                            Page {currentPage} of {totalPages}. Total {filteredTransactions.length} transactions.
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
@@ -200,22 +235,15 @@ export default function MonthlyTransactionsPage() {
                                 </div>
                             </div>
                             <Separator />
-                            <div className="flex justify-between items-center">
+                             <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Merchant:</span>
-                                <span className="font-semibold">{selectedTransaction.merchant}</span>
+                                <span className="font-semibold">{selectedTransaction.merchantId}</span>
                             </div>
                             <Separator />
                             <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Customer:</span>
                                 <div className="text-right">
-                                    <p className="font-semibold">{selectedTransaction.customerName}</p>
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Email:</span>
-                                <div className="flex items-center gap-2">
-                                     <span className="font-semibold">{selectedTransaction.customerEmail}</span>
-                                     <Copy className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => copyToClipboard(selectedTransaction.customerEmail, 'Customer Email')} />
+                                    <p className="font-semibold">{selectedTransaction.customerEmail}</p>
                                 </div>
                             </div>
                             <Separator />
@@ -233,9 +261,9 @@ export default function MonthlyTransactionsPage() {
                     <DialogFooter className="sm:justify-between gap-2">
                         <Button variant="ghost" onClick={() => setSelectedTransaction(null)}>Close</Button>
                         {selectedTransaction && (
-                        <Button asChild>
-                            <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant Profile</Link>
-                        </Button>
+                            <Button asChild>
+                                <Link href={`/dashboard/users/${selectedTransaction.merchantId}`}>View Merchant</Link>
+                            </Button>
                         )}
                     </DialogFooter>
                 </DialogContent>

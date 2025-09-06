@@ -9,48 +9,31 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, collection, query, where, onSnapshot, orderBy, doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { Customer, CustomerTransaction } from '@/lib/customersData';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const toDateSafe = (dateFieldValue: any): Date => {
   if (dateFieldValue instanceof Timestamp) {
     return dateFieldValue.toDate();
   }
-  if (dateFieldValue && typeof dateFieldValue === 'string') {
+  if (dateFieldValue && typeof dateFieldValue.toDate === 'string') {
     const date = new Date(dateFieldValue);
     if (!isNaN(date.getTime())) {
         return date;
     }
   }
-  if (dateFieldValue && typeof dateFieldValue === 'number') {
+  if (dateFieldValue && typeof dateFieldValue.toDate === 'number') {
     return new Date(dateFieldValue);
   }
   return new Date(); 
 };
 
-type Transaction = {
-    id: string;
-    amount: string;
-    status: 'Success' | 'Failed';
-    date: Date;
-    method: 'UPI' | 'Crypto' | 'Page' | 'Link';
-}
-
-const mockCustomer = {
-    id: 'cust_1',
-    name: 'Liam Johnson',
-};
-
-const mockTransactions: Transaction[] = [
-    { id: 'TXN101', amount: '50.00', status: 'Success', date: toDateSafe('2023-11-10'), method: 'Page' },
-    { id: 'TXN102', amount: '25.50', status: 'Success', date: toDateSafe('2023-10-22'), method: 'Link' },
-    { id: 'TXN103', amount: '100.00', status: 'Success', date: toDateSafe('2023-09-05'), method: 'Page' },
-    { id: 'TXN104', amount: '14.50', status: 'Failed', date: toDateSafe('2023-08-18'), method: 'UPI' },
-    { id: 'TXN105', amount: '60.00', status: 'Success', date: toDateSafe('2023-07-30'), method: 'Crypto' },
-];
 
 const getStatusBadgeVariant = (status: string) => {
     return status === 'Success' ? 'default' : 'destructive';
@@ -60,15 +43,46 @@ export default function CustomerTransactionsPage() {
     const params = useParams();
     const customerId = params.customerId as string;
     const { toast } = useToast();
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [transactions, setTransactions] = useState<CustomerTransaction[]>([]);
+    const [customer, setCustomer] = useState<Customer | null>(null);
+    const [selectedTransaction, setSelectedTransaction] = useState<CustomerTransaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const itemsPerPage = 10;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setTransactions(mockTransactions);
-    }, [customerId]);
+        if (!customerId) return;
+        setLoading(true);
+
+        const fetchCustomer = async () => {
+             const customerRef = doc(db, 'customers', customerId);
+             const docSnap = await getDoc(customerRef);
+             if (docSnap.exists()) {
+                setCustomer({ id: docSnap.id, ...docSnap.data() } as Customer);
+             } else {
+                 notFound();
+             }
+        }
+        fetchCustomer();
+
+        const transQuery = query(collection(db, 'transactions'), where('customerId', '==', customerId), orderBy('date', 'desc'));
+        const unsubscribe = onSnapshot(transQuery, (snapshot) => {
+            const fetched = snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                date: toDateSafe(d.data().date).toLocaleDateString()
+            } as CustomerTransaction));
+            setTransactions(fetched);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching customer transactions:", error);
+            toast({ variant: 'destructive', title: 'Error', description: "Could not load transactions." });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [customerId, toast]);
 
     const filteredTransactions = useMemo(() => {
         if (!searchTerm) {
@@ -102,7 +116,7 @@ export default function CustomerTransactionsPage() {
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Transaction History for {mockCustomer.name}</CardTitle>
+                        <CardTitle>Transaction History for {customer?.name || 'Customer'}</CardTitle>
                         <CardDescription>A complete list of all payments from this customer.</CardDescription>
                     </div>
                      <div className="flex items-center gap-2">
@@ -134,10 +148,20 @@ export default function CustomerTransactionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedTransactions.map(tx => (
+                            {loading ? (
+                                Array.from({length: 3}).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-6 w-full"/></TableCell>
+                                    <TableCell><Skeleton className="h-6 w-full"/></TableCell>
+                                    <TableCell><Skeleton className="h-6 w-full"/></TableCell>
+                                    <TableCell><Skeleton className="h-6 w-full"/></TableCell>
+                                    <TableCell><Skeleton className="h-6 w-full"/></TableCell>
+                                </TableRow>
+                                ))
+                            ) : paginatedTransactions.map(tx => (
                                 <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedTransaction(tx)}>
                                     <TableCell className="font-medium">{tx.id}</TableCell>
-                                    <TableCell>{tx.date.toLocaleDateString()}</TableCell>
+                                    <TableCell>{tx.date}</TableCell>
                                     <TableCell>{tx.method}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge>
@@ -147,6 +171,11 @@ export default function CustomerTransactionsPage() {
                             ))}
                         </TableBody>
                     </Table>
+                    {!loading && filteredTransactions.length === 0 && (
+                        <div className="text-center p-8 text-muted-foreground">
+                            No transactions found for this customer.
+                        </div>
+                    )}
                 </CardContent>
                 <CardFooter>
                     <div className="flex justify-between items-center w-full">
