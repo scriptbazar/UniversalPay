@@ -90,11 +90,7 @@ const faqItems = [
     },
     {
         question: "What is the white-label solution?",
-        answer: "The white-label solution, available on our Premium plan, allows you to completely rebrand the payment gateway as your own. You can use your custom domain, logo, and color scheme. It's perfect for agencies and resellers."
-    },
-    {
-        question: "How does the reseller program work?",
-        answer: "Our reseller program allows you to act as a payment provider for your own clients. You can onboard and manage multiple sub-merchants under your reseller account, track their sales, and earn a commission on their transaction volume."
+        answer: "The white-label solution, available on our Premium plan, allows you to completely rebrand the payment gateway as your own. You can use your custom domain, logo, and color scheme. It's perfect for agencies that want to offer payment services."
     }
 ]
 
@@ -135,7 +131,7 @@ const tiers = [
     description: "For established businesses and enterprises at scale.",
     features: [
       "Unlimited transactions",
-      "White-Label & Reseller Mode",
+      "White-Label Solution",
       "Advanced Fraud Controls",
       "All Country-Specific Methods",
       "24/7 Dedicated Support",
@@ -157,12 +153,6 @@ const testimonials = [
     name: "Priya Singh",
     title: "Lead Developer, CreativeGoods",
     avatar: "https://placehold.co/100x100.png?text=PS"
-  },
-  {
-    quote: "As a reseller, the white-label solution is exactly what I needed. I can manage my clients under my own brand.",
-    name: "Rohan Mehta",
-    title: "CEO, PayRight Solutions",
-    avatar: "https://placehold.co/100x100.png?text=RM"
   },
   {
     quote: "The fraud detection system saved us from a major headache. It's incredibly smart and gives us peace of mind.",

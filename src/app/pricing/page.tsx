@@ -41,7 +41,7 @@ const tiers = [
     description: "For established businesses and enterprises at scale.",
     features: [
       "Unlimited transactions",
-      "White-Label & Reseller Mode",
+      "White-Label Solution",
       "Advanced Fraud Controls",
       "All Country-Specific Methods",
       "24/7 Dedicated Support",
