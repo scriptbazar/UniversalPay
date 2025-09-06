@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit, Mail, AtSign, CircleHelp } from "lucide-react";
+import { Upload, Globe, KeyRound, Wallet, Banknote, ShieldQuestion, Palette, FileText, IndianRupee, CreditCard, Bitcoin, LifeBuoy, ShieldCheck, DollarSign, Server, Smartphone, Store, Download, ShoppingCart, Code2, Info, Copy, User, Bell, Fingerprint, AlertTriangle, CheckCircle, Edit, Mail, AtSign, CircleHelp, Link as LinkIcon, ExternalLink } from "lucide-react";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,6 @@ import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { doc, getDoc, Timestamp, updateDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db, app } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
-import Link from "next/link";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { debounce } from 'lodash';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -76,6 +75,7 @@ interface UserProfile {
     handleEditCount?: number;
     kycStatus?: 'Verified' | 'Pending' | 'Not Started';
     isKycRequestedByAdmin?: boolean;
+    plan?: string;
 }
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -740,18 +740,40 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-start justify-between rounded-lg border p-4">
-                                <div className="space-y-1">
-                                <Label htmlFor="hideIdentity" className="text-base font-semibold flex items-center gap-2">
-                                    <ShieldQuestion className="w-5 h-5" />
-                                    Hide My Identity &amp; Show 'UniversalPay' Branding
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Turn ON to always show "UniversalPay" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
-                                </p>
+                            <div className="space-y-4 p-4 border rounded-lg">
+                                <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                    <Label htmlFor="hideIdentity" className="text-base font-semibold flex items-center gap-2">
+                                        <ShieldQuestion className="w-5 h-5" />
+                                        Hide My Identity &amp; Show 'UniversalPay' Branding
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Turn ON to always show "UniversalPay" as the merchant. Turn OFF to show your business name. Your personal name will never be shown.
+                                    </p>
+                                    </div>
+                                    <Switch id="hideIdentity" checked={profileData.hideIdentity} onCheckedChange={(checked) => handleSwitchChange('hideIdentity', checked)} />
                                 </div>
-                                <Switch id="hideIdentity" checked={profileData.hideIdentity} onCheckedChange={(checked) => handleSwitchChange('hideIdentity', checked)} />
+                                {profileData.plan === 'Premium' && (
+                                     <div className="space-y-4 pt-4 border-t">
+                                        <h4 className="font-semibold flex items-center gap-2"><LinkIcon className="w-4 h-4"/> Custom Domain for Payment Pages</h4>
+                                        <p className="text-sm text-muted-foreground">Use your own domain for a fully white-labeled payment experience.</p>
+                                        <div className="flex items-center gap-2">
+                                            <Input placeholder="e.g., pay.yourbusiness.com" />
+                                            <Button variant="secondary">Save</Button>
+                                        </div>
+                                         <Alert>
+                                            <Info className="h-4 w-4" />
+                                            <AlertTitle>Setup Required</AlertTitle>
+                                            <AlertDescription>
+                                                To use a custom domain, add a CNAME record pointing to <code className="font-mono bg-muted p-1 rounded">custom.universalpay.com</code> with your domain provider.
+                                                <Button variant="ghost" size="sm" className="ml-2 h-auto p-0 text-primary">Verify Domain</Button>
+                                            </AlertDescription>
+                                        </Alert>
+                                    </div>
+                                )}
                             </div>
+
+
                             <Button onClick={() => saveUserData({
                                 businessName: profileData.businessName,
                                 brandColor: profileData.brandColor,
