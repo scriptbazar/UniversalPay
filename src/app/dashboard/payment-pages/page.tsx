@@ -13,6 +13,7 @@ import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { onSnapshot, collection, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminPaymentPagesPage() {
   const router = useRouter();
@@ -30,17 +31,28 @@ export default function AdminPaymentPagesPage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const fetchedLinks: PaymentLink[] = [];
         querySnapshot.forEach((doc) => {
-            fetchedLinks.push({ id: doc.id, ...doc.data() } as PaymentLink);
+            const data = doc.data();
+            fetchedLinks.push({ 
+                id: doc.id, 
+                ...data,
+                createdAt: data.createdAt?.toDate() // Convert Timestamp to Date
+            } as PaymentLink);
         });
         setLinks(fetchedLinks);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching payment pages: ", error);
         setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleRowClick = (linkId: string) => {
-    router.push(`/dashboard/payment-pages/${linkId}`);
+  const handleRowClick = (slug: string) => {
+    // The detail page uses the slug, not the ID, for routing
+    if (slug) {
+        router.push(`/dashboard/payment-pages/${slug}`);
+    }
   };
 
   const filteredLinks = useMemo(() => {
@@ -48,7 +60,9 @@ export default function AdminPaymentPagesPage() {
         return [];
     }
     return links.filter(link => {
-      const matchesSearch = searchTerm === '' || link.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = searchTerm === '' || 
+                            link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            link.merchantId.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || (link.isActive ? 'active' : 'inactive') === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -74,7 +88,7 @@ export default function AdminPaymentPagesPage() {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search by title..."
+                            placeholder="Search by title or merchant ID..."
                             className="pl-8 w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -106,9 +120,15 @@ export default function AdminPaymentPagesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">Loading pages...</TableCell>
-                </TableRow>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  </TableRow>
+                ))
               ) : filteredLinks.map((link) => (
                 <TableRow key={link.id} onClick={() => handleRowClick(link.slug)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{link.title}</TableCell>
@@ -119,7 +139,7 @@ export default function AdminPaymentPagesPage() {
                       {link.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(link.createdAt?.toDate()).toLocaleDateString()}</TableCell>
+                  <TableCell>{link.createdAt ? new Date(link.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                 </TableRow>
               ))}
                {!loading && filteredLinks.length === 0 && (
@@ -136,5 +156,3 @@ export default function AdminPaymentPagesPage() {
     </div>
   );
 }
-
-    
