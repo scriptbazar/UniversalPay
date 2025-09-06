@@ -8,8 +8,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { scaleQuantile } from 'd3-scale';
-import { Tooltip as ReactTooltip } from 'react-tooltip'
-import 'react-tooltip/dist/react-tooltip.css'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -29,7 +28,6 @@ const generateMockGeoData = () => {
 export default function GeoAnalyticsPage() {
     const [geoData, setGeoData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [tooltipContent, setTooltipContent] = useState('');
 
     useEffect(() => {
         setGeoData(generateMockGeoData());
@@ -68,10 +66,8 @@ export default function GeoAnalyticsPage() {
                     {loading ? (
                         <Skeleton className="w-full h-[450px]" />
                     ) : (
-                        <>
-                        <ReactTooltip id="map-tooltip" />
+                        <TooltipProvider>
                         <ComposableMap
-                            data-tip=""
                             projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }}
                             style={{ width: "100%", height: "auto" }}
                          >
@@ -79,31 +75,30 @@ export default function GeoAnalyticsPage() {
                                 {({ geographies }) =>
                                     geographies.map((geo) => {
                                         const d = geoData.find((s) => s.iso === geo.properties.ISO_A3);
+                                        const countryName = geo.properties.NAME;
+                                        const tooltipText = d ? `${countryName} - $${d.volume.toLocaleString()}` : `${countryName} - No data`;
                                         return (
-                                            <Geography
-                                                key={geo.rsmKey}
-                                                geography={geo}
-                                                onMouseEnter={() => {
-                                                    const { NAME } = geo.properties;
-                                                    setTooltipContent(`${NAME} - ${d ? `$${d.volume.toLocaleString()}` : 'No data'}`);
-                                                  }}
-                                                  onMouseLeave={() => {
-                                                    setTooltipContent("");
-                                                  }}
-                                                style={{
-                                                    default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
-                                                    hover: { fill: "#F53", outline: "none" },
-                                                    pressed: { fill: "#E42", outline: "none" },
-                                                }}
-                                                data-tooltip-id="map-tooltip"
-                                                data-tooltip-content={tooltipContent}
-                                            />
+                                            <Tooltip key={geo.rsmKey}>
+                                                <TooltipTrigger asChild>
+                                                     <Geography
+                                                        geography={geo}
+                                                        style={{
+                                                            default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
+                                                            hover: { fill: "#F53", outline: "none", cursor: 'pointer' },
+                                                            pressed: { fill: "#E42", outline: "none" },
+                                                        }}
+                                                    />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{tooltipText}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
                                         );
                                     })
                                 }
                             </Geographies>
                         </ComposableMap>
-                        </>
+                        </TooltipProvider>
                     )}
                 </CardContent>
             </Card>
