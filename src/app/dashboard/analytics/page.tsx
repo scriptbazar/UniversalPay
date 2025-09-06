@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy, Shield } from "lucide-react";
+import { DollarSign, Users, CreditCard, CheckCircle, Percent, Copy, Shield, Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -18,6 +18,11 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, limit, where, Timestamp, onSnapshot } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toDateSafe } from "@/lib/utils";
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { scaleQuantile } from 'd3-scale';
+import { Tooltip as ChartTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 type Transaction = {
     id: string;
@@ -129,11 +134,11 @@ export default function AnalyticsPage() {
             setPaymentMethodData(paymentMethodChartData);
 
             // --- Process Geo Data ---
-            const geoDistribution: { [key: string]: { volume: number, transactions: number, merchants: number, flag: string } } = {};
+            const geoDistribution: { [key: string]: { volume: number, transactions: number, merchants: number, flag: string, iso: string } } = {};
             allUsers.forEach(user => {
                 if(user.country) {
                     if (!geoDistribution[user.country]) {
-                        geoDistribution[user.country] = { volume: 0, transactions: 0, merchants: 0, flag: user.country.toLowerCase() };
+                        geoDistribution[user.country] = { volume: 0, transactions: 0, merchants: 0, flag: user.country.toLowerCase(), iso: '' }; // ISO placeholder
                     }
                     geoDistribution[user.country].merchants++;
                 }
@@ -239,6 +244,20 @@ export default function AnalyticsPage() {
   const handleCountryClick = (country: any) => {
      router.push(`/dashboard/users/country/${country.country}`);
   };
+
+   const colorScale = useMemo(() => {
+        if (geoData.length === 0) {
+            return () => "#EEE";
+        }
+        const volumes = geoData.map(d => d.volume);
+        return scaleQuantile<string>()
+            .domain(volumes)
+            .range([
+                "#d1e6f1", "#b3d6e8", "#94c6df", "#76b6d6",
+                "#58a6cd", "#3a96c4", "#1c86bb", "#0076b2", "#0067a1",
+            ]);
+    }, [geoData]);
+
 
   return (
     <div className="space-y-6">
@@ -349,6 +368,53 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+       <Card>
+          <CardHeader>
+              <CardTitle>Geographical Revenue</CardTitle>
+              <CardDescription>An overview of your revenue distribution across the world.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              {loading ? (
+                  <Skeleton className="w-full h-[450px]" />
+              ) : (
+                  <TooltipProvider>
+                  <ComposableMap
+                      projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }}
+                      style={{ width: "100%", height: "auto" }}
+                   >
+                      <Geographies geography={GEO_URL}>
+                          {({ geographies }) =>
+                              geographies.map((geo) => {
+                                  const d = geoData.find((s) => s.iso === geo.properties.ISO_A3);
+                                  const countryName = geo.properties.NAME;
+                                  const tooltipText = d ? `${countryName} - $${d.volume.toLocaleString()}` : `${countryName} - No data`;
+                                  return (
+                                      <ChartTooltip key={geo.rsmKey}>
+                                          <TooltipTrigger asChild>
+                                               <Geography
+                                                  geography={geo}
+                                                  style={{
+                                                      default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
+                                                      hover: { fill: "#F53", outline: "none", cursor: 'pointer' },
+                                                      pressed: { fill: "#E42", outline: "none" },
+                                                  }}
+                                              />
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                              <p>{tooltipText}</p>
+                                          </TooltipContent>
+                                      </ChartTooltip>
+                                  );
+                              })
+                          }
+                      </Geographies>
+                  </ComposableMap>
+                  </TooltipProvider>
+              )}
+          </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>

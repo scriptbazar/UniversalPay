@@ -58,7 +58,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Admin Dashboard" },
   { href: "/dashboard/analytics", icon: BarChart, label: "Analytics" },
-  { href: "/dashboard/analytics/geo", icon: Globe, label: "Geo Analytics" },
   { href: "/dashboard/users", icon: Users, label: "Users & Merchants" },
   { href: "/dashboard/handles", icon: AtSign, label: "Handle Links" },
   { href: "/dashboard/customers", icon: Users, label: "All Customers" },
