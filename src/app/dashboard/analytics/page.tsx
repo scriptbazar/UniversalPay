@@ -66,6 +66,8 @@ export default function AnalyticsPage() {
 
   const [geoCurrentPage, setGeoCurrentPage] = useState(1);
   const geoItemsPerPage = 5;
+  const [tooltipContent, setTooltipContent] = useState('');
+
 
   useEffect(() => {
     setLoading(true);
@@ -375,11 +377,10 @@ export default function AnalyticsPage() {
                   <CardTitle>Geographical Revenue</CardTitle>
                   <CardDescription>An overview of your revenue distribution across the world.</CardDescription>
               </CardHeader>
-              <CardContent className="h-[400px]">
+              <CardContent className="h-[400px]" data-tip="" data-for="geo-tooltip">
                   {loading ? (
                       <Skeleton className="w-full h-full" />
                   ) : (
-                      <TooltipProvider>
                       <ComposableMap
                           projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }}
                           style={{ width: "100%", height: "100%" }}
@@ -388,30 +389,29 @@ export default function AnalyticsPage() {
                               {({ geographies }) =>
                                   geographies.map((geo) => {
                                       const d = geoData.find((s) => s.iso === geo.properties.ISO_A3);
-                                      const countryName = geo.properties.NAME;
-                                      const tooltipText = d ? `${countryName} - $${d.volume.toLocaleString()}` : `${countryName} - No data`;
                                       return (
-                                          <ChartTooltip key={geo.rsmKey}>
-                                              <TooltipTrigger asChild>
-                                                   <Geography
-                                                      geography={geo}
-                                                      style={{
-                                                          default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
-                                                          hover: { fill: "#F53", outline: "none", cursor: 'pointer' },
-                                                          pressed: { fill: "#E42", outline: "none" },
-                                                      }}
-                                                  />
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                  <p>{tooltipText}</p>
-                                              </TooltipContent>
-                                          </ChartTooltip>
+                                          <Geography
+                                              key={geo.rsmKey}
+                                              geography={geo}
+                                              onMouseEnter={() => {
+                                                  const { NAME } = geo.properties;
+                                                  const countryData = geoData.find((s) => s.country === NAME);
+                                                  setTooltipContent(`${NAME} - ${countryData ? `$${countryData.volume.toLocaleString()}` : 'No data'}`);
+                                              }}
+                                              onMouseLeave={() => {
+                                                  setTooltipContent("");
+                                              }}
+                                              style={{
+                                                  default: { fill: d ? colorScale(d.volume) : "#EEE", outline: "none" },
+                                                  hover: { fill: "#F53", outline: "none", cursor: 'pointer' },
+                                                  pressed: { fill: "#E42", outline: "none" },
+                                              }}
+                                          />
                                       );
                                   })
                               }
                           </Geographies>
                       </ComposableMap>
-                      </TooltipProvider>
                   )}
               </CardContent>
             </Card>
