@@ -105,3 +105,20 @@ export async function updatePaymentSettings(adminUid: string, data: {
         return { success: false, error: error.message };
     }
 }
+
+export async function updateGeneralSettings(data: {
+    platformName: string;
+    supportEmail: string;
+    defaultCurrency: string;
+    maintenanceMode: boolean;
+}) {
+    try {
+        const functions = getFunctions(app);
+        const updateSettings = httpsCallable(functions, 'updateGeneralSettings');
+        await updateSettings(data);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating general settings:", error);
+        return { success: false, error: error.message };
+    }
+}

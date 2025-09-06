@@ -326,10 +326,18 @@ exports.updatePaymentSettings = onCall(async (request) => {
     return { success: true };
 });
 
+exports.updateGeneralSettings = onCall(async (request) => {
+    if (!request.auth || request.auth.token.role !== 'admin') {
+        throw new HttpsError('permission-denied', 'Only admins can update settings.');
+    }
+    await settingsDocRef.set({ general: request.data }, { merge: true });
+    return { success: true };
+});
+
+
 // ===== Subscription Plan Management Functions =====
 
 exports.getSubscriptionPlans = onCall(async (request) => {
-    // FIX: Add authentication check. Only logged-in users should see plans.
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'You must be logged in to view subscription plans.');
     }

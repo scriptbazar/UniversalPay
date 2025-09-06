@@ -15,7 +15,7 @@ import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { auth, app } from "@/lib/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { getSecuritySettings, updateSecuritySettings, getPaymentSettings, updatePaymentSettings } from "./actions";
+import { getSecuritySettings, updateSecuritySettings, getPaymentSettings, updatePaymentSettings, updateGeneralSettings } from "./actions";
 
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -46,11 +46,28 @@ type GatewayState = {
     cad_eft: boolean;
 };
 
+type GeneralSettingsState = {
+    platformName: string;
+    supportEmail: string;
+    defaultCurrency: string;
+    maintenanceMode: boolean;
+    logo?: string;
+};
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // General Settings State
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettingsState>({
+      platformName: "UniversalPay",
+      supportEmail: "support@universalpay.com",
+      defaultCurrency: "usd",
+      maintenanceMode: false,
+      logo: undefined,
+  });
   
   // Security settings state
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -68,7 +85,6 @@ export default function SettingsPage() {
   const [usdtWallet, setUsdtWallet] = useState('');
   const [btcWallet, setBtcWallet] = useState('');
 
-  const [logo, setLogo] = useState<string | null>(null);
   
   const [gateways, setGateways] = useState<GatewayState>({
     paytm: true,
@@ -121,6 +137,18 @@ export default function SettingsPage() {
   const handleGatewayToggle = (gateway: keyof GatewayState) => {
     setGateways(prev => ({...prev, [gateway]: !prev[gateway]}));
   };
+
+  const handleSaveGeneralSettings = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSaving(true);
+      const result = await updateGeneralSettings(generalSettings);
+      if (result.success) {
+          toast({ title: "Success", description: "General settings saved successfully." });
+      } else {
+          toast({ variant: "destructive", title: "Error", description: result.error || "Failed to save general settings." });
+      }
+      setIsSaving(false);
+  }
 
   const handleSaveSecuritySettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +219,7 @@ export default function SettingsPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogo(reader.result as string);
+        setGeneralSettings(prev => ({...prev, logo: reader.result as string}));
       };
       reader.readAsDataURL(file);
     }
@@ -240,6 +268,7 @@ export default function SettingsPage() {
         </TabsList>
         <TabsContent value="general" className="pt-4">
           <Card>
+           <form onSubmit={handleSaveGeneralSettings}>
             <CardHeader>
               <CardTitle>General Settings</CardTitle>
               <CardDescription>Manage general platform settings.</CardDescription>
@@ -248,30 +277,30 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="platform-name">Platform Name</Label>
-                    <Input id="platform-name" defaultValue="UniversalPay" />
+                    <Input id="platformName" value={generalSettings.platformName} onChange={(e) => setGeneralSettings(prev => ({...prev, platformName: e.target.value}))}/>
                 </div>
                  <div className="space-y-2">
                     <Label>Platform Logo</Label>
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center border overflow-hidden">
-                        {logo ? (
-                                <Image src={logo} alt="Business Logo" width={40} height={40} className="object-cover" data-ai-hint="logo business" />
+                        {generalSettings.logo ? (
+                                <Image src={generalSettings.logo} alt="Business Logo" width={40} height={40} className="object-cover" data-ai-hint="logo business" />
                             ) : (
                                 <Upload className="w-5 h-5 text-muted-foreground" />
                             )}
                         </div>
                         <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
-                        <Button variant="outline" size="sm" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
                     </div>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="support-email" className="flex items-center gap-2"><Mail className="w-4 h-4" /> Support Email</Label>
-                    <Input id="support-email" type="email" placeholder="support@universalpay.com" />
+                    <Label htmlFor="supportEmail" className="flex items-center gap-2"><Mail className="w-4 h-4" /> Support Email</Label>
+                    <Input id="supportEmail" type="email" placeholder="support@universalpay.com" value={generalSettings.supportEmail} onChange={(e) => setGeneralSettings(prev => ({...prev, supportEmail: e.target.value}))} />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="default-currency" className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Default Currency</Label>
-                     <Select defaultValue="usd">
-                        <SelectTrigger id="default-currency">
+                    <Label htmlFor="defaultCurrency" className="flex items-center gap-2"><Banknote className="w-4 h-4" /> Default Currency</Label>
+                     <Select value={generalSettings.defaultCurrency} onValueChange={(value) => setGeneralSettings(prev => ({...prev, defaultCurrency: value}))}>
+                        <SelectTrigger id="defaultCurrency">
                             <SelectValue placeholder="Select default currency" />
                         </SelectTrigger>
                         <SelectContent>
@@ -288,12 +317,13 @@ export default function SettingsPage() {
                   <h4 className="font-medium">Platform Maintenance Mode</h4>
                   <p className="text-sm text-muted-foreground">Temporarily disable access for non-admins.</p>
                 </div>
-                <Switch />
+                <Switch checked={generalSettings.maintenanceMode} onCheckedChange={(checked) => setGeneralSettings(prev => ({...prev, maintenanceMode: checked}))} />
               </div>
             </CardContent>
              <CardFooter>
-                <Button>Save Changes</Button>
+                <Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</Button>
             </CardFooter>
+            </form>
           </Card>
         </TabsContent>
         <TabsContent value="api-keys" className="pt-4">
@@ -380,7 +410,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-muted-foreground mt-1">If users exist in Authentication but not in the database, this tool will sync them.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button onClick={handleSyncUsers} disabled={isSyncing} variant="outline">
+                        <Button onClick={handleSyncUsers} disabled={isSyncing} variant="outline" type="button">
                             <RefreshCw className="mr-2 h-4 w-4"/> {isSyncing ? 'Syncing...' : 'Sync Users'}
                         </Button>
                     </div>
