@@ -123,8 +123,7 @@
         },
         {
           "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
+          "order": "DESCENDING"        }
       ]
     },
     {
