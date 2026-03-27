@@ -5,26 +5,13 @@ import { db } from './firebase';
 import { 
     collection, 
     addDoc, 
-    getDocs, 
-    doc, 
-    getDoc, 
-    updateDoc, 
-    query, 
-    where, 
-    orderBy,
     serverTimestamp,
-    runTransaction,
-    increment,
-    Timestamp
 } from 'firebase/firestore';
-import { addInvoice } from './invoicesData';
-import { addDoc as addAuditLogDoc } from 'firebase/firestore';
 import { toDateSafe } from './utils';
-
 
 export type Transaction = {
   id: string;
-  sourceId: string; // This could be a payment link ID, invoice ID, etc.
+  sourceId: string;
   merchantId: string;
   amount: number;
   currency: string;
@@ -33,121 +20,16 @@ export type Transaction = {
   status: 'Success' | 'Pending' | 'Failed';
   createdAt: any; 
   method: string;
-  date: any; // Storing as a server timestamp
+  date: any;
 };
 
-
-// Function to get all transactions for a specific source (e.g., a payment link)
-export const getTransactionsBySource = async (sourceId: string): Promise<Transaction[]> => {
-    const transactionsCol = collection(db, 'transactions');
-    const q = query(transactionsCol, where('sourceId', '==', sourceId), orderBy('createdAt', 'desc'));
-    
-    const transactionSnapshot = await getDocs(q);
-    const transactionList = transactionSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return { 
-            id: doc.id, 
-            ...data, 
-            date: toDateSafe(data.date),
-            amount: data.amount.toString() // Ensure amount is a string as expected by some components
-        } as Transaction;
-    });
-    return transactionList;
-};
-
-// Function to get a single transaction by its ID
-export const getTransactionById = async (id: string): Promise<Transaction | null> => {
-    const docRef = doc(db, 'transactions', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        return { 
-            id: docSnap.id, 
-            ...data, 
-            date: toDateSafe(data.date) 
-        } as Transaction;
-    }
-    return null;
-};
-
-// Function to add a new transaction and trigger post-payment actions
 export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' | 'createdAt'>): Promise<void> => {
-  const transactionRef = await addDoc(collection(db, 'transactions'), {
+  // FINANCIAL SECURITY: Logic moved to Cloud Function trigger 'onTransactionCreated'
+  // Client only saves the record to the database.
+  await addDoc(collection(db, 'transactions'), {
     ...newTransactionData,
-    amount: Number(newTransactionData.amount), // Ensure amount is stored as a number
-    date: serverTimestamp(), // CRITICAL FIX: Ensure date is saved
+    amount: Number(newTransactionData.amount),
+    date: serverTimestamp(),
     createdAt: serverTimestamp(),
   });
-
-  // Post-payment actions for successful transactions
-  if (newTransactionData.status === 'Success') {
-    const merchantDocRef = doc(db, 'users', newTransactionData.merchantId);
-    const merchantDocSnap = await getDoc(merchantDocRef);
-    const merchantName = merchantDocSnap.exists() ? merchantDocSnap.data().fullName : 'Your Merchant';
-
-    // 1. Create an invoice
-    await addInvoice({
-      merchantId: newTransactionData.merchantId,
-      merchantName: merchantName,
-      customerName: newTransactionData.customerName || newTransactionData.customerEmail,
-      customerEmail: newTransactionData.customerEmail,
-      issueDate: new Date().toISOString().split("T")[0],
-      dueDate: new Date().toISOString().split("T")[0], // Due immediately
-      items: [{ description: `Payment via ${newTransactionData.method}`, amount: Number(newTransactionData.amount) }],
-      status: 'Paid',
-    });
-
-    // 2. Create or update customer record
-    const customerQuery = query(collection(db, 'customers'), where('email', '==', newTransactionData.customerEmail), where('merchantId', '==', newTransactionData.merchantId));
-    const customerSnapshot = await getDocs(customerQuery);
-    
-    if (customerSnapshot.empty) {
-        // Create new customer
-        await addDoc(collection(db, 'customers'), {
-            merchantId: newTransactionData.merchantId,
-            merchantName: merchantName,
-            email: newTransactionData.customerEmail,
-            name: newTransactionData.customerName || 'New Customer',
-            avatar: `https://placehold.co/40x40.png?text=${(newTransactionData.customerName || 'N').charAt(0)}`,
-            totalSpent: Number(newTransactionData.amount),
-            transactions: 1,
-            lastSeen: new Date().toLocaleDateString(),
-            joinedDate: new Date().toISOString().split("T")[0]
-        });
-    } else {
-        // Update existing customer
-        const customerDocRef = customerSnapshot.docs[0].ref;
-        await updateDoc(customerDocRef, {
-            totalSpent: increment(Number(newTransactionData.amount)),
-            transactions: increment(1),
-            lastSeen: new Date().toLocaleDateString()
-        });
-    }
-
-    // 3. Create an audit log entry for the merchant
-    await addAuditLogDoc(collection(db, 'audit_logs'), {
-        type: 'PAYMENT_RECEIVED',
-        level: 'INFO',
-        message: `Payment of $${newTransactionData.amount} received from ${newTransactionData.customerEmail}.`,
-        details: {
-            amount: newTransactionData.amount,
-            customer: newTransactionData.customerEmail,
-            transactionId: transactionRef.id,
-            targetUser: newTransactionData.merchantId,
-        },
-        timestamp: serverTimestamp(),
-    });
-
-    // 4. Update merchant's wallet balance
-    await updateDoc(merchantDocRef, {
-        walletBalance: increment(Number(newTransactionData.amount)),
-    });
-  }
-};
-
-
-// Function to update a transaction
-export const updateTransaction = async (id: string, updates: Partial<Transaction>): Promise<void> => {
-    const docRef = doc(db, 'transactions', id);
-    await updateDoc(docRef, updates);
 };
