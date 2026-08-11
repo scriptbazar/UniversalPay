@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
+import { getAuth, initializeAuth, inMemoryPersistence, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -13,7 +13,19 @@ const firebaseConfig = {
 
 // Initialize Firebase for SSR and CSR, ensuring it's only done once.
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth: Auth = getAuth(app);
+
+// Use inMemoryPersistence to prevent iframe.js getProjectConfig background 400 network calls
+let auth: Auth;
+if (typeof window !== 'undefined') {
+  try {
+    auth = initializeAuth(app, { persistence: inMemoryPersistence });
+  } catch {
+    auth = getAuth(app);
+  }
+} else {
+  auth = getAuth(app);
+}
+
 const db: Firestore = getFirestore(app);
 
 export { app, auth, db };
