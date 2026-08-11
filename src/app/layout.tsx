@@ -10,7 +10,7 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en" suppressHydrationWarning={true} data-scroll-behavior="smooth">
       <head>
         <title>UniversalPay — Hybrid Web3 &amp; UPI Payment Gateway</title>
         <meta name="description" content="A secure, scalable, and globally functional third-party payment gateway platform." />
