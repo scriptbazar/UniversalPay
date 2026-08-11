@@ -91,6 +91,7 @@ export default function AuditLogsPage() {
                     <CardDescription>A chronological record of critical system and admin activities.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div className="overflow-x-auto rounded-md border border-border">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -132,6 +133,7 @@ export default function AuditLogsPage() {
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

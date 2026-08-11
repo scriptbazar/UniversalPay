@@ -112,7 +112,8 @@ export default function AllCustomersPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+                    <div className="overflow-x-auto rounded-md border border-border">
+                        <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Customer</TableHead>
@@ -155,6 +156,7 @@ export default function AllCustomersPage() {
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </CardContent>
                  <CardFooter>
                     <div className="flex justify-between items-center w-full">
