@@ -22,7 +22,7 @@ export function Header() {
           <Link href="/#pricing" className="text-muted-foreground transition-colors hover:text-foreground">
             Pricing
           </Link>
-          <Link href="/dashboard/developer" className="text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="/#developers" className="text-muted-foreground transition-colors hover:text-foreground">
             Developers
           </Link>
         </nav>
@@ -67,7 +67,7 @@ export function Header() {
                     </Link>
                 </SheetClose>
                 <SheetClose asChild>
-                    <Link href="/dashboard/developer" className="text-muted-foreground hover:text-foreground">
+                    <Link href="/#developers" className="text-muted-foreground hover:text-foreground">
                         Developers
                     </Link>
                 </SheetClose>

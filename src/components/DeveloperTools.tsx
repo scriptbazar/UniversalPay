@@ -670,11 +670,11 @@ class _MyAppState extends State<MyApp> {
                                      <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
                                      <ol className="list-decimal list-inside space-y-2 text-sm">
                                         <li>Go to your WordPress Admin Dashboard.</li>
-                                        <li>Navigate to `Plugins > Add New`.</li>
+                                         <li>Navigate to `Plugins &gt; Add New`.</li>
                                         <li>Click on the "Upload Plugin" button at the top of the page.</li>
                                         <li>Choose the downloaded .zip file and click "Install Now".</li>
                                         <li>After installation, click "Activate Plugin".</li>
-                                        <li>Go to `WooCommerce > Settings > Payments` and enable the "UniversalPay" gateway.</li>
+                                        <li>Go to `WooCommerce &gt; Settings &gt; Payments` and enable the "UniversalPay" gateway.</li>
                                         <li>Enter your Publishable Key and Secret Key from this page and save changes.</li>
                                     </ol>
                                 </TabsContent>
@@ -712,7 +712,7 @@ php bin/magento setup:di:compile
 php bin/magento setup:static-content:deploy
 php bin/magento cache:clean
                                      `} />
-                                     <p className="text-sm mt-4">After installation, navigate to `Stores > Configuration > Sales > Payment Methods` to configure and enable the UniversalPay gateway.</p>
+                                     <p className="text-sm mt-4">After installation, navigate to `Stores &gt; Configuration &gt; Sales &gt; Payment Methods` to configure and enable the UniversalPay gateway.</p>
                                 </TabsContent>
                                 <TabsContent value="prestashop" className="pt-4">
                                     <h3 className="font-semibold text-lg mb-2">PrestaShop Integration</h3>
@@ -723,7 +723,7 @@ php bin/magento cache:clean
                                      <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
                                      <ol className="list-decimal list-inside space-y-2 text-sm">
                                         <li>Go to your PrestaShop Admin Dashboard.</li>
-                                        <li>Navigate to `Modules > Module Manager`.</li>
+                                        <li>Navigate to `Modules &gt; Module Manager`.</li>
                                         <li>Click on "Upload a module" and select the downloaded .zip file.</li>
                                         <li>Once the module is installed, click "Configure".</li>
                                         <li>Enter your API Keys from UniversalPay and save the settings.</li>
@@ -739,9 +739,9 @@ php bin/magento cache:clean
                                      <h4 className="font-semibold mt-6 mb-2">Installation Steps</h4>
                                      <ol className="list-decimal list-inside space-y-2 text-sm">
                                         <li>Go to your OpenCart Admin Dashboard.</li>
-                                        <li>Navigate to `Extensions > Installer`.</li>
+                                        <li>Navigate to `Extensions &gt; Installer`.</li>
                                         <li>Click the "Upload" button and select the downloaded `.ocmod.zip` file.</li>
-                                        <li>After successful upload, go to `Extensions > Extensions` and select "Payments" from the dropdown.</li>
+                                        <li>After successful upload, go to `Extensions &gt; Extensions` and select "Payments" from the dropdown.</li>
                                         <li>Find "UniversalPay" in the list and click the green "Install" button.</li>
                                         <li>Click the blue "Edit" button to configure the module with your API keys.</li>
                                         <li>Set the status to "Enabled" and save.</li>

@@ -265,5 +265,4 @@ export default function InvoicesPage() {
         </Dialog>
     </div>
   );
-    
-    
+}
