@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.icons8.com/isometric/96/000000/cyber-security.png" alt="UniversalPay Logo" width="100">
+  <img src="public/logo.svg" alt="UniversalPay Logo" width="100">
 </p>
 
 <h1 align="center">UniversalPay — Hybrid Web3 & UPI Global Payment Gateway</h1>

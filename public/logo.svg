@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle with Glow -->
+  <circle cx="60" cy="60" r="50" fill="url(#bgGrad)" filter="url(#glow)" />
+
+  <!-- Outer Ring -->
+  <circle cx="60" cy="60" r="40" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.4" stroke-dasharray="8 4" />
+
+  <!-- Globe Lines -->
+  <circle cx="60" cy="60" r="28" fill="none" stroke="#ffffff" stroke-width="4" />
+  <ellipse cx="60" cy="60" rx="14" ry="28" fill="none" stroke="#ffffff" stroke-width="3" />
+  <line x1="32" y1="60" x2="88" y2="60" stroke="#ffffff" stroke-width="3" />
+  <line x1="38" y1="46" x2="82" y2="46" stroke="#ffffff" stroke-width="2" opacity="0.8" />
+  <line x1="38" y1="74" x2="82" y2="74" stroke="#ffffff" stroke-width="2" opacity="0.8" />
+</svg>
