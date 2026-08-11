@@ -1,6 +1,7 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
+import Script from 'next/script';
 
 export default function RootLayout({
   children,
@@ -16,7 +17,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
-        <script
+      </head>
+      <body className="font-body antialiased min-h-screen bg-background flex flex-col">
+        <Script
+          id="sw-cleanup"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
@@ -29,8 +34,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="font-body antialiased min-h-screen bg-background flex flex-col">
         <ThemeProvider
             attribute="class"
             defaultTheme="dark"
