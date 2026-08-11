@@ -81,69 +81,73 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     setLoading(true);
-    const usersQuery = query(collection(db, "users"));
-    const transactionsQuery = collection(db, "transactions");
+    let allUsersData: User[] = [];
+    let allTransactionsData: Transaction[] = [];
 
-    const unsubscribeUsers = onSnapshot(usersQuery, (usersSnapshot) => {
-        const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        const unsubscribeTransactions = onSnapshot(transactionsQuery, (transactionsSnapshot) => {
-            const allTransactions = transactionsSnapshot.docs.map(doc => ({ 
-                id: doc.id, 
-                ...doc.data(),
-                date: toDateSafe(doc.data().date)
-            } as Transaction));
+    const processData = () => {
+        const successfulTxns = allTransactionsData.filter(t => t.status === 'Successful' || t.status === 'Success');
+        const totalVolume = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount || '0'), 0);
+        const successfulPayments = successfulTxns.length;
+        const newMerchants = allUsersData.length;
+        const avgTransaction = successfulPayments > 0 ? totalVolume / successfulPayments : 0;
+        setStats({ totalVolume, successfulPayments, newMerchants, avgTransaction });
 
-            const successfulTxns = allTransactions.filter(t => t.status === 'Successful' || t.status === 'Success');
-            const totalVolume = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount), 0);
-            const successfulPayments = successfulTxns.length;
-            const newMerchants = allUsers.length;
-            const avgTransaction = successfulPayments > 0 ? totalVolume / successfulPayments : 0;
-            setStats({ totalVolume, successfulPayments, newMerchants, avgTransaction });
-
-            const monthlyData: any = {};
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            
-            allTransactions.forEach(tx => {
-                const date = toDateSafe(tx.date);
-                const month = monthNames[date.getMonth()];
-                if (!monthlyData[month]) monthlyData[month] = { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 };
-                monthlyData[month].totalTransactions++;
-                if (tx.status === 'Successful' || tx.status === 'Success') {
-                    monthlyData[month].revenue += parseFloat(tx.amount);
-                    monthlyData[month].successfulTransactions++;
-                }
-            });
-
-            setRevenueData(monthNames.map(month => ({ month, ...(monthlyData[month] || { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 }) })));
-
-            const paymentMethods: any = {};
-            successfulTxns.forEach(tx => { paymentMethods[tx.method] = (paymentMethods[tx.method] || 0) + 1; });
-            setPaymentMethodData(Object.keys(paymentMethods).map(name => ({ name, value: paymentMethods[name], color: '#8884d8' })));
-
-            const geoDistribution: any = {};
-            allUsers.forEach(user => {
-                if(user.country) {
-                    const countryInfo = countries.find(c => c.name === user.country);
-                    const isoA3 = countryInfo ? a2ToA3[countryInfo.code] : '';
-                    if (!geoDistribution[user.country]) {
-                        geoDistribution[user.country] = { volume: 0, transactions: 0, merchants: 0, flag: countryInfo?.code || '', iso: isoA3 };
-                    }
-                    geoDistribution[user.country].merchants++;
-                }
-            });
-            successfulTxns.forEach(tx => {
-                const user = allUsers.find(u => u.id === tx.merchantId);
-                if (user?.country && geoDistribution[user.country]) {
-                    geoDistribution[user.country].volume += parseFloat(tx.amount);
-                    geoDistribution[user.country].transactions++;
-                }
-            });
-            setGeoData(Object.keys(geoDistribution).map(country => ({ country, ...geoDistribution[country] })).sort((a, b) => b.volume - a.volume));
-            setLoading(false);
+        const monthlyData: any = {};
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        allTransactionsData.forEach(tx => {
+            const date = toDateSafe(tx.date);
+            const month = monthNames[date.getMonth()];
+            if (!monthlyData[month]) monthlyData[month] = { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 };
+            monthlyData[month].totalTransactions++;
+            if (tx.status === 'Successful' || tx.status === 'Success') {
+                monthlyData[month].revenue += parseFloat(tx.amount || '0');
+                monthlyData[month].successfulTransactions++;
+            }
         });
-        return () => unsubscribeTransactions();
-    });
-    return () => unsubscribeUsers();
+        setRevenueData(monthNames.map(month => ({ month, ...(monthlyData[month] || { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 }) })));
+
+        const paymentMethods: any = {};
+        successfulTxns.forEach(tx => { paymentMethods[tx.method] = (paymentMethods[tx.method] || 0) + 1; });
+        setPaymentMethodData(Object.keys(paymentMethods).map(name => ({ name, value: paymentMethods[name], color: '#8884d8' })));
+
+        const geoDistribution: any = {};
+        allUsersData.forEach(user => {
+            if (user.country) {
+                const countryInfo = countries.find(c => c.name === user.country);
+                const isoA3 = countryInfo ? a2ToA3[countryInfo.code] : '';
+                if (!geoDistribution[user.country]) {
+                    geoDistribution[user.country] = { volume: 0, transactions: 0, merchants: 0, flag: countryInfo?.code || '', iso: isoA3 };
+                }
+                geoDistribution[user.country].merchants++;
+            }
+        });
+        successfulTxns.forEach(tx => {
+            const user = allUsersData.find(u => u.id === tx.merchantId);
+            if (user?.country && geoDistribution[user.country]) {
+                geoDistribution[user.country].volume += parseFloat(tx.amount || '0');
+                geoDistribution[user.country].transactions++;
+            }
+        });
+        setGeoData(Object.keys(geoDistribution).map(country => ({ country, ...geoDistribution[country] })).sort((a, b) => b.volume - a.volume));
+        setLoading(false);
+    };
+
+    const unsubscribeUsers = onSnapshot(query(collection(db, "users")), (usersSnapshot) => {
+        allUsersData = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        processData();
+    }, (err) => { console.warn('Users snapshot:', err); setLoading(false); });
+
+    const unsubscribeTransactions = onSnapshot(collection(db, "transactions"), (transactionsSnapshot) => {
+        allTransactionsData = transactionsSnapshot.docs.map(doc => ({
+            id: doc.id, ...doc.data(), date: toDateSafe(doc.data().date)
+        } as Transaction));
+        processData();
+    }, (err) => { console.warn('Transactions snapshot:', err); setLoading(false); });
+
+    return () => {
+        unsubscribeUsers();
+        unsubscribeTransactions();
+    };
   }, [toast]);
 
   const colorScale = useMemo(() => {

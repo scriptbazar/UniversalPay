@@ -41,8 +41,7 @@ export default function AdminLoginPage() {
         router.push('/dashboard');
       }
     } catch (error: any) {
-        toast({ title: "Admin Access Granted", description: "Welcome to Dashboard!" });
-        router.push('/dashboard');
+        toast({ variant: 'destructive', title: "Login Failed", description: "An unexpected error occurred. Please try again." });
     } finally {
         setIsLoading(false);
     }
