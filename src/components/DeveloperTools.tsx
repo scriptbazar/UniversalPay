@@ -1,7 +1,10 @@
 
 'use client';
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,6 +59,30 @@ const CodeSnippet = ({ code }: { code: string }) => {
 export function DeveloperTools() {
     const [showSecret, setShowSecret] = React.useState(false);
     const { toast } = useToast();
+    const [webhooks, setWebhooks] = useState<any[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUserId(user.uid);
+            } else {
+                setUserId(null);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const q = query(collection(db, 'webhooks'), where('merchantId', '==', userId));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedWebhooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setWebhooks(fetchedWebhooks);
+        });
+        return () => unsubscribe();
+    }, [userId]);
 
     const copyKey = (key: string) => {
         navigator.clipboard.writeText(key);
@@ -188,22 +215,35 @@ export function DeveloperTools() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow>
-                            <TableCell className="font-medium">https://api.myapp.com/webhooks/universalpay</TableCell>
-                            <TableCell>Active</TableCell>
-                            <TableCell>payment.succeeded, payment.failed</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell className="font-medium">https://api.anotherapp.com/hooks</TableCell>
-                            <TableCell>Inactive</TableCell>
-                            <TableCell>withdrawal.completed</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
-                            </TableCell>
-                        </TableRow>
+                        {webhooks.length > 0 ? webhooks.map((webhook) => (
+                            <TableRow key={webhook.id}>
+                                <TableCell className="font-medium">{webhook.url}</TableCell>
+                                <TableCell>{webhook.status || 'Active'}</TableCell>
+                                <TableCell>{(webhook.events || []).join(', ')}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
+                                </TableCell>
+                            </TableRow>
+                        )) : (
+                            <>
+                                <TableRow>
+                                    <TableCell className="font-medium">https://api.myapp.com/webhooks/universalpay</TableCell>
+                                    <TableCell>Active</TableCell>
+                                    <TableCell>payment.succeeded, payment.failed</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
+                                    </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-medium">https://api.anotherapp.com/hooks</TableCell>
+                                    <TableCell>Inactive</TableCell>
+                                    <TableCell>withdrawal.completed</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
+                                    </TableCell>
+                                </TableRow>
+                            </>
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>

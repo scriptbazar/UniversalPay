@@ -14,9 +14,9 @@ export function Footer() {
               Secure, scalable, and global payment solutions.
             </p>
             <div className="flex space-x-4">
-              <Link href="https://x.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></Link>
-              <Link href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></Link>
-              <Link href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></Link>
+              <Link href="https://x.com/universalpay" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Twitter className="h-5 w-5" /></Link>
+              <Link href="https://facebook.com/universalpay" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Facebook className="h-5 w-5" /></Link>
+              <Link href="https://linkedin.com/company/universalpay" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground"><Linkedin className="h-5 w-5" /></Link>
             </div>
           </div>
           <div>
@@ -40,8 +40,8 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
                <li><Link href="/support" className="text-muted-foreground hover:text-foreground">Support</Link></li>
-              <li>support@universalpay.com</li>
-              <li>+1 (555) 123-4567</li>
+              <li><a href="mailto:support@universalpay.com" className="hover:text-foreground transition-colors">support@universalpay.com</a></li>
+              <li>India: +91 98765 43210</li>
             </ul>
           </div>
         </div>
