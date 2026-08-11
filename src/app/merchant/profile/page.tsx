@@ -13,9 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, Timestamp, collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { countries } from "@/lib/countries";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toDateSafe } from "@/lib/utils";
 
 interface UserProfile {
     id: string;
@@ -58,6 +60,9 @@ export default function MerchantProfilePage() {
   const [merchant, setMerchant] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [joinedDate, setJoinedDate] = useState('N/A');
+  const [stats, setStats] = useState({ volume: 0, totalTxns: 0, successRate: 0 });
+  const [recentActivity, setRecentActivity] = useState<Array<{ type: string; details: string; status: string; date: Date; route: string }>>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const formattedUserId = useMemo(() => {
     if (!merchant?.id) return '';
@@ -100,6 +105,37 @@ export default function MerchantProfilePage() {
     });
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+      const unsubAuth = onAuthStateChanged(auth, (user) => {
+          if (!user) return;
+          const q = query(
+              collection(db, 'transactions'),
+              where('merchantId', '==', user.uid),
+              orderBy('date', 'desc'),
+              limit(10)
+          );
+          const unsub = onSnapshot(q, (snap) => {
+              const txns = snap.docs.map(d => ({ ...d.data(), id: d.id, date: toDateSafe(d.data().date) })) as any[];
+              const success = txns.filter((t: any) => t.status === 'Success');
+              const volume = success.reduce((s: number, t: any) => s + parseFloat(t.amount || '0'), 0);
+              const rate = txns.length > 0 ? Math.round((success.length / txns.length) * 100) : 0;
+              setStats({ volume, totalTxns: txns.length, successRate: rate });
+  
+              const activity = txns.slice(0, 5).map((t: any) => ({
+                  type: 'Payment Received',
+                  details: `From ${t.customerEmail || 'customer'} · $${t.amount}`,
+                  status: t.status,
+                  date: t.date,
+                  route: '/merchant/payments'
+              }));
+              setRecentActivity(activity);
+              setStatsLoading(false);
+          }, () => setStatsLoading(false));
+          return () => unsub();
+      });
+      return () => unsubAuth();
+  }, []);
 
   const copyToClipboard = (text: string, label: string) => {
     if (!text) return;
@@ -179,8 +215,7 @@ export default function MerchantProfilePage() {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$45,231.89</div>
-                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                        {statsLoading ? <Skeleton className="h-8 w-28" /> : <div className="text-2xl font-bold">${stats.volume.toFixed(2)}</div>}
                     </CardContent>
                 </Link>
             </Card>
@@ -191,8 +226,7 @@ export default function MerchantProfilePage() {
                         <CreditCard className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+2350</div>
-                        <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+                        {statsLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalTxns}</div>}
                     </CardContent>
                 </Link>
             </Card>
@@ -203,8 +237,7 @@ export default function MerchantProfilePage() {
                         <Percent className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">98.5%</div>
-                        <p className="text-xs text-muted-foreground">+1.2% from last month</p>
+                        {statsLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold text-green-500">{stats.successRate}%</div>}
                     </CardContent>
                 </Link>
             </Card>
@@ -247,24 +280,20 @@ export default function MerchantProfilePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/merchant/withdrawals')}>
-                            <TableCell>Withdrawal</TableCell>
-                            <TableCell>Withdrawal to USDT Wallet</TableCell>
-                            <TableCell><Badge variant="secondary">Pending</Badge></TableCell>
-                            <TableCell className="text-right">{new Date().toLocaleDateString()}</TableCell>
-                        </TableRow>
-                         <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/merchant/payments')}>
-                            <TableCell>Payment Received</TableCell>
-                            <TableCell>From customer@example.com</TableCell>
-                            <TableCell><Badge variant="default">Success</Badge></TableCell>
-                            <TableCell className="text-right">{new Date(Date.now() - 86400000).toLocaleDateString()}</TableCell>
-                        </TableRow>
-                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => router.push('/merchant/payment-links')}>
-                            <TableCell>Payment Link Created</TableCell>
-                            <TableCell>New T-Shirt Sale</TableCell>
-                            <TableCell><Badge variant="outline">Active</Badge></TableCell>
-                            <TableCell className="text-right">{new Date(Date.now() - 172800000).toLocaleDateString()}</TableCell>
-                        </TableRow>
+                        {statsLoading ? Array.from({ length: 3 }).map((_, i) => (
+                            <TableRow key={i}>{Array.from({ length: 4 }).map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>
+                        )) : recentActivity.length === 0 ? (
+                            <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No recent activity yet.</TableCell></TableRow>
+                        ) : recentActivity.map((a, i) => (
+                            <TableRow key={i} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(a.route)}>
+                                <TableCell>{a.type}</TableCell>
+                                <TableCell className="text-muted-foreground text-sm">{a.details}</TableCell>
+                                <TableCell>
+                                    <Badge variant={a.status === 'Success' ? 'default' : a.status === 'Failed' ? 'destructive' : 'secondary'}>{a.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right text-muted-foreground text-xs">{a.date instanceof Date ? a.date.toLocaleDateString() : '-'}</TableCell>
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
             </CardContent>

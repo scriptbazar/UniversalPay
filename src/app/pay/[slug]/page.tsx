@@ -52,7 +52,7 @@ export default function PayPage() {
     fetchLink();
   }, [slug]);
 
-  const convenienceFee = 1.00;
+  const convenienceFee = link?.convenienceFee ?? 0;
   const totalAmount = (Number(amount) || 0) + convenienceFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,17 +71,14 @@ export default function PayPage() {
       sourceId: link.id,
     };
     
-    // Simulate payment processing and save to database
+    // Save transaction to Firestore and show success
     await addTransaction(newTransaction);
-    
-    setTimeout(() => {
-        setIsProcessing(false);
-        setIsPaid(true);
-        toast({
-            title: "Payment Successful!",
-            description: `Thank you for your payment of $${totalAmount.toFixed(2)}.`,
-        });
-    }, 1500);
+    setIsProcessing(false);
+    setIsPaid(true);
+    toast({
+        title: "Payment Successful!",
+        description: `Thank you for your payment of $${totalAmount.toFixed(2)}.`,
+    });
   }
 
   if (loading) {
