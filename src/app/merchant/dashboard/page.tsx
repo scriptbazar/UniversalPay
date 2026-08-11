@@ -85,7 +85,7 @@ export default function Dashboard() {
             const userDocRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
-                setMerchantName(userDoc.data().fullName || "Merchant");
+                setMerchantName(userDoc.data()?.fullName || "Merchant");
             }
 
             // Fetch merchant's transactions

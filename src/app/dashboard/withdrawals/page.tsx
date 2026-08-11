@@ -41,7 +41,7 @@ export default function AdminWithdrawalsPage() {
         const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const idTokenResult = await user.getIdTokenResult(true);
-                const userIsAdmin = !!idTokenResult.claims.role && idTokenResult.claims.role === 'admin';
+                const userIsAdmin = !!idTokenResult?.claims?.role && idTokenResult.claims.role === 'admin';
                 setIsAdmin(userIsAdmin);
 
                 if (userIsAdmin) {

@@ -49,7 +49,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, getDocs, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
 import { toDateSafe } from "@/lib/utils";
 
-type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed'; date: Date; method: string; merchantId: string; };
+type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed' | 'Flagged' | 'Pending'; date: Date; method: string; merchantId: string; };
 type Signup = { id: string; name: string; email: string; plan: string; status: string; avatar: string; role?: string; createdAt: any; };
 
 
@@ -167,11 +167,13 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-        title: `${label} Copied!`,
-    });
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: `${label} Copied!` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Copy Failed', description: 'Clipboard access was denied. Please copy manually.' });
+    }
   };
 
   const handleBarClick = (data: any) => {

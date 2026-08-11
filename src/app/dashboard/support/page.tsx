@@ -66,7 +66,7 @@ export default function AdminSupportPage() {
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
         if (filter === 'all') return true;
-        return ticket.status.toLowerCase().replace(' ', '-') === filter;
+        return ticket.status.toLowerCase().replaceAll(' ', '-') === filter;
     });
   }, [tickets, filter]);
 

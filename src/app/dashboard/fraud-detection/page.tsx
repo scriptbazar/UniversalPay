@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { toDateSafe } from "@/lib/utils";
 
 type Transaction = {
   id: string;
@@ -64,7 +65,7 @@ export default function FraudDetectionPage() {
         ip: "192.168.1.1",
         riskScore: Math.floor(Math.random() * 40) + 60, // 60-100
         reason: "High frequency transactions",
-        timestamp: new Date(doc.data().date?.toDate()).toLocaleString(),
+        timestamp: toDateSafe(doc.data().date).toLocaleString(),
       } as Transaction));
       setTransactions(fetchedTransactions);
       setLoading(false);

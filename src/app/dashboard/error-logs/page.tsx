@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { collection, query, orderBy, onSnapshot, Timestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, Timestamp, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { toDateSafe } from '@/lib/utils';
 import { AlertCircle, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 type AuditLog = {
@@ -57,7 +58,8 @@ export default function ErrorLogsPage() {
         const q = query(
             logsCollectionRef, 
             where('level', 'in', ['ERROR', 'CRITICAL', 'SECURITY_ALERT']),
-            orderBy('timestamp', 'desc')
+            orderBy('timestamp', 'desc'),
+            limit(200)
         );
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -117,7 +119,7 @@ export default function ErrorLogsPage() {
                             ) : (
                                 logs.map((log) => (
                                     <TableRow key={log.id}>
-                                        <TableCell>{log.timestamp?.toDate().toLocaleString() ?? 'No date'}</TableCell>
+                                        <TableCell>{toDateSafe(log.timestamp).toLocaleString()}</TableCell>
                                         <TableCell>
                                             <Badge variant={getLevelVariant(log.level)} className="flex items-center gap-1 w-fit">
                                                 {getLevelIcon(log.level)}
