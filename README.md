@@ -138,12 +138,12 @@ Create a `.env.local` file in the project root directory:
 
 ```env
 # Firebase Client SDK Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyABNmB1Op_cwat9iNDyztloLohEHjMLbiE
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=universalpay-ir4yd.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=universalpay-ir4yd
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=universalpay-ir4yd.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=573852939232
-NEXT_PUBLIC_FIREBASE_APP_ID=1:573852939232:web:5181ba8a00ef787a583185
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 
 # Gemini AI / Genkit Key
 GEMINI_API_KEY=your_gemini_api_key_here
