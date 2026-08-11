@@ -261,14 +261,13 @@ export function PaymentLinksManager({ userType }: { userType: 'admin' | 'merchan
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(link.url); }}>
                               <Copy className="mr-2 h-4 w-4" /> Copy Link
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(link); }}>
+                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(link); }}>
                                <Switch
-                                    className="mr-2 h-4 w-4"
+                                    className="mr-2 h-4 w-4 pointer-events-none"
                                     checked={link.isActive}
-                                    readOnly
                                 />
                               {link.isActive ? 'Deactivate' : 'Activate'}
-                            </DropdownMenuItem>
+                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteLink(link.id); }}>
                               <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
