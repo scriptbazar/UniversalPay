@@ -235,13 +235,19 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Approximate mid-2026 exchange rates — update periodically or integrate a live FX API
+  const FX_RATES = { INR_PER_USD: 84.2, EUR_PER_USD: 0.92 };
+  const CRYPTO_RATES = { BTC: 97500, ETH: 3850, SOL: 185 };
+
   const getCryptoEstimate = () => {
-    const inUsd = fiat === 'INR' ? amount / 83.5 : fiat === 'EUR' ? amount * 1.08 : amount;
+    const inUsd = fiat === 'INR' ? amount / FX_RATES.INR_PER_USD
+                : fiat === 'EUR' ? amount / FX_RATES.EUR_PER_USD
+                : amount;
     switch (cryptoAsset) {
       case 'USDT': return inUsd.toFixed(2);
-      case 'BTC': return (inUsd / 65000).toFixed(6);
-      case 'ETH': return (inUsd / 3400).toFixed(4);
-      case 'SOL': return (inUsd / 145).toFixed(3);
+      case 'BTC': return (inUsd / CRYPTO_RATES.BTC).toFixed(6);
+      case 'ETH': return (inUsd / CRYPTO_RATES.ETH).toFixed(4);
+      case 'SOL': return (inUsd / CRYPTO_RATES.SOL).toFixed(3);
     }
   };
 
