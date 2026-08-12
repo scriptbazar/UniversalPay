@@ -13,8 +13,10 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { auth, app } from "@/lib/firebase";
+import { auth, app, storage } from "@/lib/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 import { getSecuritySettings, updateSecuritySettings, getPaymentSettings, updatePaymentSettings, updateGeneralSettings } from "./actions";
 
 
@@ -59,6 +61,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   // General Settings State
   const [generalSettings, setGeneralSettings] = useState<GeneralSettingsState>({
@@ -214,14 +217,27 @@ export default function SettingsPage() {
     }
   };
   
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setGeneralSettings(prev => ({...prev, logo: reader.result as string}));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File Too Large', description: 'Logo must be smaller than 2MB.' });
+      return;
+    }
+    setLogoUploading(true);
+    try {
+      const user = getAuth().currentUser;
+      const uid = user?.uid || 'admin';
+      const storageRef = ref(storage, `logos/${uid}/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      setGeneralSettings(prev => ({ ...prev, logo: downloadURL }));
+      toast({ title: 'Logo Uploaded', description: 'Logo saved to storage. Click Save Settings to apply.' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Upload Failed', description: err.message || 'Could not upload logo.' });
+    } finally {
+      setLogoUploading(false);
     }
   };
   
@@ -290,7 +306,9 @@ export default function SettingsPage() {
                             )}
                         </div>
                         <Input id="logo-upload" type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
-                        <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById('logo-upload')?.click()}>Upload Logo</Button>
+                        <Button type="button" variant="outline" size="sm" disabled={logoUploading} onClick={() => document.getElementById('logo-upload')?.click()}>
+                          {logoUploading ? 'Uploading...' : 'Upload Logo'}
+                        </Button>
                     </div>
                 </div>
                  <div className="space-y-2">

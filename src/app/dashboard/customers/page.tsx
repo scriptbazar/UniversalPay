@@ -1,7 +1,7 @@
 
 'use client';
 
-import { ArrowLeft, Copy, Download, Search, User } from "lucide-react";
+import { ArrowLeft, Download, Search, User, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { onSnapshot, collection, query } from "firebase/firestore";
+import { getDocs, collection, query, orderBy, limit, startAfter, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const PAGE_SIZE = 50;
 
 export type Customer = {
     id: string;
@@ -32,55 +34,71 @@ export default function AllCustomersPage() {
     const { toast } = useToast();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
     const [loading, setLoading] = useState(true);
+    const [cursors, setCursors] = useState<QueryDocumentSnapshot<DocumentData>[]>([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
+
+    const fetchPage = async (cursor?: QueryDocumentSnapshot<DocumentData>) => {
+        setLoading(true);
+        try {
+            let q = query(
+                collection(db, 'customers'),
+                orderBy('name'),
+                limit(PAGE_SIZE + 1)
+            );
+            if (cursor) q = query(q, startAfter(cursor));
+
+            const snap = await getDocs(q);
+            const docs = snap.docs.slice(0, PAGE_SIZE);
+            setHasMore(snap.docs.length > PAGE_SIZE);
+
+            const allCustomers: Customer[] = docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+            setCustomers(allCustomers);
+
+            if (docs.length > 0) {
+                setCursors(prev => {
+                    const updated = [...prev];
+                    updated[currentPage] = docs[docs.length - 1];
+                    return updated;
+                });
+            }
+        } catch (error: any) {
+            console.error("Failed to fetch customers:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load customers data.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setLoading(true);
-        const customersCollectionRef = collection(db, "customers");
-        const q = query(customersCollectionRef);
+        fetchPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const allCustomers: Customer[] = [];
-            querySnapshot.forEach((doc) => {
-                allCustomers.push({ id: doc.id, ...doc.data() } as Customer);
-            });
-            setCustomers(allCustomers);
-            setLoading(false);
-        }, (error) => {
-             console.error("Failed to fetch customers:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not load customers data.'
-            });
-            setLoading(false);
-        });
+    const handleNextPage = () => {
+        const cursor = cursors[currentPage];
+        if (!cursor) return;
+        setCurrentPage(p => p + 1);
+        fetchPage(cursor);
+    };
 
-        return () => unsubscribe();
-    }, [toast]);
-    
+    const handlePrevPage = () => {
+        if (currentPage === 0) return;
+        const prevPage = currentPage - 1;
+        setCurrentPage(prevPage);
+        fetchPage(prevPage === 0 ? undefined : cursors[prevPage - 1]);
+    };
+
     const filteredCustomers = useMemo(() => {
-        if (!searchTerm) {
-            return customers;
-        }
-        return customers.filter(customer => 
-            customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.merchantId.toLowerCase().includes(searchTerm.toLowerCase())
+        if (!searchTerm) return customers;
+        const lower = searchTerm.toLowerCase();
+        return customers.filter(c =>
+            c.name?.toLowerCase().includes(lower) ||
+            c.email?.toLowerCase().includes(lower) ||
+            c.merchantId?.toLowerCase().includes(lower)
         );
     }, [customers, searchTerm]);
-
-    const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
-    const paginatedCustomers = filteredCustomers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
-
-    const handleRowClick = (customer: Customer) => {
-        router.push(`/dashboard/customers/${customer.id}`);
-    };
 
     return (
         <div className="space-y-6">
@@ -92,16 +110,19 @@ export default function AllCustomersPage() {
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
-                        <CardTitle className="text-2xl">All Platform Customers</CardTitle>
-                         <div className="flex items-center gap-2">
+                        <div>
+                            <CardTitle className="text-2xl">All Platform Customers</CardTitle>
+                            <CardDescription>Server-paginated · {PAGE_SIZE} customers per page</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
                             <div className="relative">
                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                <Input
                                  type="search"
                                  placeholder="Search by name, email, or merchant ID..."
-                                 className="pl-8 w-40"
+                                 className="pl-8 w-48"
                                  value={searchTerm}
-                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                 onChange={e => setSearchTerm(e.target.value)}
                                />
                             </div>
                            <Button size="sm" variant="outline" className="h-9 gap-1">
@@ -124,61 +145,51 @@ export default function AllCustomersPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                Array.from({length: 5}).map((_, i) => (
+                                Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
-                                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
+                                        {[1,2,3,4].map(j => <TableCell key={j}><Skeleton className="h-10 w-full" /></TableCell>)}
                                     </TableRow>
                                 ))
-                            ) : paginatedCustomers.map(customer => (
-                                <TableRow key={customer.id} onClick={() => handleRowClick(customer)} className="cursor-pointer hover:bg-muted/50">
+                            ) : filteredCustomers.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                        {searchTerm ? 'No customers match your search.' : 'No customers found.'}
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredCustomers.map(customer => (
+                                <TableRow
+                                    key={customer.id}
+                                    onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                >
                                     <TableCell>
                                         <div className="font-medium">{customer.name}</div>
                                         <div className="text-sm text-muted-foreground">{customer.email}</div>
                                     </TableCell>
                                     <TableCell>
-                                        <Link href={`/dashboard/users/${customer.merchantId}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
+                                        <Link href={`/dashboard/users/${customer.merchantId}`} onClick={e => e.stopPropagation()} className="hover:underline font-mono text-xs">
                                             {customer.merchantId}
                                         </Link>
                                     </TableCell>
                                     <TableCell>{customer.transactions}</TableCell>
-                                    <TableCell className="text-right font-semibold">${customer.totalSpent.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-semibold">${customer.totalSpent?.toFixed(2) ?? '0.00'}</TableCell>
                                 </TableRow>
                             ))}
-                            {!loading && filteredCustomers.length === 0 && (
-                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24">
-                                        No customers found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
                         </TableBody>
                     </Table>
                     </div>
                 </CardContent>
-                 <CardFooter>
+                <CardFooter>
                     <div className="flex justify-between items-center w-full">
                         <div className="text-xs text-muted-foreground">
-                            Page {currentPage} of {totalPages}. Total {filteredCustomers.length} customers.
+                            Page {currentPage + 1} · {customers.length} customers loaded
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                            >
-                                Previous
+                            <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={currentPage === 0 || loading}>
+                                <ChevronLeft className="h-4 w-4" /> Previous
                             </Button>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
+                            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!hasMore || loading}>
+                                Next <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
