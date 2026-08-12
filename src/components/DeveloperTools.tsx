@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, addDoc, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -84,9 +84,60 @@ export function DeveloperTools() {
         return () => unsubscribe();
     }, [userId]);
 
-    const copyKey = (key: string) => {
-        navigator.clipboard.writeText(key);
-        toast({ title: "API Key Copied!" });
+    const copyKey = async (key: string) => {
+        try {
+            await navigator.clipboard.writeText(key);
+            toast({ title: "API Key Copied!" });
+        } catch {
+            toast({ variant: 'destructive', title: 'Copy Failed', description: 'Please copy manually.' });
+        }
+    };
+
+    const [webhookUrl, setWebhookUrl] = useState('');
+    const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+    const [addingWebhook, setAddingWebhook] = useState(false);
+    const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+
+    const toggleEvent = (event: string) => {
+        setSelectedEvents(prev => prev.includes(event) ? prev.filter(e => e !== event) : [...prev, event]);
+    };
+
+    const handleAddWebhook = async () => {
+        if (!webhookUrl.trim() || !webhookUrl.startsWith('http')) {
+            toast({ variant: 'destructive', title: 'Invalid URL', description: 'Please enter a valid https:// endpoint URL.' });
+            return;
+        }
+        if (selectedEvents.length === 0) {
+            toast({ variant: 'destructive', title: 'No Events Selected', description: 'Select at least one event to subscribe to.' });
+            return;
+        }
+        if (!userId) { toast({ variant: 'destructive', title: 'Not Authenticated' }); return; }
+        setAddingWebhook(true);
+        try {
+            await addDoc(collection(db, 'webhooks'), {
+                url: webhookUrl,
+                events: selectedEvents,
+                status: 'Active',
+                merchantId: userId,
+                createdAt: serverTimestamp(),
+            });
+            toast({ title: 'Webhook Added!', description: `Endpoint ${webhookUrl} is now active.` });
+            setWebhookUrl('');
+            setSelectedEvents([]);
+            setWebhookDialogOpen(false);
+        } catch {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to save webhook. Try again.' });
+        }
+        setAddingWebhook(false);
+    };
+
+    const handleDeleteWebhook = async (webhookId: string) => {
+        try {
+            await deleteDoc(doc(db, 'webhooks', webhookId));
+            toast({ title: 'Webhook Removed' });
+        } catch {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to remove webhook.' });
+        }
     };
 
   return (
@@ -158,7 +209,7 @@ export function DeveloperTools() {
                             Get notified about events that happen in your UniversalPay account.
                         </CardDescription>
                     </div>
-                     <Dialog>
+                     <Dialog open={webhookDialogOpen} onOpenChange={setWebhookDialogOpen}>
                         <DialogTrigger asChild>
                             <Button><PlusCircle className="mr-2 h-4 w-4"/> Add Webhook</Button>
                         </DialogTrigger>
@@ -166,39 +217,29 @@ export function DeveloperTools() {
                             <DialogHeader>
                             <DialogTitle>Add a new webhook endpoint</DialogTitle>
                             <DialogDescription>
-                                We'll send a POST request to this URL when selected events occur.
+                                We&apos;ll send a POST request to this URL when selected events occur.
                             </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="webhook-url">Endpoint URL</Label>
-                                    <Input id="webhook-url" placeholder="https://your-server.com/webhook" />
+                                    <Input id="webhook-url" placeholder="https://your-server.com/webhook" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Events to send</Label>
                                     <div className="space-y-2 rounded-md border p-4">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox id="payment.succeeded" />
-                                            <Label htmlFor="payment.succeeded">payment.succeeded</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox id="payment.failed" />
-                                            <Label htmlFor="payment.failed">payment.failed</Label>
-                                        </div>
-                                         <div className="flex items-center space-x-2">
-                                            <Checkbox id="withdrawal.created" />
-                                            <Label htmlFor="withdrawal.created">withdrawal.created</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox id="withdrawal.completed" />
-                                            <Label htmlFor="withdrawal.completed">withdrawal.completed</Label>
-                                        </div>
+                                        {['payment.succeeded','payment.failed','withdrawal.created','withdrawal.completed'].map(ev => (
+                                            <div key={ev} className="flex items-center space-x-2">
+                                                <Checkbox id={ev} checked={selectedEvents.includes(ev)} onCheckedChange={() => toggleEvent(ev)} />
+                                                <Label htmlFor={ev}>{ev}</Label>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button variant="outline">Cancel</Button>
-                                <Button type="submit">Add Endpoint</Button>
+                                <Button variant="outline" onClick={() => setWebhookDialogOpen(false)}>Cancel</Button>
+                                <Button onClick={handleAddWebhook} disabled={addingWebhook}>{addingWebhook ? 'Saving...' : 'Add Endpoint'}</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -217,32 +258,17 @@ export function DeveloperTools() {
                     <TableBody>
                         {webhooks.length > 0 ? webhooks.map((webhook) => (
                             <TableRow key={webhook.id}>
-                                <TableCell className="font-medium">{webhook.url}</TableCell>
-                                <TableCell>{webhook.status || 'Active'}</TableCell>
-                                <TableCell>{(webhook.events || []).join(', ')}</TableCell>
+                                <TableCell className="font-medium font-mono text-xs">{webhook.url}</TableCell>
+                                <TableCell><span className={`text-xs font-medium ${webhook.status === 'Active' ? 'text-green-500' : 'text-muted-foreground'}`}>{webhook.status || 'Active'}</span></TableCell>
+                                <TableCell className="text-xs">{(webhook.events || []).join(', ')}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteWebhook(webhook.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                 </TableCell>
                             </TableRow>
                         )) : (
-                            <>
-                                <TableRow>
-                                    <TableCell className="font-medium">https://api.myapp.com/webhooks/universalpay</TableCell>
-                                    <TableCell>Active</TableCell>
-                                    <TableCell>payment.succeeded, payment.failed</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell className="font-medium">https://api.anotherapp.com/hooks</TableCell>
-                                    <TableCell>Inactive</TableCell>
-                                    <TableCell>withdrawal.completed</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4"/></Button>
-                                    </TableCell>
-                                </TableRow>
-                            </>
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No webhooks configured yet. Click &quot;Add Webhook&quot; to get started.</TableCell>
+                            </TableRow>
                         )}
                     </TableBody>
                 </Table>

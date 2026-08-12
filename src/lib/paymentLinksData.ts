@@ -32,7 +32,6 @@ export type PaymentLink = {
   collectPhone: boolean;
   imageUrl: string | null;
   isPage?: boolean; // To distinguish between links and pages
-  convenienceFee?: number; // Optional per-link convenience fee, defaults to 0
 };
 
 // Function to get all links (for admin) or links for a specific merchant

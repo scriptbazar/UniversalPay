@@ -57,16 +57,27 @@ export default function FraudDetectionPage() {
     setLoading(true);
     const q = query(collection(db, "transactions"), where("status", "in", ["Flagged", "Blocked", "Held", "KYC Requested"]));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedTransactions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        // Mock data for fields not in transaction schema for now
-        user: doc.data().merchantId, // or customerId
-        ip: "192.168.1.1",
-        riskScore: Math.floor(Math.random() * 40) + 60, // 60-100
-        reason: "High frequency transactions",
-        timestamp: toDateSafe(doc.data().date).toLocaleString(),
-      } as Transaction));
+      const fetchedTransactions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const amount = parseFloat(data.amount || '0');
+        // Deterministic risk score based on amount (higher amount = higher risk)
+        const baseScore = Math.min(60 + Math.floor(amount / 50), 99);
+        const statusReasonMap: Record<string, string> = {
+          'Flagged': 'Suspicious transaction pattern detected',
+          'Blocked': 'Transaction blocked by fraud filter',
+          'Held': 'Manual review required — unusual activity',
+          'KYC Requested': 'KYC verification pending for this merchant',
+        };
+        return {
+          id: doc.id,
+          ...data,
+          user: data.merchantId || data.customerId || 'Unknown',
+          ip: 'N/A',
+          riskScore: baseScore,
+          reason: statusReasonMap[data.status] || 'Flagged by automated system',
+          timestamp: toDateSafe(data.date).toLocaleString(),
+        } as Transaction;
+      });
       setTransactions(fetchedTransactions);
       setLoading(false);
     });

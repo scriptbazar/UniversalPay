@@ -49,7 +49,7 @@ export default function MerchantWalletPage() {
   const [transactionId, setTransactionId] = useState("");
   const [method, setMethod] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<WalletLoadRequest | null>(null);
-  const currentBalance = 5430.50; // Placeholder value
+  const [currentBalance, setCurrentBalance] = useState(0);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +60,11 @@ export default function MerchantWalletPage() {
      const querySnapshot = await getDocs(q);
      const fetchedRequests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletLoadRequest));
      setRequests(fetchedRequests);
+     // Compute balance from approved requests
+     const approvedTotal = fetchedRequests
+       .filter(r => r.status === 'Approved')
+       .reduce((sum, r) => sum + parseFloat(r.amount || '0'), 0);
+     setCurrentBalance(approvedTotal);
      setLoading(false);
   }
 

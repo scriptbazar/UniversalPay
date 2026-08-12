@@ -17,6 +17,7 @@ const tiers = [
       "Email Support",
     ],
     cta: "Get Started",
+    href: "/signup",
     popular: false,
   },
   {
@@ -32,6 +33,7 @@ const tiers = [
       "Priority Email Support",
     ],
     cta: "Choose Pro",
+    href: "/signup?plan=pro",
     popular: true,
   },
   {
@@ -47,6 +49,7 @@ const tiers = [
       "24/7 Dedicated Support",
     ],
     cta: "Contact Sales",
+    href: "mailto:support@universalpay.com",
     popular: false,
   },
 ];
@@ -60,7 +63,7 @@ export default function PricingPage() {
           <div className="container mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Flexible Pricing for Every Business</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that's right for you. No hidden fees, no surprises.
+              Choose the plan that&apos;s right for you. No hidden fees, no surprises.
             </p>
           </div>
         </section>
@@ -94,8 +97,8 @@ export default function PricingPage() {
                     </ul>
                   </CardContent>
                   <div className="p-6">
-                    <Button className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
-                      {tier.cta}
+                    <Button asChild className={`w-full ${tier.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
+                      <a href={tier.href}>{tier.cta}</a>
                     </Button>
                   </div>
                 </Card>
