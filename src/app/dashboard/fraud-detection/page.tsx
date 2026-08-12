@@ -28,7 +28,7 @@ type Transaction = {
   amount: number;
   riskScore: number;
   reason: string;
-  status: "Flagged" | "Blocked" | "Held" | "KYC Requested" | "Approved";
+  status: "Flagged" | "Blocked" | "Held" | "KYC Requested" | "Approved" | "Success";
   timestamp: string;
 };
 
@@ -92,7 +92,7 @@ export default function FraudDetectionPage() {
       'Approve': 'Success',
       'Dismiss': 'Success',
     };
-    const newStatus = statusMap[action] || action;
+    const newStatus = (statusMap[action] || action) as Transaction['status'];
     try {
       await updateDoc(doc(db, 'transactions', txId), { status: newStatus });
       setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: newStatus } : tx));

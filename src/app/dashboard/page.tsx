@@ -46,7 +46,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, orderBy, limit, where, Timestamp, onSnapshot } from "firebase/firestore";
 import { toDateSafe } from "@/lib/utils";
 
 type Transaction = { id: string; name: string; email: string; amount: string; status: 'Success' | 'Failed' | 'Flagged' | 'Pending'; date: Date; method: string; merchantId: string; };

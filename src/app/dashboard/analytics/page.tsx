@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
     let allTransactionsData: Transaction[] = [];
 
     const processData = () => {
-        const successfulTxns = allTransactionsData.filter(t => t.status === 'Successful' || t.status === 'Success');
+        const successfulTxns = allTransactionsData.filter(t => (t.status as string) === 'Successful' || (t.status as string) === 'Success');
         const totalVolume = successfulTxns.reduce((acc, t) => acc + parseFloat(t.amount || '0'), 0);
         const successfulPayments = successfulTxns.length;
         const newMerchants = allUsersData.length;
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
             const month = monthNames[date.getMonth()];
             if (!monthlyData[month]) monthlyData[month] = { revenue: 0, newUsers: 0, totalTransactions: 0, successfulTransactions: 0 };
             monthlyData[month].totalTransactions++;
-            if (tx.status === 'Successful' || tx.status === 'Success') {
+            if ((tx.status as string) === 'Successful' || (tx.status as string) === 'Success') {
                 monthlyData[month].revenue += parseFloat(tx.amount || '0');
                 monthlyData[month].successfulTransactions++;
             }
@@ -262,13 +262,13 @@ export default function AnalyticsPage() {
             {loading ? <Skeleton className="w-full h-full" /> : (
               <ComposableMap projectionConfig={{ scale: 140 }} style={{ width: "100%", height: "100%" }}>
                 <Geographies geography={GEO_URL}>
-                  {({ geographies }) => geographies.map((geo) => {
+                  {({ geographies }: any) => geographies.map((geo: any) => {
                     const countryData = geoData.find((s) => s.iso === geo.properties.ISO_A3);
                     return (
                       <Geography
                         key={geo.rsmKey}
                         geography={geo}
-                        onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+                        onMouseMove={(e: any) => setMousePos({ x: e.clientX, y: e.clientY })}
                         onMouseEnter={() => setTooltipContent({ name: geo.properties.NAME, volume: countryData ? countryData.volume.toLocaleString() : '0' })}
                         onMouseLeave={() => setTooltipContent(null)}
                         style={{

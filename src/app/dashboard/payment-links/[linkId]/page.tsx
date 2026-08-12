@@ -19,8 +19,6 @@ const getStatusBadgeVariant = (status: Transaction["status"]) => {
     switch (status) {
         case 'Success':
             return 'default';
-        case 'Flagged':
-            return 'destructive';
         case 'Failed':
             return 'secondary';
         default:
@@ -66,7 +64,7 @@ export default function PaymentLinkDetailPage({ params }: { params: { linkId: st
   
   const analytics = useMemo(() => {
     const successfulTxns = transactions.filter(t => t.status === 'Success');
-    const totalVolume = successfulTxns.reduce((acc, p) => acc + parseFloat(p.amount), 0);
+    const totalVolume = successfulTxns.reduce((acc, p) => acc + Number(p.amount || 0), 0);
     const averagePayment = successfulTxns.length > 0 ? (totalVolume / successfulTxns.length).toFixed(2) : "0.00";
     return {
       totalVolume,

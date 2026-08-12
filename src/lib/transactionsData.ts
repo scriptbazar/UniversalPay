@@ -6,6 +6,9 @@ import {
     collection, 
     addDoc, 
     serverTimestamp,
+    query,
+    where,
+    getDocs
 } from 'firebase/firestore';
 import { toDateSafe } from './utils';
 
@@ -32,4 +35,19 @@ export const addTransaction = async (newTransactionData: Omit<Transaction, 'id' 
     date: serverTimestamp(),
     createdAt: serverTimestamp(),
   });
+};
+
+export const getTransactionsBySource = async (sourceId: string): Promise<Transaction[]> => {
+  try {
+    const q = query(collection(db, 'transactions'), where('sourceId', '==', sourceId));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+      date: toDateSafe(d.data().date),
+      createdAt: toDateSafe(d.data().createdAt),
+    } as Transaction));
+  } catch {
+    return [];
+  }
 };

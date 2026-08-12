@@ -100,7 +100,7 @@ function AnalyticsDetailPageContent() {
                     const allUsers = usersSnapshot.docs.map(doc => {
                         const data = doc.data();
                         const { dateString, month: docMonth } = formatDateAndMonth(data.createdAt);
-                        return { id: doc.id, ...data, joined: dateString, month: docMonth } as User;
+                        return { id: doc.id, ...data, joined: dateString, month: docMonth } as unknown as User;
                     });
                     
                     fetchedData = allUsers.filter(u => month === 'all' || u.month === month);

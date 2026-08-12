@@ -16,7 +16,7 @@ interface UserData {
     [key: string]: any; 
 }
 
-export async function createUser(email: string, password: string, additionalData: UserData) {
+export async function createUser(email: string, password: string, additionalData: UserData): Promise<{ success: boolean; userId: string; error?: string; isDemoMode?: boolean }> {
     try {
         if (!process.env.NEXT_PUBLIC_USE_LIVE_FIREBASE_AUTH) {
             return {
@@ -34,9 +34,9 @@ export async function createUser(email: string, password: string, additionalData
         return { success: true, userId: user.uid };
     } catch (error: any) {
         return {
-            success: true,
-            userId: 'demo_user_' + Date.now(),
-            isDemoMode: true
+            success: false,
+            userId: '',
+            error: error.message || 'Signup failed'
         };
     }
 }
@@ -94,18 +94,18 @@ export async function signInUser(email: string, password: string, loginType: 'ad
     }
 }
 
-export async function signOutUser() {
+export async function signOutUser(): Promise<{ success: boolean; error?: string }> {
     try {
         if (process.env.NEXT_PUBLIC_USE_LIVE_FIREBASE_AUTH) {
             await signOut(auth);
         }
         return { success: true };
     } catch (error: any) {
-        return { success: true };
+        return { success: false, error: error.message || 'Logout failed' };
     }
 }
 
-export async function sendPasswordReset(email: string) {
+export async function sendPasswordReset(email: string): Promise<{ success: boolean; error?: string; isDemoMode?: boolean }> {
     try {
         if (!process.env.NEXT_PUBLIC_USE_LIVE_FIREBASE_AUTH) {
             return { success: true, isDemoMode: true };
@@ -113,6 +113,6 @@ export async function sendPasswordReset(email: string) {
         await sendPasswordResetEmail(auth, email);
         return { success: true };
     } catch (error: any) {
-        return { success: true, isDemoMode: true };
+        return { success: false, error: error.message || 'Password reset failed', isDemoMode: true };
     }
 }

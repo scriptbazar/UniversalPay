@@ -34,13 +34,15 @@ const getPriorityVariant = (priority: Ticket['priority']) => {
   }
 };
 
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+const formatDate = (dateInput: any) => {
+    if (!dateInput) return '-';
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
 };
 

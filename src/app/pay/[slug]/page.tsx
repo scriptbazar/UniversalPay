@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PayPalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -64,7 +65,8 @@ export default function PayPage() {
     const newTransaction = {
       merchantId: link.merchantId,
       customerEmail: email,
-      amount: totalAmount.toFixed(2),
+      amount: Number(totalAmount.toFixed(2)),
+      currency: "USD",
       status: "Success" as const,
       method: selectedMethod.toUpperCase() as "UPI" | "Crypto" | "Link" | "Page",
       date: new Date().toISOString(),

@@ -119,10 +119,12 @@ export default function AdminWithdrawalsPage() {
         }
 
         if (debouncedSearch) {
+            const lower = debouncedSearch.toLowerCase();
             filtered = filtered.filter(w =>
-                w.merchantId?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-                w.merchantName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-                w.walletAddress?.toLowerCase().includes(debouncedSearch.toLowerCase())
+                (w.accountName && w.accountName.toLowerCase().includes(lower)) ||
+                (w.userId && w.userId.toLowerCase().includes(lower)) ||
+                (w.accountNumber && w.accountNumber.toLowerCase().includes(lower)) ||
+                ((w as any).merchantId && (w as any).merchantId.toLowerCase().includes(lower))
             );
         }
 

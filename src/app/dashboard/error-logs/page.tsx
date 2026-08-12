@@ -10,6 +10,7 @@ import { collection, query, orderBy, onSnapshot, Timestamp, where, limit } from 
 import { db } from '@/lib/firebase';
 import { toDateSafe } from '@/lib/utils';
 import { AlertCircle, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 type AuditLog = {
     id: string;
