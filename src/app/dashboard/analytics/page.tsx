@@ -211,6 +211,50 @@ export default function AnalyticsPage() {
       <div className="grid gap-8 lg:grid-cols-2">
         <Card>
           <CardHeader>
+            <CardTitle>Monthly Revenue</CardTitle>
+            <CardDescription>Platform revenue trend over time.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? <Skeleton className="h-64 w-full" /> : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={revenueData}>
+                  <XAxis dataKey="month" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '6px' }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Revenue']} />
+                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Methods</CardTitle>
+            <CardDescription>Distribution of successful transactions by method.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? <Skeleton className="h-64 w-full" /> : paymentMethodData.length === 0 ? (
+              <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">No payment data yet.</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie data={paymentMethodData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                    {paymentMethodData.map((_, idx) => (
+                      <Cell key={idx} fill={['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444'][idx % 6]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: any) => [v, 'Transactions']} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
             <CardTitle>Geographical Revenue</CardTitle>
             <CardDescription>Global distribution of volume.</CardDescription>
           </CardHeader>

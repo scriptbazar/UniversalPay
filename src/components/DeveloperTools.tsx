@@ -61,6 +61,36 @@ export function DeveloperTools() {
     const { toast } = useToast();
     const [webhooks, setWebhooks] = useState<any[]>([]);
     const [userId, setUserId] = useState<string | null>(null);
+    const [secretKey, setSecretKey] = useState('sk_live_xxxxxxxxxxxxxxxxxxxxxxxx');
+    const [pubKey, setPubKey] = useState('pk_live_xxxxxxxxxxxxxxxxxxxxxxxx');
+    const [regenerating, setRegenerating] = useState(false);
+
+    const generateApiKey = (prefix: string) => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const random = Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        return `${prefix}${random}`;
+    };
+
+    const handleRegenerateKey = async () => {
+        if (!userId) return;
+        setRegenerating(true);
+        try {
+            const newSecret = generateApiKey('sk_live_');
+            const newPub = generateApiKey('pk_live_');
+            await addDoc(collection(db, 'merchantKeys'), {
+                merchantId: userId,
+                secretKey: newSecret,
+                pubKey: newPub,
+                createdAt: serverTimestamp(),
+            });
+            setSecretKey(newSecret);
+            setPubKey(newPub);
+            toast({ title: 'Keys Regenerated!', description: 'Your new API keys are ready. Copy and save them securely.' });
+        } catch {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to regenerate keys. Try again.' });
+        }
+        setRegenerating(false);
+    };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -161,19 +191,19 @@ export function DeveloperTools() {
                 <div>
                     <Label htmlFor="public-key">Publishable Key</Label>
                     <div className="flex items-center gap-2">
-                        <Input id="public-key" readOnly value="pk_live_xxxxxxxxxxxxxxxxxxxxxxxx" />
-                        <Button variant="outline" size="icon" onClick={() => copyKey('pk_live_xxxxxxxxxxxxxxxxxxxxxxxx')}><Copy className="h-4 w-4"/></Button>
+                        <Input id="public-key" readOnly value={pubKey} />
+                        <Button variant="outline" size="icon" onClick={() => copyKey(pubKey)}><Copy className="h-4 w-4"/></Button>
                     </div>
                      <p className="text-xs text-muted-foreground mt-1">This key is safe to use in your frontend code (e.g., JS Widget).</p>
                 </div>
                 <div>
                     <Label htmlFor="secret-key">Secret Key</Label>
                     <div className="flex items-center gap-2">
-                        <Input id="secret-key" type={showSecret ? "text" : "password"} readOnly value="sk_live_xxxxxxxxxxxxxxxxxxxxxxxx" />
+                        <Input id="secret-key" type={showSecret ? "text" : "password"} readOnly value={secretKey} />
                         <Button variant="outline" size="icon" onClick={() => setShowSecret(!showSecret)}>
                             {showSecret ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => copyKey('sk_live_xxxxxxxxxxxxxxxxxxxxxxxx')}><Copy className="h-4 w-4"/></Button>
+                        <Button variant="outline" size="icon" onClick={() => copyKey(secretKey)}><Copy className="h-4 w-4"/></Button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">This key should only be used on your server. Never expose it on the client-side.</p>
                 </div>
@@ -191,7 +221,7 @@ export function DeveloperTools() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => toast({title: "Key Regenerated!", description: "Your new secret key has been generated."})}>Continue</AlertDialogAction>
+                            <AlertDialogAction onClick={handleRegenerateKey} disabled={regenerating}>{regenerating ? 'Regenerating...' : 'Continue'}</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>

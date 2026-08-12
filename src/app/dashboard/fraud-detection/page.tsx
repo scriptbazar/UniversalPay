@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toDateSafe } from "@/lib/utils";
 
@@ -85,19 +85,22 @@ export default function FraudDetectionPage() {
     return () => unsubscribe();
   }, []);
 
-  const handleAction = (action: string, txId: string) => {
-    if (action === "Requested KYC") {
-        setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: "KYC Requested" } : tx));
-    }
-    toast({
-      title: "Action Triggered",
-      description: `${action} for transaction ${txId}.`,
-    });
-    // This part is client-side only. In a real app, this would trigger a backend update.
-    const updatedTx = transactions.find(tx => tx.id === txId);
-    if(updatedTx) {
-        const updatedSelected = { ...updatedTx, status: action === "Requested KYC" ? "KYC Requested" : updatedTx.status };
-        setSelectedTx(updatedSelected);
+  const handleAction = async (action: string, txId: string) => {
+    const statusMap: Record<string, string> = {
+      'Requested KYC': 'KYC Requested',
+      'Block': 'Blocked',
+      'Approve': 'Success',
+      'Dismiss': 'Success',
+    };
+    const newStatus = statusMap[action] || action;
+    try {
+      await updateDoc(doc(db, 'transactions', txId), { status: newStatus });
+      setTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: newStatus } : tx));
+      const updatedTx = transactions.find(tx => tx.id === txId);
+      if (updatedTx) setSelectedTx({ ...updatedTx, status: newStatus });
+      toast({ title: 'Action Applied', description: `Transaction marked as ${newStatus}.` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update transaction. Check Firestore permissions.' });
     }
   };
 

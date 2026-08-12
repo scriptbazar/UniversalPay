@@ -138,6 +138,7 @@ export function PaymentLinksManager({ userType }: { userType: 'admin' | 'merchan
       try {
           const linkRef = doc(db, "paymentLinks", linkId);
           await deleteDoc(linkRef);
+          setLinks(prev => prev.filter(l => l.id !== linkId)); // ← Fix: update local state immediately
           toast({ title: 'Link deleted!', description: 'The payment link has been successfully deleted.' });
       } catch (error) {
            console.error("Error deleting payment link:", error);

@@ -250,7 +250,7 @@ export default function MerchantProfilePage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{merchant.plan || 'Free'}</div>
                         <p className="text-xs text-muted-foreground">
-                            <span className="hover:underline">Upgrade Plan</span>
+                            <span className="hover:underline text-primary"><Link href="/pricing">Upgrade Plan →</Link></span>
                         </p>
                     </CardContent>
                 </Link>
