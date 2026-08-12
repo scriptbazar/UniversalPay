@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign, RefreshCw, Database } from "lucide-react";
+import { Globe, KeyRound, Upload, Mail, Banknote, ShieldCheck, IndianRupee, CreditCard, Bitcoin, DollarSign, RefreshCw, Database, Eye, EyeOff } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -76,6 +76,8 @@ export default function SettingsPage() {
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [reCaptchaSiteKey, setReCaptchaSiteKey] = useState('');
   const [reCaptchaSecretKey, setReCaptchaSecretKey] = useState('');
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showCaptchaSecret, setShowCaptchaSecret] = useState(false);
   const [isCaptchaEnabled, setIsCaptchaEnabled] = useState(true);
   const [isMerchantCaptchaRequired, setIsMerchantCaptchaRequired] = useState(true);
   const [isAdmin2faEnabled, setIsAdmin2faEnabled] = useState(true);
@@ -358,14 +360,20 @@ export default function SettingsPage() {
                         <div className="space-y-4 p-4 border rounded-md">
                         <div className="space-y-2">
                             <Label htmlFor="gemini-api-key">Google Gemini API Key</Label>
-                            <Input 
-                                id="gemini-api-key" 
-                                type="password" 
-                                placeholder={isLoading ? "Loading..." : "Enter your Gemini API Key"} 
-                                value={geminiApiKey}
-                                onChange={(e) => setGeminiApiKey(e.target.value)}
-                                disabled={isLoading}
-                            />
+                            <div className="relative">
+                              <Input 
+                                  id="gemini-api-key" 
+                                  type={showGeminiKey ? "text" : "password"} 
+                                  placeholder={isLoading ? "Loading..." : "Enter your Gemini API Key"} 
+                                  value={geminiApiKey}
+                                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                                  disabled={isLoading}
+                                  className="pr-10"
+                              />
+                              <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowGeminiKey(!showGeminiKey)}>
+                                {showGeminiKey ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                              </Button>
+                            </div>
                             <p className="text-xs text-muted-foreground">
                                 Required for platform-wide AI features like fraud detection.
                             </p>
@@ -383,14 +391,20 @@ export default function SettingsPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="recaptcha-secret-key">Captcha Secret Key</Label>
-                                <Input 
-                                id="recaptcha-secret-key" 
-                                type="password" 
-                                placeholder={isLoading ? "Loading..." : "Enter your Captcha Secret Key"}
-                                value={reCaptchaSecretKey}
-                                onChange={(e) => setReCaptchaSecretKey(e.target.value)}
-                                disabled={isLoading}
-                                />
+                                <div className="relative">
+                                  <Input 
+                                  id="recaptcha-secret-key" 
+                                  type={showCaptchaSecret ? "text" : "password"} 
+                                  placeholder={isLoading ? "Loading..." : "Enter your Captcha Secret Key"}
+                                  value={reCaptchaSecretKey}
+                                  onChange={(e) => setReCaptchaSecretKey(e.target.value)}
+                                  disabled={isLoading}
+                                  className="pr-10"
+                                  />
+                                  <Button type="button" variant="ghost" size="icon" className="absolute inset-y-0 right-0 h-full px-3" onClick={() => setShowCaptchaSecret(!showCaptchaSecret)}>
+                                    {showCaptchaSecret ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                                  </Button>
+                                </div>
                             </div>
                         </div>
                     </div>

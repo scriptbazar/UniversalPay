@@ -35,6 +35,7 @@ export default function AdminWithdrawalsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
 
 
     useEffect(() => {
@@ -78,6 +79,12 @@ export default function AdminWithdrawalsPage() {
         return () => unsubscribeAuth();
     }, [toast]);
 
+    // Debounce search input — 300ms delay
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
 
     const handleProcessWithdrawal = async (id: string, newStatus: 'Completed' | 'Failed') => {
         setIsProcessing(id);
@@ -111,15 +118,16 @@ export default function AdminWithdrawalsPage() {
             filtered = filtered.filter(w => w.status.toLowerCase() === filter);
         }
 
-        if (searchTerm) {
-            filtered = filtered.filter(w => 
-                w.accountName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                w.userId?.toLowerCase().includes(searchTerm.toLowerCase())
+        if (debouncedSearch) {
+            filtered = filtered.filter(w =>
+                w.merchantId?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                w.merchantName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                w.walletAddress?.toLowerCase().includes(debouncedSearch.toLowerCase())
             );
         }
 
         return filtered;
-    }, [withdrawals, filter, searchTerm]);
+    }, [withdrawals, filter, debouncedSearch]);
 
     if (!isAdmin && !loading) {
         return (

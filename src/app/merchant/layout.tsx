@@ -312,8 +312,8 @@ export default function MerchantDashboardLayout({
                         <Link
                         key={item.label}
                         href={item.href}
-                        className={cn("flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
-                            "bg-muted text-foreground": pathname === item.href,
+                        className={cn("flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground transition-all", {
+                            "bg-primary/10 text-primary font-medium": pathname === item.href,
                         })}
                         >
                         <item.icon className="h-5 w-5" />

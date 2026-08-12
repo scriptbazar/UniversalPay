@@ -185,6 +185,8 @@ export function PaymentLinksManager({ userType }: { userType: 'admin' | 'merchan
                         id="amount"
                         type="number"
                         placeholder="e.g., 25.00"
+                        step="0.01"
+                        min="0.01"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required

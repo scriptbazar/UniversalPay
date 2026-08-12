@@ -57,31 +57,31 @@ export function Header() {
                   <Logo />
                 </Link>
                  <SheetClose asChild>
-                    <Link href="/#features" className="hover:text-foreground">
+                    <Link href="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
                         Features
                     </Link>
                 </SheetClose>
                 <SheetClose asChild>
-                    <Link href="/#pricing" className="text-muted-foreground hover:text-foreground">
+                    <Link href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                         Pricing
                     </Link>
                 </SheetClose>
                 <SheetClose asChild>
-                    <Link href="/#developers" className="text-muted-foreground hover:text-foreground">
+                    <Link href="/#developers" className="text-muted-foreground hover:text-foreground transition-colors">
                         Developers
                     </Link>
                 </SheetClose>
                 <Separator />
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-2 pt-2">
                     <SheetClose asChild>
-                        <Button variant="ghost" asChild>
-                            <Link href="/login">Log In</Link>
-                        </Button>
+                        <Link href="/login" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 hover:bg-accent hover:text-accent-foreground transition-colors border border-border">
+                            Log In
+                        </Link>
                     </SheetClose>
                     <SheetClose asChild>
-                        <Button asChild>
-                            <Link href="/signup">Sign Up</Link>
-                        </Button>
+                        <Link href="/signup" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                            Sign Up
+                        </Link>
                     </SheetClose>
                 </div>
               </nav>

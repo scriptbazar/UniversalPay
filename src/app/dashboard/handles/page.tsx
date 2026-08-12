@@ -142,8 +142,20 @@ export default function AdminHandleLinksPage() {
                 : filteredHandles.length === 0
                 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                        {searchTerm ? 'No handles match your search.' : 'No merchant handles configured yet.'}
+                      <TableCell colSpan={3} className="text-center py-12">
+                        <div className="flex flex-col items-center justify-center space-y-3">
+                          <div className="w-12 h-12 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+                            <LinkIcon className="h-6 w-6" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-semibold text-foreground">
+                              {searchTerm ? 'No handles match your search query' : 'No Merchant Handle Links Yet'}
+                            </p>
+                            <p className="text-xs text-muted-foreground max-w-sm">
+                              {searchTerm ? 'Try adjusting your search terms or clearing the filter.' : 'Merchants will appear here once they create personalized handle links.'}
+                            </p>
+                          </div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

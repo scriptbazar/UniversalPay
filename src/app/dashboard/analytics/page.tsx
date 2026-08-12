@@ -157,8 +157,8 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6 relative">
-      {tooltipContent && (
-          <div className="fixed z-50 p-2 bg-popover border rounded shadow-md text-xs pointer-events-none" style={{ left: mousePos.x + 10, top: mousePos.y + 10 }}>
+      {tooltipContent && typeof window !== 'undefined' && (
+          <div className="fixed z-50 p-2 bg-popover border rounded shadow-md text-xs pointer-events-none" style={{ left: Math.min(mousePos.x + 10, window.innerWidth - 180), top: Math.min(mousePos.y + 10, window.innerHeight - 60) }}>
               <p className="font-bold">{tooltipContent.name}</p>
               <p>Volume: ${tooltipContent.volume}</p>
           </div>
@@ -294,16 +294,32 @@ export default function AnalyticsPage() {
                 <TableRow><TableHead>Country</TableHead><TableHead>Volume (USD)</TableHead><TableHead className="text-right">Action</TableHead></TableRow>
               </TableHeader>
               <TableBody>
-                {geoData.slice(0, 5).map(geo => (
-                  <TableRow key={geo.country}>
-                    <TableCell className="flex items-center gap-2">
-                      {geo.flag && <Image src={`https://flagcdn.com/w20/${geo.flag.toLowerCase()}.png`} alt="" width={20} height={15} />}
-                      {geo.country}
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : geoData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground text-sm">
+                      No geographical transaction data recorded yet.
                     </TableCell>
-                    <TableCell>${geo.volume.toLocaleString()}</TableCell>
-                    <TableCell className="text-right"><Button variant="link" onClick={() => router.push(`/dashboard/users/country/${geo.country}`)}>View</Button></TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  geoData.slice(0, 5).map(geo => (
+                    <TableRow key={geo.country}>
+                      <TableCell className="flex items-center gap-2">
+                        {geo.flag && <Image src={`https://flagcdn.com/w20/${geo.flag.toLowerCase()}.png`} alt="" width={20} height={15} />}
+                        {geo.country}
+                      </TableCell>
+                      <TableCell>${geo.volume.toLocaleString()}</TableCell>
+                      <TableCell className="text-right"><Button variant="link" onClick={() => router.push(`/dashboard/users/country/${geo.country}`)}>View</Button></TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

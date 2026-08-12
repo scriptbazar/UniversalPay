@@ -56,6 +56,7 @@ import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, orderBy, limit, onSnapshot, getDocs, Timestamp } from "firebase/firestore";
 import { toDateSafe } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 type Transaction = {
@@ -78,6 +79,7 @@ export default function Dashboard() {
   const [merchantName, setMerchantName] = useState("Merchant");
   const [chartData, setChartData] = useState<any[]>([]);
   const [customerCount, setCustomerCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -138,6 +140,7 @@ export default function Dashboard() {
                     { name: 'May', revenue: 42800 }
                 ]);
 
+                setLoading(false);
             }, (error) => {
                 console.warn("Merchant transactions notice:", error);
                 setAllTransactions([
@@ -154,6 +157,7 @@ export default function Dashboard() {
                     { name: 'Mar', revenue: 24500 },
                     { name: 'Apr', revenue: 31200 }
                 ]);
+                setLoading(false);
             });
 
             // Fetch customer count
@@ -161,6 +165,7 @@ export default function Dashboard() {
             const customerQuery = query(customersCol, where("merchantId", "==", user.uid));
             const customerSnapshot = await getDocs(customerQuery);
             setCustomerCount(customerSnapshot.size);
+            setLoading(false);
 
             return () => unsubscribeTransactions(); // Cleanup listener
 
@@ -169,6 +174,7 @@ export default function Dashboard() {
             setAllTransactions([]);
             setRecentTransactionsData([]);
             setChartData([]);
+            setLoading(false);
         }
     });
     return () => unsubscribe(); // Cleanup auth listener
@@ -229,7 +235,7 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue}</div>
+              {loading ? <Skeleton className="h-8 w-24 my-1" /> : <div className="text-2xl font-bold">${totalRevenue}</div>}
               <p className="text-xs text-muted-foreground">
                 All-time successful payments
               </p>
@@ -245,7 +251,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{customerCount}</div>
+              {loading ? <Skeleton className="h-8 w-16 my-1" /> : <div className="text-2xl font-bold">+{customerCount}</div>}
               <p className="text-xs text-muted-foreground">
                 Total customers who paid you
               </p>
@@ -259,7 +265,7 @@ export default function Dashboard() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{allTransactions.length}</div>
+              {loading ? <Skeleton className="h-8 w-16 my-1" /> : <div className="text-2xl font-bold">{allTransactions.length}</div>}
               <p className="text-xs text-muted-foreground">
                 Total transactions attempted
               </p>
@@ -275,7 +281,7 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{successRate}</div>
+              {loading ? <Skeleton className="h-8 w-20 my-1" /> : <div className="text-2xl font-bold">{successRate}</div>}
               <p className="text-xs text-muted-foreground">
                 Of all attempted transactions
               </p>

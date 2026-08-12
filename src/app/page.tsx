@@ -309,10 +309,15 @@ export default function Home() {
                     </Link>
                   </Button>
 
-                  <Button asChild size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-base font-semibold border-cyan-500/40 text-foreground hover:bg-cyan-500/10 backdrop-blur-xl">
-                    <Link href="/#converter">
-                      Try Converter Demo
-                    </Link>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="w-full sm:w-auto h-14 px-8 text-base font-semibold border-cyan-500/40 text-foreground hover:bg-cyan-500/10 backdrop-blur-xl"
+                    onClick={() => {
+                      document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    Try Converter Demo
                   </Button>
                 </div>
 
@@ -413,7 +418,7 @@ export default function Home() {
                   )}
 
                   {/* Simulated Live Transaction Stream Widget */}
-                  <div className="bg-muted p-3 rounded-xl border border-border text-xs space-y-1">
+                  <div key={txIndex} className="animate-tx-fade bg-muted p-3 rounded-xl border border-border text-xs space-y-1">
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                       <span>Live Gateway Feed</span>
                       <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><Activity className="w-3 h-3" /> Streaming</span>

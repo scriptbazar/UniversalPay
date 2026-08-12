@@ -105,9 +105,14 @@ export default function ErrorLogsPage() {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">Loading error logs...</TableCell>
-                                </TableRow>
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                                    </TableRow>
+                                ))
                             ) : error ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center text-destructive">{error}</TableCell>
@@ -129,7 +134,7 @@ export default function ErrorLogsPage() {
                                         <TableCell>
                                             <Badge variant="outline">{log.type}</Badge>
                                         </TableCell>
-                                        <TableCell className="font-mono text-xs">{log.message}</TableCell>
+                                        <TableCell className="font-mono text-xs max-w-xs break-all">{log.message}</TableCell>
                                     </TableRow>
                                 ))
                             )}

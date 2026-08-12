@@ -128,11 +128,16 @@ export default function AdminSupportPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                    <TableRow>
-                        <TableCell colSpan={6}>
-                           <Skeleton className="h-24 w-full" />
-                        </TableCell>
-                    </TableRow>
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-36" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : !error && filteredTickets.length > 0 ? (
                     filteredTickets.map((ticket) => (
                     <TableRow key={ticket.id} onClick={() => handleRowClick(ticket.id)} className="cursor-pointer hover:bg-muted/50">

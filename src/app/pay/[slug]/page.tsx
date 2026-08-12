@@ -85,7 +85,16 @@ export default function PayPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-muted/40">
+        <div className="w-full max-w-md space-y-4 p-4">
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-3/4 mx-auto rounded-xl" />
+        </div>
+      </div>
+    );
   }
 
   if (!link || !link.isActive) {
@@ -122,7 +131,7 @@ export default function PayPage() {
                         <div className="flex flex-col items-center space-y-4">
                             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                                 {link.imageUrl ? (
-                                    <Image src={link.imageUrl} alt={link.title} width={80} height={80} className="object-cover" data-ai-hint="product image" />
+                                    <Image src={link.imageUrl} alt={link.title} width={80} height={80} className="object-contain" data-ai-hint="product image" />
                                 ) : (
                                     <Globe className="w-10 h-10 text-muted-foreground" />
                                 )}
@@ -175,10 +184,22 @@ export default function PayPage() {
                             <div className="w-full">
                                 <p className="text-xs text-muted-foreground mb-2">Select a payment method:</p>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button type="button" variant={selectedMethod === 'upi' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('upi')}><IndianRupee className="mr-2 h-4 w-4"/> Pay with UPI</Button>
-                                    <Button type="button" variant={selectedMethod === 'card' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('card')}><CreditCard className="mr-2 h-4 w-4"/> Pay with Card</Button>
-                                    <Button type="button" variant={selectedMethod === 'crypto' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('crypto')}><Bitcoin className="mr-2 h-4 w-4"/> Pay with Crypto</Button>
-                                    <Button type="button" variant={selectedMethod === 'paypal' ? 'default' : 'outline'} className="w-full justify-start" onClick={() => setSelectedMethod('paypal')}><PayPalIcon className="mr-2 h-4 w-4"/> Pay with PayPal</Button>
+                                    <Button type="button" variant={selectedMethod === 'upi' ? 'default' : 'outline'} className={`w-full justify-between ${selectedMethod === 'upi' ? 'ring-2 ring-primary' : ''}`} onClick={() => setSelectedMethod('upi')}>
+                                        <span className="flex items-center"><IndianRupee className="mr-2 h-4 w-4"/> UPI</span>
+                                        {selectedMethod === 'upi' && <CheckCircle className="h-4 w-4 ml-1" />}
+                                    </Button>
+                                    <Button type="button" variant={selectedMethod === 'card' ? 'default' : 'outline'} className={`w-full justify-between ${selectedMethod === 'card' ? 'ring-2 ring-primary' : ''}`} onClick={() => setSelectedMethod('card')}>
+                                        <span className="flex items-center"><CreditCard className="mr-2 h-4 w-4"/> Card</span>
+                                        {selectedMethod === 'card' && <CheckCircle className="h-4 w-4 ml-1" />}
+                                    </Button>
+                                    <Button type="button" variant={selectedMethod === 'crypto' ? 'default' : 'outline'} className={`w-full justify-between ${selectedMethod === 'crypto' ? 'ring-2 ring-primary' : ''}`} onClick={() => setSelectedMethod('crypto')}>
+                                        <span className="flex items-center"><Bitcoin className="mr-2 h-4 w-4"/> Crypto</span>
+                                        {selectedMethod === 'crypto' && <CheckCircle className="h-4 w-4 ml-1" />}
+                                    </Button>
+                                    <Button type="button" variant={selectedMethod === 'paypal' ? 'default' : 'outline'} className={`w-full justify-between ${selectedMethod === 'paypal' ? 'ring-2 ring-primary' : ''}`} onClick={() => setSelectedMethod('paypal')}>
+                                        <span className="flex items-center"><PayPalIcon className="mr-2 h-4 w-4"/> PayPal</span>
+                                        {selectedMethod === 'paypal' && <CheckCircle className="h-4 w-4 ml-1" />}
+                                    </Button>
                                 </div>
                             </div>
 
